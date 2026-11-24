@@ -18,7 +18,7 @@ export const noteInput = z
   })
   .strict();
 
-const noteFields = {
+export const noteFields = {
   id: noteId,
   preview: sealedField('note.preview').nullable(),
   createdAt: isoTime,

@@ -23,13 +23,13 @@ export const SCHEDULE_OUTCOMES = ['updated', 'started', 'none', 'removed', 'crea
 
 const priority = z.enum(PRIORITIES);
 const effort = z.enum(EFFORTS);
-const everyMs = z.number().int().min(MIN_INTERVAL_MS).max(MAX_INTERVAL_MS);
-const cron = z.string().min(1).max(256);
-const timezone = z.string().min(1).max(64);
-const moreCrons = z.array(cron).max(MAX_SCHEDULE_CRONS - 1);
-const delayMs = z.number().int().min(0).max(MAX_INTERVAL_MS);
-const maxConcurrent = z.number().int().min(1).max(MAX_SCHEDULE_CONCURRENT);
-const times = z.number().int().min(1).max(MAX_SCHEDULE_TIMES);
+export const everyMs = z.number().int().min(MIN_INTERVAL_MS).max(MAX_INTERVAL_MS);
+export const cron = z.string().min(1).max(256);
+export const timezone = z.string().min(1).max(64);
+export const moreCrons = z.array(cron).max(MAX_SCHEDULE_CRONS - 1);
+export const delayMs = z.number().int().min(0).max(MAX_INTERVAL_MS);
+export const maxConcurrent = z.number().int().min(1).max(MAX_SCHEDULE_CONCURRENT);
+export const times = z.number().int().min(1).max(MAX_SCHEDULE_TIMES);
 
 export const scheduleAfter = z.object({ scheduleId, delayMs }).strict();
 
@@ -115,32 +115,44 @@ const repeat = z.union([
   z.object({ after: scheduleAfter }).strict(),
 ]);
 
+export const scheduleSettingsShape = {
+  agent: sealedField('agent').optional(),
+  place: z.object({ machine: machineName, directoryId }).strict().nullable(),
+  priority,
+  model: modelName.nullable(),
+  effort: effort.nullable().optional(),
+  lane: laneName.nullable().optional(),
+  icon: sealedField('icon').nullable().optional(),
+  labels: sealedField('labels').nullable().optional(),
+  autoDone: z.boolean(),
+  repeat,
+  at: isoTime.optional(),
+  runsLeft: times.nullable(),
+  until: isoTime.nullable(),
+  maxConcurrent: maxConcurrent.nullable(),
+};
+
+export const checkScheduleSettings = (
+  settings: {
+    repeat: z.infer<typeof repeat>;
+    at?: string | undefined;
+    runsLeft: number | null;
+    until: string | null;
+  },
+  ctx: z.RefinementCtx,
+) => {
+  if ('after' in settings.repeat && settings.at !== undefined) {
+    ctx.addIssue({ code: 'custom', message: 'at excludes a repeat after another schedule' });
+  }
+  if (settings.runsLeft !== null && settings.until !== null) {
+    ctx.addIssue({ code: 'custom', message: 'runsLeft excludes until' });
+  }
+};
+
 export const scheduleSettings = z
-  .object({
-    agent: sealedField('agent').optional(),
-    place: z.object({ machine: machineName, directoryId }).strict().nullable(),
-    priority,
-    model: modelName.nullable(),
-    effort: effort.nullable().optional(),
-    lane: laneName.nullable().optional(),
-    icon: sealedField('icon').nullable().optional(),
-    labels: sealedField('labels').nullable().optional(),
-    autoDone: z.boolean(),
-    repeat,
-    at: isoTime.optional(),
-    runsLeft: times.nullable(),
-    until: isoTime.nullable(),
-    maxConcurrent: maxConcurrent.nullable(),
-  })
+  .object(scheduleSettingsShape)
   .strict()
-  .superRefine((settings, ctx) => {
-    if ('after' in settings.repeat && settings.at !== undefined) {
-      ctx.addIssue({ code: 'custom', message: 'at excludes a repeat after another schedule' });
-    }
-    if (settings.runsLeft !== null && settings.until !== null) {
-      ctx.addIssue({ code: 'custom', message: 'runsLeft excludes until' });
-    }
-  });
+  .superRefine(checkScheduleSettings);
 
 export const scheduleEdit = z
   .object({
