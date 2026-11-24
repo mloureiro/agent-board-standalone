@@ -30,37 +30,39 @@ and `Q<n>` refer to the plan's requirements and the owner's decisions.
 | Column | Meaning |
 |---|---|
 | ID | Stable id |
-| Requirement | One testable sentence. "Changed:" marks where the new design alters today's behaviour. |
-| Sources | Inventory rows, plan requirements and other catalogue rows it derives from |
+| Requirement | One testable sentence. "Changed:" marks where the new design alters today's behaviour. "Retired:" marks a row that no longer applies, with the reason. "Conditional" marks a row built only if the named option is chosen. |
+| Sources | Inventory rows, plan requirements, ADRs and other catalogue rows it derives from |
 | Today | Status of today's implementation, the weakest among the sources: `works`, `unproven`, `broken`, `not built` (discussed, never built), `new` (a requirement of this plan) |
-| Test | Where the test lives: `e2e` (the suite connecting API, CLI and browser client), `part` (the owning part's own suite, wrappers included), or `manual: <reason>` (a written manual walk, R4.5) |
+| Test | Where the test lives: `e2e` (the suite connecting API, CLI and browser client), `part` (the owning part's own suite, wrappers included), `manual: <reason>` (a written manual walk, R4.5), or `retired` (no test) |
 | Test ids | Empty until step 4 assigns the test ids |
 
 The Test column is the catalogue's proposal; step 4 may move a row between `e2e` and `part` when it writes the test.
+A retired row needs no test.
 
 ## Counts
 
 | Part | Rows |
 |---|---|
-| api | 106 |
-| contract | 12 |
+| api | 125 |
+| contract | 15 |
 | sealing | 7 |
-| cli | 82 |
-| web | 100 |
-| server-app | 88 |
-| client-app | 48 |
-| mobile | 7 |
-| migrate | 10 |
-| repo | 7 |
-| **Total** | **467** |
+| cli | 85 |
+| web | 106 |
+| server-app | 91 |
+| client-app | 52 |
+| mobile | 10 |
+| migrate | 12 |
+| repo | 9 |
+| **Total** | **512** |
 
-Tests proposed: 97 `e2e`, 355 `part`, 15 `manual`.
+Tests proposed: 103 `e2e`, 385 `part`, 15 `manual`, 9 `retired` (client-app-030, server-app-075…082).
 
 Inventory rows: 472. Mapped to catalogue rows: 456 (17 of them pin-caused rows replaced). Dropped with a reason: 16.
+The architecture added 45 rows, each under "Added by the architecture" at the end of its file.
 
-## Left to the architecture step
+## Settled by the architecture
 
-Rows that say "step 2 decides" name the open design choices: how the bundled clients (client app, Android) carry a
-session cross-origin, key isolation per server inside one bundled client, the server-app to client-app handover
-mechanism, whether the server app keeps a front proxy, hidden-server behaviour in the client app, and how a machine
-token may act as its owner for the CLI's user commands.
+The open design choices left by step 1 are settled in [docs/architecture.md](../docs/architecture.md) and the ADRs in
+[docs/adr/](../docs/adr/): sessions for bundled and cross-origin clients (ADR-0004), key isolation per server
+(ADR-0005), the API serving the browser client with no separate front (ADR-0006), the server-app to client-app
+handover (ADR-0007), hidden server windows (ADR-0008), and how a machine may act as its owner (ADR-0009).
