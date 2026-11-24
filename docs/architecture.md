@@ -79,15 +79,14 @@ Rules ([ADR-0001](adr/0001-dependency-rule-and-versioning.md)):
 
 ### Token prefixes and cookie names
 
-| Credential                    | Prefix | Carried in                                                             | Stored by the server as |
-| ----------------------------- | ------ | ---------------------------------------------------------------------- | ----------------------- |
-| Browser session (same origin) | `abs_` | HttpOnly cookie `__Host-board-session` (https), `board-session` (http) | SHA-256 of the token    |
-| Client token (cross-origin)   | `abc_` | `Authorization: Bearer abc_…`                                          | SHA-256 of the token    |
-| Machine token                 | `abm_` | `Authorization: Bearer abm_…`                                          | SHA-256 of the token    |
+| Credential                    | Prefix | Carried in                                                             | Stored by the server as                   |
+| ----------------------------- | ------ | ---------------------------------------------------------------------- | ----------------------------------------- |
+| Browser session (same origin) | `abs_` | HttpOnly cookie `__Host-board-session` (https), `board-session` (http) | Lower-case hex SHA-256 of the whole token |
+| Client token (cross-origin)   | `abc_` | `Authorization: Bearer abc_…`                                          | Lower-case hex SHA-256 of the whole token |
+| Machine token                 | `abm_` | `Authorization: Bearer abm_…`                                          | Lower-case hex SHA-256 of the whole token |
 
-Migrated machine tokens must stay valid (migrate-004), so the stored hash must equal the one today's boards store.
-Step 3 verifies this with a vector computed by a reference board, and changes the scheme here if the vector
-disagrees.
+Migrated machine tokens must stay valid (migrate-004). The stored hash equals the one today's boards store, and the
+vector in `packages/sealing/test/vectors/token-hashes.json` pins it.
 
 ### Version and feature handshake
 
