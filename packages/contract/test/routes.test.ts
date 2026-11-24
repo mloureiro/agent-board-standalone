@@ -44,6 +44,8 @@ const objectIssues = (schema: z.core.$ZodType, path: string, seen: Set<unknown>)
   }
 };
 
+const CREATES_ITS_OWN_ID: readonly string[] = ['client.projects.create'];
+
 describe('route table', () => {
   it('[contract-003] route names are unique', () => {
     const names = routes.map((route) => route.name);
@@ -99,7 +101,9 @@ describe('route table', () => {
   it('[contract-003] every command that takes an id may answer not-found', () => {
     for (const route of routes) {
       const shape = (route.request as z.ZodObject).shape as Record<string, unknown> | undefined;
-      if (shape && 'id' in shape) expect(route.errors).toContain('not-found');
+      if (shape && 'id' in shape && !CREATES_ITS_OWN_ID.includes(route.name)) {
+        expect(route.errors).toContain('not-found');
+      }
     }
   });
 

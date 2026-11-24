@@ -32,13 +32,16 @@ export const defineRoute = <Req extends z.ZodType, Res extends z.ZodType>(
   route: Route<Req, Res>,
 ): Route<Req, Res> => route;
 
-export type MachineCommandSpec<Req extends z.ZodType, Res extends z.ZodType> = Pick<
+export type RouteSpec<Req extends z.ZodType, Res extends z.ZodType> = Pick<
   Route<Req, Res>,
   'request' | 'response'
 > &
   Partial<
     Pick<Route<Req, Res>, 'errors' | 'feature' | 'module' | 'bodyLimit' | 'issuesCredential'>
   >;
+
+export type MachineCommandSpec<Req extends z.ZodType, Res extends z.ZodType> = RouteSpec<Req, Res>;
+export type ClientRouteSpec<Req extends z.ZodType, Res extends z.ZodType> = RouteSpec<Req, Res>;
 
 export type MachineRoute<C extends string, Req extends z.ZodType, Res extends z.ZodType> = Route<
   Req,
@@ -82,7 +85,7 @@ const clientRoute =
   <M extends 'GET' | 'POST'>(method: M) =>
   <P extends string, Req extends z.ZodType, Res extends z.ZodType>(
     path: P,
-    spec: MachineCommandSpec<Req, Res>,
+    spec: ClientRouteSpec<Req, Res>,
   ): ClientRoute<M, P, Req, Res> => ({
     ...spec,
     errors: spec.errors ?? [],
