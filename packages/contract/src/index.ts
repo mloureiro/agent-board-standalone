@@ -1,4 +1,5 @@
 export * from './address/index.js';
+export * from './board-export.js';
 export * from './compat.js';
 export * from './doctor.js';
 export * from './enums.js';

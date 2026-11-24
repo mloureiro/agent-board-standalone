@@ -301,13 +301,13 @@ backup (server-app-035) and `pair-code` for "Pair a device…".
 
 ([ADR-0010](adr/0010-projects-data-model.md))
 
-| Table         | Columns (besides `owner`)                                                                                                              | Constraints                                                                                      |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `project`     | `id` uuid, `name` sealed or null, `icon` sealed or null, `position` text, `is_default` bool, `archived_at`, `created_at`, `updated_at` | unique (`owner`, `id`); one `is_default` per owner                                               |
-| `directory`   | `id` uuid, `machine_id`, `project_id`, `path` sealed, `repo` sealed or null, `created_at`                                              | unique (`owner`, `id`, `project_id`); FK (`owner`, `machine_id`); FK (`owner`, `project_id`)     |
-| `task`        | adds `project_id` not null, `directory_id` null, `legacy_directory` sealed or null                                                     | FK (`owner`, `project_id`); FK (`owner`, `directory_id`, `project_id`) → `directory`, deferrable |
-| `schedule`    | adds `project_id` not null, `directory_id` null, `legacy_directory` sealed or null                                                     | same two foreign keys                                                                            |
-| `legacy_dirs` | `machine_id`, `document` sealed                                                                                                        | one row per (`owner`, `machine_id`); exists only for migrated boards                             |
+| Table         | Columns (besides `owner`)                                                                                                                 | Constraints                                                                                      |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `project`     | `id` uuid, `name` sealed or null, `icon` sealed or null, `position` integer, `is_default` bool, `archived_at`, `created_at`, `updated_at` | unique (`owner`, `id`); one `is_default` per owner                                               |
+| `directory`   | `id` uuid, `machine_id`, `project_id`, `path` sealed, `repo` sealed or null, `created_at`                                                 | unique (`owner`, `id`, `project_id`); FK (`owner`, `machine_id`); FK (`owner`, `project_id`)     |
+| `task`        | adds `project_id` not null, `directory_id` null, `legacy_directory` sealed or null                                                        | FK (`owner`, `project_id`); FK (`owner`, `directory_id`, `project_id`) → `directory`, deferrable |
+| `schedule`    | adds `project_id` not null, `directory_id` null, `legacy_directory` sealed or null                                                        | same two foreign keys                                                                            |
+| `legacy_dirs` | `machine_id`, `document` sealed                                                                                                           | one row per (`owner`, `machine_id`); exists only for migrated boards                             |
 
 - The composite foreign key makes "a task's directory belongs to the task's project" a database fact (api-103,
   api-116).

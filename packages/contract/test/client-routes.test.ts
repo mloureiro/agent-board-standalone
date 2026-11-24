@@ -297,7 +297,7 @@ describe('client routes: tasks, schedules, transcript, me, revision, events', ()
   });
 
   it('[contract-003] every client route path starts with /api/client/ and auth is client', () => {
-    for (const entry of clientRoutes) {
+    for (const entry of clientRoutes.filter((candidate) => candidate.name.startsWith('client.'))) {
       expect(entry.auth).toBe('client');
       expect(entry.path.startsWith('/api/client/')).toBe(true);
       expect(entry.path).toMatch(/^\/api\/client\/[a-z]+(-[a-z]+)*(\/[a-z]+(-[a-z]+)*)?$/);

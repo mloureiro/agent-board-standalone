@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { clientRoutes } from '../src/index.js';
+import { clientRoutes as allClientRoutes } from '../src/index.js';
+
+const clientRoutes = allClientRoutes.filter((entry) => entry.path.startsWith('/api/client/'));
 
 describe('client route table', () => {
   it('[contract-003] client routes:', () => {

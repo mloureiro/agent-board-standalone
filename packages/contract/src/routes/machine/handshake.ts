@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { keyIdString } from '../../limits.js';
 import { emptyResult } from '../../schemas/common.js';
+import { publicKeyString } from '../../schemas/ids.js';
 import { versionAnswer } from '../../schemas/machine.js';
 import { machineCommand } from '../route.js';
 
@@ -13,7 +14,7 @@ export const versionRoute = machineCommand('version', {
 export const registerKeyRoute = machineCommand('register-key', {
   request: z
     .object({
-      publicKey: z.string().regex(/^[A-Za-z0-9_-]{1,200}$/),
+      publicKey: publicKeyString,
       label: z.string().min(1).max(64),
     })
     .strict(),
