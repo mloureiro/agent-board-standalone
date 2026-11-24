@@ -1,0 +1,70 @@
+{
+  "marketplace": "claude-plugin",
+  "_comment": "Registry for agent-board-standalone: one pnpm monorepo (API, CLI, browser client, server app, client app, Android wrapper, migration tool, shared contract and sealing packages, e2e). Personal repo, solo delivery. The models block records the model per role (Opus 5.5 for architect, QA, review and research; Sonnet 5.5 for dev and E2E).",
+  "repo": { "match": ["mloureiro/agent-board-standalone(\\.git)?$"] },
+  "delivery": { "mode": "solo" },
+  "models": {
+    "architect": "claude-opus-5-5",
+    "qa": "claude-opus-5-5",
+    "review": "claude-opus-5-5",
+    "researcher": "claude-opus-5-5",
+    "backend": "claude-sonnet-5-5",
+    "frontend": "claude-sonnet-5-5",
+    "e2e": "claude-sonnet-5-5"
+  },
+  "checks": {
+    "static": { "format": "pnpm format:check", "lint": "pnpm lint", "typecheck": "pnpm typecheck" },
+    "packageScoped": false,
+    "unit": "pnpm test"
+  },
+  "worktree": { "link": ["wiki"], "setup": ["pnpm install"] },
+  "roles": {
+    "architect": [
+      "m:beads-workflow",
+      "m:git-workflow",
+      "m:wiki-conventions",
+      "topic-testing:test-design",
+      "topic-review:security-audit",
+      "topic-typescript:typescript"
+    ],
+    "backend": [
+      "m:beads-workflow",
+      "m:git-workflow",
+      "m:wiki-conventions",
+      "topic-testing:test-design",
+      "topic-review:pre-push-review",
+      "topic-review:security-audit",
+      "topic-typescript:typescript",
+      "topic-vitest:vitest"
+    ],
+    "frontend": [
+      "m:beads-workflow",
+      "m:git-workflow",
+      "m:wiki-conventions",
+      "topic-testing:test-design",
+      "topic-review:pre-push-review",
+      "topic-typescript:typescript",
+      "topic-vitest:vitest",
+      "topic-ui-design:ui-design",
+      "topic-ui-design:visual-qa"
+    ],
+    "e2e": [
+      "m:beads-workflow",
+      "m:git-workflow",
+      "m:wiki-conventions",
+      "topic-testing:test-design",
+      "topic-typescript:typescript",
+      "topic-ui-design:visual-qa"
+    ],
+    "qa": [
+      "m:beads-workflow",
+      "m:git-workflow",
+      "m:wiki-conventions",
+      "topic-testing:test-design",
+      "topic-review:*",
+      "topic-typescript:typescript",
+      "topic-vitest:vitest"
+    ],
+    "researcher": ["m:beads-workflow", "m:wiki-conventions"]
+  }
+}
