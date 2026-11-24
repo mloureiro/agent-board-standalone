@@ -94,9 +94,9 @@ describe('key slots', () => {
     await expect(unwrapSlot([passphrase], { kind: 'recovery', recoveryKey: 'x' })).rejects.toThrow(
       'This key has no recovery key.',
     );
-    await expect(
-      unwrapSlot([recovery], { kind: 'passphrase', passphrase: PASSPHRASE }),
-    ).rejects.toThrow('This key has no passphrase.');
+    const refused = unwrapSlot([recovery], { kind: 'passphrase', passphrase: PASSPHRASE });
+    await expect(refused).rejects.toThrow(KeyError);
+    await expect(refused).rejects.not.toThrow(WrongSecretError);
     await expect(
       unwrapSlot([passphrase, passphrase], { kind: 'passphrase', passphrase: PASSPHRASE }),
     ).rejects.toThrow(KeyError);
@@ -104,6 +104,18 @@ describe('key slots', () => {
     await expect(
       unwrapSlot(Array(5).fill(passphrase), { kind: 'passphrase', passphrase: PASSPHRASE }),
     ).rejects.toThrow(KeyError);
+  });
+
+  it('[sealing-004] a slot set without a passphrase slot is refused even with the correct recovery key', async () => {
+    const { setup, recoveryKey } = await createKeySetup('owner', PASSPHRASE, MIN_KDF);
+    const recoveryOnly = { keyId: setup.keyId, slots: [setup.slots[1]!] };
+    const secret = { kind: 'recovery', recoveryKey } as const;
+    const direct = unwrapSlot(recoveryOnly.slots, secret);
+    await expect(direct).rejects.toThrow(KeyError);
+    await expect(direct).rejects.not.toThrow(WrongSecretError);
+    await expect(unlockKeys('owner', recoveryOnly, secret)).rejects.toThrow(
+      'This key slot is not valid.',
+    );
   });
 
   it('[sealing-004] a passphrase shorter than 14 characters after normalisation is refused when wrapping', async () => {

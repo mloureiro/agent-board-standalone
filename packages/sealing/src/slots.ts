@@ -54,7 +54,6 @@ const MIN_SALT_BYTES = 16;
 const MAX_SALT_BYTES = 64;
 const WRAPPED_BODY_LENGTH = 80;
 const WRAP_ADDITIONAL = new TextEncoder().encode('v1\0wrap-data-key');
-const NO_PASSPHRASE = 'This key has no passphrase.';
 const NO_RECOVERY = 'This key has no recovery key.';
 const WRONG_SECRET = 'Wrong passphrase or recovery key.';
 const MISMATCH = 'This key does not match the one the board is set up with.';
@@ -144,7 +143,7 @@ export async function wrapSlot(
 
 function assertSlotSet(slots: readonly KeySlot[]): void {
   const kinds = new Set(slots.map((slot) => slot.kind));
-  if (slots.length < 1 || slots.length > MAX_KEY_SLOTS || kinds.size !== slots.length)
+  if (slots.length > MAX_KEY_SLOTS || kinds.size !== slots.length || !kinds.has('passphrase'))
     throw new KeyError(BAD_SLOT);
 }
 
@@ -173,8 +172,7 @@ export async function unwrapSlot(
 ): Promise<Uint8Array<ArrayBuffer>> {
   assertSlotSet(slots);
   const slot = slots.find((candidate) => candidate.kind === secret.kind);
-  if (slot === undefined)
-    throw new KeyError(secret.kind === 'passphrase' ? NO_PASSPHRASE : NO_RECOVERY);
+  if (slot === undefined) throw new KeyError(NO_RECOVERY);
   if (!isWrappedKey(slot.wrapped)) throw new KeyError(BAD_SLOT);
   const key = await wrappingKeyOf(slot, secret);
   const body = fromBase64Url(slot.wrapped.slice(WRAPPED_KEY_PREFIX.length));

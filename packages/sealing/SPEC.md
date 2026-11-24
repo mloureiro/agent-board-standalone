@@ -136,7 +136,7 @@ A **setup** is `{ keyId, slots }`: the key id of the data key and one to four sl
 the data key.
 
 - **Wrapped key**: `abw1.` followed by the base64url of `nonce (12) || AES-256-GCM(data key) || tag (16)`, with
-  the additional data being the UTF-8 bytes of `v1`, NUL, `wrap-data-key`. Always 80 characters. The wrapping key is
+  the additional data being the UTF-8 bytes of `v1`, NUL, `wrap-data-key`. 80 base64url characters after the `abw1.` prefix, 85 in all. The wrapping key is
   supplied by the slot.
 - **Passphrase slot**: `{ kind: 'passphrase', kdf: 'argon2id', m, t, p, salt, wrapped }`. `salt` is base64url of
   16 to 64 random bytes (22 to 86 characters). The wrapping key is the 32-byte Argon2id output (version 0x13,
@@ -150,7 +150,7 @@ the data key.
 - **Passphrase normalisation**: remove leading and trailing whitespace, then apply Unicode NFKC. The minimum length
   is 14 code points of the normalised text. Everything that reaches the hash goes through this one function.
 - **Slot set**: 1 to 4 slots, at most one of each kind, and a passphrase slot always present. In practice a setup
-  has one passphrase slot and one recovery slot, in that order.
+  has one passphrase slot and one recovery slot, in that order. A reader refuses a set without a passphrase slot before opening anything.
 - **Unlock**: open the slot of the kind the secret names, derive the keys from the data key, and require the derived
   key id to equal the stored `keyId`; otherwise fail with a "does not match" error. Any failure to open a slot is one
   wrong-secret error that does not say which part was wrong.
@@ -187,7 +187,7 @@ New in this repository; the vectors for it come from an independent implementati
 
 - Key type: ECDSA on P-256 with SHA-256. The private key is non-extractable.
 - Public key text: SPKI DER, base64url.
-- Key id (sent as `x-board-key`): base64url SHA-256 of the SPKI DER, 43 characters, computed by both sides.
+- Key id (sent as `x-board-key`): base64url SHA-256 of the SPKI DER, 43 characters, computed by both sides. A text that does not import as a P-256 SPKI key has no key id and is refused.
 - Signature: IEEE P1363 `r || s`, 64 bytes, base64url.
 - `Content-Digest`: `sha-256=:<standard base64 with padding of SHA-256 of the body>:` (RFC 9530).
 - Timestamp: decimal Unix seconds. Nonce: 16 random bytes, base64url (22 characters).
@@ -196,8 +196,10 @@ New in this repository; the vectors for it come from an independent implementati
 
 ## 12. Vectors
 
-`test/vectors/` holds seven files. Each begins with `"source": "reference board 011f7be"` and
-`"generatedBy": "scripts/generate-vectors.mts"`.
+`test/vectors/` holds eight files. Seven come from the reference board and begin with `"source": "reference board 011f7be"`
+and `"generatedBy": "scripts/generate-vectors.mts"`. `signatures.json` comes from the independent implementation of
+section 11, begins with its own `note` and `generatedBy`, and is not reproducible byte for byte because ECDSA
+signatures are randomised. Its private JWKs are synthetic test keys.
 
 | File                 | Pins                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
