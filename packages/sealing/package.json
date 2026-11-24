@@ -1,11 +1,19 @@
 {
   "name": "@agent-board/sealing",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hash-wasm": "^4.13.0"
+  },
+  "devDependencies": {
+    "@vitest/browser-playwright": "5.1.1",
+    "playwright": "^1.65.1"
   }
 }
