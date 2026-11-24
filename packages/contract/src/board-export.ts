@@ -186,6 +186,7 @@ const taskRow = z
     projectId,
     directoryId: nullable(directoryId),
     legacyDirectory: nullable(sealedField('workdir')),
+    legacyHomeWorkdir: nullable(sealedField('workdir')),
     agent: nullable(sealedField('agent')),
     icon: nullable(sealedField('icon')),
     labels: nullable(sealedField('labels')),

@@ -45,6 +45,7 @@ const task = {
   projectId: uuid,
   directoryId: null,
   legacyDirectory: sealed,
+  legacyHomeWorkdir: sealed,
   agent: null,
   icon: null,
   labels: null,
@@ -230,6 +231,7 @@ describe('BoardExport', () => {
       ['task', 'title'],
       ['task', 'input'],
       ['task', 'legacyDirectory'],
+      ['task', 'legacyHomeWorkdir'],
       ['project', 'name'],
       ['directory', 'path'],
       ['legacy_dirs', 'document'],
@@ -283,7 +285,9 @@ describe('BoardExport', () => {
     const legacyDirs = parseBoardExportLine(line('legacy_dirs', rows.legacy_dirs), 3);
     expect(legacyDirs).toEqual({ owner, table: 'legacy_dirs', row: rows.legacy_dirs });
     const parsedTask = parseBoardExportLine(line('task', rows.task), 4);
-    expect(parsedTask).toMatchObject({ row: { legacyDirectory: sealed, directoryId: null } });
+    expect(parsedTask).toMatchObject({
+      row: { legacyDirectory: sealed, legacyHomeWorkdir: sealed, directoryId: null },
+    });
     const assigned = set(rows.task, { directoryId: other, legacyDirectory: null });
     expect(parseBoardExportLine(line('task', assigned), 5)).toMatchObject({
       row: { directoryId: other, legacyDirectory: null },
