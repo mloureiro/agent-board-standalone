@@ -7,10 +7,21 @@ import {
   sign,
   SealingError,
   signingKeyId,
+  toBase64Url,
   verify,
 } from '../src/index.js';
 
 describe('signing', () => {
+  it('[contract-014] a key id is refused for a P-384 key and for base64url that is not DER', async () => {
+    const p384 = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-384' }, true, [
+      'verify',
+      'sign',
+    ]);
+    const spki = new Uint8Array(await crypto.subtle.exportKey('spki', p384.publicKey));
+    await expect(signingKeyId(toBase64Url(spki))).rejects.toThrow(SealingError);
+    await expect(signingKeyId(toBase64Url(new Uint8Array(32)))).rejects.toThrow(SealingError);
+  });
+
   it('[contract-014] sign then verify round-trips; the key id is stable for the same public key', async () => {
     const pair = await generateSigningKey();
     const text = await exportPublicKey(pair.publicKey);

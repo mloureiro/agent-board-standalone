@@ -24,8 +24,9 @@ export async function importPublicKey(text: string): Promise<CryptoKey> {
 }
 
 export async function signingKeyId(publicKeyText: string): Promise<string> {
-  const der = fromBase64Url(publicKeyText);
-  if (der === null) throw new SealingError(INVALID_KEY);
+  const der = new Uint8Array(
+    await crypto.subtle.exportKey('spki', await importPublicKey(publicKeyText)),
+  );
   return toBase64Url(new Uint8Array(await crypto.subtle.digest('SHA-256', der)));
 }
 
