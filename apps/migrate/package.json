@@ -2,10 +2,15 @@
   "name": "@agent-board/migrate",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@agent-board/contract": "workspace:^1.0.0",
+    "@agent-board/sealing": "workspace:^1.0.0"
   }
 }
