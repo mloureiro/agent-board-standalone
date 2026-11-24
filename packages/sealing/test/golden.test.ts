@@ -2,20 +2,35 @@ import { describe, expect, it } from 'vitest';
 import {
   bindings,
   blindIndex,
+  contentDigest,
   decodeDataKey,
   deriveKeys,
+  formatRecoveryKey,
   fromBase64Url,
+  importPublicKey,
+  KeyError,
   open,
+  parseRecoveryKey,
+  replacePassphrase,
+  sign,
+  signingKeyId,
   tokenHash,
   toBase64Url,
+  unlockKeys,
+  unwrapSlot,
+  verify,
   type Binding,
   type Keys,
+  type KeySetup,
 } from '../src/index.js';
 import { additionalData, encryptBytes } from '../src/envelope.js';
 import bindingVectors from './vectors/bindings.json' with { type: 'json' };
 import blindIndexVectors from './vectors/blind-indexes.json' with { type: 'json' };
 import envelopeVectors from './vectors/envelopes.json' with { type: 'json' };
 import keyVectors from './vectors/keys.json' with { type: 'json' };
+import recoveryVectors from './vectors/recovery-keys.json' with { type: 'json' };
+import signatureVectors from './vectors/signatures.json' with { type: 'json' };
+import slotVectors from './vectors/slots.json' with { type: 'json' };
 import tokenVectors from './vectors/token-hashes.json' with { type: 'json' };
 
 interface Row {
@@ -124,5 +139,134 @@ describe('golden vectors', () => {
   for (const entry of tokenVectors.cases)
     it(`[sealing-002] token hash of ${entry.token.slice(0, 4)} token matches the reference board`, async () => {
       await expect(tokenHash(entry.token)).resolves.toBe(entry.hash);
+    });
+
+  for (const entry of slotVectors.setups) {
+    const setup = entry.setup as KeySetup;
+    const label = `${entry.owner} (m=${entry.kdf.m}, t=${entry.kdf.t})`;
+
+    it(`[sealing-004] unlocks ${label} with the passphrase and with the recovery key`, async () => {
+      const viaPassphrase = await unlockKeys(entry.owner, setup, {
+        kind: 'passphrase',
+        passphrase: entry.passphrase,
+      });
+      const viaRecovery = await unlockKeys(entry.owner, setup, {
+        kind: 'recovery',
+        recoveryKey: entry.recoveryKey,
+      });
+      expect(viaPassphrase.keyId).toBe(entry.keyId);
+      expect(viaRecovery.keyId).toBe(entry.keyId);
+      const dataKey = await unwrapSlot(setup.slots, {
+        kind: 'passphrase',
+        passphrase: entry.passphrase,
+      });
+      expect(toBase64Url(dataKey)).toBe(entry.dataKey);
+    });
+
+    it(`[sealing-004] a normalised passphrase variant unlocks ${label} and a different capitalisation does not`, async () => {
+      for (const variant of slotVectors.variants) {
+        const attempt = unlockKeys(entry.owner, setup, {
+          kind: 'passphrase',
+          passphrase: variant.typed,
+        });
+        if (variant.opens) await expect(attempt).resolves.toMatchObject({ keyId: entry.keyId });
+        else await expect(attempt).rejects.toThrow(KeyError);
+      }
+    });
+  }
+
+  it('[sealing-004] the replaced passphrase opens the same data key and key id; the recovery slot is unchanged', async () => {
+    const { replaced } = slotVectors;
+    const before = slotVectors.setups.find((entry) => entry.owner === replaced.owner);
+    if (before === undefined) throw new Error('setup of the replacement is missing');
+    const setup = { keyId: replaced.keyId, slots: replaced.slots } as KeySetup;
+    const keys = await unlockKeys(replaced.owner, setup, {
+      kind: 'passphrase',
+      passphrase: replaced.newPassphrase,
+    });
+    expect(keys.keyId).toBe(replaced.keyId);
+    expect(replaced.keyId).toBe(before.keyId);
+    expect(replaced.slots[1]).toEqual(before.setup.slots[1]);
+    const dataKey = await unwrapSlot(setup.slots, {
+      kind: 'passphrase',
+      passphrase: replaced.newPassphrase,
+    });
+    expect(toBase64Url(dataKey)).toBe(replaced.dataKey);
+    await expect(
+      unlockKeys(replaced.owner, setup, { kind: 'passphrase', passphrase: before.passphrase }),
+    ).rejects.toThrow(KeyError);
+
+    const again = await replacePassphrase(
+      replaced.owner,
+      before.setup as KeySetup,
+      { kind: 'recovery', recoveryKey: before.recoveryKey },
+      replaced.newPassphrase,
+      replaced.kdf,
+    );
+    expect(again.keyId).toBe(before.keyId);
+    expect(again.slots[1]).toEqual(before.setup.slots[1]);
+    await expect(
+      unlockKeys(replaced.owner, again, { kind: 'passphrase', passphrase: replaced.newPassphrase }),
+    ).resolves.toMatchObject({ keyId: before.keyId });
+  });
+
+  for (const entry of recoveryVectors.cases)
+    it(`[sealing-004] recovery key text ${entry.text.slice(0, 9)} encodes and parses`, async () => {
+      const bytes = fromBase64Url(entry.bytes);
+      if (bytes === null) throw new Error('vector is not canonical');
+      await expect(formatRecoveryKey(bytes)).resolves.toBe(entry.text);
+      await expect(parseRecoveryKey(entry.text)).resolves.toEqual(bytes);
+    });
+
+  for (const entry of recoveryVectors.typed)
+    it(`[sealing-004] typed recovery key ${JSON.stringify(entry.input.slice(0, 24))} parses`, async () => {
+      const parsed = await parseRecoveryKey(entry.input);
+      expect(toBase64Url(parsed)).toBe(entry.bytes);
+    });
+
+  for (const entry of recoveryVectors.refusals)
+    it(`[sealing-004] recovery key refused for ${entry.reason}`, async () => {
+      await expect(parseRecoveryKey(entry.input)).rejects.toThrow(KeyError);
+    });
+
+  const signingKeys = new Map(signatureVectors.keys.map((key) => [key.name, key]));
+  const signingKey = (name: string) => {
+    const key = signingKeys.get(name);
+    if (key === undefined) throw new Error(`unknown signing key ${name}`);
+    return key;
+  };
+
+  it('[contract-014] verifies the signature vectors and refuses the refusal cases', async () => {
+    for (const key of signatureVectors.keys)
+      await expect(signingKeyId(key.publicKey)).resolves.toBe(key.keyId);
+    for (const entry of signatureVectors.cases) {
+      const publicKey = await importPublicKey(signingKey(entry.key).publicKey);
+      await expect(verify(publicKey, entry.canonical, entry.signature)).resolves.toBe(true);
+    }
+    for (const entry of signatureVectors.refusals) {
+      const publicKey = await importPublicKey(signingKey(entry.key).publicKey);
+      await expect(verify(publicKey, entry.canonical, entry.signature)).resolves.toBe(false);
+    }
+  });
+
+  it('[contract-014] a signature made here verifies against the vector public key', async () => {
+    const key = signingKey('first');
+    const privateKey = await crypto.subtle.importKey(
+      'jwk',
+      key.privateKeyJwk,
+      { name: 'ECDSA', namedCurve: 'P-256' },
+      false,
+      ['sign'],
+    );
+    const publicKey = await importPublicKey(key.publicKey);
+    const signature = await sign(privateKey, 'GET\n/ok\n1\nn\n');
+    await expect(verify(publicKey, 'GET\n/ok\n1\nn\n', signature)).resolves.toBe(true);
+  });
+
+  for (const entry of signatureVectors.digests)
+    it(`[contract-014] digest of ${entry.name} matches`, async () => {
+      const body = fromBase64Url(entry.body);
+      if (body === null) throw new Error('vector is not canonical');
+      await expect(contentDigest(body)).resolves.toBe(entry.digest);
     });
 });

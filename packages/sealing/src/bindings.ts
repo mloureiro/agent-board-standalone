@@ -108,8 +108,7 @@ export const bindings = {
     return { field: 'workdir', context: origin(value) };
   },
 
-  occurrenceWorkdir(args: { taskId: string; scheduleId: string }): Binding {
-    segment('task id', args.taskId);
+  occurrenceWorkdir(args: { scheduleId: string }): Binding {
     return { field: 'workdir', context: origin({ schedule: args.scheduleId }) };
   },
 
