@@ -554,16 +554,17 @@ only writes `agent` and `system` notes). Step 2 decides how a machine token may 
 
 ### 3.3 Gaps not adopted
 
-| Gap                                 | Reason                                                                                                                   |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| G-10 apply polish                   | Rare from a terminal; the browser client applies it (web-046).                                                           |
-| G-11 stop another machine's watch   | `unwatch` on the owning machine is enough; the browser stops any watch (web-044).                                        |
-| G-12 schedule fields                | Already covered by `schedules edit`.                                                                                     |
-| G-14 issue a machine token          | Needs a user session, not a machine token; issuing stays in the browser client (web-069) and the server app's enrolment. |
-| G-16 catalogues, advertised CLI     | Display data; the advertised CLI already drives the update hint.                                                         |
-| G-17 request another machine's feed | Rarely needed; each machine runs its own feeds.                                                                          |
-| G-18 link rules                     | A browser rendering rule.                                                                                                |
-| G-19 title rules editing            | Low value; rules are edited in the browser (web-072) and the worker already reads them.                                  |
-| G-21 account export/import          | Needs user credentials, which the CLI does not hold by design.                                                           |
-| G-22 keys                           | The data key must not travel through a machine token.                                                                    |
-| G-23 sign-in, passkeys              | Browser session concerns.                                                                                                |
+| Gap                                 | Reason                                                                                                                                 |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| G-10 apply polish                   | Rare from a terminal; the browser client applies it (web-046).                                                                         |
+| G-11 stop another machine's watch   | `unwatch` on the owning machine is enough; the browser stops any watch (web-044).                                                      |
+| G-12 schedule fields                | Already covered by `schedules edit`.                                                                                                   |
+| G-14 issue a machine token          | Needs a user session, not a machine token; issuing stays in the browser client (web-069) and the server app's enrolment.               |
+| G-15 revoke another machine         | Needs a user session; revoking stays in the browser client (web-069). A machine revokes its own token on uninstall (cli-052, api-089). |
+| G-16 catalogues, advertised CLI     | Display data; the advertised CLI already drives the update hint.                                                                       |
+| G-17 request another machine's feed | Rarely needed; each machine runs its own feeds.                                                                                        |
+| G-18 link rules                     | A browser rendering rule.                                                                                                              |
+| G-19 title rules editing            | Low value; rules are edited in the browser (web-072) and the worker already reads them.                                                |
+| G-21 account export/import          | Needs user credentials, which the CLI does not hold by design.                                                                         |
+| G-22 keys                           | The data key must not travel through a machine token.                                                                                  |
+| G-23 sign-in, passkeys              | Browser session concerns.                                                                                                              |
