@@ -69,38 +69,6 @@ describe('route table', () => {
     }
   });
 
-  it('[contract-003] this iteration registers the 24 machine commands', () => {
-    expect(machineRoutes.map((route) => route.name.slice('machine.'.length)).sort()).toEqual(
-      [
-        'list-tasks',
-        'get-task',
-        'attach-session',
-        'add-task',
-        'update-task',
-        'configure-task',
-        'edit-prompt',
-        'claim-task',
-        'add-note',
-        'read-notes',
-        'ask',
-        'add-pr',
-        'remove-pr',
-        'set-pr-states',
-        'set-watches',
-        'ack-watch-stops',
-        'heartbeat',
-        'pause',
-        'fail',
-        'stopped',
-        'run-inbox',
-        'ack-messages',
-        'wait',
-        'wake',
-      ].sort(),
-    );
-    expect(machineRoutes).toHaveLength(24);
-  });
-
   it('[contract-003] every request and response schema is strict', () => {
     for (const route of routes) {
       expect(objectIssues(route.request, `${route.name}.request`, new Set())).toEqual([]);

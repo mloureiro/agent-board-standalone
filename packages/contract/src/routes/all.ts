@@ -1,8 +1,15 @@
 import {
+  machineDirectoryRoutes,
+  machineDocumentRoutes,
+  machineEventsRoute,
+  machineHandshakeRoutes,
   machineNoteRoutes,
   machinePrRoutes,
   machineRunRoutes,
+  machineScheduleRoutes,
   machineTaskRoutes,
+  machineUserActionRoutes,
+  transcriptRoute,
 } from './machine/index.js';
 import type { AnyRoute } from './route.js';
 
@@ -11,6 +18,13 @@ export const routes = [
   ...machineNoteRoutes,
   ...machinePrRoutes,
   ...machineRunRoutes,
+  ...machineHandshakeRoutes,
+  ...machineDocumentRoutes,
+  ...machineDirectoryRoutes,
+  ...machineScheduleRoutes,
+  ...machineUserActionRoutes,
+  transcriptRoute,
+  machineEventsRoute,
 ] as const;
 
 export type RouteName = (typeof routes)[number]['name'];

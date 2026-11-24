@@ -36,7 +36,9 @@ export type MachineCommandSpec<Req extends z.ZodType, Res extends z.ZodType> = P
   Route<Req, Res>,
   'request' | 'response'
 > &
-  Partial<Pick<Route<Req, Res>, 'errors' | 'feature' | 'module' | 'bodyLimit'>>;
+  Partial<
+    Pick<Route<Req, Res>, 'errors' | 'feature' | 'module' | 'bodyLimit' | 'issuesCredential'>
+  >;
 
 export type MachineRoute<C extends string, Req extends z.ZodType, Res extends z.ZodType> = Route<
   Req,
