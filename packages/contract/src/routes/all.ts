@@ -1,4 +1,11 @@
 import {
+  clientEventsRoute,
+  clientScheduleRoutes,
+  clientTaskRoutes,
+  clientTopRoutes,
+  clientTranscriptRoutes,
+} from './client/index.js';
+import {
   machineDirectoryRoutes,
   machineDocumentRoutes,
   machineEventsRoute,
@@ -25,6 +32,11 @@ export const routes = [
   ...machineUserActionRoutes,
   transcriptRoute,
   machineEventsRoute,
+  ...clientTopRoutes,
+  ...clientTaskRoutes,
+  ...clientScheduleRoutes,
+  ...clientTranscriptRoutes,
+  clientEventsRoute,
 ] as const;
 
 export type RouteName = (typeof routes)[number]['name'];

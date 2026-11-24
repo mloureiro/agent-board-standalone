@@ -61,3 +61,36 @@ export const machineCommand = <C extends string, Req extends z.ZodType, Res exte
   path: `/api/machine/${command}`,
   auth: 'machine',
 });
+
+type Dotted<P extends string> = P extends `${infer Group}/${infer Action}`
+  ? `${Group}.${Action}`
+  : P;
+
+export type ClientRoute<
+  M extends HttpMethod,
+  P extends string,
+  Req extends z.ZodType,
+  Res extends z.ZodType,
+> = Route<Req, Res> & {
+  name: `client.${Dotted<P>}`;
+  method: M;
+  path: `/api/client/${P}`;
+  auth: 'client';
+};
+
+const clientRoute =
+  <M extends 'GET' | 'POST'>(method: M) =>
+  <P extends string, Req extends z.ZodType, Res extends z.ZodType>(
+    path: P,
+    spec: MachineCommandSpec<Req, Res>,
+  ): ClientRoute<M, P, Req, Res> => ({
+    ...spec,
+    errors: spec.errors ?? [],
+    name: `client.${path.replace('/', '.')}` as `client.${Dotted<P>}`,
+    method,
+    path: `/api/client/${path}`,
+    auth: 'client',
+  });
+
+export const clientQuery = clientRoute('GET');
+export const clientCommand = clientRoute('POST');

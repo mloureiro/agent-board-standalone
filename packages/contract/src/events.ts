@@ -8,3 +8,9 @@ export const machineEvent = z.discriminatedUnion('event', [
 ]);
 
 export type MachineEvent = z.infer<typeof machineEvent>;
+
+export const clientEvent = z.discriminatedUnion('event', [
+  z.object({ event: z.literal('changed'), data: z.object({}).strict() }).strict(),
+]);
+
+export type ClientEvent = z.infer<typeof clientEvent>;
