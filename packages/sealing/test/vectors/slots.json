@@ -1,0 +1,138 @@
+{
+  "source": "reference board 011f7be",
+  "generatedBy": "scripts/generate-vectors.mts",
+  "setups": [
+    {
+      "owner": "vector-owner",
+      "passphrase": "correct horse battery staple",
+      "kdf": {
+        "m": 65536,
+        "t": 3,
+        "p": 1
+      },
+      "dataKey": "elhT-z0KnmlqFI86kCewTdWVlpHpeXDM6HS6q0YA_ms",
+      "keyId": "80f9254da320d872",
+      "setup": {
+        "keyId": "80f9254da320d872",
+        "slots": [
+          {
+            "kind": "passphrase",
+            "kdf": "argon2id",
+            "m": 65536,
+            "t": 3,
+            "p": 1,
+            "salt": "VgjVeo5l6w5SSOACDGOepg",
+            "wrapped": "abw1.M5VYzBuRyqlSAE7DkrxNr2DaysQPuD5VN8HElZ6c5zvsusCW1DsyXdR7nYts2-xs1g11h-K8HqmGriNw"
+          },
+          {
+            "kind": "recovery",
+            "wrapped": "abw1.n_Y5l8V1dnRefuNJqrX20NzFCN9fvVB4P1AiDUf8WhEy3280M24NxTqRlXhAZw3n_DLvMLBdssiczTBb"
+          }
+        ]
+      },
+      "recoveryKey": "RDJ7-F7K1-5T48-FM7R-EV92-KYEW-H0YD-09DN-1N2Q-KBN0-0TJD-DHSR-51V0-FD50",
+      "recoveryKeyBytes": "w2R3nmEuiIfQ-HbSKfnciDzQJbUNRXmuoAak1sc4KHY"
+    },
+    {
+      "owner": "vector-owner-2",
+      "passphrase": "correct horse battery staple",
+      "kdf": {
+        "m": 8192,
+        "t": 1,
+        "p": 1
+      },
+      "dataKey": "ObaJhNBgr0Sa90CA6darNJp-yuS_ovmN5INBzZcdlpA",
+      "keyId": "f72efc14a1f06cc7",
+      "setup": {
+        "keyId": "f72efc14a1f06cc7",
+        "slots": [
+          {
+            "kind": "passphrase",
+            "kdf": "argon2id",
+            "m": 8192,
+            "t": 1,
+            "p": 1,
+            "salt": "b7Qcy0bz7r9C9rwLA01LKg",
+            "wrapped": "abw1.yoOMYSRFCYkarBB43KkTrylfzn2FfE5HoDarlupFiOKv0pUlNtoTbGnZxNlTnDxlsfT_FF9dCRC8uJa1"
+          },
+          {
+            "kind": "recovery",
+            "wrapped": "abw1.M2RXxxueBEXvpnb4J-mPMRPCOfWkq-GSuNSjpWgwWeMjdeAJwpPuxzAHrNAxCJBxvk4I5UQutGvpeipD"
+          }
+        ]
+      },
+      "recoveryKey": "D9ZY-8D07-ST0C-J2KX-G443-4W3Q-QYJ0-WVR0-JMXB-XTE8-HRMW-HER4-9YB0-3SXC",
+      "recoveryKeyBytes": "an_kNAfOgMkKfYEIMnB3v6QObwCVOr7pyI4pyLsET5Y"
+    }
+  ],
+  "variants": [
+    {
+      "typed": "correct horse battery staple",
+      "opens": true
+    },
+    {
+      "typed": "  correct horse battery staple  ",
+      "opens": true
+    },
+    {
+      "typed": "\tcorrect horse battery staple\n",
+      "opens": true
+    },
+    {
+      "typed": "ｃｏｒｒｅｃｔ　ｈｏｒｓｅ　ｂａｔｔｅｒｙ　ｓｔａｐｌｅ",
+      "opens": true
+    },
+    {
+      "typed": "　ｃｏｒｒｅｃｔ　ｈｏｒｓｅ　ｂａｔｔｅｒｙ　ｓｔａｐｌｅ　",
+      "opens": true
+    },
+    {
+      "typed": "Correct horse battery staple",
+      "opens": false
+    }
+  ],
+  "replaced": {
+    "owner": "vector-owner-2",
+    "setup": {
+      "keyId": "f72efc14a1f06cc7",
+      "slots": [
+        {
+          "kind": "passphrase",
+          "kdf": "argon2id",
+          "m": 8192,
+          "t": 1,
+          "p": 1,
+          "salt": "b7Qcy0bz7r9C9rwLA01LKg",
+          "wrapped": "abw1.yoOMYSRFCYkarBB43KkTrylfzn2FfE5HoDarlupFiOKv0pUlNtoTbGnZxNlTnDxlsfT_FF9dCRC8uJa1"
+        },
+        {
+          "kind": "recovery",
+          "wrapped": "abw1.M2RXxxueBEXvpnb4J-mPMRPCOfWkq-GSuNSjpWgwWeMjdeAJwpPuxzAHrNAxCJBxvk4I5UQutGvpeipD"
+        }
+      ]
+    },
+    "dataKey": "ObaJhNBgr0Sa90CA6darNJp-yuS_ovmN5INBzZcdlpA",
+    "keyId": "f72efc14a1f06cc7",
+    "newPassphrase": "a different long passphrase",
+    "kdf": {
+      "m": 8192,
+      "t": 1,
+      "p": 1
+    },
+    "slots": [
+      {
+        "kind": "passphrase",
+        "kdf": "argon2id",
+        "m": 8192,
+        "t": 1,
+        "p": 1,
+        "salt": "5frKCFPGEs5UuhyQ6ag2vg",
+        "wrapped": "abw1._G7ks9FMWzAZtvgoFxd5gvq34tauWsUjo1NUBUrDxZ86ZZPzcRTcztfbwuzCGOTUCTR5zlmDearevzn_"
+      },
+      {
+        "kind": "recovery",
+        "wrapped": "abw1.M2RXxxueBEXvpnb4J-mPMRPCOfWkq-GSuNSjpWgwWeMjdeAJwpPuxzAHrNAxCJBxvk4I5UQutGvpeipD"
+      }
+    ]
+  }
+}

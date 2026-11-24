@@ -1,0 +1,1155 @@
+{
+  "source": "reference board 011f7be",
+  "generatedBy": "scripts/generate-vectors.mts",
+  "cases": [
+    {
+      "builder": "title",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0001",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "title",
+      "context": "task:tsk_0001"
+    },
+    {
+      "builder": "title",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0002",
+          "createdBy": "agent",
+          "scheduleId": null,
+          "agent": "reviewer",
+          "forkOf": null
+        }
+      },
+      "field": "title",
+      "context": "task:tsk_0002"
+    },
+    {
+      "builder": "title",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0003",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": "tsk_0001"
+        }
+      },
+      "field": "title",
+      "context": "task:tsk_0003"
+    },
+    {
+      "builder": "title",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0004",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": "reviewer",
+          "forkOf": "tsk_0001"
+        }
+      },
+      "field": "title",
+      "context": "task:tsk_0004"
+    },
+    {
+      "builder": "title",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0005",
+          "createdBy": "intake",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "title",
+      "context": "task:tsk_0005"
+    },
+    {
+      "builder": "title",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0006",
+          "createdBy": "user",
+          "scheduleId": "sch_0001",
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "title",
+      "context": "schedule:sch_0001"
+    },
+    {
+      "builder": "title",
+      "args": {
+        "row": {
+          "kind": "schedule",
+          "id": "sch_0001",
+          "agent": null
+        }
+      },
+      "field": "title",
+      "context": "schedule:sch_0001"
+    },
+    {
+      "builder": "title",
+      "args": {
+        "row": {
+          "kind": "schedule",
+          "id": "sch_0002",
+          "agent": "reviewer"
+        }
+      },
+      "field": "title",
+      "context": "schedule:sch_0002"
+    },
+    {
+      "builder": "agent",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0001",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "agent",
+      "context": "task:tsk_0001"
+    },
+    {
+      "builder": "agent",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0002",
+          "createdBy": "agent",
+          "scheduleId": null,
+          "agent": "reviewer",
+          "forkOf": null
+        }
+      },
+      "field": "agent",
+      "context": "task:tsk_0002"
+    },
+    {
+      "builder": "agent",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0003",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": "tsk_0001"
+        }
+      },
+      "field": "agent",
+      "context": "task:tsk_0003"
+    },
+    {
+      "builder": "agent",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0004",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": "reviewer",
+          "forkOf": "tsk_0001"
+        }
+      },
+      "field": "agent",
+      "context": "task:tsk_0004"
+    },
+    {
+      "builder": "agent",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0005",
+          "createdBy": "intake",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "agent",
+      "context": "task:tsk_0005"
+    },
+    {
+      "builder": "agent",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0006",
+          "createdBy": "user",
+          "scheduleId": "sch_0001",
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "agent",
+      "context": "schedule:sch_0001"
+    },
+    {
+      "builder": "agent",
+      "args": {
+        "row": {
+          "kind": "schedule",
+          "id": "sch_0001",
+          "agent": null
+        }
+      },
+      "field": "agent",
+      "context": "schedule:sch_0001"
+    },
+    {
+      "builder": "agent",
+      "args": {
+        "row": {
+          "kind": "schedule",
+          "id": "sch_0002",
+          "agent": "reviewer"
+        }
+      },
+      "field": "agent",
+      "context": "schedule:sch_0002"
+    },
+    {
+      "builder": "icon",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0001",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "icon",
+      "context": "task:tsk_0001"
+    },
+    {
+      "builder": "icon",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0002",
+          "createdBy": "agent",
+          "scheduleId": null,
+          "agent": "reviewer",
+          "forkOf": null
+        }
+      },
+      "field": "icon",
+      "context": "task:tsk_0002"
+    },
+    {
+      "builder": "icon",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0003",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": "tsk_0001"
+        }
+      },
+      "field": "icon",
+      "context": "task:tsk_0003"
+    },
+    {
+      "builder": "icon",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0004",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": "reviewer",
+          "forkOf": "tsk_0001"
+        }
+      },
+      "field": "icon",
+      "context": "task:tsk_0004"
+    },
+    {
+      "builder": "icon",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0005",
+          "createdBy": "intake",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "icon",
+      "context": "task:tsk_0005"
+    },
+    {
+      "builder": "icon",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0006",
+          "createdBy": "user",
+          "scheduleId": "sch_0001",
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "icon",
+      "context": "schedule:sch_0001"
+    },
+    {
+      "builder": "icon",
+      "args": {
+        "row": {
+          "kind": "schedule",
+          "id": "sch_0001",
+          "agent": null
+        }
+      },
+      "field": "icon",
+      "context": "schedule:sch_0001"
+    },
+    {
+      "builder": "icon",
+      "args": {
+        "row": {
+          "kind": "schedule",
+          "id": "sch_0002",
+          "agent": "reviewer"
+        }
+      },
+      "field": "icon",
+      "context": "schedule:sch_0002"
+    },
+    {
+      "builder": "labels",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0001",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "labels",
+      "context": "task:tsk_0001"
+    },
+    {
+      "builder": "labels",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0002",
+          "createdBy": "agent",
+          "scheduleId": null,
+          "agent": "reviewer",
+          "forkOf": null
+        }
+      },
+      "field": "labels",
+      "context": "task:tsk_0002"
+    },
+    {
+      "builder": "labels",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0003",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": "tsk_0001"
+        }
+      },
+      "field": "labels",
+      "context": "task:tsk_0003"
+    },
+    {
+      "builder": "labels",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0004",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": "reviewer",
+          "forkOf": "tsk_0001"
+        }
+      },
+      "field": "labels",
+      "context": "task:tsk_0004"
+    },
+    {
+      "builder": "labels",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0005",
+          "createdBy": "intake",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "labels",
+      "context": "task:tsk_0005"
+    },
+    {
+      "builder": "labels",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0006",
+          "createdBy": "user",
+          "scheduleId": "sch_0001",
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "labels",
+      "context": "schedule:sch_0001"
+    },
+    {
+      "builder": "labels",
+      "args": {
+        "row": {
+          "kind": "schedule",
+          "id": "sch_0001",
+          "agent": null
+        }
+      },
+      "field": "labels",
+      "context": "schedule:sch_0001"
+    },
+    {
+      "builder": "labels",
+      "args": {
+        "row": {
+          "kind": "schedule",
+          "id": "sch_0002",
+          "agent": "reviewer"
+        }
+      },
+      "field": "labels",
+      "context": "schedule:sch_0002"
+    },
+    {
+      "builder": "workdir",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0001",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "workdir",
+      "context": "task:tsk_0001"
+    },
+    {
+      "builder": "workdir",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0002",
+          "createdBy": "agent",
+          "scheduleId": null,
+          "agent": "reviewer",
+          "forkOf": null
+        }
+      },
+      "field": "workdir",
+      "context": "task:tsk_0002"
+    },
+    {
+      "builder": "workdir",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0003",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": "tsk_0001"
+        }
+      },
+      "field": "workdir",
+      "context": "task:tsk_0003"
+    },
+    {
+      "builder": "workdir",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0004",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": "reviewer",
+          "forkOf": "tsk_0001"
+        }
+      },
+      "field": "workdir",
+      "context": "task:tsk_0004"
+    },
+    {
+      "builder": "workdir",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0005",
+          "createdBy": "intake",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "workdir",
+      "context": "task:tsk_0005"
+    },
+    {
+      "builder": "workdir",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0006",
+          "createdBy": "user",
+          "scheduleId": "sch_0001",
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "workdir",
+      "context": "task:tsk_0006:schedule:sch_0001"
+    },
+    {
+      "builder": "workdir",
+      "args": {
+        "row": {
+          "kind": "schedule",
+          "id": "sch_0001",
+          "agent": null
+        }
+      },
+      "field": "workdir",
+      "context": "schedule:sch_0001"
+    },
+    {
+      "builder": "input",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0001",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "input",
+      "context": "task:tsk_0001:user"
+    },
+    {
+      "builder": "input",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0002",
+          "createdBy": "agent",
+          "scheduleId": null,
+          "agent": "reviewer",
+          "forkOf": null
+        }
+      },
+      "field": "input",
+      "context": "task:tsk_0002:agent:agent:reviewer"
+    },
+    {
+      "builder": "input",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0003",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": "tsk_0001"
+        }
+      },
+      "field": "input",
+      "context": "task:tsk_0003:user:fork:tsk_0001"
+    },
+    {
+      "builder": "input",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0004",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": "reviewer",
+          "forkOf": "tsk_0001"
+        }
+      },
+      "field": "input",
+      "context": "task:tsk_0004:user:fork:tsk_0001:agent:reviewer"
+    },
+    {
+      "builder": "input",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0005",
+          "createdBy": "intake",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "input",
+      "context": "task:tsk_0005:intake"
+    },
+    {
+      "builder": "input",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0006",
+          "createdBy": "user",
+          "scheduleId": "sch_0001",
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "input",
+      "context": "schedule:sch_0001:user"
+    },
+    {
+      "builder": "input",
+      "args": {
+        "row": {
+          "kind": "schedule",
+          "id": "sch_0001",
+          "agent": null
+        }
+      },
+      "field": "input",
+      "context": "schedule:sch_0001:user"
+    },
+    {
+      "builder": "input",
+      "args": {
+        "row": {
+          "kind": "schedule",
+          "id": "sch_0002",
+          "agent": "reviewer"
+        }
+      },
+      "field": "input",
+      "context": "schedule:sch_0002:user:agent:reviewer"
+    },
+    {
+      "builder": "input",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0001",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": null
+        },
+        "directoryId": "dir_0001"
+      },
+      "field": "input",
+      "context": "task:tsk_0001:user:directory:dir_0001",
+      "new": true
+    },
+    {
+      "builder": "input",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0002",
+          "createdBy": "agent",
+          "scheduleId": null,
+          "agent": "reviewer",
+          "forkOf": null
+        },
+        "directoryId": "dir_0001"
+      },
+      "field": "input",
+      "context": "task:tsk_0002:agent:agent:reviewer:directory:dir_0001",
+      "new": true
+    },
+    {
+      "builder": "input",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0003",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": null,
+          "forkOf": "tsk_0001"
+        },
+        "directoryId": "dir_0001"
+      },
+      "field": "input",
+      "context": "task:tsk_0003:user:fork:tsk_0001:directory:dir_0001",
+      "new": true
+    },
+    {
+      "builder": "input",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0004",
+          "createdBy": "user",
+          "scheduleId": null,
+          "agent": "reviewer",
+          "forkOf": "tsk_0001"
+        },
+        "directoryId": "dir_0001"
+      },
+      "field": "input",
+      "context": "task:tsk_0004:user:fork:tsk_0001:agent:reviewer:directory:dir_0001",
+      "new": true
+    },
+    {
+      "builder": "input",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0006",
+          "createdBy": "user",
+          "scheduleId": "sch_0001",
+          "agent": null,
+          "forkOf": null
+        },
+        "directoryId": "dir_0001"
+      },
+      "field": "input",
+      "context": "schedule:sch_0001:user:directory:dir_0001",
+      "new": true
+    },
+    {
+      "builder": "input",
+      "args": {
+        "row": {
+          "kind": "schedule",
+          "id": "sch_0001",
+          "agent": null
+        },
+        "directoryId": "dir_0001"
+      },
+      "field": "input",
+      "context": "schedule:sch_0001:user:directory:dir_0001",
+      "new": true
+    },
+    {
+      "builder": "occurrenceWorkdir",
+      "args": {
+        "row": {
+          "kind": "task",
+          "id": "tsk_0006",
+          "createdBy": "user",
+          "scheduleId": "sch_0001",
+          "agent": null,
+          "forkOf": null
+        }
+      },
+      "field": "workdir",
+      "context": "schedule:sch_0001"
+    },
+    {
+      "builder": "pr",
+      "args": {
+        "taskId": "tsk_0001"
+      },
+      "field": "pr",
+      "context": "task:tsk_0001:agent"
+    },
+    {
+      "builder": "watches",
+      "args": {
+        "taskId": "tsk_0001"
+      },
+      "field": "watches",
+      "context": "task:tsk_0001:agent"
+    },
+    {
+      "builder": "machineDocument",
+      "args": {
+        "field": "machine.dirs",
+        "machine": "vector-machine"
+      },
+      "field": "machine.dirs",
+      "context": "machine:vector-machine"
+    },
+    {
+      "builder": "machineDocument",
+      "args": {
+        "field": "machine.catalog",
+        "machine": "vector-machine"
+      },
+      "field": "machine.catalog",
+      "context": "machine:vector-machine"
+    },
+    {
+      "builder": "machineDocument",
+      "args": {
+        "field": "machine.usage",
+        "machine": "vector-machine"
+      },
+      "field": "machine.usage",
+      "context": "machine:vector-machine"
+    },
+    {
+      "builder": "machineDocument",
+      "args": {
+        "field": "machine.feeds",
+        "machine": "vector-machine"
+      },
+      "field": "machine.feeds",
+      "context": "machine:vector-machine"
+    },
+    {
+      "builder": "sharedAgents",
+      "args": {
+        "version": 1
+      },
+      "field": "agents.shared",
+      "context": "agents:v1"
+    },
+    {
+      "builder": "links",
+      "args": {
+        "version": 1
+      },
+      "field": "links",
+      "context": "links:v1"
+    },
+    {
+      "builder": "titles",
+      "args": {
+        "version": 1
+      },
+      "field": "titles",
+      "context": "titles:v1"
+    },
+    {
+      "builder": "sharedAgents",
+      "args": {
+        "version": 7
+      },
+      "field": "agents.shared",
+      "context": "agents:v7"
+    },
+    {
+      "builder": "links",
+      "args": {
+        "version": 7
+      },
+      "field": "links",
+      "context": "links:v7"
+    },
+    {
+      "builder": "titles",
+      "args": {
+        "version": 7
+      },
+      "field": "titles",
+      "context": "titles:v7"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.body",
+        "taskId": "tsk_0001",
+        "author": "agent",
+        "kind": "comment"
+      },
+      "field": "note.body",
+      "context": "note:tsk_0001:agent:comment"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.body",
+        "taskId": "tsk_0001",
+        "author": "agent",
+        "kind": "question"
+      },
+      "field": "note.body",
+      "context": "note:tsk_0001:agent:question"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.body",
+        "taskId": "tsk_0001",
+        "author": "agent",
+        "kind": "polish"
+      },
+      "field": "note.body",
+      "context": "note:tsk_0001:agent:polish"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.body",
+        "taskId": "tsk_0001",
+        "author": "system",
+        "kind": "event"
+      },
+      "field": "note.body",
+      "context": "note:tsk_0001:system:event"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.body",
+        "taskId": "tsk_0001",
+        "author": "user",
+        "kind": "comment"
+      },
+      "field": "note.body",
+      "context": "note:tsk_0001:user:comment"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.body",
+        "taskId": "tsk_0001",
+        "author": "user",
+        "kind": "answer"
+      },
+      "field": "note.body",
+      "context": "note:tsk_0001:user:answer"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.body",
+        "taskId": "tsk_0001",
+        "author": "user",
+        "kind": "event"
+      },
+      "field": "note.body",
+      "context": "note:tsk_0001:user:event"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.preview",
+        "taskId": "tsk_0001",
+        "author": "agent",
+        "kind": "comment"
+      },
+      "field": "note.preview",
+      "context": "note:tsk_0001:agent:comment"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.preview",
+        "taskId": "tsk_0001",
+        "author": "agent",
+        "kind": "question"
+      },
+      "field": "note.preview",
+      "context": "note:tsk_0001:agent:question"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.suggestion",
+        "taskId": "tsk_0001",
+        "author": "agent",
+        "kind": "comment"
+      },
+      "field": "note.suggestion",
+      "context": "note:tsk_0001:agent:comment"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.suggestion",
+        "taskId": "tsk_0001",
+        "author": "agent",
+        "kind": "question"
+      },
+      "field": "note.suggestion",
+      "context": "note:tsk_0001:agent:question"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.questions",
+        "taskId": "tsk_0001",
+        "author": "agent",
+        "kind": "comment"
+      },
+      "field": "note.questions",
+      "context": "note:tsk_0001:agent:comment"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.questions",
+        "taskId": "tsk_0001",
+        "author": "agent",
+        "kind": "question"
+      },
+      "field": "note.questions",
+      "context": "note:tsk_0001:agent:question"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.answers",
+        "taskId": "tsk_0001",
+        "author": "agent",
+        "kind": "comment"
+      },
+      "field": "note.answers",
+      "context": "note:tsk_0001:agent:comment"
+    },
+    {
+      "builder": "note",
+      "args": {
+        "field": "note.answers",
+        "taskId": "tsk_0001",
+        "author": "agent",
+        "kind": "question"
+      },
+      "field": "note.answers",
+      "context": "note:tsk_0001:agent:question"
+    },
+    {
+      "builder": "transcript",
+      "args": {
+        "field": "tr.data",
+        "taskId": "tsk_0001",
+        "runId": "run_0001",
+        "seq": 0
+      },
+      "field": "tr.data",
+      "context": "tsk_0001:run_0001:0"
+    },
+    {
+      "builder": "transcript",
+      "args": {
+        "field": "tr.data",
+        "taskId": "tsk_0001",
+        "runId": "run_0001",
+        "seq": 41
+      },
+      "field": "tr.data",
+      "context": "tsk_0001:run_0001:41"
+    },
+    {
+      "builder": "transcript",
+      "args": {
+        "field": "tr.output",
+        "taskId": "tsk_0001",
+        "runId": "run_0001",
+        "seq": 0
+      },
+      "field": "tr.output",
+      "context": "tsk_0001:run_0001:0"
+    },
+    {
+      "builder": "transcript",
+      "args": {
+        "field": "tr.output",
+        "taskId": "tsk_0001",
+        "runId": "run_0001",
+        "seq": 41
+      },
+      "field": "tr.output",
+      "context": "tsk_0001:run_0001:41"
+    },
+    {
+      "builder": "projectName",
+      "args": {
+        "projectId": "prj_0001"
+      },
+      "field": "project.name",
+      "context": "project:prj_0001",
+      "new": true
+    },
+    {
+      "builder": "projectIcon",
+      "args": {
+        "projectId": "prj_0001"
+      },
+      "field": "project.icon",
+      "context": "project:prj_0001",
+      "new": true
+    },
+    {
+      "builder": "directoryPath",
+      "args": {
+        "directoryId": "dir_0001"
+      },
+      "field": "directory.path",
+      "context": "directory:dir_0001",
+      "new": true
+    },
+    {
+      "builder": "directoryRepo",
+      "args": {
+        "directoryId": "dir_0001"
+      },
+      "field": "directory.repo",
+      "context": "directory:dir_0001",
+      "new": true
+    },
+    {
+      "builder": "settings",
+      "args": {
+        "version": 1
+      },
+      "field": "settings",
+      "context": "settings:v1",
+      "new": true
+    },
+    {
+      "builder": "settings",
+      "args": {
+        "version": 4
+      },
+      "field": "settings",
+      "context": "settings:v4",
+      "new": true
+    }
+  ]
+}

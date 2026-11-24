@@ -1,0 +1,18 @@
+{
+  "source": "reference board 011f7be",
+  "generatedBy": "scripts/generate-vectors.mts",
+  "owners": [
+    {
+      "owner": "vector-owner",
+      "dataKey": "bCKV_XxBreX8D_SkgRQeq2h6vxPVhhYfIGrIWPU3L9Q",
+      "dataKeyText": "abk1_bCKV_XxBreX8D_SkgRQeq2h6vxPVhhYfIGrIWPU3L9Q",
+      "keyId": "d5079bad2b1f434f"
+    },
+    {
+      "owner": "vector-owner-2",
+      "dataKey": "0oW3qmoyChN_3S4oX3v23ZxnWOroBVBONYWwXdjHtc0",
+      "dataKeyText": "abk1_0oW3qmoyChN_3S4oX3v23ZxnWOroBVBONYWwXdjHtc0",
+      "keyId": "51d1c555f3d07852"
+    }
+  ]
+}

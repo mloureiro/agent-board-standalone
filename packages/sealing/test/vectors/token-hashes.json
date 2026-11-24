@@ -1,0 +1,19 @@
+{
+  "source": "reference board 011f7be",
+  "generatedBy": "scripts/generate-vectors.mts",
+  "note": "The hash is the lower-case hex SHA-256 of the UTF-8 bytes of the whole token, prefix included. abm_ machine tokens are hashed by the same expression in the reference backend machines service.",
+  "cases": [
+    {
+      "token": "abs_HJ-vt07NzRDa2uhix8HwWb_8tY34jIassSIUpd_B_Yw",
+      "hash": "8e19db46fa7f140ce573dac4267d5b7d8ec6983b09e31e16515561184cbfd412"
+    },
+    {
+      "token": "abm_ZTsLRPJYpCFppalkqcvw7L1ydFLIrglDyn_dK7_3Ra8",
+      "hash": "86e87fa9721104a7c277a3bed1f0e42138e619998431c11252ecb588f9182163"
+    },
+    {
+      "token": "abc_ZWn7Ieh2MYAH1EmsREM5EIdN7M7SLaMTmXVzR8r1WHY",
+      "hash": "26bc409ad4234b12647bb553090321bae9840e46621ff1de4bb42d4659adf159"
+    }
+  ]
+}
