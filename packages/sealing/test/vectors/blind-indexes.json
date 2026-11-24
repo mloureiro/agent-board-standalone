@@ -1,0 +1,56 @@
+{
+  "source": "reference board 011f7be",
+  "generatedBy": "scripts/generate-vectors.mts",
+  "cases": [
+    {
+      "owner": "vector-owner",
+      "value": "",
+      "index": "abh1.Qh3x1qZM_P3MH2aH3eAP_EYY86JdB1MgZfY5PsunkDc"
+    },
+    {
+      "owner": "vector-owner",
+      "value": "https://github.com/vector-org/vector-repo/pull/17",
+      "index": "abh1.8HXkhsK8UeyFqoOvSsaeKTKfir3-bJ4k6xCaRmhVKCs"
+    },
+    {
+      "owner": "vector-owner",
+      "value": "0123456789abcdef0123456789abcdef01234567",
+      "index": "abh1.avoWAW3rLjP4sgn7iwQxJuttiAbNC3NT04H9vmuRi1c"
+    },
+    {
+      "owner": "vector-owner",
+      "value": "naïve café 🚀 é",
+      "index": "abh1.B6oLmUJ0yHC0l_1A3hdGYsKzv3kS3lix2dwcI-smKtM"
+    },
+    {
+      "owner": "vector-owner",
+      "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "index": "abh1.lcOQAQWOAsaLOw77tMuXHHuLyo7BtYi7g81OYPcMaB0"
+    },
+    {
+      "owner": "vector-owner-2",
+      "value": "",
+      "index": "abh1.30wXiLt_cmPCwNATQ_tRzUG6RldDOyF9NtQ4KJ19v8Y"
+    },
+    {
+      "owner": "vector-owner-2",
+      "value": "https://github.com/vector-org/vector-repo/pull/17",
+      "index": "abh1.XAA9YMAu2IN_OPYIp1Hb7lwPUzzLkciKzZLeP-QK84I"
+    },
+    {
+      "owner": "vector-owner-2",
+      "value": "0123456789abcdef0123456789abcdef01234567",
+      "index": "abh1.WFkKUcm5dTthg6CbZfzZzHti-mJnLotBh64sWCVesxU"
+    },
+    {
+      "owner": "vector-owner-2",
+      "value": "naïve café 🚀 é",
+      "index": "abh1.DY3IaSqU0Yy1-0usee2HLm0YwomtS1SLy1VCCZXTng0"
+    },
+    {
+      "owner": "vector-owner-2",
+      "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "index": "abh1.EkXsvfhdlYqF2im7eVEF9GoOVszzgYGksQepibTdKPc"
+    }
+  ]
+}

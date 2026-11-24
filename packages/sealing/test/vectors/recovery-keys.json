@@ -1,0 +1,78 @@
+{
+  "source": "reference board 011f7be",
+  "generatedBy": "scripts/generate-vectors.mts",
+  "cases": [
+    {
+      "bytes": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "text": "0000-0000-0000-0000-0000-0000-0000-0000-0000-0000-0000-0000-0000-VST4"
+    },
+    {
+      "bytes": "__________________________________________8",
+      "text": "ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZG-Y5VE"
+    },
+    {
+      "bytes": "3Ft3I9n0nTq-URZLn_7AT1ZfqzCFsjqC13GDiaarzXE",
+      "text": "VHDQ-E8YS-YJEK-NFJH-2S5S-ZZP0-9XB5-ZASG-GPS3-N0PQ-E61R-K9NB-SNRG-309S"
+    },
+    {
+      "bytes": "B42zp4-4vdxalUucM9_ViHK6i-IvUk_Omtp5n24dIEo",
+      "text": "0Y6V-79WF-Q2YX-RPMN-9EE3-7QYN-H1SB-N2Z2-5X94-ZKMT-V9WS-YVGX-4150-FCF4"
+    }
+  ],
+  "typed": [
+    {
+      "input": "vhdq-e8ys-yjek-nfjh-2s5s-zzp0-9xb5-zasg-gps3-n0pq-e61r-k9nb-snrg-309s",
+      "bytes": "3Ft3I9n0nTq-URZLn_7AT1ZfqzCFsjqC13GDiaarzXE"
+    },
+    {
+      "input": "VHDQE8YSYJEKNFJH2S5SZZP09XB5ZASGGPS3N0PQE61RK9NBSNRG309S",
+      "bytes": "3Ft3I9n0nTq-URZLn_7AT1ZfqzCFsjqC13GDiaarzXE"
+    },
+    {
+      "input": "VHDQ E8YS YJEK NFJH 2S5S ZZP0 9XB5 ZASG GPS3 N0PQ E61R K9NB SNRG 309S",
+      "bytes": "3Ft3I9n0nTq-URZLn_7AT1ZfqzCFsjqC13GDiaarzXE"
+    },
+    {
+      "input": " VHDQ - E8YS - YJEK - NFJH - 2S5S - ZZP0 - 9XB5 - ZASG - GPS3 - N0PQ - E61R - K9NB - SNRG - 309S ",
+      "bytes": "3Ft3I9n0nTq-URZLn_7AT1ZfqzCFsjqC13GDiaarzXE"
+    },
+    {
+      "input": "VHDQ-E8YS-YJEK-NFJH-2S5S-ZZPO-9XB5-ZASG-GPS3-NOPQ-E61R-K9NB-SNRG-3O9S",
+      "bytes": "3Ft3I9n0nTq-URZLn_7AT1ZfqzCFsjqC13GDiaarzXE"
+    },
+    {
+      "input": "VHDQ-E8YS-YJEK-NFJH-2S5S-ZZP0-9XB5-ZASG-GPS3-N0PQ-E6IR-K9NB-SNRG-309S",
+      "bytes": "3Ft3I9n0nTq-URZLn_7AT1ZfqzCFsjqC13GDiaarzXE"
+    },
+    {
+      "input": "VHDQ-E8YS-YJEK-NFJH-2S5S-ZZP0-9XB5-ZASG-GPS3-N0PQ-E6lR-K9NB-SNRG-309S",
+      "bytes": "3Ft3I9n0nTq-URZLn_7AT1ZfqzCFsjqC13GDiaarzXE"
+    },
+    {
+      "input": "vhdqe8ysyjeknfjh2s5szzpo9xb5zasggps3nopqe6irk9nbsnrg3o9s",
+      "bytes": "3Ft3I9n0nTq-URZLn_7AT1ZfqzCFsjqC13GDiaarzXE"
+    }
+  ],
+  "refusals": [
+    {
+      "input": "VHDQ-E8YS-YJEK-NFJH-2S5S-ZZP0-9XB5-ZASG-GPS3-N0PQ-E61R-K9NB-SNRG-3092",
+      "reason": "checksum"
+    },
+    {
+      "input": "VHDQ-E8YS-YJEK-NFJH-2S5S-ZZP0-9XB5-ZASG-GPS3-N0PQ-E61R-K9NB-SNRG-309",
+      "reason": "length"
+    },
+    {
+      "input": "VHDQ-E8YS-YJEK-NFJH-2S5S-ZZP0-9XB5-ZASG-GPS3-N0PQ-E61R-K9NB-SNRG-309S2",
+      "reason": "length"
+    },
+    {
+      "input": "UHDQ-E8YS-YJEK-NFJH-2S5S-ZZP0-9XB5-ZASG-GPS3-N0PQ-E61R-K9NB-SNRG-309S",
+      "reason": "alphabet"
+    },
+    {
+      "input": "VHDQ-E8YS-YJEK-NFJH-2S5S-ZZP0-9XB5-ZASG-GPS3-N0PQ-E61R-K9NB-SNRH-309S",
+      "reason": "spare-bits"
+    }
+  ]
+}
