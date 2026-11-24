@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { z } from 'zod';
 
-import { emptyResult, routeByName, routes } from '../src/index.js';
+import { emptyResult, routeByName, routes, scheduleId } from '../src/index.js';
 
 const sealed = `abe1.${'A'.repeat(38)}`;
 const blind = `abh1.${'A'.repeat(43)}`;
@@ -179,7 +179,17 @@ describe('machine commands: tasks, notes, pull requests, watches and run control
 
   it('[contract-003] ids refuse unsafe, reserved and malformed values', () => {
     const { request } = route('get-task');
-    for (const id of ['', 'a/b', '-lead', 'dispatch', 'intake', 'x'.repeat(65), 'a b']) {
+    for (const id of [
+      '',
+      'a/b',
+      '-lead',
+      'dispatch',
+      'intake',
+      'listen',
+      'watch',
+      'x'.repeat(65),
+      'a b',
+    ]) {
       expect(parse(request, { id }).success).toBe(false);
     }
     expect(parse(route('claim-task').request, { id: task, machine: 'bad name' }).success).toBe(
@@ -189,6 +199,22 @@ describe('machine commands: tasks, notes, pull requests, watches and run control
       parse(route('heartbeat').request, { id: task, run: 'short', lane: 'l', borrowed: false })
         .success,
     ).toBe(false);
+  });
+
+  it('[contract-003] note ids may start with an underscore or a dash; schedule and pr ids share the task rule', () => {
+    const acks = route('ack-messages').request;
+    for (const id of ['_abc', '-abc', 'n1']) {
+      expect(parse(acks, { id: task, ids: [id] }).success).toBe(true);
+    }
+    for (const id of ['', 'x'.repeat(65), 'a b']) {
+      expect(parse(acks, { id: task, ids: [id] }).success).toBe(false);
+    }
+    const removal = route('remove-pr').request;
+    for (const pr of ['listen', 'watch', 'dispatch', 'intake', '-pr']) {
+      expect(parse(removal, { id: task, pr }).success).toBe(false);
+    }
+    expect(scheduleId.safeParse('watch').success).toBe(false);
+    expect(scheduleId.safeParse('Sc3dEf9x').success).toBe(true);
   });
 
   it('[contract-003] sealed fields refuse plain text', () => {
