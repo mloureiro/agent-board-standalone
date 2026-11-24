@@ -27,3 +27,7 @@ export const projectId = z.uuid();
 export const directoryId = z.uuid();
 export const sessionId = z.uuid();
 export const isoTime = z.iso.datetime();
+export const transcriptRunId = z.string().regex(/^[A-Za-z0-9_-]{8,64}$/);
+export const feedId = z.string().regex(/^[0-9a-f]{16}$/);
+export const feedRequest = z.string().regex(/^(pause|resume|run):[0-9a-f]{16}$/);
+export const toolUseId = z.string().regex(/^[A-Za-z0-9_-]{1,256}$/);

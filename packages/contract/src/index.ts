@@ -3,6 +3,7 @@ export * from './compat.js';
 export * from './doctor.js';
 export * from './enums.js';
 export * from './errors.js';
+export * from './events.js';
 export * from './features.js';
 export * from './handover/index.js';
 export * from './headers.js';
