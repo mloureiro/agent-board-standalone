@@ -4,9 +4,11 @@ import { FEED_ACTIONS, MACHINE_STATES } from '../enums.js';
 import { sealedField } from '../limits.js';
 import { feedId, feedRequest, isoTime, machineName } from './ids.js';
 
+export const storedMachineName = z.string().min(1).max(256);
+
 export const uiMachine = z
   .object({
-    name: machineName,
+    name: storedMachineName,
     createdAt: isoTime,
     lastSeenAt: isoTime.nullable(),
     revokedAt: isoTime.nullable(),

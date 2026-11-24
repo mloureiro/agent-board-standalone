@@ -243,8 +243,34 @@ describe('client routes: keys, passkeys, machines, feeds, documents, account, pr
   it('[contract-003] machines/issue is marked issuesCredential', () => {
     expect(route('client.machines.issue').issuesCredential).toBe(true);
     const marked = cases.filter((entry) => route(entry.name).issuesCredential);
-    expect(marked.map((entry) => entry.name)).toEqual(['client.machines.issue']);
+    expect(marked.map((entry) => entry.name).sort()).toEqual([
+      'client.account.import',
+      'client.machines.issue',
+      'client.passkeys.register',
+    ]);
     expect(parse(route('client.machines.issue').response, { token: 'abc_x' }).success).toBe(false);
+  });
+
+  it('[contract-003] machine names stored before the name rule stay listed and revocable', () => {
+    const legacy = 'Old Laptop (2019)';
+    const row = (
+      cases.find((entry) => entry.name === 'client.machines.list')!.response as {
+        machines: Record<string, unknown>[];
+      }
+    ).machines[0]!;
+    expect(
+      parse(route('client.machines.list').response, { machines: [{ ...row, name: legacy }] })
+        .success,
+    ).toBe(true);
+    expect(parse(route('client.machines.revoke').request, { name: legacy }).success).toBe(true);
+    expect(parse(route('client.machines.revoke').request, { name: '' }).success).toBe(false);
+    expect(parse(route('client.machines.revoke').request, { name: 'a'.repeat(257) }).success).toBe(
+      false,
+    );
+    expect(parse(route('client.machines.issue').request, { name: legacy }).success).toBe(false);
+    expect(
+      parse(route('client.machines.set-grant').request, { name: legacy, grant: true }).success,
+    ).toBe(false);
   });
 
   it('[contract-003] machines/set-grant carries the machine-grant feature', () => {

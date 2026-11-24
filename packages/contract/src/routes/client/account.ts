@@ -29,6 +29,7 @@ export const importClientAccountRoute = clientCommand('account/import', {
   errors: ['forbidden'],
   feature: 'board-export',
   bodyLimit: ACCOUNT_IMPORT_BODY_LIMIT,
+  issuesCredential: true,
 });
 
 export const deleteClientAccountRoute = clientCommand('account/delete', {

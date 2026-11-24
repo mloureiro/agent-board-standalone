@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { emptyResult } from '../../schemas/common.js';
 import { machineName } from '../../schemas/ids.js';
-import { uiMachine, uiMachineCatalog } from '../../schemas/ui-machine.js';
+import { storedMachineName, uiMachine, uiMachineCatalog } from '../../schemas/ui-machine.js';
 import { TOKEN_PATTERN } from '../../session.js';
 import { clientCommand, clientQuery } from '../route.js';
 
@@ -31,7 +31,7 @@ export const issueClientMachineRoute = clientCommand('machines/issue', {
 });
 
 export const revokeClientMachineRoute = clientCommand('machines/revoke', {
-  request: named,
+  request: z.object({ name: storedMachineName }).strict(),
   response: emptyResult,
   errors: ['not-found'],
 });

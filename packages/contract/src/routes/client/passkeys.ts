@@ -27,6 +27,7 @@ export const registerClientPasskeyRoute = clientCommand('passkeys/register', {
     .strict(),
   response: emptyResult,
   errors: ['conflict'],
+  issuesCredential: true,
 });
 
 export const renameClientPasskeyRoute = clientCommand('passkeys/rename', {

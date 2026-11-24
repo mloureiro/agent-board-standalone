@@ -83,14 +83,17 @@ describe('client route table', () => {
     `);
   });
 
-  it('[contract-003] client routes are named from their path and only machines/issue issues a credential', () => {
+  it('[contract-003] client routes are named from their path and exactly these issue a credential', () => {
     for (const entry of clientRoutes) {
       expect(entry.name).toBe(
         `client.${entry.path.slice('/api/client/'.length).replace('/', '.')}`,
       );
     }
     expect(
-      clientRoutes.filter((entry) => entry.issuesCredential).map((entry) => entry.name),
-    ).toEqual(['client.machines.issue']);
+      clientRoutes
+        .filter((entry) => entry.issuesCredential)
+        .map((entry) => entry.name)
+        .sort(),
+    ).toEqual(['client.account.import', 'client.machines.issue', 'client.passkeys.register']);
   });
 });
