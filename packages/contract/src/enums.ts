@@ -57,6 +57,31 @@ export type SignInMethod = (typeof SIGN_IN_METHODS)[number];
 export const PROJECT_DELETE_THEN = ['move-to-default', 'delete'] as const;
 export type ProjectDeleteThen = (typeof PROJECT_DELETE_THEN)[number];
 
+export const FEED_ACTIONS = ['pause', 'resume', 'run'] as const;
+export type FeedAction = (typeof FEED_ACTIONS)[number];
+
+export const DEVICE_KINDS = ['session', 'machine', 'paired'] as const;
+export type DeviceKind = (typeof DEVICE_KINDS)[number];
+
+export const ACCOUNT_TABLES = [
+  'task',
+  'schedule',
+  'note',
+  'task_pr',
+  'machine',
+  'shared_agents',
+  'link_rules',
+  'title_rules',
+  'transcript_run',
+  'transcript_event',
+  'project',
+  'directory',
+  'legacy_dirs',
+  'setting',
+  'device',
+] as const;
+export type AccountTable = (typeof ACCOUNT_TABLES)[number];
+
 export const listOfKnown = <const T extends readonly [string, ...string[]]>(values: T) =>
   z
     .array(z.string())
