@@ -550,7 +550,7 @@ exceptions below. Release names and unit labels change where noted; behaviour do
 | B-08 branch divergence        | cli-012 (both lines merged)                                   |
 
 The user-tool commands (cli-028…035) need user-authored machine commands in the contract (today the machine API
-only writes `agent` and `system` notes). Step 2 decides how a machine token may act as its owner for these.
+only writes `agent` and `system` notes). A machine acts as its owner only with the user's grant, off by default (api-119, ADR-0009).
 
 ### 3.3 Gaps not adopted
 
