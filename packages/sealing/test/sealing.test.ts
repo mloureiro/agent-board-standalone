@@ -46,6 +46,30 @@ const EXPORTS = [
   'toBase64Url',
   'toHex',
   'tokenHash',
+  'KDF_LIMITS',
+  'MAX_KEY_SLOTS',
+  'MIN_PASSPHRASE_LENGTH',
+  'PRODUCTION_KDF',
+  'RECOVERY_KEY_BYTES',
+  'SALT_BYTES',
+  'WRAPPED_KEY_PREFIX',
+  'contentDigest',
+  'createKeySetup',
+  'exportPublicKey',
+  'formatRecoveryKey',
+  'generateSigningKey',
+  'importPublicKey',
+  'isWrappedKey',
+  'normalizePassphrase',
+  'parseRecoveryKey',
+  'passphraseProblem',
+  'replacePassphrase',
+  'sign',
+  'signingKeyId',
+  'unlockKeys',
+  'unwrapSlot',
+  'verify',
+  'wrapSlot',
 ];
 
 const binding = bindings.title({ task: 'tsk_1' });
@@ -142,7 +166,7 @@ describe('sealing core', () => {
     }
   });
 
-  it('[sealing-006] deriveKeys leaves the caller bytes untouched and the key copy does not alias them', async () => {
+  it('[sealing-006] deriveKeys leaves the caller bytes untouched because it zeroes only its own copy', async () => {
     const dataKey = generateDataKey();
     const before = dataKey.slice();
     await deriveKeys(dataKey, 'owner');
