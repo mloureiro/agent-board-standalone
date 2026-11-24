@@ -47,6 +47,12 @@ describe('units', () => {
     }
   });
 
+  it('[contract-010] workerUnits refuses two listen services', () => {
+    const base = recipe('linux');
+    const [tick, listen] = base.units;
+    expect(workerUnits.safeParse({ ...base, units: [tick, listen, listen] }).success).toBe(false);
+  });
+
   it('[contract-010] workerUnits refuses a long PATH and an unknown platform', () => {
     const long = {
       ...recipe('linux'),

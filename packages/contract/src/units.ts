@@ -95,7 +95,11 @@ export const workerUnits = z
         message: `at most ${MAX_WORKER_PATH_ENTRIES} PATH entries`,
       }),
     passedVariables: z.array(z.string()),
-    units: z.tuple([tickUnit, serviceUnit, serviceUnit]),
+    units: z
+      .tuple([tickUnit, serviceUnit, serviceUnit])
+      .refine(([, first, second]) => first.name !== second.name, {
+        message: 'the two service units must have distinct names',
+      }),
   })
   .strict();
 
