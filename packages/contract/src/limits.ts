@@ -133,3 +133,5 @@ export const CLIENT_BODY_LIMIT = 2 * 1024 * 1024;
 export const ACCOUNT_IMPORT_BODY_LIMIT = 16 * 1024 * 1024;
 export const MAX_ACCOUNT_IMPORT_ROWS = 1000;
 export const MAX_OUTPUT_SIZE = 256 * 1024 + 1024;
+
+export const SAML_FORM_BODY_LIMIT = 256 * 1024;

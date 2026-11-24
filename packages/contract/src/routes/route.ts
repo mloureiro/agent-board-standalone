@@ -28,9 +28,11 @@ export type AnyRoute = Route<z.ZodType, z.ZodType>;
 export type RouteRequest<R extends AnyRoute> = z.input<R['request']>;
 export type RouteResponse<R extends AnyRoute> = z.output<R['response']>;
 
-export const defineRoute = <Req extends z.ZodType, Res extends z.ZodType>(
-  route: Route<Req, Res>,
-): Route<Req, Res> => route;
+type RouteExtras = Partial<
+  Pick<AnyRoute, 'feature' | 'module' | 'issuesCredential' | 'stream' | 'bodyLimit' | 'bodyType'>
+>;
+
+export const defineRoute = <const R extends AnyRoute>(route: R): R & RouteExtras => route;
 
 export type RouteSpec<Req extends z.ZodType, Res extends z.ZodType> = Pick<
   Route<Req, Res>,

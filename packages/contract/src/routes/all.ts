@@ -29,6 +29,8 @@ import {
   machineUserActionRoutes,
   transcriptRoute,
 } from './machine/index.js';
+import { authRouteList } from './auth.js';
+import { publicRouteList } from './public.js';
 import type { AnyRoute } from './route.js';
 
 export const routes = [
@@ -59,6 +61,8 @@ export const routes = [
   clientAttentionRoute,
   ...clientDeviceRoutes,
   clientEventsRoute,
+  ...publicRouteList,
+  ...authRouteList,
 ] as const;
 
 export type RouteName = (typeof routes)[number]['name'];

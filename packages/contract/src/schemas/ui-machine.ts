@@ -22,7 +22,7 @@ export const uiMachine = z
 
 export const uiMachineCatalog = z
   .object({
-    name: machineName,
+    name: storedMachineName,
     catalog: sealedField('machine.catalog').nullable(),
     catalogUpdatedAt: isoTime.nullable(),
   })
@@ -30,7 +30,7 @@ export const uiMachineCatalog = z
 
 export const uiMachineFeeds = z
   .object({
-    name: machineName,
+    name: storedMachineName,
     lastSeenAt: isoTime.nullable(),
     feeds: sealedField('machine.feeds').nullable(),
     feedsUpdatedAt: isoTime.nullable(),

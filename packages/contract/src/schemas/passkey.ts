@@ -79,4 +79,34 @@ export const uiRegistrationResponse = z
   })
   .strict();
 
+export const uiPasskeyRequestOptions = z
+  .object({
+    challenge: base64url,
+    timeout: z.number().int().min(0).optional(),
+    rpId: z.string().max(256).optional(),
+    allowCredentials: z.array(uiCredentialDescriptor).max(256).optional(),
+    userVerification: z.string().max(64).optional(),
+    hints: z.array(z.string().max(64)).max(8).optional(),
+    extensions: extensions.optional(),
+  })
+  .strict();
+
+export const uiAuthenticationResponse = z
+  .object({
+    id: base64url,
+    rawId: base64url,
+    type: z.literal('public-key'),
+    response: z
+      .object({
+        clientDataJSON: base64url,
+        authenticatorData: base64url,
+        signature: base64url,
+        userHandle: base64url.optional(),
+      })
+      .strict(),
+    authenticatorAttachment: attachment.optional(),
+    clientExtensionResults: extensions.optional(),
+  })
+  .strict();
+
 export type UiPasskey = z.infer<typeof uiPasskey>;
