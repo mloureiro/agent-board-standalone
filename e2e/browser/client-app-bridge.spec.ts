@@ -9,10 +9,12 @@ import {
   SESSION_CHECK_TIMEOUT_MS,
   SESSION_LIFETIME_SECONDS,
   accountOnLoginBoard,
+  approveOpenedLink,
   approverContext,
   dumpPageStorage,
   holdsToken,
   indexedDbNames,
+  indexedDbRows,
   localKeysWithPrefix,
   newBridgeHost,
   openBridgedClient,
@@ -24,7 +26,6 @@ import {
 } from '../src/steps/bridge.js';
 import { NOT_ANSWERING } from '../src/steps/journeys.js';
 import { UI_TIMEOUT_MS, unlockIfAsked, waitForBoard } from '../src/steps/keys.js';
-import { approveHandoff } from '../src/fixtures/browser.js';
 
 const PASSPHRASE = 'bridge passphrase here';
 const UNREACHABLE_URL = 'http://127.0.0.1:9';
@@ -70,10 +71,10 @@ test.describe('client app sessions through the native bridge', () => {
       expect(opened.toString()).toContain(code);
       expect(client.page.url()).not.toBe(opened.toString());
 
-      const approval = await approveHandoff(approver, board.url, code);
+      const approval = await approveOpenedLink(approver, host);
       await approval.close();
+      await expect.poll(() => host.tokenFor(serverId), { timeout: UI_TIMEOUT_MS }).toBeDefined();
       await unlockIfAsked(client.page, PASSPHRASE);
-      expect(host.tokenFor(serverId)).toBeDefined();
 
       await client.page.getByRole('link', { name: BRIDGE_NAMES.settings }).click();
       await expect(client.page).toHaveURL(/settings/i);
@@ -183,14 +184,17 @@ test.describe('client app sessions through the native bridge', () => {
       await expect
         .poll(() => localKeysWithPrefix(client.page, `ab:${serverId}:`), { timeout: UI_TIMEOUT_MS })
         .not.toEqual([]);
-      expect(await indexedDbNames(client.page)).toContain(`agent-board:${serverId}`);
+      expect((await indexedDbRows(client.page, `agent-board:${serverId}`)).length).toBeGreaterThan(
+        0,
+      );
 
+      await client.page.getByRole('button', { name: /close dialog/i }).click();
       await client.page.getByRole('button', { name: BRIDGE_NAMES.signOut }).click();
       await expect.poll(() => host.tokenFor(serverId), { timeout: UI_TIMEOUT_MS }).toBeUndefined();
       await expect(signInButton(client.page)).toBeVisible({ timeout: UI_TIMEOUT_MS });
 
       expect(await localKeysWithPrefix(client.page, `ab:${serverId}:`)).toEqual([]);
-      expect(await indexedDbNames(client.page)).not.toContain(`agent-board:${serverId}`);
+      expect(await indexedDbRows(client.page, `agent-board:${serverId}`)).toEqual([]);
       await client.page.reload();
       await expect(signInButton(client.page)).toBeVisible({ timeout: UI_TIMEOUT_MS });
       await signInThroughBridge(client, board, approver);
