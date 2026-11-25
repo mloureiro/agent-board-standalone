@@ -157,12 +157,12 @@ test.describe('reply with resume without a worker', () => {
   test('[api-069] a reply with resume puts the task at the top of Todo', async ({ page }) => {
     const w = await world.get();
     const first = await newTask(w, { prompt: 'todo one', title: 'Todo one' });
-    const second = await newTask(w, { prompt: 'todo two', title: 'Todo two' });
     const target = await newTask(w, {
       prompt: 'reply target',
       title: 'Reply target',
       status: 'needs-me',
     });
+    const second = await newTask(w, { prompt: 'todo two', title: 'Todo two' });
     await openTask(page, w, target);
     await replyBox(page).fill('carry on with the second part');
     await panelButton(page, NAMES.sendAndContinue).click();

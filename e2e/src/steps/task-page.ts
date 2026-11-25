@@ -44,7 +44,6 @@ export const NAMES = {
   transcriptRuns: 'Runs',
   contextBar: 'Context',
   autoCompact: 'Auto-compact',
-  board: 'Board',
 } as const;
 
 export const STATUS_LABELS: Readonly<Record<TaskStatus, string>> = {
@@ -380,18 +379,14 @@ export const SCOPE_QUESTION = {
 } as const;
 
 export async function findFork(world: TaskWorld, parentId: string): Promise<string> {
-  let found: string | null = null;
-  await expect
-    .poll(
-      async () => {
-        const { tasks } = await world.user.ok('client.tasks.list', {});
-        found = tasks.find((task) => task.forkOf === parentId)?.id ?? null;
-        return found !== null;
-      },
-      { timeout: STATUS_TIMEOUT_MS },
-    )
-    .toBe(true);
-  return found as unknown as string;
+  const forkId = async () => {
+    const { tasks } = await world.user.ok('client.tasks.list', {});
+    return tasks.find((task) => task.parentId === parentId)?.id ?? null;
+  };
+  await expect.poll(forkId, { timeout: STATUS_TIMEOUT_MS }).not.toBeNull();
+  const id = await forkId();
+  if (id === null) throw new Error(`no fork of ${parentId}`);
+  return id;
 }
 
 export async function releaseTask(world: TaskWorld, id: string): Promise<void> {

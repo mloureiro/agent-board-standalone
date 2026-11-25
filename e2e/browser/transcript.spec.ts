@@ -62,7 +62,7 @@ test.describe('transcript drawer and context bar', () => {
     await expect(
       drawer.getByRole('list', { name: NAMES.transcriptRuns }).getByRole('listitem'),
     ).toHaveCount(1);
-    await expect(drawer.getByText('done', { exact: true })).toBeVisible();
+    await expect(drawer.getByText('done', { exact: true }).first()).toBeVisible();
 
     const toolCall = drawer.getByRole('button', { name: /Read/ });
     await expect(toolCall).toBeVisible();
@@ -126,7 +126,7 @@ test.describe('transcript drawer and context bar', () => {
   }) => {
     const w = await world.get();
     const task = await newTask(w, {
-      prompt: `#stub: usage ${USED_TOKENS}\n#stub: done`,
+      prompt: `#stub: usage ${USED_TOKENS}`,
       title: 'Context usage',
     });
     await waitForStatus(w, task.id, 'needs-me');
