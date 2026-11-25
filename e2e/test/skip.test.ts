@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, describe, expect, it } from 'vitest';
 
 import { E2E_ROOT } from '../src/harness/paths.js';
 import { recordSkip } from '../src/harness/skip.js';
@@ -11,6 +11,7 @@ describe('recordSkip', () => {
   const dir = mkdtempSync(path.join(os.tmpdir(), 'skip-test-'));
   const log = path.join(dir, 'skips.jsonl');
   afterEach(() => rmSync(log, { force: true }));
+  afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
   it('appends one JSON line with file relative to e2e/, titlePath, project and reason', () => {
     recordSkip(

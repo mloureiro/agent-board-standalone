@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 
 import { cliEnv } from '../src/harness/cli.js';
 import { STUBS_DIR } from '../src/harness/paths.js';
@@ -8,6 +8,7 @@ import { createTmp } from '../src/harness/tmp.js';
 
 describe('cliEnv', () => {
   const tmp = createTmp('cli-env-test');
+  afterAll(() => tmp.remove());
 
   it('sets the three directory overrides and no XDG variable in overrides mode', () => {
     const env = cliEnv({ tmp }, { profileMode: 'overrides' }, { PATH: '/usr/bin' });
