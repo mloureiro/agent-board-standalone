@@ -63,6 +63,7 @@ interface CommandCase {
 }
 
 const NO_QUESTION = 'no-question';
+const SENT = uniqueLabel('sent-');
 
 async function finishedSubject(fixture: Fixture): Promise<Subject> {
   const finished = await finishedTask(fixture);
@@ -141,9 +142,13 @@ const CASES: Record<Command, CommandCase> = {
     invoke: async (machine, fixture, subject) =>
       machine.call('machine.send', {
         ...idOnly(subject.taskId),
-        message: await sealedMessage(fixture.key, subject.taskId, 'comment', 'sent'),
+        message: await sealedMessage(fixture.key, subject.taskId, 'comment', SENT),
       }),
-    verify: async () => undefined,
+    verify: async (fixture) => {
+      await waitUntil('the sent message to reach the agent', () =>
+        stubStdin(fixture).some((text) => text.includes(SENT)),
+      );
+    },
   },
   stop: {
     subject: runningSubject,
@@ -356,7 +361,7 @@ describe('user commands with a worker', () => {
     expect(result.status, result.text).toBe(200);
     const note = (await threadOf(fx, subject.taskId)).find((entry) => entry.text === 'replied');
     expect(note?.author).toBe('user');
-    expect(JSON.stringify(note?.raw)).toContain(fx.operator.name);
+    expect(note?.by).toBe(fx.operator.name);
   });
 
   it('[cli-028] board answer answers an open question with picks, as the user', async () => {

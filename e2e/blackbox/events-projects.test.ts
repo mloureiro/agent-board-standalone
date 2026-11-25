@@ -1,9 +1,12 @@
+import { mkdirSync } from 'node:fs';
+
 import { bindings } from '@agent-board/sealing';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { enrolledMachine, type EnrolledMachine } from '../src/fixtures/machines.js';
 import { newTaskId } from '../src/fixtures/tasks.js';
 import { useBoard } from '../src/harness/vitest.js';
+import { createWorkerTask, directoryIdOf, moveDirectory } from '../src/steps/worker.js';
 import {
   collectEvents,
   combined,
@@ -15,7 +18,6 @@ import {
   once,
   startFixture,
   uniqueLabel,
-  waitForStatus,
   waitUntil,
   writeWorkFile,
   type Fixture,
@@ -245,15 +247,29 @@ describe('board projects', () => {
     expect(task.projectId).toBe(project.id);
   });
 
-  it('[cli-039] a default project set on the host receives an in-run board add without --project', async () => {
+  it("[cli-039] the host default project does not override the parent's project for an in-run board add", async () => {
     const fx = await fixture();
-    const project = await hostDefaultSet();
+    const hostDefault = await hostDefaultSet();
+    const parentProject = await createProject(fx, uniqueLabel('parent-'));
+    const directory = fx.board.tmp.path('parent-project-dir');
+    mkdirSync(directory, { recursive: true });
+    await expectOk(fx.runner.cli(['dirs', 'add', directory]), 'board dirs add');
+    const directoryId = await directoryIdOf(fx.user, fx.key, fx.runner.name, directory);
+    await moveDirectory(fx.user, directoryId, parentProject);
     const title = uniqueLabel('followup-');
     const file = writeWorkFile(fx, `${title}.md`, 'a follow-up proposal');
-    const parent = await newTask(fx, `#stub: board add --title ${title} --file ${file}`);
-    await waitForStatus(fx, parent.id, 'done');
+    const parentId = newTaskId();
+    fx.taskIds.push(parentId);
+    await createWorkerTask(fx.user, fx.key, {
+      id: parentId,
+      prompt: `#stub: board add --title ${title} --file ${file} --parent ${parentId}`,
+      projectId: parentProject,
+      place: { machine: fx.runner.name, directoryId },
+    });
     const task = await waitUntil('the proposal', () => findTaskByTitle(fx, title));
-    expect(task.projectId).toBe(project.id);
+    expect(task.parentId).toBe(parentId);
     expect(task.status).toBe('backlog');
+    expect(task.projectId).toBe(parentProject);
+    expect(task.projectId).not.toBe(hostDefault.id);
   });
 });

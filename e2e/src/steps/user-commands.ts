@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { bindings } from '@agent-board/sealing';
@@ -12,6 +12,14 @@ import { noLoginUser, type BoardUser } from '../fixtures/users.js';
 import type { Board } from '../harness/board.js';
 import type { RunResult } from '../harness/run.js';
 import type { RunningCli } from '../harness/cli.js';
+import {
+  createProject as createSealedProject,
+  killStubs,
+  readStubLog,
+  sleep,
+  stdinTexts,
+  type StubEntry,
+} from './worker.js';
 
 export type TaskDetail = RouteOutput<'client.tasks.get'>;
 export type WireTaskView = TaskDetail['task'];
@@ -42,10 +50,6 @@ export function once<T>(make: () => Promise<T>): () => Promise<T> {
     started ??= make();
     return started;
   };
-}
-
-export function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function waitUntil<T>(
@@ -104,6 +108,7 @@ export async function finishFixture(fixture: Fixture | null): Promise<void> {
     await fixture.user.call('client.tasks.stop', { id }).catch(() => undefined);
   }
   await fixture.listener?.stop().catch(() => undefined);
+  killStubs(stubEntries(fixture));
 }
 
 export async function newTask(
@@ -289,23 +294,12 @@ export function sealedAnswers(
   );
 }
 
-export interface StubEntry {
-  readonly kind: string;
-  readonly [field: string]: unknown;
-}
-
 export function stubEntries(fixture: Pick<Fixture, 'stubLog'>): StubEntry[] {
-  if (!existsSync(fixture.stubLog)) return [];
-  return readFileSync(fixture.stubLog, 'utf8')
-    .split('\n')
-    .filter((line) => line.trim() !== '')
-    .map((line) => JSON.parse(line) as StubEntry);
+  return readStubLog(fixture.stubLog);
 }
 
 export function stubStdin(fixture: Pick<Fixture, 'stubLog'>): string[] {
-  return stubEntries(fixture)
-    .filter((entry) => entry.kind === 'stdin')
-    .map((entry) => String(entry.text));
+  return stdinTexts(stubEntries(fixture));
 }
 
 export function stubInterrupts(fixture: Pick<Fixture, 'stubLog'>): number {
@@ -384,13 +378,7 @@ export async function createProject(
   fixture: Pick<Fixture, 'user' | 'key'>,
   name: string,
 ): Promise<string> {
-  const id = crypto.randomUUID();
-  await fixture.user.ok('client.projects.create', {
-    id,
-    name: await fixture.key.seal(bindings.projectName(id), name),
-    icon: null,
-  });
-  return id;
+  return createSealedProject(fixture.user, fixture.key, name);
 }
 
 export async function findTaskByTitle(
