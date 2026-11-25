@@ -61,10 +61,10 @@ describe('questions', () => {
     const parsed = parseQuestions({ questions: [question] });
     expect(parseQuestions([question])).toEqual(parsed);
     expect(formatQuestions(parsed)).toBe('- **H**: Q?\n  - a\n  - b');
-    expect(formatAnswers(parsed, [{ selected: ['a'], other: 'and more' }])).toBe(
+    expect(formatAnswers(parsed, [{ picks: ['a'], other: 'and more' }])).toBe(
       '- H: Q? → a; and more',
     );
-    expect(formatAnswers(undefined, [{ selected: [] }])).toBe('- Question 1 → (none)');
+    expect(formatAnswers(undefined, [{ picks: [], other: null }])).toBe('- Question 1 → (none)');
   });
 
   it('refuses duplicates, two recommendations, a long header and too few options', () => {

@@ -3,6 +3,7 @@ import type { Command } from 'commander';
 import { MODEL_ALIASES } from '@agent-board/contract';
 
 import type { Context } from '../context.js';
+import { TASK_ARGUMENT, collect, dryRun } from '../options.js';
 import { runAdd, type AddOptions } from './add.js';
 import { runAsk } from './ask.js';
 import { runAttach, type AttachOptions } from './attach.js';
@@ -19,13 +20,7 @@ import { runUnwatch, runWatch, runWatches, type WatchOptions } from './watch.js'
 
 type WithContext = (command: Command) => Context;
 
-const TASK_ARGUMENT = 'the task: its id, a link to it, or a unique id prefix';
 const STATUS_LIST = 'backlog, todo, running, waiting, needs-me, done';
-
-const collect = (value: string, previous: string[] = []): string[] => [...previous, value];
-
-const dryRun = (command: Command): Command =>
-  command.option('--dry-run', 'do the reads and print each write as DRY <command>');
 
 export function registerTaskCommands(program: Command, withContext: WithContext): void {
   dryRun(
@@ -94,12 +89,15 @@ export function registerTaskCommands(program: Command, withContext: WithContext)
       .description(`Move a task to the bottom of a status: ${STATUS_LIST}`)
       .argument('<task>', TASK_ARGUMENT)
       .argument('<status...>', 'the status to move it to')
-      .option(
-        '--expect <status>',
-        'move it only while it is in this status; exit 3 when it is not',
-      ),
+      .option('--expect <status>', 'move it only while it is in this status; exit 3 when it is not')
+      .option('--fresh', 'with todo: run it again without resuming its session'),
   ).action(
-    async (input: string, status: string[], options: { expect?: string }, command: Command) => {
+    async (
+      input: string,
+      status: string[],
+      options: { expect?: string; fresh?: boolean },
+      command: Command,
+    ) => {
       await runMove(withContext(command), input, status, options);
     },
   );

@@ -55,6 +55,17 @@ export interface TaskSeed {
   readonly notBefore?: string | null;
 }
 
+export interface StubRun {
+  readonly id: string;
+  readonly machine?: string;
+  readonly resumed?: boolean;
+  readonly events: readonly {
+    readonly kind: 'text' | 'thinking' | 'tool_use' | 'tool_result' | 'result' | 'note' | 'context';
+    readonly data: Record<string, unknown>;
+    readonly output?: string;
+  }[];
+}
+
 export interface ApiStub {
   readonly url: string;
   readonly seen: SeenRequest[];
@@ -65,6 +76,11 @@ export interface ApiStub {
   readonly directories: Map<string, WireDirectory>;
   readonly watches: Map<string, string | null>;
   commands(): string[];
+  setGrant(granted: boolean): void;
+  forbid(command: string): void;
+  holdTask(id: string): void;
+  addRun(taskId: string, run: StubRun): void;
+  addQuestion(taskId: string, questions: readonly unknown[]): Promise<string>;
   seal(binding: Binding, plaintext: string): Promise<string>;
   open(binding: Binding, envelope: string): Promise<string>;
   addTask(seed: TaskSeed): Promise<WireTask>;
@@ -93,6 +109,10 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
   const commands: string[] = [];
   let noteSequence = 0;
   let tokenRefused = false;
+  let granted = true;
+  const held = new Set<string>();
+  const forbidden = new Set<string>();
+  const runs = new Map<string, StubRun[]>();
   const holder: { keys?: Keys } = {};
 
   const requireKeys = (): Keys => {
@@ -180,6 +200,31 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
       watchStops: [],
       noteCount: 0,
     };
+  };
+
+  const gate = (id: string): WireTask => {
+    if (!granted) throw new Refusal(403, 'grant-required', 'this machine has no grant');
+    if (held.has(id)) throw new Refusal(409, 'run-holds-task', 'a run of this machine holds it');
+    return taskOf(id);
+  };
+
+  const userNote = (
+    taskId: string,
+    kind: WireNote['kind'],
+    message: { body: string },
+    extra: Partial<WireNote> = {},
+  ): void => {
+    noteSequence += 1;
+    const wire = {
+      id: `n${noteSequence}`,
+      preview: null,
+      createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, noteSequence)).toISOString(),
+      kind,
+      author: 'user',
+      body: message.body,
+      ...extra,
+    } as WireNote;
+    notes.set(taskId, [...(notes.get(taskId) ?? []), wire]);
   };
 
   const taskOf = (id: string): WireTask => {
@@ -377,9 +422,147 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
       for (const row of rows) directories.set(row.id, row);
       return { directories: rows };
     },
+    answer: (body) => {
+      const task = gate(body.id as string);
+      if (!task.openQuestion) throw new Refusal(409, 'conflict', 'no open question');
+      userNote(task.id, 'answer', body.message as { body: string }, {
+        answers: body.answers as string,
+        questionNoteId: body.questionNoteId as string,
+      });
+      const updated = { ...task, openQuestion: false, status: 'todo' as const };
+      tasks.set(task.id, updated);
+      return updated;
+    },
+    'dismiss-question': (body) => {
+      const task = gate(body.id as string);
+      if (!task.openQuestion) throw new Refusal(409, 'conflict', 'no open question');
+      const updated = { ...task, openQuestion: false };
+      tasks.set(task.id, updated);
+      return updated;
+    },
+    reply: (body) => {
+      const task = gate(body.id as string);
+      userNote(task.id, 'comment', body.message as { body: string });
+      const updated = body.resume === true ? { ...task, status: 'todo' as const } : task;
+      tasks.set(task.id, updated);
+      return updated;
+    },
+    send: (body) => {
+      const task = gate(body.id as string);
+      if (task.status !== 'running') throw new Refusal(409, 'conflict', 'the task is not running');
+      userNote(task.id, 'comment', body.message as { body: string });
+      return task;
+    },
+    stop: (body) => {
+      const task = gate(body.id as string);
+      if (task.status !== 'running') throw new Refusal(409, 'conflict', 'the task is not running');
+      if (body.message !== undefined)
+        userNote(task.id, 'comment', body.message as { body: string });
+      const updated = { ...task, status: 'backlog' as const };
+      tasks.set(task.id, updated);
+      return updated;
+    },
+    'take-back': (body) => {
+      const task = gate(body.id as string);
+      if (task.status !== 'running') throw new Refusal(409, 'conflict', 'the run is not quiet');
+      const updated = { ...task, status: 'todo' as const };
+      tasks.set(task.id, updated);
+      return updated;
+    },
+    rerun: (body) => {
+      const task = gate(body.id as string);
+      const updated = { ...task, status: 'todo' as const, next: 'fresh' as const };
+      tasks.set(task.id, updated);
+      return updated;
+    },
+    'set-closed': (body) => {
+      const task = gate(body.id as string);
+      const updated = { ...task, closed: body.closed as boolean };
+      tasks.set(task.id, updated);
+      return updated;
+    },
+    fork: async (body) => {
+      const parent = gate(body.parentId as string);
+      const draft = await baseTask({ id: body.id as string, createdBy: 'user' });
+      const created = {
+        ...draft,
+        title: body.title as string,
+        input: body.input as string,
+        agent: (body.agent as string | undefined) ?? null,
+        directoryId: body.directoryId as string | null,
+        forkOf: parent.id,
+        status: 'backlog' as const,
+      };
+      tasks.set(created.id, created);
+      return created;
+    },
+    'list-runs': (body) => {
+      gate(body.id as string);
+      return {
+        runs: (runs.get(body.id as string) ?? []).map((run) => ({
+          id: run.id,
+          machine: run.machine ?? MACHINE,
+          sessionId: null,
+          resumed: run.resumed ?? false,
+          startedAt: '2026-01-01T00:00:00.000Z',
+          lastEventAt: '2026-01-01T00:01:00.000Z',
+          eventCount: run.events.length,
+        })),
+      };
+    },
+    'transcript-events': async (body) => {
+      if (!granted) throw new Refusal(403, 'grant-required', 'this machine has no grant');
+      const found = findRun(body.runId as string);
+      const after = (body.afterSeq as number | undefined) ?? -1;
+      const events = await Promise.all(
+        found.run.events.map(async (event, seq) => ({
+          seq,
+          at: '2026-01-01T00:00:00.000Z',
+          kind: event.kind,
+          parent: null,
+          data: await sealed(
+            bindings.transcript({
+              field: 'tr.data',
+              taskId: found.taskId,
+              runId: found.run.id,
+              seq,
+            }),
+            JSON.stringify(event.data),
+          ),
+          outputSize: event.output === undefined ? null : event.output.length,
+        })),
+      );
+      return { events: events.filter((event) => event.seq > after) };
+    },
+    'transcript-output': async (body) => {
+      if (!granted) throw new Refusal(403, 'grant-required', 'this machine has no grant');
+      const found = findRun(body.runId as string);
+      const event = found.run.events[body.seq as number];
+      return {
+        output:
+          event?.output === undefined
+            ? null
+            : await sealed(
+                bindings.transcript({
+                  field: 'tr.output',
+                  taskId: found.taskId,
+                  runId: found.run.id,
+                  seq: body.seq as number,
+                }),
+                event.output,
+              ),
+      };
+    },
     'list-machines': () => ({
       machines: [{ name: MACHINE, lastSeenAt: null, current: true }],
     }),
+  };
+  const findRun = (runId: string): { taskId: string; run: StubRun } => {
+    for (const [taskId, list] of runs) {
+      const run = list.find((candidate) => candidate.id === runId);
+      if (run !== undefined) return { taskId, run };
+    }
+    throw new Refusal(404, 'not-found', `no run ${runId}`);
   };
   const parents = new Map<string, string | undefined>();
 
@@ -425,6 +608,9 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
         };
       }
       commands.push(commandOf(route));
+      if (forbidden.has(commandOf(route))) {
+        return { status: 403, body: { error: { code: 'forbidden', message: 'not for you' } } };
+      }
       try {
         const result = await handler(parsed.data as Record<string, unknown>);
         return { body: route.response.parse(result) };
@@ -453,6 +639,28 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
     directories,
     watches,
     commands: () => commands,
+    setGrant: (value) => {
+      granted = value;
+    },
+    forbid: (command) => {
+      forbidden.add(command);
+    },
+    holdTask: (id) => {
+      held.add(id);
+    },
+    addRun: (taskId, run) => {
+      runs.set(taskId, [...(runs.get(taskId) ?? []), run]);
+    },
+    addQuestion: async (taskId, questions) => {
+      const wire = await noteWire(taskId, 'agent', 'question', 'questions', {
+        questions: await sealed(
+          bindings.note({ field: 'note.questions', taskId, author: 'agent', kind: 'question' }),
+          JSON.stringify({ questions }),
+        ),
+      });
+      tasks.set(taskId, { ...taskOf(taskId), openQuestion: true, status: 'needs-me' });
+      return wire.id;
+    },
     seal: sealed,
     open: (binding, envelope) => open(requireKeys(), binding, envelope),
     addTask: async (seed) => {

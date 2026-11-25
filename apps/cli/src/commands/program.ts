@@ -5,6 +5,7 @@ import type { Runtime } from '../runtime.js';
 import { buildContext, type Context, type GlobalOptions } from './context.js';
 import { registerInit } from './setup/init.js';
 import { registerTaskCommands } from './tasks/index.js';
+import { registerUserCommands } from './user/index.js';
 import { cliVersionLine, registerVersion } from './setup/version.js';
 
 const CLEAN_EXIT_CODES = new Set([
@@ -42,6 +43,7 @@ export function buildProgram(rt: Runtime): Command {
   registerVersion(program, withContext);
   registerInit(program, withContext);
   registerTaskCommands(program, withContext);
+  registerUserCommands(program, withContext);
   return program;
 }
 

@@ -19,6 +19,8 @@ export interface SseMessage {
   readonly data: string;
 }
 
+export const MAX_SSE_LINE = 1024 * 1024;
+
 const LINE_BREAK = /\r\n|\n|\r/;
 
 export async function* readSse(
@@ -61,6 +63,9 @@ export async function* readSse(
       const held = pending.endsWith('\r') ? '\r' : '';
       const lines = pending.slice(0, pending.length - held.length).split(LINE_BREAK);
       pending = (lines.pop() ?? '') + held;
+      if (pending.length > MAX_SSE_LINE) {
+        throw new CliError('the event stream sent a line longer than 1 MiB');
+      }
       for (const line of lines) {
         const message = handle(line);
         if (message !== null) yield message;

@@ -19,8 +19,8 @@ export interface Question {
 }
 
 export interface Answer {
-  readonly selected: readonly string[];
-  readonly other?: string;
+  readonly picks: readonly string[];
+  readonly other: string | null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -103,7 +103,7 @@ export function formatAnswers(
       const question = questions?.[index];
       const asked = question ? `${question.header}: ${question.question}` : `Question ${index + 1}`;
       const given =
-        [answer.selected.join(', '), answer.other ?? ''].filter((part) => part !== '').join('; ') ||
+        [answer.picks.join(', '), answer.other ?? ''].filter((part) => part !== '').join('; ') ||
         '(none)';
       return `- ${asked} → ${given}`;
     })
@@ -125,11 +125,54 @@ export function answersOf(opened: string): Answer[] | undefined {
     const list = isRecord(parsed) ? parsed.answers : parsed;
     if (!Array.isArray(list)) return undefined;
     return list.map((item: unknown) => {
-      if (!isRecord(item) || !Array.isArray(item.selected)) throw new Error('shape');
-      const selected = item.selected.filter((label): label is string => typeof label === 'string');
-      return typeof item.other === 'string' ? { selected, other: item.other } : { selected };
+      if (!isRecord(item) || !Array.isArray(item.picks)) throw new Error('shape');
+      const picks = item.picks.filter((label): label is string => typeof label === 'string');
+      return { picks, other: typeof item.other === 'string' ? item.other : null };
     });
   } catch {
     return undefined;
   }
+}
+
+export function composeAnswers(
+  questions: readonly Question[],
+  picks: readonly string[],
+  others: readonly string[],
+): Answer[] {
+  const selected: string[][] = questions.map(() => []);
+  for (const pick of picks) {
+    const index = questions.findIndex((question) =>
+      question.options.some((option) => option.label === pick),
+    );
+    const chosen = selected[index];
+    if (chosen === undefined) {
+      const labels = questions.flatMap((question) => question.options.map((o) => o.label));
+      throw new UsageError(`"${pick}" is not an option of the open question: ${labels.join(', ')}`);
+    }
+    chosen.push(pick);
+  }
+  questions.forEach((question, index) => {
+    if (!question.multiSelect && (selected[index]?.length ?? 0) > 1) {
+      throw new UsageError(`"${question.header}" takes one option: give one --pick for it`);
+    }
+  });
+  const remaining = [...others];
+  const answers = questions.map((question, index): Answer => {
+    const chosen = selected[index] ?? [];
+    const other = chosen.length === 0 ? (remaining.shift() ?? null) : null;
+    return { picks: chosen, other };
+  });
+  const leftover = remaining.shift();
+  if (leftover !== undefined) {
+    throw new UsageError('there is no question left without an answer for the extra --other');
+  }
+  questions.forEach((question, index) => {
+    const answer = answers[index];
+    if (answer === undefined || (answer.picks.length === 0 && answer.other === null)) {
+      throw new UsageError(
+        `"${question.header}" has no answer: give a --pick or an --other for it`,
+      );
+    }
+  });
+  return answers;
 }

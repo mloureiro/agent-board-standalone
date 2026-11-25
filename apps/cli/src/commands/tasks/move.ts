@@ -12,12 +12,18 @@ export async function runMove(
   ctx: Context,
   input: string,
   statusWords: readonly string[],
-  options: { expect?: string },
+  options: { expect?: string; fresh?: boolean },
 ): Promise<void> {
   if (options.expect !== undefined) {
     refuseInRun(ctx, 'board move --expect');
   }
+  if (options.fresh === true) {
+    refuseInRun(ctx, 'board move --fresh');
+  }
   const status = parseStatus(statusWords.join(' '));
+  if (options.fresh === true && status !== 'todo') {
+    throw new UsageError('--fresh applies when moving a task to todo');
+  }
   const expect = options.expect === undefined ? undefined : parseStatus(options.expect);
   if (status === 'waiting') {
     throw new UsageError(
@@ -32,6 +38,7 @@ export async function runMove(
       status,
       ...fenceOf(ctx, id),
       ...(expect === undefined ? {} : { expect }),
+      ...(options.fresh === true ? { next: 'fresh' as const } : {}),
     });
   } catch (error) {
     if (!(error instanceof ApiError)) throw error;
