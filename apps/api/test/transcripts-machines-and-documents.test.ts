@@ -3,6 +3,8 @@ import { tokenHash } from '@agent-board/sealing';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { bindClientKey } from '../src/auth/index.js';
+import { systemClock } from '../src/clock.js';
 import * as schema from '../src/db/schema/index.js';
 import {
   OWNER,
@@ -15,6 +17,7 @@ import {
   uniqueName,
   type MachineBoard,
 } from './machine-support.js';
+import { newSigner } from './signing.js';
 
 let board: MachineBoard;
 
@@ -678,5 +681,33 @@ describe('machine versions and documents', () => {
     });
     for (const feature of answer.features) expect(FEATURES).toContain(feature);
     expect(answer.features).toContain('machine-grant');
+  });
+});
+
+describe('machine integration with keys and legacy directories', () => {
+  it('[api-120] re-issuing a machine token clears the key bound to that machine only', async () => {
+    const first = await enrolled();
+    const other = await enrolled();
+    const bind = async (name: string) =>
+      bindClientKey(board.database, systemClock, {
+        owner: OWNER,
+        publicKey: (await newSigner()).publicKey,
+        label: name,
+        binding: { kind: 'machine', machineId: name },
+      });
+    await bind(first.name);
+    await bind(other.name);
+    expect((await call(board, 'client.machines.issue', { name: first.name })).status).toBe(200);
+    const keys = await board.database.withOwner(OWNER, (tx) => tx.select().from(schema.clientKey));
+    expect(keys.map((key) => key.machineId)).toEqual([other.name]);
+  });
+
+  it('[api-125] machine.version reports legacyDirs from the stored legacy document', async () => {
+    const { name, token } = await enrolled();
+    expect((await call(board, 'machine.version', {}, { token })).body.legacyDirs).toBe(false);
+    await board.database.withOwner(OWNER, (tx) =>
+      tx.insert(schema.legacyDirs).values({ machineId: name, document: envelope() }),
+    );
+    expect((await call(board, 'machine.version', {}, { token })).body.legacyDirs).toBe(true);
   });
 });

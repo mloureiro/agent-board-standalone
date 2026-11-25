@@ -56,7 +56,7 @@ export const clientHandlers = (): HandlerTable => ({
 
   'client.machines.issue': async ({ input, principal, context }) => {
     const token = await context.services.database.withOwner(principal.owner, (tx) =>
-      issueMachineToken(tx, input.name),
+      issueMachineToken(tx, principal.owner, input.name),
     );
     await announceRevoked(context.services.events, principal.owner, input.name);
     await announceChange(context.services.events, principal.owner);
