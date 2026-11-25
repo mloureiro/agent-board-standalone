@@ -1,10 +1,13 @@
 import type { MantineColorScheme, MantineColorSchemeManager } from '@mantine/core';
 
-import { deviceStore } from '../storage/index.js';
+import { DEVICE_PREFIX, deviceStore } from '../storage/index.js';
 
 export const COLOR_SCHEME_KEY = 'color-scheme';
 
 const SCHEMES: readonly MantineColorScheme[] = ['light', 'dark', 'auto'];
+
+const isScheme = (value: string | null): value is MantineColorScheme =>
+  SCHEMES.includes(value as MantineColorScheme);
 
 export const deviceColorSchemeManager = (): MantineColorSchemeManager => {
   const store = deviceStore();
@@ -12,15 +15,13 @@ export const deviceColorSchemeManager = (): MantineColorSchemeManager => {
   return {
     get: (defaultValue) => {
       const saved = store.get(COLOR_SCHEME_KEY);
-      return SCHEMES.includes(saved as MantineColorScheme)
-        ? (saved as MantineColorScheme)
-        : defaultValue;
+      return isScheme(saved) ? saved : defaultValue;
     },
     set: (value) => store.set(COLOR_SCHEME_KEY, value),
     subscribe: (onUpdate) => {
       listener = (event) => {
-        if (event.key?.endsWith(COLOR_SCHEME_KEY) && event.newValue !== null) {
-          onUpdate(event.newValue as MantineColorScheme);
+        if (event.key === DEVICE_PREFIX + COLOR_SCHEME_KEY && isScheme(event.newValue)) {
+          onUpdate(event.newValue);
         }
       };
       window.addEventListener('storage', listener);
