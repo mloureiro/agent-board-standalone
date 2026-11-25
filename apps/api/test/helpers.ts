@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { emptyCredentialStore, type CredentialStore } from '../src/auth/index.js';
 import { HANDLER_SETS } from '../src/handlers/index.js';
 import type { HandlerSet } from '../src/http/handler.js';
+import { stubDatabase } from '../src/modules/database/index.js';
 import { loadConfig, type Env } from '../src/modules/index.js';
 import { createServer } from '../src/server.js';
 import { createOpenStreams, type OpenStreams } from '../src/streams.js';
@@ -54,12 +55,9 @@ export const boot = async (
   const app = await createServer(
     loadConfig(env),
     {
-      database: {
-        kind: 'pglite',
-        close: async () => {
-          closed.database += 1;
-        },
-      },
+      database: stubDatabase('pglite', async () => {
+        closed.database += 1;
+      }),
       credentials: options.credentials ?? emptyCredentialStore,
       streams,
     },

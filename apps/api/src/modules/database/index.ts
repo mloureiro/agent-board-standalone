@@ -2,5 +2,15 @@ import { defineModule } from '../module.js';
 import { databaseSchema } from './config.js';
 
 export type { DatabaseConfig, DatabaseKind } from './config.js';
-export { openStubDatabase, type Database, type OpenDatabase } from './database.js';
+export {
+  openStubDatabase,
+  stubDatabase,
+  type Database,
+  type OpenDatabase,
+  type ScopedDatabase,
+} from './database.js';
+export { DatabaseRefusal, StatementRefused } from './errors.js';
+export { openDatabase } from './open.js';
+export { openPgliteDatabase, defaultPgliteFactory, type PgliteFactory } from './pglite.js';
+export { openPostgresDatabase } from './postgres.js';
 export const databaseModule = defineModule({ name: 'database', schema: databaseSchema });
