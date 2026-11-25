@@ -1,5 +1,6 @@
 import type { HandlerSet } from '../http/handler.js';
 import { ApiError } from '../errors.js';
+import { addSchedule, draftOfRepeating, isRepeating } from '../modules/scheduling/index.js';
 import { contractOf } from './request-contract.js';
 import {
   claimTask,
@@ -21,15 +22,14 @@ const CREATE_STATUS = { now: 'todo', backlog: 'backlog', hold: 'needs-me' } as c
 
 const isTrue = (value: unknown): boolean => value === true || value === 'true';
 
-const isRepeat = (when: object): boolean => 'every' in when || 'cron' in when || 'after' in when;
-
 const dateOf = (value: string | null | undefined): Date | null | undefined =>
   value == null ? (value as null | undefined) : new Date(value);
 
 export const createTaskHandlers =
   (vocabulary: Vocabulary): HandlerSet =>
-  ({ services }) => {
+  ({ services, config }) => {
     const { database } = services;
+    const { scheduling } = config;
     return {
       'machine.list-tasks': ({ input, principal, request }) =>
         database.withOwner(principal.owner, async (tx) => ({
@@ -68,7 +68,7 @@ export const createTaskHandlers =
             tx,
             id,
             { ...patch, notBefore: dateOf(notBefore) },
-            { machine: principal.machineId, run },
+            { machine: principal.machineId, run, scheduling },
           );
           const [wire] = await presentWireTasks(tx, [row]);
           return wire!;
@@ -78,7 +78,9 @@ export const createTaskHandlers =
         if (input.machine !== principal.machineId)
           throw new ApiError('forbidden', 'a machine claims only for itself');
         return database.withOwner(principal.owner, async (tx) => {
-          const [wire] = await presentWireTasks(tx, [await claimTask(tx, input.id, input.machine)]);
+          const [wire] = await presentWireTasks(tx, [
+            await claimTask(tx, input.id, input.machine, { scheduling }),
+          ]);
           return wire!;
         });
       },
@@ -97,8 +99,15 @@ export const createTaskHandlers =
 
       'client.tasks.create': ({ input, principal }) => {
         const { when = 'now', place, lane, projectId, ...fields } = input;
-        if (typeof when === 'object' && isRepeat(when))
-          throw new ApiError('unavailable', 'repeating tasks are created by the scheduling module');
+        if (isRepeating(when)) {
+          if (!scheduling)
+            throw new ApiError('not-enabled', 'scheduling is switched off on this server');
+          return database.withOwner(principal.owner, async (tx) => {
+            const added = await addSchedule(tx, draftOfRepeating(input, when));
+            const [ui] = added.task === null ? [] : await presentUiTasks(tx, [added.task]);
+            return { task: ui ?? null };
+          });
+        }
         return database.withOwner(principal.owner, async (tx) => {
           const { task } = await createTask(tx, {
             ...fields,
@@ -120,7 +129,7 @@ export const createTaskHandlers =
 
       'client.tasks.move': ({ input, principal }) =>
         database.withOwner(principal.owner, async (tx) => {
-          const row = await moveTask(tx, input, principal.owner);
+          const row = await moveTask(tx, input, principal.owner, { scheduling });
           const [ui] = await presentUiTasks(tx, [row]);
           return ui!;
         }),

@@ -8,7 +8,7 @@ import { edgePosition } from './positions.js';
 import { RECENT_FIRST_STATUSES, lockTask } from './queries.js';
 import { recordServerEvent } from './server-events.js';
 import { requireNotIntoWaiting, transitionTask } from './transition.js';
-import type { TaskMove, TaskRow } from './types.js';
+import type { TaskMove, TaskOptions, TaskRow } from './types.js';
 
 export const droppedPriority = (
   own: Priority,
@@ -50,6 +50,7 @@ export const moveTask = async (
   tx: ScopedDatabase,
   input: TaskMove,
   by: string,
+  options: TaskOptions = {},
 ): Promise<TaskRow> => {
   const current = await lockTask(tx, input.id);
   if (current.status === 'running' && input.status !== 'running')
@@ -77,13 +78,12 @@ export const moveTask = async (
       );
     start = { input: input.startInput };
   }
-  const row = await transitionTask(tx, current, {
-    to: input.status,
-    place: position,
-    by: 'user',
-    set: { priority },
-    start,
-  });
+  const row = await transitionTask(
+    tx,
+    current,
+    { to: input.status, place: position, by: 'user', set: { priority }, start },
+    options,
+  );
   if (current.status !== input.status)
     await recordServerEvent(
       tx,

@@ -6,9 +6,10 @@ import { and, eq } from 'drizzle-orm';
 import { note, task } from '../../db/schema/index.js';
 import { ApiError } from '../../errors.js';
 import type { ScopedDatabase } from '../database/index.js';
+import { completeOccurrence } from '../scheduling/occurrence.js';
 import { edgePosition } from './positions.js';
 import { recordServerEvent } from './server-events.js';
-import type { TaskRow, TaskValues, Transition } from './types.js';
+import type { TaskOptions, TaskRow, TaskValues, Transition } from './types.js';
 
 const keepsPause = (from: TaskStatus, to: TaskStatus): boolean =>
   (from === 'todo' && (to === 'todo' || to === 'running')) ||
@@ -46,6 +47,7 @@ export const transitionTask = async (
   tx: ScopedDatabase,
   current: TaskRow,
   change: Transition,
+  options: TaskOptions = {},
 ): Promise<TaskRow> => {
   const leavingRunning =
     current.status === 'running' && (change.to ?? current.status) !== 'running';
@@ -104,5 +106,8 @@ export const transitionTask = async (
     .set({ ...values, ...change.set, ...handedBack })
     .where(eq(task.id, current.id))
     .returning();
+  const leftTodo = current.status === 'todo' && (to !== 'todo' || (row!.closed && !current.closed));
+  if (options.scheduling !== false && leftTodo && current.scheduleId !== null)
+    await completeOccurrence(tx, current.id, current.scheduleId, now);
   return row!;
 };

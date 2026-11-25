@@ -5,7 +5,7 @@ import { ApiError } from '../../errors.js';
 import type { ScopedDatabase } from '../database/index.js';
 import { lockTask } from './queries.js';
 import { transitionTask } from './transition.js';
-import type { TaskRow } from './types.js';
+import type { TaskOptions, TaskRow } from './types.js';
 
 export const isScheduleFull = async (
   tx: ScopedDatabase,
@@ -58,9 +58,10 @@ export const claimTask = async (
   tx: ScopedDatabase,
   id: string,
   machine: string,
+  options: TaskOptions = {},
 ): Promise<TaskRow> => {
   const current = await lockTask(tx, id);
   const refused = await refusal(tx, current, machine);
   if (refused !== undefined) throw new ApiError('conflict', refused);
-  return transitionTask(tx, current, { to: 'running', by: 'machine', set: { machine } });
+  return transitionTask(tx, current, { to: 'running', by: 'machine', set: { machine } }, options);
 };

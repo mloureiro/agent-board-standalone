@@ -4,6 +4,7 @@ import { directory } from '../../db/schema/index.js';
 import { ApiError } from '../../errors.js';
 import type { ScopedDatabase } from '../database/index.js';
 import { lockTask } from './queries.js';
+import { occurrenceFinished } from '../scheduling/occurrence.js';
 import { recordServerEvent } from './server-events.js';
 import { requireNotIntoWaiting, transitionTask } from './transition.js';
 import type { Edge, TaskPatchInput, TaskRow, TaskValues } from './types.js';
@@ -11,6 +12,7 @@ import type { Edge, TaskPatchInput, TaskRow, TaskValues } from './types.js';
 export interface TaskCaller {
   machine: string;
   run?: string | undefined;
+  scheduling?: boolean | undefined;
 }
 
 const NOT_AUTO_DONE =
@@ -79,13 +81,19 @@ export const updateTask = async (
   let place: Edge | undefined;
   if (agentDone) place = 'top';
   else if (set.priority !== undefined) place = 'bottom';
-  const row = await transitionTask(tx, current, {
-    to: patch.status,
-    place,
-    by: run === undefined ? 'machine' : 'agent',
-    set,
-  });
+  const row = await transitionTask(
+    tx,
+    current,
+    { to: patch.status, place, by: run === undefined ? 'machine' : 'agent', set },
+    caller,
+  );
   if (agentDone && row.status === 'done')
     await recordServerEvent(tx, id, { type: 'moved', from: 'running', to: 'done' }, caller.machine);
+  if (
+    caller.scheduling !== false &&
+    current.status === 'running' &&
+    (row.status === 'needs-me' || row.status === 'done')
+  )
+    await occurrenceFinished(tx, current, row.updatedAt);
   return row;
 };

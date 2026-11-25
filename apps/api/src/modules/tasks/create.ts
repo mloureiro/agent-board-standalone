@@ -9,15 +9,18 @@ import type { NewTask, NewTaskExtras, TaskRow } from './types.js';
 
 const DEFAULT_PRIORITY = 'normal';
 
-const resolveProject = async (
+export const resolveProject = async (
   tx: ScopedDatabase,
   projectId: string | undefined,
+  allowArchived = false,
 ): Promise<string> => {
   const [row] = await tx
-    .select({ id: project.id })
+    .select({ id: project.id, archivedAt: project.archivedAt })
     .from(project)
     .where(projectId === undefined ? eq(project.isDefault, true) : eq(project.id, projectId));
   if (!row) throw new ApiError('not-found', 'no such project');
+  if (!allowArchived && row.archivedAt !== null)
+    throw new ApiError('conflict', 'the project is archived');
   return row.id;
 };
 
@@ -47,7 +50,7 @@ export const createTask = async (
   const status = proposed ? 'backlog' : (draft.status ?? 'todo');
   if (draft.notBefore !== undefined && status !== 'todo')
     throw new ApiError('bad-request', 'only a task in todo can have a start time');
-  const projectId = await resolveProject(tx, draft.projectId);
+  const projectId = await resolveProject(tx, draft.projectId, extras.scheduleId !== undefined);
   const machine = await resolveMachine(tx, projectId, draft);
   const [row] = await tx
     .insert(task)
@@ -65,6 +68,8 @@ export const createTask = async (
       machine,
       projectId,
       directoryId: draft.directoryId ?? null,
+      legacyDirectory: draft.legacyDirectory ?? null,
+      legacyHomeWorkdir: draft.legacyDirectory ?? null,
       agent: draft.agent ?? null,
       icon: draft.icon ?? null,
       labels: draft.labels ?? null,

@@ -59,6 +59,7 @@ export interface NewTask {
   machine?: string | undefined;
   projectId?: string | undefined;
   directoryId?: string | null | undefined;
+  legacyDirectory?: string | undefined;
   agent?: string | undefined;
   icon?: string | undefined;
   labels?: string | undefined;
@@ -95,4 +96,8 @@ export interface TaskMove {
 export interface TaskListOptions {
   all?: boolean | undefined;
   projectId?: string | undefined;
+}
+
+export interface TaskOptions {
+  scheduling?: boolean | undefined;
 }
