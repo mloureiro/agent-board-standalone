@@ -48,11 +48,18 @@ describe('GET /api/version', () => {
 
   it('[api-115] lists the sign-in methods of a login server', async () => {
     const { app } = await started(
-      loginEnv({ OIDC_ISSUER: 'https://idp.example', SAML_ENTRY_POINT: 'https://idp.example/sso' }),
+      loginEnv({
+        OIDC_ISSUER: 'https://idp.example',
+        OIDC_CLIENT_ID: 'board',
+        OIDC_CLIENT_SECRET: 'secret',
+        SAML_IDP_METADATA_URL: 'https://idp.example/metadata',
+      }),
     );
     const document = (await app.inject({ url: '/api/version' })).json();
     expect(document.modules.signIn).toEqual(['passkeys', 'handoff', 'oidc', 'saml']);
-    const passkeysOff = await started(loginEnv({ PASSKEYS: 'off', SAML_ENTRY_POINT: 'https://x' }));
+    const passkeysOff = await started(
+      loginEnv({ PASSKEYS: 'off', SAML_IDP_METADATA_URL: 'https://x.example/metadata' }),
+    );
     expect((await passkeysOff.app.inject({ url: '/api/version' })).json().modules.signIn).toEqual([
       'handoff',
       'saml',
