@@ -331,10 +331,23 @@ answered the notification prompt for this app.
 4. Make another task need you. A banner shows and no permission prompt shows. The Notifications entry still reads
    Allow Notifications on and no second entry exists.
 5. Repeat the steps with `Agent Board Debug` in place of build B. It shows banners without a prompt and without a
-   second entry, because it has the same bundle id.
+   second entry, because it has the same bundle id. Its ad-hoc signature differs from the release build, so the
+   Keychain prompts of the walk "Keychain prompt after an update (S4)" show for the token and key items. They are not
+   a failure of this entry.
 
 Expected: the permission is tied to the bundle id and not to the code signature, so an ad-hoc rebuild keeps it. If a
 prompt shows again after step 3, record it: the row no longer holds.
+
+## 051: All servers follows the open windows
+
+1. Open one server, so its window is the only server window. In the list click "All servers". It shows that server
+   only.
+2. Leave All servers open, then open a second server from the list. Without reopening All servers, the window reloads
+   and now shows both servers.
+3. Remove the second server from the list. All servers reloads and no longer shows it, with no "unknown server"
+   message.
+
+Expected: the All servers window always matches the server windows that are open, with no manual reopen.
 
 ## 048: runs on macOS 14 and later, on Apple silicon and Intel
 
@@ -391,10 +404,12 @@ The end-to-end check of a release. Use the zip attached to the `client-app-v<ver
 4. Create a card with New task (a short prompt for a machine you have connected). The card appears in Backlog or Todo.
 5. Let it run. The card moves through Running and reaches Done, and the board updates without a reload. If a task asks
    for you on the way, a native notification shows when the home tab is not in front, and clicking it opens the task.
-6. Quit with Cmd-Q and open the app again. The server window comes back with its tabs, the board shows the card in Done,
-   and no sign-in is asked.
-7. Repeat steps 2 to 4 with `Agent Board Debug`. It reaches the same server with the same sign-in, and right-click
-   Inspect Element opens the Web Inspector.
+6. Quit with Cmd-Q and open the app again. No server window comes back, because nothing loads at launch. Open the
+   server from the list: its window opens with the tabs it had, the board shows the card in Done, and no sign-in is
+   asked.
+7. Repeat steps 2 to 4 with `Agent Board Debug`. Its ad-hoc signature differs from the release build, so the Keychain
+   prompts of the walk "Keychain prompt after an update (S4)" show for the token and key items. Allow them. It then
+   reaches the same server with the same sign-in, and right-click Inspect Element opens the Web Inspector.
 
 Expected: from a clean Mac and a release zip, the server app hands the server over, a created card runs to Done, and
 a restart keeps the session.
