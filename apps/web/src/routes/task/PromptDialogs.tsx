@@ -2,6 +2,7 @@ import { Button, Group, Modal, Stack, Text, TextInput, Textarea } from '@mantine
 import { useState, type ReactNode } from 'react';
 
 import { Markdown } from '../../components/index.js';
+import { useDraft } from '../../drafts/index.js';
 import type { PolishRewrite } from './action-model.js';
 
 interface PromptValue {
@@ -10,23 +11,35 @@ interface PromptValue {
 }
 
 function PromptForm(props: {
+  readonly draftKey: string;
   readonly initial: PromptValue;
   readonly titleLabel: string;
   readonly textLabel: string;
   readonly submitLabel: string;
   readonly textFirst?: boolean;
-  readonly busy: boolean;
-  readonly onSubmit: (value: PromptValue) => void;
+  readonly onSubmit: (value: PromptValue) => Promise<boolean>;
+  readonly onDone: () => void;
 }): ReactNode {
-  const [title, setTitle] = useState(props.initial.title);
-  const [text, setText] = useState(props.initial.text);
+  const [titleDraft, setTitleDraft] = useDraft(`${props.draftKey}:title`, props.initial.title);
+  const [textDraft, setTextDraft] = useDraft(`${props.draftKey}:text`, props.initial.text);
+  const [title, setTitle] = useState(titleDraft === '' ? props.initial.title : titleDraft);
+  const [text, setText] = useState(textDraft === '' ? props.initial.text : textDraft);
+  const [busy, setBusy] = useState(false);
   const ready = title.trim() !== '' && text.trim() !== '';
+  const changeTitle = (next: string): void => {
+    setTitle(next);
+    setTitleDraft(next === props.initial.title ? '' : next);
+  };
+  const changeText = (next: string): void => {
+    setText(next);
+    setTextDraft(next === props.initial.text ? '' : next);
+  };
   const titleField = (
     <TextInput
       key="title"
       label={props.titleLabel}
       value={title}
-      onChange={(event) => setTitle(event.currentTarget.value)}
+      onChange={(event) => changeTitle(event.currentTarget.value)}
     />
   );
   const textField = (
@@ -37,7 +50,7 @@ function PromptForm(props: {
       minRows={5}
       maxRows={16}
       value={text}
-      onChange={(event) => setText(event.currentTarget.value)}
+      onChange={(event) => changeText(event.currentTarget.value)}
       data-autofocus={props.textFirst === true ? true : undefined}
     />
   );
@@ -45,13 +58,21 @@ function PromptForm(props: {
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        if (ready && !props.busy) props.onSubmit({ title: title.trim(), text });
+        if (!ready || busy) return;
+        setBusy(true);
+        void props.onSubmit({ title: title.trim(), text }).then((ok) => {
+          setBusy(false);
+          if (!ok) return;
+          setTitleDraft('');
+          setTextDraft('');
+          props.onDone();
+        });
       }}
     >
       <Stack>
         {props.textFirst === true ? [textField, titleField] : [titleField, textField]}
         <Group justify="flex-end">
-          <Button type="submit" disabled={!ready || props.busy}>
+          <Button type="submit" disabled={!ready || busy}>
             {props.submitLabel}
           </Button>
         </Group>
@@ -61,54 +82,44 @@ function PromptForm(props: {
 }
 
 export function ForkDialog(props: {
+  readonly taskId: string;
   readonly opened: boolean;
   readonly onClose: () => void;
   readonly onFork: (value: PromptValue) => Promise<boolean>;
 }): ReactNode {
-  const [busy, setBusy] = useState(false);
   return (
     <Modal opened={props.opened} onClose={props.onClose} title="Fork" centered size="lg">
       <PromptForm
+        draftKey={`fork:${props.taskId}`}
         initial={{ title: '', text: '' }}
         titleLabel="Title"
         textLabel="Instructions"
         submitLabel="Fork"
         textFirst
-        busy={busy}
-        onSubmit={(value) => {
-          setBusy(true);
-          void props.onFork(value).then((ok) => {
-            setBusy(false);
-            if (ok) props.onClose();
-          });
-        }}
+        onSubmit={props.onFork}
+        onDone={props.onClose}
       />
     </Modal>
   );
 }
 
 export function EditPromptDialog(props: {
+  readonly taskId: string;
   readonly opened: boolean;
   readonly initial: PromptValue;
   readonly onClose: () => void;
   readonly onSave: (value: PromptValue) => Promise<boolean>;
 }): ReactNode {
-  const [busy, setBusy] = useState(false);
   return (
     <Modal opened={props.opened} onClose={props.onClose} title="Edit prompt" centered size="lg">
       <PromptForm
+        draftKey={`edit:${props.taskId}`}
         initial={props.initial}
         titleLabel="Title"
         textLabel="Prompt"
         submitLabel="Save"
-        busy={busy}
-        onSubmit={(value) => {
-          setBusy(true);
-          void props.onSave(value).then((ok) => {
-            setBusy(false);
-            if (ok) props.onClose();
-          });
-        }}
+        onSubmit={props.onSave}
+        onDone={props.onClose}
       />
     </Modal>
   );

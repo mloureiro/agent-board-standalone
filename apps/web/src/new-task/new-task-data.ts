@@ -13,7 +13,8 @@ import { callRoute } from '../auth/api.js';
 import { useKeys } from '../keys/index.js';
 import { useServers } from '../servers/index.js';
 import type { ServerClient } from '../transport/client.js';
-import { boardKey, featuresOf, fetchProjectNames } from '../routes/board/board-data.js';
+import { fetchProjectEntries } from '../projects/fetch-projects.js';
+import { boardKey, featuresOf } from '../routes/board/board-data.js';
 import { attempt } from '../routes/board/card-model.js';
 
 export interface Option {
@@ -21,9 +22,17 @@ export interface Option {
   readonly label: string;
 }
 
+export interface ProjectOption extends Option {
+  readonly isDefault: boolean;
+}
+
+export interface DirectoryOption extends Option {
+  readonly projectId: string;
+}
+
 export interface NewTaskOptions {
-  readonly projects: readonly Option[];
-  readonly directories: readonly Option[] | undefined;
+  readonly projects: readonly ProjectOption[];
+  readonly directories: readonly DirectoryOption[] | undefined;
   readonly machines: readonly string[] | undefined;
   readonly schedules: readonly Option[];
   readonly directoriesEnabled: boolean;
@@ -50,24 +59,27 @@ export function useNewTaskOptions(): NewTaskOptions | null {
   const projects = useQuery({
     queryKey: [...base, 'projects'],
     enabled: enabled && features.includes('projects'),
-    queryFn: async (): Promise<Option[]> => {
+    queryFn: async (): Promise<ProjectOption[]> => {
       const client = clientRef.current;
       if (client === null || keys === null) return [];
-      const names = await fetchProjectNames(client, keys);
-      return [...names].map(([id, label]) => ({ id, label }));
+      const entries = await fetchProjectEntries(client, keys);
+      return entries
+        .filter((entry) => !entry.archived)
+        .map((entry) => ({ id: entry.id, label: entry.label, isDefault: entry.isDefault }));
     },
   });
 
   const directories = useQuery({
     queryKey: [...base, 'directories'],
     enabled: enabled && features.includes('directories'),
-    queryFn: async (): Promise<Option[]> => {
+    queryFn: async (): Promise<DirectoryOption[]> => {
       const client = clientRef.current;
       if (client === null || keys === null) return [];
       const answer = await callRoute(client, listClientDirectoriesRoute, {});
       return Promise.all(
         answer.directories.map(async (directory) => ({
           id: directory.id,
+          projectId: directory.projectId,
           label:
             (await attempt(keys, bindings.directoryPath(directory.id), directory.path)) ??
             'Unreadable directory',

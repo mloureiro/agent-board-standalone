@@ -1,4 +1,4 @@
-import { Box } from '@mantine/core';
+import { Box, Group } from '@mantine/core';
 import type { ReactNode } from 'react';
 import { Outlet, useLocation } from 'react-router';
 
@@ -7,13 +7,16 @@ import { KeyGate, useKeys } from '../keys/index.js';
 import { PairingPanel } from '../pairing/index.js';
 import {
   AppHeader,
+  usePhone,
   ConnectionBanners,
   ErrorBoundaryPanel,
   NewTaskProvider,
   ServerStatePanel,
+  NeedsMeNotifier,
   Toasts,
   panelFor,
 } from '../components/index.js';
+import { ProjectFilterGuard, ProjectFilterProvider, ProjectsSidebar } from '../projects/index.js';
 import { useServers } from '../servers/index.js';
 import { useEnvironment } from '../session/index.js';
 
@@ -39,14 +42,22 @@ function Content(): ReactNode {
 
 export function Shell(): ReactNode {
   const { epoch } = useKeys();
+  const phone = usePhone();
   return (
-    <NewTaskProvider key={epoch}>
-      <AppHeader />
-      <ConnectionBanners />
-      <Box component="main" p="md">
-        <Content />
-      </Box>
-      <Toasts />
-    </NewTaskProvider>
+    <ProjectFilterProvider>
+      <NewTaskProvider key={epoch}>
+        <ProjectFilterGuard />
+        <AppHeader />
+        <ConnectionBanners />
+        <Group align="flex-start" wrap="nowrap" gap={0}>
+          {phone ? null : <ProjectsSidebar />}
+          <Box component="main" p="md" style={{ flex: 1, minWidth: 0 }}>
+            <Content />
+          </Box>
+        </Group>
+        <NeedsMeNotifier />
+        <Toasts />
+      </NewTaskProvider>
+    </ProjectFilterProvider>
   );
 }

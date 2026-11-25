@@ -121,6 +121,10 @@ afterEach(() => {
 
 describe('new task form', () => {
   it('[web-061] sends every field sealed, with the prompt bound to the directory and agent', async () => {
+    world.directories = [
+      { id: DIRECTORY_REPO, path: '/work/repo' },
+      { id: DIRECTORY_DOCS, path: '/work/docs', projectId: PROJECT_WORK },
+    ];
     const { user } = render();
     const dialog = await openForm(user);
     const form = within(dialog);
@@ -130,7 +134,7 @@ describe('new task form', () => {
     await user.selectOptions(form.getByLabelText('Project'), 'Work');
     await user.click(form.getByRole('button', { name: 'Icon' }));
     await user.click(await form.findByRole('button', { name: '🚀' }));
-    await user.selectOptions(form.getByLabelText('Directory'), '/work/repo');
+    await user.selectOptions(form.getByLabelText('Directory'), '/work/docs');
     await user.type(form.getByLabelText('Labels'), 'bug, ui{Enter}');
     await user.selectOptions(form.getByLabelText('Priority'), 'High');
     await user.selectOptions(form.getByLabelText('Model'), 'Opus');
@@ -151,7 +155,7 @@ describe('new task form', () => {
       autoDone: true,
       projectId: PROJECT_WORK,
       when: 'now',
-      place: { machine: 'laptop', directoryId: DIRECTORY_REPO },
+      place: { machine: 'laptop', directoryId: DIRECTORY_DOCS },
     });
     expect(await open(keys, bindings.title({ task: id }), String(sent.title))).toBe('Badge fix');
     expect(await open(keys, bindings.icon({ task: id }), String(sent.icon))).toBe('🚀');
@@ -164,7 +168,7 @@ describe('new task form', () => {
       creator: 'user',
       forkOf: null,
       agent: 'e2e-agent',
-      directoryId: DIRECTORY_REPO,
+      directoryId: DIRECTORY_DOCS,
     });
     expect(await open(keys, bound, String(sent.input))).toBe('Fix the badge');
     const unbound = bindings.input({ origin: { task: id }, creator: 'user', agent: 'e2e-agent' });

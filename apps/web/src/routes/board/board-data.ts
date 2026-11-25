@@ -1,7 +1,6 @@
 import {
   doneClientTaskRoute,
   listClientMachinesRoute,
-  listClientProjectsRoute,
   listClientTasksRoute,
   moveClientTaskRoute,
   configureClientTaskRoute,
@@ -17,6 +16,8 @@ import type { ServerClient } from '../../transport/client.js';
 import { watchEvents } from '../../transport/index.js';
 import { decryptCard, type BoardCard } from './card-model.js';
 import { applyMove, type MoveRequest } from './columns.js';
+import { fetchProjectNames } from '../../projects/fetch-projects.js';
+import { useProjectFilter } from '../../projects/project-filter.js';
 import { parseTime } from './format.js';
 
 export const POLL_MS = 5_000;
@@ -57,20 +58,6 @@ async function openText(keys: Keys, binding: ReturnType<typeof bindings.title>, 
 export const featuresOf = (
   view: ReturnType<ReturnType<typeof useServers>['connectionOf']>,
 ): readonly string[] => ('server' in view ? view.server.server.features : []);
-
-export async function fetchProjectNames(
-  client: ServerClient,
-  keys: Keys,
-): Promise<Map<string, string>> {
-  const names = new Map<string, string>();
-  const answer = await callRoute(client, listClientProjectsRoute, {});
-  for (const project of answer.projects) {
-    if (project.name === null) continue;
-    const name = await openText(keys, bindings.projectName(project.id), project.name);
-    if (name !== null) names.set(project.id, name);
-  }
-  return names;
-}
 
 export interface BoardData {
   readonly serverId: string;
@@ -133,6 +120,7 @@ export function useBoardData(): BoardData | null {
   const hasClient = clientRef.current !== null;
   const keyId = keys?.keyId ?? '';
   const scope = serverId ?? '';
+  const { projectId: filter } = useProjectFilter();
   const features = serverId === null ? [] : featuresOf(connectionOf(serverId));
   const withProjects = features.includes('projects');
 
@@ -194,6 +182,14 @@ export function useBoardData(): BoardData | null {
     },
   });
 
+  const cards = useMemo(
+    () =>
+      filter === null || !withProjects
+        ? tasks.data
+        : tasks.data?.filter((card) => card.task.projectId === filter),
+    [tasks.data, filter, withProjects],
+  );
+
   return useMemo(
     () =>
       serverId === null || keys === null
@@ -201,7 +197,7 @@ export function useBoardData(): BoardData | null {
         : {
             serverId,
             keys,
-            cards: tasks.data,
+            cards,
             machines: machines.data ?? [],
             projectNames: withProjects && projects.data !== undefined ? projects.data : null,
             refreshFailed: tasks.isError,
@@ -211,7 +207,7 @@ export function useBoardData(): BoardData | null {
     [
       serverId,
       keys,
-      tasks.data,
+      cards,
       tasks.isError,
       tasks.error,
       machines.data,
