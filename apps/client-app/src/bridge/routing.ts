@@ -2,6 +2,10 @@ const TITLE_SUFFIX = ' · Agent Board';
 const HOME_LABEL = /-0$/;
 const WATCHED_MUTATIONS = { childList: true, characterData: true, subtree: true } as const;
 
+export function isHomeLabel(label: string): boolean {
+  return HOME_LABEL.test(label);
+}
+
 export type Report = (command: string, args: Record<string, unknown>) => Promise<unknown>;
 
 export interface RoutingOptions {
@@ -20,7 +24,7 @@ function send(report: Report, command: string, args: Record<string, unknown>): v
 
 function watchHistory({ target, label, report }: RoutingOptions): () => void {
   const { history, location } = target;
-  const intent = HOME_LABEL.test(label) ? 'open' : 'route';
+  const intent = isHomeLabel(label) ? 'open' : 'route';
   let last = location.pathname + location.search;
   const announce = (): void => {
     const path = location.pathname + location.search;

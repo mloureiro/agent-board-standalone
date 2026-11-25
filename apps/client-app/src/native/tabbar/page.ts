@@ -26,8 +26,15 @@ function isTyping(target: EventTarget | null): boolean {
 export async function mountTabbar(root: HTMLElement, backend: TabbarBackend): Promise<void> {
   const homeSlot = h('div', { class: 'home-slot' });
   const scroller = h('div', { class: 'scroller' });
+  const banner = h('div', { class: 'banner', role: 'status', hidden: '' });
   const bar = h('div', { class: 'bar', role: 'tablist', 'aria-label': 'Tabs' }, homeSlot, scroller);
-  root.replaceChildren(bar);
+  root.replaceChildren(h('div', { class: 'strip' }, bar, banner));
+
+  function showBanner(text: string | null): void {
+    banner.textContent = text ?? '';
+    banner.title = text ?? '';
+    banner.hidden = text === null;
+  }
 
   const fail = (action: string) => (): void => {
     console.error(`${action} failed`);
@@ -185,4 +192,12 @@ export async function mountTabbar(root: HTMLElement, backend: TabbarBackend): Pr
   });
   const snapshot = await backend.snapshot();
   if (!live) render(snapshot);
+
+  let bannerLive = false;
+  await backend.onBanner((text) => {
+    bannerLive = true;
+    showBanner(text);
+  });
+  const current = await backend.banner();
+  if (!bannerLive) showBanner(current);
 }

@@ -8,6 +8,8 @@
   --text: light-dark(#1d1f22, #ecebe7);
   --text-muted: light-dark(#63676d, #a2a6ad);
   --accent: light-dark(#1f5fbf, #7fb0ff);
+  --warning: light-dark(#b26a00, #e0a64a);
+  --warning-surface: light-dark(#fff3dc, #3a2d14);
 
   --bar-height: 36px;
   --tab-min-width: 96px;
@@ -42,11 +44,37 @@ body {
   -webkit-user-select: none;
 }
 
-.bar {
+.strip {
   display: flex;
+  align-items: center;
   height: var(--bar-height);
   border-bottom: 1px solid var(--border);
   background: var(--surface);
+}
+
+.bar {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+}
+
+.banner {
+  flex: 0 1 auto;
+  max-width: 45%;
+  margin: 0 var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  overflow: hidden;
+  border: 1px solid var(--warning);
+  border-radius: var(--space-1);
+  background: var(--warning-surface);
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.banner[hidden] {
+  display: none;
 }
 
 .home-slot {

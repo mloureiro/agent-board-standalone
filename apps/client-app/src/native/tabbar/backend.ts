@@ -19,6 +19,8 @@ export interface TabbarBackend {
   close(tab: number): Promise<void>;
   cycle(direction: 'next' | 'previous'): Promise<void>;
   onChanged(handler: (view: PaneView) => void): Promise<void>;
+  banner(): Promise<string | null>;
+  onBanner(handler: (text: string | null) => void): Promise<void>;
 }
 
 export const tauriBackend: TabbarBackend = {
@@ -28,6 +30,12 @@ export const tauriBackend: TabbarBackend = {
   cycle: (dir) => command('tab_cycle', { dir }),
   onChanged: async (handler) => {
     await getCurrentWebview().listen<PaneView>('tabs-changed', (event) => {
+      handler(event.payload);
+    });
+  },
+  banner: () => command<string | null>('tabbar_banner'),
+  onBanner: async (handler) => {
+    await getCurrentWebview().listen<string | null>('banner-changed', (event) => {
       handler(event.payload);
     });
   },

@@ -34,6 +34,8 @@ function fakeBackend(initial: PaneView = TABS): Fake {
       onChanged: async (next) => {
         handler = next;
       },
+      banner: async () => null,
+      onBanner: async () => undefined,
     },
   };
 }
