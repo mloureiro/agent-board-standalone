@@ -1,10 +1,17 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  appendFileSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { loadExpectedRed } from './expected.ts';
+import { loadExpectedRed, skipsListed } from './expected.ts';
 import {
   joinSkipReasons,
   parsePlaywrightErrors,
@@ -13,7 +20,7 @@ import {
   parseVitestReport,
   type TestResult,
 } from './results.ts';
-import { exitCode, judgeRun, type Verdict, type VerdictOptions } from './verdict.ts';
+import { exitCode, judgeRun, NOW_PASSES, type Verdict, type VerdictOptions } from './verdict.ts';
 
 const E2E_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const EXPECTED_FILE = path.join(E2E_ROOT, 'expected-red.json');
@@ -137,14 +144,14 @@ export function runRunner(
   }
 }
 
-function print(runner: Runner, outcome: RatchetOutcome): void {
+function print(runner: Runner, outcome: RatchetOutcome, maxWarnings: number): void {
   const failures = outcome.verdicts.filter((entry) => entry.level === 'fail');
   const warnings = outcome.verdicts.filter((entry) => entry.level === 'warn');
-  for (const entry of warnings.slice(0, MAX_WARNINGS)) {
+  for (const entry of warnings.slice(0, maxWarnings)) {
     console.warn(`ratchet warning: ${entry.message}`);
   }
-  if (warnings.length > MAX_WARNINGS) {
-    console.warn(`ratchet warning: ... and ${warnings.length - MAX_WARNINGS} more`);
+  if (warnings.length > maxWarnings) {
+    console.warn(`ratchet warning: ... and ${warnings.length - maxWarnings} more`);
   }
   for (const entry of failures) console.error(`ratchet FAIL: ${entry.message}`);
   const red = outcome.verdicts.filter((entry) => entry.message.endsWith('red as listed')).length;
@@ -178,14 +185,32 @@ export function main(argv: readonly string[], env: NodeJS.ProcessEnv): number {
     ci: Boolean(env.CI),
     matrixCell: Boolean(env.E2E_MATRIX_CELL),
     strict,
+    skipListed: skipsListed(env),
+    reportPassing: !skipsListed(env),
   };
   let code = 0;
   for (const runner of runners) {
     const outcome = runRunner(runner, passthrough, options, env);
-    print(runner, outcome);
+    print(runner, outcome, options.reportPassing === true ? Infinity : MAX_WARNINGS);
+    if (options.reportPassing === true) summarisePassing(runner, outcome, env);
     if (outcome.code !== 0) code = 1;
   }
   return code;
+}
+
+function summarisePassing(runner: Runner, outcome: RatchetOutcome, env: NodeJS.ProcessEnv): void {
+  const passing = outcome.verdicts.filter(
+    (entry) => entry.level === 'warn' && entry.message.endsWith(NOW_PASSES),
+  );
+  const target = env.GITHUB_STEP_SUMMARY;
+  if (!target) return;
+  const lines = [
+    `### ${runner}: ${passing.length} listed red test(s) now pass`,
+    '',
+    ...passing.map((entry) => `- ${entry.message.slice(0, -NOW_PASSES.length - 2)}`),
+    '',
+  ];
+  appendFileSync(target, `${lines.join('\n')}\n`);
 }
 
 if (

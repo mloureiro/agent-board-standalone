@@ -2,15 +2,47 @@ name: CI
 
 on:
   push:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+env:
+  E2E_LISTED: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'run' || 'skip' }}
+
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      e2e_blackbox: ${{ steps.plan.outputs.e2e_blackbox }}
+      e2e_browser: ${{ steps.plan.outputs.e2e_browser }}
+      compat: ${{ steps.plan.outputs.compat }}
+      api_executable: ${{ steps.plan.outputs.api_executable }}
+      sealing_runtimes: ${{ steps.plan.outputs.sealing_runtimes }}
+      binary_smoke: ${{ steps.plan.outputs.binary_smoke }}
+      mobile: ${{ steps.plan.outputs.mobile }}
+      client_app: ${{ steps.plan.outputs.client_app }}
+      server_app: ${{ steps.plan.outputs.server_app }}
+      install_alone: ${{ steps.plan.outputs.install_alone }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+        run: node tools/repo/src/affected.ts
+
   check:
     runs-on: ubuntu-latest
     services:
@@ -39,7 +71,9 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: apps/client-app/src-tauri
+          workspaces: |
+            apps/client-app/src-tauri
+            apps/server-app/src-tauri
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
       - run: pnpm lint
@@ -49,6 +83,8 @@ jobs:
 
   mobile-rust:
     name: mobile (rust)
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -69,6 +105,8 @@ jobs:
       - run: pnpm --filter @agent-board/mobile test:rust
 
   api-executable:
+    needs: changes
+    if: needs.changes.outputs.api_executable == 'true'
     runs-on: ubuntu-latest
     env:
       REQUIRE_BUN_EXECUTABLE: '1'
@@ -85,6 +123,8 @@ jobs:
 
   mobile-phone:
     name: mobile (phone)
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -101,6 +141,8 @@ jobs:
 
   client-app-macos:
     name: client-app (macOS)
+    needs: changes
+    if: needs.changes.outputs.client_app == 'true'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -119,7 +161,33 @@ jobs:
       - run: pnpm --filter "@agent-board/client-app..." --if-present run build
       - run: pnpm --filter @agent-board/client-app shell:check
 
+  server-app-macos:
+    name: server-app (macOS)
+    needs: changes
+    if: needs.changes.outputs.server_app == 'true'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/server-app/src-tauri
+      - run: pnpm install --frozen-lockfile --filter "@agent-board/server-app..."
+      - run: pnpm --filter "@agent-board/server-app..." --if-present run build
+      - run: pnpm --filter @agent-board/server-app shell:check
+      - run: pnpm --filter @agent-board/server-app build:binary
+      - run: pnpm --filter @agent-board/server-app test
+
   sealing-runtimes:
+    needs: changes
+    if: needs.changes.outputs.sealing_runtimes == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -136,6 +204,8 @@ jobs:
 
   e2e-blackbox:
     name: e2e (black-box)
+    needs: changes
+    if: needs.changes.outputs.e2e_blackbox == 'true'
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -174,6 +244,8 @@ jobs:
 
   e2e-browser:
     name: e2e (${{ matrix.project }})
+    needs: changes
+    if: needs.changes.outputs.e2e_browser == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -231,6 +303,8 @@ jobs:
 
   compat-matrix:
     name: compatibility matrix (N vs N-1)
+    needs: changes
+    if: needs.changes.outputs.compat == 'true'
     runs-on: ubuntu-latest
     env:
       E2E_KEEP_TMP: '1'
@@ -262,22 +336,13 @@ jobs:
 
   install-alone:
     name: install alone (${{ matrix.package }})
+    needs: changes
+    if: needs.changes.outputs.install_alone != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        package:
-          - api
-          - cli
-          - web
-          - migrate
-          - server-app
-          - client-app
-          - mobile
-          - contract
-          - sealing
-          - e2e
-          - repo-tools
+        package: ${{ fromJSON(needs.changes.outputs.install_alone) }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -285,7 +350,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - if: matrix.package == 'client-app' || matrix.package == 'mobile'
+      - if: matrix.package == 'client-app' || matrix.package == 'server-app' || matrix.package == 'mobile'
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
@@ -300,6 +365,8 @@ jobs:
 
   binary-smoke:
     name: binary smoke (${{ matrix.target }})
+    needs: changes
+    if: needs.changes.outputs.binary_smoke == 'true'
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false

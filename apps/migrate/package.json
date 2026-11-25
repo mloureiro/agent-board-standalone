@@ -1,15 +1,17 @@
 {
   "name": "@agent-board/migrate",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "license": "MIT",
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
     "migrate": "node bin/agent-board-migrate.js",
+    "build": "tsx scripts/build.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "fixtures:build": "tsx fixtures/build.ts"
+    "fixtures:build": "tsx fixtures/build.ts",
+    "release": "tsx scripts/release.ts"
   },
   "dependencies": {
     "@agent-board/contract": "workspace:^1.0.0",
@@ -21,7 +23,9 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
-    "@types/pg": "^8.23.1"
+    "@types/pg": "^8.23.1",
+    "esbuild": "^0.28.2",
+    "pglite-target": "npm:@electric-sql/pglite@0.6.0"
   },
   "bin": {
     "agent-board-migrate": "./bin/agent-board-migrate.js"

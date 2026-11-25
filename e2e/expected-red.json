@@ -5,9 +5,7 @@
       "board projects › [cli-039] board projects lists the server's projects",
       "board projects › [cli-039] a default project set on the host receives board schedule without --project"
     ],
-    "blackbox/legacy-dirs.test.ts": "*",
     "blackbox/matrix-refusal.test.ts": "*",
-    "blackbox/migrate.test.ts": "*",
     "blackbox/schedules.test.ts": [
       "[api-077] an after schedule › [api-077] fires once when the upstream task moves from running to done",
       "[api-077] an after schedule › [api-077] fires once more for running to done on a second run"
@@ -66,9 +64,10 @@
       "accessibility of the sign-in page › [web-080] the sign-in page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme"
     ],
     "browser/board.spec.ts": "*",
-    "browser/client-app-bridge.spec.ts": "*",
     "browser/connection.spec.ts": "*",
-    "browser/migrate.spec.ts": "*",
+    "browser/migrate.spec.ts": [
+      "the migrated board in the browser › [migrate-003] the owner passphrase unlocks the migrated board and every task opens"
+    ],
     "browser/new-task.spec.ts": "*",
     "browser/parity.spec.ts": [
       "redirect sign-in › [P-05] SAML redirect sign-in finishes in the tab that started it",

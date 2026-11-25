@@ -97,6 +97,9 @@ function flattenHeaders(headers: Headers): Record<string, string> {
   return flat;
 }
 
+const PAGE_GONE =
+  /has been closed|Execution context was destroyed|Frame was detached|navigation|Target closed/i;
+
 const inbox = ([name, id, message]: readonly [string, string, unknown]): void => {
   (window as unknown as Record<string, (id: string, message: unknown) => void>)[name]?.(
     id,
@@ -380,7 +383,12 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
       attached = context;
       await context.exposeBinding(BRIDGE_BINDING, async (source, op, args) =>
         handle(op as BridgeOp, (args ?? {}) as Record<string, unknown>, (id, delivery) => {
-          void source.page.evaluate(inbox, [BRIDGE_INBOX, id, delivery] as const);
+          source.page
+            .evaluate(inbox, [BRIDGE_INBOX, id, delivery] as const)
+            .catch((error: unknown) => {
+              if (source.page.isClosed() || PAGE_GONE.test(String(error))) return;
+              throw error;
+            });
         }),
       );
       await context.addInitScript(bridgeInitScript());

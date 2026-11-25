@@ -1,6 +1,7 @@
 import { createWriteStream } from 'node:fs';
 import { once } from 'node:events';
-import { rm } from 'node:fs/promises';
+import { mkdir, rm } from 'node:fs/promises';
+import { dirname } from 'node:path';
 import {
   BOARD_EXPORT_FORMAT,
   BOARD_EXPORT_VERSION,
@@ -14,6 +15,7 @@ import { exportRecords } from './transform/records.js';
 
 export async function writeExport(reader: SourceReader, outFile: string): Promise<PlanReport> {
   const detected = await detectSourceVersion(reader);
+  await mkdir(dirname(outFile), { recursive: true });
   const out = createWriteStream(outFile, { encoding: 'utf8', mode: 0o600 });
   const failed = once(out, 'error').then(([error]) => Promise.reject(error as Error));
   failed.catch(() => undefined);
