@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { linkSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -134,5 +135,11 @@ describe('the files a command reads', () => {
     expect(() => readNoteFile(directory)).toThrow(UsageError);
     expect(() => readNoteFile(tmpFile('x'.repeat(1024 * 1024 + 1)))).toThrow('1 MiB');
     expect(() => readNoteFile('/tmp/board-cli-test-missing/none')).toThrow('cannot read');
+  });
+
+  it('refuses a named pipe without waiting for a writer', () => {
+    const fifo = path.join(tmpDir(), 'pipe');
+    execFileSync('mkfifo', [fifo]);
+    expect(() => readNoteFile(fifo)).toThrow('regular file');
   });
 });

@@ -3,7 +3,7 @@ import {
   constants,
   fstatSync,
   openSync,
-  readFileSync,
+  readSync,
   readlinkSync,
   realpathSync,
   statSync,
@@ -17,7 +17,7 @@ const NOTE_FILE_MAX_BYTES = 1024 * 1024;
 export function readNoteFile(path: string, platform: NodeJS.Platform = process.platform): string {
   let fd: number;
   try {
-    fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+    fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   } catch {
     throw new UsageError(`cannot read the file ${path}`);
   }
@@ -47,7 +47,17 @@ export function readNoteFile(path: string, platform: NodeJS.Platform = process.p
       throw new UsageError('the file must be a regular file of at most 1 MiB');
     }
     if (stat.nlink !== 1) throw new UsageError('the file must not be a hard link to another file');
-    return readFileSync(fd, 'utf8').trim();
+    const buffer = Buffer.alloc(NOTE_FILE_MAX_BYTES + 1);
+    let length = 0;
+    for (;;) {
+      const read = readSync(fd, buffer, length, buffer.length - length, null);
+      if (read === 0) break;
+      length += read;
+      if (length > NOTE_FILE_MAX_BYTES) {
+        throw new UsageError('the file must be a regular file of at most 1 MiB');
+      }
+    }
+    return buffer.toString('utf8', 0, length).trim();
   } finally {
     closeSync(fd);
   }
