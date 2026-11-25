@@ -7,8 +7,9 @@
   "main": "./src/index.ts",
   "scripts": {
     "test": "vitest run",
-    "e2e:browser": "playwright test",
-    "e2e:blackbox": "vitest run -c vitest.blackbox.config.ts",
+    "e2e:browser": "node src/ratchet/cli.ts playwright",
+    "e2e": "node src/ratchet/cli.ts all",
+    "e2e:blackbox": "node src/ratchet/cli.ts vitest",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
