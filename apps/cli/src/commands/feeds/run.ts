@@ -13,6 +13,7 @@ import type { Context } from '../context.js';
 import { loadMarketplace, pinProblem } from '../../plugins/load.js';
 import { checkoutDir, readRegistry } from '../../plugins/registry.js';
 import type { Session } from '../../transport/session.js';
+import { feedIdOf } from '../../feeds/ids.js';
 import { parseFeed, type FeedConfig } from '../../feeds/definition.js';
 import { parseItems } from '../../feeds/items.js';
 import { readFeedState, writeFeedState, type FeedCounts, type FeedRun } from '../../feeds/store.js';
@@ -121,7 +122,7 @@ export async function runFeed(ctx: Context, s: Session, feed: FeedConfig): Promi
     error,
     counts: counts as FeedCounts,
   };
-  if (!ctx.dryRun) writeFeedState(ctx.dirs, feed.name, { ...state, last: run, items });
+  if (!ctx.dryRun) writeFeedState(ctx.dirs, feed.name, { paused: state.paused, last: run, items });
   return run;
 }
 
@@ -132,7 +133,9 @@ export async function publishFeeds(ctx: Context, s: Session): Promise<void> {
     feeds: feeds.map((feed) => {
       const state = readFeedState(ctx.dirs, feed.name);
       return {
+        id: feedIdOf(feed.name),
         name: feed.name,
+        status: state.paused ? 'paused' : 'idle',
         integration: feed.integration,
         action: feed.action,
         everyMs: feed.everyMs,
