@@ -74,9 +74,10 @@ const STRIPPED_HEADERS: ReadonlySet<string> = new Set([
 export function refusedBridgePath(path: string): string | null {
   if (!path.startsWith('/') || path.startsWith('//')) return 'path must start with a single /';
   if (path.includes('\\')) return 'backslash';
-  if (/%2e/i.test(path) || path.split('?')[0]?.split('/').includes('..')) return 'dot segment';
-  if (path.split('?')[0]?.includes('//')) return 'empty segment';
   const pathname = path.split('?')[0] ?? '';
+  if (/%(2f|5c)/i.test(pathname)) return 'encoded separator';
+  if (/%2e/i.test(path) || pathname.split('/').includes('..')) return 'dot segment';
+  if (pathname.includes('//')) return 'empty segment';
   if (pathname !== '/healthz' && !pathname.startsWith('/api/')) return 'outside /api/';
   if (CREDENTIAL_PATHS.has(pathname)) return 'credential route';
   return null;
@@ -307,9 +308,12 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
         const server = serverOf(args.serverId);
         const token = tokens.get(server.id);
         if (token !== undefined) {
-          await forward(server, { method: 'POST', path: '/api/auth/logout', body: '{}' }).catch(
-            () => undefined,
-          );
+          await forward(server, {
+            method: 'POST',
+            path: '/api/auth/logout',
+            headers: { 'content-type': 'application/json' },
+            body: '{}',
+          }).catch(() => undefined);
         }
         tokens.delete(server.id);
         return null;

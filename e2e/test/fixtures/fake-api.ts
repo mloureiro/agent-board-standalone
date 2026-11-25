@@ -63,7 +63,7 @@ const server = http.createServer((request, response) => {
   request.on('end', () => {
     const body = Buffer.concat(chunks).toString('utf8');
     const isBoardRoute = /^\/api\/(client|machine)\//.test(url.pathname);
-    if (isBoardRoute) {
+    if (isBoardRoute || url.pathname === '/api/auth/logout') {
       last = {
         method: request.method ?? '',
         url: request.url ?? '',

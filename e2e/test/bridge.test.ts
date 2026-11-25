@@ -1,7 +1,7 @@
 import path from 'node:path';
 import vm from 'node:vm';
 
-import { TOKEN_PATTERN } from '@agent-board/contract';
+import { TOKEN_PATTERN, routes } from '@agent-board/contract';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createBridgeHost, refusedBridgePath, type BridgeHost } from '../src/fakes/bridge/host.js';
@@ -32,11 +32,14 @@ afterAll(async () => {
   else process.env.AGENT_BOARD_API_BIN = originalBin;
 });
 
-async function lastSeen(): Promise<{ headers: Record<string, string>; url: string }> {
-  return (await (await fetch(`${api.url}/__last`)).json()) as {
-    headers: Record<string, string>;
-    url: string;
-  };
+interface SeenRequest {
+  readonly method: string;
+  readonly headers: Record<string, string>;
+  readonly url: string;
+}
+
+async function lastSeen(): Promise<SeenRequest> {
+  return (await (await fetch(`${api.url}/__last`)).json()) as SeenRequest;
 }
 
 describe('refusedBridgePath', () => {
@@ -55,9 +58,19 @@ describe('refusedBridgePath', () => {
     ['/api/client/machines/issue', 'credential route'],
     ['/api/client/passkeys/register', 'credential route'],
     ['/api/client/account/import', 'credential route'],
+    ['/api/auth%2Fhandoff/finish', 'encoded separator'],
+    ['/api/pair%5c', 'encoded separator'],
+    ['/api/client/me?next=%2Fapi%2Fpair', null],
   ])('%s -> %s', (candidate, reason) => {
     expect(refusedBridgePath(candidate)).toBe(reason);
   });
+
+  it.each(routes.filter((route) => route.issuesCredential === true).map((route) => route.path))(
+    'refuses %s, which the contract marks as issuing a credential',
+    (credentialPath) => {
+      expect(refusedBridgePath(credentialPath)).toBe('credential route');
+    },
+  );
 });
 
 describe('bridge host', () => {
@@ -160,6 +173,11 @@ describe('bridge host', () => {
   it('signs out by deleting the token after logout', async () => {
     host.setToken(serverId, `abc_${'T'.repeat(43)}`);
     await host.handle('sign-out', { serverId });
+    const seen = await lastSeen();
+    expect(seen.url).toBe('/api/auth/logout');
+    expect(seen.method).toBe('POST');
+    expect(seen.headers.authorization).toBe(`Bearer abc_${'T'.repeat(43)}`);
+    expect(seen.headers['content-type']).toBe('application/json');
     expect(host.tokenFor(serverId)).toBeUndefined();
   });
 
