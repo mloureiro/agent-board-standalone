@@ -47,6 +47,8 @@ interface World {
   saml: FakeSaml;
 }
 
+const NO_SAML: Env = { SAML_IDP_METADATA_URL: undefined, SAML_SP_ENTITY_ID: undefined };
+
 const cleanups: (() => Promise<void>)[] = [];
 
 afterEach(async () => {
@@ -222,7 +224,7 @@ describe('OIDC', () => {
   });
 
   it('[api-035] a user outside ALLOWED_GROUPS is refused, one inside is signed in', async () => {
-    const w = await world({ ALLOWED_GROUPS: 'board-admins, ops' });
+    const w = await world({ ...NO_SAML, ALLOWED_GROUPS: 'board-admins, ops' });
     const refused = await finishOidc(w, await oidcReturn(w));
     expect(refused.statusCode).toBe(403);
     expect(refused.json().error.message).toContain('not allowed');
@@ -233,7 +235,7 @@ describe('OIDC', () => {
   });
 
   it('[api-035] a comma-separated groups claim and a custom OIDC_GROUPS_CLAIM are read', async () => {
-    const w = await world({ ALLOWED_GROUPS: 'ops', OIDC_GROUPS_CLAIM: 'roles' });
+    const w = await world({ ...NO_SAML, ALLOWED_GROUPS: 'ops', OIDC_GROUPS_CLAIM: 'roles' });
     w.oidc.claims = { ...w.oidc.claims, roles: 'staff, ops' };
     expect((await finishOidc(w, await oidcReturn(w))).statusCode).toBe(200);
   });
@@ -444,7 +446,7 @@ describe('identity re-check', () => {
   });
 
   it('[api-042] a session ends when the user left the allowed groups', async () => {
-    const { w, token } = await signedInWithRefresh({ ALLOWED_GROUPS: 'board-users' });
+    const { w, token } = await signedInWithRefresh({ ...NO_SAML, ALLOWED_GROUPS: 'board-users' });
     advancePast(w.board);
     expect((await me(w.board.app, token)).statusCode).toBe(200);
     w.oidc.claims = { ...w.oidc.claims, groups: ['other'] };
