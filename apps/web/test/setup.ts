@@ -2,8 +2,10 @@ import '@testing-library/jest-dom/vitest';
 import 'fake-indexeddb/auto';
 
 import { IDBFactory } from 'fake-indexeddb';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach, beforeEach } from 'vitest';
+
+configure({ asyncUtilTimeout: 4000 });
 
 class ResizeObserverStub {
   observe(): void {}

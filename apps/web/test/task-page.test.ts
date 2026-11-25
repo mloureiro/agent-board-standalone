@@ -1,4 +1,5 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { bindings, open, seal } from '@agent-board/sealing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -533,7 +534,8 @@ describe('transcript drawer', () => {
     await world.seedRun(ID, 'run-live-00001', [textEvent(0, 'Started')]);
     world.eventsStatus = 503;
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    const { user } = openTask();
+    openTask();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     await screen.findByRole('heading', { name: 'Live run' });
 
     await user.click(screen.getByRole('button', { name: 'Transcript' }));
