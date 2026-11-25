@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "tabbar",
+  "description": "The tab bar page of a server window. Matched by webview label only: a window match would grant these permissions to every page webview in the same window.",
+  "webviews": ["tabbar-*"],
+  "permissions": ["core:event:allow-listen", "core:event:allow-unlisten"]
+}
