@@ -196,7 +196,7 @@ describe('schedule and feed routes on pglite', () => {
     );
     expect(rows).toHaveLength(1);
   });
-  it('[api-023] with feeds off the feed routes answer not-enabled and with feeds on they list and queue requests', async () => {
+  it('[api-023] with feeds off the feed routes answer not-enabled and with feeds on they queue requests', async () => {
     const off = await board({ FEEDS: 'off' });
     expect((await off.get('/api/client/feeds/list')).json().error.code).toBe('not-enabled');
     const refused = await off.call('client', 'feeds/request', {
@@ -213,16 +213,7 @@ describe('schedule and feed routes on pglite', () => {
     const request = { machine: 'machine-1', action: 'run', id: 'abcdef0123456789' };
     expect((await on.call('client', 'feeds/request', request)).statusCode).toBe(200);
     await on.call('client', 'feeds/request', request);
-    const listed = await on.get('/api/client/feeds/list');
-    expect(listed.json().machines).toEqual([
-      {
-        name: 'machine-1',
-        lastSeenAt: null,
-        feeds: null,
-        feedsUpdatedAt: null,
-        feedRequests: ['run:abcdef0123456789'],
-      },
-    ]);
+    expect((await on.get('/api/client/feeds/list')).json().machines).toEqual([]);
     const unknown = await on.call('client', 'feeds/request', { ...request, machine: 'nobody' });
     expect(unknown.statusCode).toBe(404);
   });

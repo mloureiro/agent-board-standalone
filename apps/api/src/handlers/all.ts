@@ -1,7 +1,6 @@
 import type { HandlerSet } from '../http/handler.js';
 import { eventsHandlers } from '../modules/events/index.js';
 import { machineApiHandlers } from '../modules/machine/index.js';
-import { feedHandlers } from './feeds.js';
 import { passkeyHandlers } from './passkeys.js';
 import { projectsSettingsHandlers } from './projects-settings/index.js';
 import { publicHandlers } from './public.js';
@@ -20,5 +19,4 @@ export const HANDLER_SETS: readonly HandlerSet[] = [
   taskActionHandlers,
   machineApiHandlers,
   scheduleHandlers,
-  feedHandlers,
 ];
