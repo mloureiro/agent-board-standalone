@@ -56,6 +56,7 @@ export const WORKER_TICK_MS = 3_000;
 export const LOG_LINE_CHARS = 4_000;
 export const PAUSE_REAP_MS = 1_000;
 export const OUTPUT_DRAIN_MS = 3_000;
+export const LEFT_RUNNING_GRACE_MS = 30_000;
 export const LANE_PAUSE_GRACE_MS = 2 * 60_000;
 export const CLOCK_JUMP_MS = 60_000;
 export const CONTEXT_FEATURE = 'transcripts';
@@ -73,6 +74,7 @@ export interface WorkerDeps {
   readonly uploadMs?: number;
   readonly lanePauseGraceMs?: number;
   readonly stopKillMs?: number;
+  readonly leftRunningGraceMs?: number;
   readonly now?: () => number;
   readonly signals?: NodeJS.Process;
   readonly titleWriter?: TitleWriter;
@@ -348,8 +350,14 @@ export async function runWorker(
     try {
       inbox = await s.query(runInboxRoute, { id: task, ...fence });
     } catch (error) {
-      if (error instanceof ApiError && error.status === 409) leftRunning = true;
-      else log(`WARN run inbox failed: ${describe(error)}`);
+      if (error instanceof ApiError && error.status === 409) {
+        leftRunning = true;
+        log('the task is no longer running: the agent may end its turn, then it is stopped');
+        channel.closeInput();
+        setTimeout(() => {
+          channel.stop(deps.stopKillMs);
+        }, deps.leftRunningGraceMs ?? LEFT_RUNNING_GRACE_MS).unref();
+      } else log(`WARN run inbox failed: ${describe(error)}`);
       return 0;
     }
     if (inbox.stop) {
@@ -448,15 +456,24 @@ export async function runWorker(
     log(chunk.toString('utf8').trimEnd());
   });
 
-  const beat = setInterval(() => {
+  let beats = 0;
+  let lastSeen: number | null = null;
+  const heartbeat = (): void => {
+    const seen = records.lastActive(task)?.getTime() ?? null;
+    if (beats > 0 && seen === lastSeen) return;
+    beats += 1;
+    lastSeen = seen;
     void s
       .command(heartbeatRoute, { id: task, ...fence, lane, borrowed: record?.borrowed ?? false })
       .catch(() => undefined);
-  }, deps.heartbeatMs ?? HEARTBEAT_MS);
+  };
+  heartbeat();
+  const beat = setInterval(heartbeat, deps.heartbeatMs ?? HEARTBEAT_MS);
   beat.unref();
 
   let lastUpload = Date.now();
   let lastTick = clock();
+  let idleFrom = 0;
   let ticking = false;
   const tick = async (): Promise<void> => {
     if (ticking) return;
@@ -464,7 +481,7 @@ export async function runWorker(
     try {
       const at = clock();
       if (at - lastTick > CLOCK_JUMP_MS) {
-        records.touchActive(task, new Date(at));
+        idleFrom = at;
         log(`the clock jumped ${Math.round((at - lastTick) / 1000)} s: the idle time starts over`);
       }
       lastTick = at;
@@ -488,7 +505,7 @@ export async function runWorker(
         const limit = limitReached({
           now: at,
           startedAt,
-          lastActive: records.lastActive(task)?.getTime() ?? null,
+          lastActive: Math.max(records.lastActive(task)?.getTime() ?? startedAt, idleFrom),
           inactivityMinutes: config.inactivityMinutes,
           maxRunHours: config.maxRunHours,
         });
