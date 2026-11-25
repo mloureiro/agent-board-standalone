@@ -15,6 +15,7 @@ import { useMediaQuery } from '@mantine/hooks';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 
 import { useDraft, useLastDirectoryStore } from '../drafts/index.js';
+import { useRecentIcons } from '../pages/index.js';
 import { newTaskId } from '../routes/task/compose.js';
 import { IconPicker } from './IconPicker.js';
 import { useNewTaskOptions, type NewTaskOptions } from './new-task-data.js';
@@ -39,6 +40,7 @@ function Fields(props: {
   const { options, onCreated } = props;
   const [raw, setRaw] = useDraft(DRAFT_NAME);
   const lastDirectory = useLastDirectoryStore();
+  const recentIcons = useRecentIcons();
   const [submitting, setSubmitting] = useState(false);
   const form = useMemo(() => restoreForm(raw), [raw]);
   const remembered = useMemo(() => lastDirectory?.read() ?? null, [lastDirectory]);
@@ -108,7 +110,14 @@ function Fields(props: {
             onChange={(event) => change({ title: event.currentTarget.value })}
             style={{ flex: 1 }}
           />
-          <IconPicker value={form.icon} onChange={(icon) => change({ icon })} />
+          <IconPicker
+            value={form.icon}
+            recent={recentIcons.icons}
+            onChange={(icon) => {
+              change({ icon });
+              recentIcons.record(icon);
+            }}
+          />
         </Group>
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
           {options.projects.length > 0 ? (

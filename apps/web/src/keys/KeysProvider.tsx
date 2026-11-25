@@ -21,7 +21,8 @@ export interface KeysValue {
   readonly state: KeysState;
   readonly kdf: KdfParams;
   readonly epoch: number;
-  adopt(keys: Keys): Promise<void>;
+  adopt(keys: Keys, dataKey?: string): Promise<void>;
+  dataKey(): string | null;
   forget(): Promise<void>;
   lock(): Promise<void>;
   reinspect(): void;
@@ -47,6 +48,7 @@ export function KeysProvider(props: {
   const [state, setState] = useState<KeysState>({ status: 'idle' });
   const [nonce, setNonce] = useState(0);
   const [epoch, setEpoch] = useState(0);
+  const dataKeyRef = useRef<{ keyId: string; text: string } | null>(null);
   const activeId = active?.id ?? null;
   const up = activeId !== null && connectionOf(activeId).state === 'up';
   const servers = useRef({ clientOf, reportKeyUnknown });
@@ -81,8 +83,9 @@ export function KeysProvider(props: {
   const reinspect = useCallback(() => setNonce((previous) => previous + 1), []);
 
   const adopt = useCallback(
-    async (keys: Keys) => {
+    async (keys: Keys, dataKey?: string) => {
       if (activeId === null) return;
+      dataKeyRef.current = dataKey === undefined ? null : { keyId: keys.keyId, text: dataKey };
       await writeStoredKeys(activeId, keys);
       setState({ status: 'unlocked', keys });
     },
@@ -91,6 +94,7 @@ export function KeysProvider(props: {
 
   const forget = useCallback(async () => {
     if (activeId === null) return;
+    dataKeyRef.current = null;
     await removeStoredKeys(activeId);
     setState({ status: 'idle' });
     reinspect();
@@ -98,6 +102,7 @@ export function KeysProvider(props: {
 
   const lock = useCallback(async () => {
     if (activeId === null) return;
+    dataKeyRef.current = null;
     queryClient.clear();
     serverNamespace(activeId).local.clear();
     await removeStoredKeys(activeId);
@@ -106,9 +111,17 @@ export function KeysProvider(props: {
     reinspect();
   }, [activeId, queryClient, reinspect]);
 
+  const dataKey = useCallback(
+    () =>
+      state.status === 'unlocked' && dataKeyRef.current?.keyId === state.keys.keyId
+        ? dataKeyRef.current.text
+        : null,
+    [state],
+  );
+
   const value = useMemo<KeysValue>(
-    () => ({ state, kdf, epoch, adopt, forget, lock, reinspect }),
-    [state, kdf, epoch, adopt, forget, lock, reinspect],
+    () => ({ state, kdf, epoch, adopt, dataKey, forget, lock, reinspect }),
+    [state, kdf, epoch, adopt, dataKey, forget, lock, reinspect],
   );
   return <KeysContext.Provider value={value}>{props.children}</KeysContext.Provider>;
 }

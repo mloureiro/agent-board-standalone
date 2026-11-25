@@ -143,9 +143,15 @@ function TaskBody(props: { readonly id: string; readonly data: TaskData }): Reac
         skills={data.skills}
         onStartProposal={() => setStarting(true)}
       />
-      <ForkDialog opened={forking} onClose={() => setForking(false)} onFork={actions.fork} />
+      <ForkDialog
+        taskId={id}
+        opened={forking}
+        onClose={() => setForking(false)}
+        onFork={actions.fork}
+      />
       {canEditPrompt(view) ? (
         <EditPromptDialog
+          taskId={id}
           opened={editing}
           initial={{ title: view.title, text: view.prompt ?? '' }}
           onClose={() => setEditing(false)}
@@ -165,7 +171,7 @@ function TaskBody(props: { readonly id: string; readonly data: TaskData }): Reac
         }
       />
       <ProposalStartDialog
-        proposal={starting ? { title: view.title, text: view.prompt ?? '' } : null}
+        proposal={starting ? { id, title: view.title, text: view.prompt ?? '' } : null}
         onClose={() => setStarting(false)}
         onStart={(text) => {
           setStarting(false);

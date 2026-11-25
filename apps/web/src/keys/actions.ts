@@ -7,9 +7,12 @@ import {
   KeyError,
   WrongSecretError,
   createKeySetup,
+  deriveKeys,
+  encodeDataKey,
   passphraseProblem,
   replacePassphrase,
   unlockKeys,
+  unwrapSlot,
   type CreatedKeySetup,
   type KdfParams,
   type KeySetup,
@@ -56,15 +59,27 @@ export const createAccountKey = (
     return created;
   });
 
+export interface Unlocked {
+  readonly keys: Keys;
+  readonly dataKey: string;
+}
+
 export const unlockWithPassphrase = async (
   client: ServerClient,
   owner: string,
   passphrase: string,
-): Promise<Keys> => {
+): Promise<Unlocked> => {
   const setup = await serverSetup(client);
-  return unlockKeys(owner, setup, { kind: 'passphrase', passphrase }).catch((cause: unknown) =>
-    explain(cause, WRONG_PASSPHRASE),
+  const bytes = await unwrapSlot(setup.slots, { kind: 'passphrase', passphrase }).catch(
+    (cause: unknown) => explain(cause, WRONG_PASSPHRASE),
   );
+  try {
+    const keys = await deriveKeys(bytes, owner);
+    if (keys.keyId !== setup.keyId) throw new KeyProblem(WRONG_PASSPHRASE);
+    return { keys, dataKey: encodeDataKey(bytes) };
+  } finally {
+    bytes.fill(0);
+  }
 };
 
 export const unlockWithRecoveryKey = async (

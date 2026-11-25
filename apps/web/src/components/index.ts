@@ -1,6 +1,7 @@
 export { AppHeader, NAV_ITEMS, PHONE_QUERY, usePhone } from './AppHeader.js';
 export { ColorSchemeMenu } from './ColorSchemeMenu.js';
 export { ConnectionBanners } from './ConnectionBanners.js';
+export { NeedsMeNotifier } from './NeedsMeNotifier.js';
 export { NewTaskButton, NewTaskProvider, useNewTask } from './new-task.js';
 export { APP_TITLE, pageTitle, usePageTitle } from './page-title.js';
 export { ServerStatePanel, panelFor } from './ServerStatePanel.js';
@@ -9,5 +10,5 @@ export { SignOutButton } from './SignOutButton.js';
 export { ToastProvider, Toasts, createToastHub, useToastHub, useToasts } from './toasts.js';
 export type { Toast, ToastHub } from './toasts.js';
 export { LinkRulesProvider, Markdown } from './Markdown.js';
-export { parseLinkRules } from './link-rules.js';
-export type { LinkRule } from './link-rules.js';
+export { linkTargets, parseLinkRules } from './link-rules.js';
+export type { LinkRule, LinkTarget } from './link-rules.js';
