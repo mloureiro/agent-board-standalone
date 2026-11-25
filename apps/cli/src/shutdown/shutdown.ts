@@ -18,17 +18,26 @@ export interface ShutdownDeps {
 
 type Outcome = 'paused' | 'stopped' | 'gone';
 
-function startedBeforeWritten(deps: ShutdownDeps, id: number, writtenAt: number): boolean | null {
+function startedBeforeWritten(
+  deps: Pick<ShutdownDeps, 'processes'>,
+  id: number,
+  writtenAt: number,
+): boolean | null {
   const startedAt = deps.processes.startedAt(id);
   if (startedAt === null) return null;
   return startedAt <= writtenAt + ELAPSED_RESOLUTION_MS;
 }
 
-function workerPid(deps: ShutdownDeps, task: string): number | null {
+export function liveWorkerPid(
+  deps: Pick<ShutdownDeps, 'files' | 'processes'>,
+  task: string,
+): number | null {
   const file = deps.files.pidOf(task, 'pid');
   if (file === null) return null;
   return startedBeforeWritten(deps, file.id, file.writtenAt) === true ? file.id : null;
 }
+
+const workerPid = liveWorkerPid;
 
 function agentGroup(deps: ShutdownDeps, task: string): number | null {
   const file = deps.files.pidOf(task, 'pgid');
