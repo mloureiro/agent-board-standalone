@@ -8,7 +8,7 @@ use crate::ports::{
     ByteStream, Clock, Confirm, FileStore, Http, HttpRequest, HttpResponse, PortError, SecretStore,
 };
 use crate::removal::{Effect, Removal};
-use crate::servers::{ServerEntry, ServerError, Servers};
+use crate::servers::{ServerEntry, ServerError, Servers, trimmed_name};
 use crate::signing::{RequestSigner, canonical_string, content_digest};
 use crate::tokens::{
     delete_secret, key_service, read_secret, read_token, token_service, write_secret,
@@ -70,6 +70,7 @@ pub enum BridgeError {
     Method,
     Address(AddressProblem),
     BlankName,
+    InvalidName,
     Transport(String),
     Native(String),
 }
@@ -83,6 +84,7 @@ impl BridgeError {
             Self::Method => "refused method".to_owned(),
             Self::Address(problem) => format!("address {}", problem.code()),
             Self::BlankName => "the name is blank".to_owned(),
+            Self::InvalidName => "the name is too long or holds control characters".to_owned(),
             Self::Transport(detail) => format!("request failed: {detail}"),
             Self::Native(detail) => detail.clone(),
         }
@@ -94,6 +96,7 @@ impl From<ServerError> for BridgeError {
         match error {
             ServerError::Address(problem) => Self::Address(problem),
             ServerError::BlankName => Self::BlankName,
+            ServerError::InvalidName => Self::InvalidName,
             ServerError::Unknown => Self::UnknownServer,
             ServerError::Write(PortError(detail)) => Self::Native(detail),
         }
@@ -203,10 +206,7 @@ where
             return Err(BridgeError::UnknownServer);
         }
         let url = crate::address::check_address(address).map_err(BridgeError::Address)?;
-        let name = name.trim();
-        if name.is_empty() {
-            return Err(BridgeError::BlankName);
-        }
+        let name = trimmed_name(name)?;
         if !self
             .confirm
             .confirm(&format!("Add the server \"{name}\" at {url}?"))
@@ -215,7 +215,7 @@ where
         }
         let entry = self
             .servers
-            .add(self.clock.new_server_id(), name, address)?;
+            .add(self.clock.new_server_id(), &name, address)?;
         Ok(Some(entry))
     }
 
