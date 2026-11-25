@@ -31,6 +31,8 @@ fn main() {
         "tab_focused",
         "tab_navigate",
         "tab_title",
+        "page_heartbeat",
+        "tabbar_banner",
     ]);
 
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(app_manifest))

@@ -38,7 +38,9 @@ uuid = { version = "1", features = ["v4"] }
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = { version = "0.6", default-features = false, features = ["std"] }
 objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSAlert", "NSResponder", "NSApplication"] }
-objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSString", "NSThread"] }
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSBundle", "NSDictionary", "NSError", "NSString", "NSThread", "NSValue"] }
+objc2-user-notifications = { version = "0.3", default-features = false, features = ["std", "block2", "UNNotification", "UNNotificationContent", "UNNotificationRequest", "UNNotificationResponse", "UNNotificationSettings", "UNNotificationSound", "UNNotificationTrigger", "UNUserNotificationCenter"] }
+block2 = { version = "0.6", default-features = false, features = ["std"] }
 security-framework = "3"
 
 [profile.release]

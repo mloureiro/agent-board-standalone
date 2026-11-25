@@ -30,6 +30,8 @@ export interface TabbarBackend {
   focusPane(pane: number): Promise<void>;
   resize(divider: number, ratio: number, commit: boolean): Promise<void>;
   onChanged(handler: (view: LayoutView) => void): Promise<void>;
+  banner(): Promise<string | null>;
+  onBanner(handler: (text: string | null) => void): Promise<void>;
 }
 
 export const tauriBackend: TabbarBackend = {
@@ -44,6 +46,12 @@ export const tauriBackend: TabbarBackend = {
   resize: (index, ratio, commit) => command('split_resize', { index, ratio, commit }),
   onChanged: async (handler) => {
     await getCurrentWebview().listen<LayoutView>('tabs-changed', (event) => {
+      handler(event.payload);
+    });
+  },
+  banner: () => command<string | null>('tabbar_banner'),
+  onBanner: async (handler) => {
+    await getCurrentWebview().listen<string | null>('banner-changed', (event) => {
       handler(event.payload);
     });
   },

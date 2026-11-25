@@ -13,6 +13,7 @@
     "allow-pane-close",
     "allow-pane-focus",
     "allow-split-resize",
+    "allow-tabbar-banner",
     "core:event:allow-listen",
     "core:event:allow-unlisten"
   ]

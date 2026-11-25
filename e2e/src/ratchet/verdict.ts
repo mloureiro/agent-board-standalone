@@ -1,10 +1,12 @@
-import { isListed, type ExpectedEntry, type ExpectedRed } from './expected.ts';
+import { isListed, LISTED_SKIP_REASON, type ExpectedEntry, type ExpectedRed } from './expected.ts';
 import { titleOf, type TestResult } from './results.ts';
 
 export interface VerdictOptions {
   readonly ci: boolean;
   readonly matrixCell: boolean;
   readonly strict: boolean;
+  readonly skipListed?: boolean;
+  readonly reportPassing?: boolean;
 }
 
 export type Level = 'ok' | 'warn' | 'fail';
@@ -14,11 +16,14 @@ export interface Verdict {
   readonly message: string;
 }
 
-type SkipKind = 'part' | 'feature' | 'other';
+export const NOW_PASSES = 'now passes; remove it from e2e/expected-red.json';
+
+type SkipKind = 'part' | 'feature' | 'listed' | 'other';
 
 function skipKind(reason: string | null): SkipKind {
   if (reason?.startsWith('part missing') === true) return 'part';
   if (reason?.startsWith('missing feature') === true) return 'feature';
+  if (reason === LISTED_SKIP_REASON) return 'listed';
   return 'other';
 }
 
@@ -44,11 +49,13 @@ export function judgeResult(
 
   if (listed) {
     if (result.outcome === 'passed') {
-      return verdict('fail', result, 'now passes; remove it from e2e/expected-red.json');
+      return verdict(options.reportPassing === true ? 'warn' : 'fail', result, NOW_PASSES);
     }
     if (result.outcome === 'skipped') {
       const kind = skipKind(result.skipReason);
-      if (kind === 'part' || kind === 'feature') return verdict('ok', result, 'red as listed');
+      if (kind === 'part' || kind === 'feature' || kind === 'listed') {
+        return verdict('ok', result, 'red as listed');
+      }
       if (result.skipReason === null && (options.matrixCell || followsFailure)) {
         return verdict('ok', result, 'red as listed');
       }
@@ -117,6 +124,7 @@ export function judgeRun(
       continue;
     }
     if (scope.outOfRun?.includes(file) === true) continue;
+    if (options.skipListed === true) continue;
     const inFile = results.filter((result) => result.file === file);
     if (inFile.length === 0) {
       if (scope.filtered !== true) {

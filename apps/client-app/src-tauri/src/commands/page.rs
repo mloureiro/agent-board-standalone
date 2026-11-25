@@ -1,9 +1,11 @@
+use crate::alerts::{self, ExpiryWatch};
 use crate::commands::tabs;
 use crate::fetches::pump;
 use crate::state::AppState;
 use crate::{links, removals, windows};
 use agent_board_client_core::bridge::{BridgeError, Scope};
 use agent_board_client_core::headers::Header;
+use agent_board_client_core::notify::NotifyRequest;
 use agent_board_client_core::page_input::{self, TabIntent};
 use agent_board_client_core::ports::PortError;
 use agent_board_client_core::servers::ServerEntry;
@@ -69,7 +71,8 @@ pub async fn server_fetch(
     page_input::fetch_input(headers.len(), body.as_deref()).map_err(input)?;
     let scope = scope(&app, &state, &webview);
     let outgoing: Vec<Header> = headers.into_iter().collect();
-    let response = state
+    let expiry = ExpiryWatch::begin(&state, &server_id);
+    let answer = state
         .bridge
         .server_fetch(
             &scope,
@@ -79,8 +82,9 @@ pub async fn server_fetch(
             &outgoing,
             body.as_deref(),
         )
-        .await
-        .map_err(text)?;
+        .await;
+    expiry.finish(&app, &state);
+    let response = answer.map_err(text)?;
     let fetch_id = state.fetches.next_id();
     let owner = Arc::clone(&state);
     state.fetches.start(fetch_id, webview.label(), || {
@@ -122,10 +126,13 @@ pub async fn handoff_finish(
 ) -> Result<HandoffOutcome, String> {
     page_input::sign_in(&flow, &verifier).map_err(input)?;
     let scope = scope(&app, &state, &webview);
-    state
+    let expiry = ExpiryWatch::begin(&state, &server_id);
+    let outcome = state
         .bridge
         .handoff_finish(&scope, &server_id, &flow, &verifier)
-        .await
+        .await;
+    expiry.finish(&app, &state);
+    outcome
         .map(|status| HandoffOutcome {
             status: status.as_str(),
         })
@@ -158,11 +165,10 @@ pub async fn sign_out(
     server_id: String,
 ) -> Result<(), String> {
     let scope = scope(&app, &state, &webview);
-    state
-        .bridge
-        .sign_out(&scope, &server_id)
-        .await
-        .map_err(text)
+    let expiry = ExpiryWatch::begin(&state, &server_id);
+    let outcome = state.bridge.sign_out(&scope, &server_id).await;
+    expiry.finish(&app, &state);
+    outcome.map_err(text)
 }
 
 #[tauri::command]
@@ -174,12 +180,18 @@ pub async fn notify(
     task_id: String,
     title: String,
 ) -> Result<(), String> {
-    scope(&app, &state, &webview)
+    let server = scope(&app, &state, &webview)
         .resolve(&server_id)
         .map_err(text)?;
-    page_input::notification(&task_id, &title)
-        .map(|_| ())
-        .map_err(input)
+    let entry = state
+        .bridge
+        .servers()
+        .get(server)
+        .ok_or_else(|| text(BridgeError::UnknownServer))?;
+    let request =
+        NotifyRequest::parse(server, &entry.name, Some(&task_id), &title).map_err(input)?;
+    alerts::raise(&app, &request);
+    Ok(())
 }
 
 #[tauri::command]
