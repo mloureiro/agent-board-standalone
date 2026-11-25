@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  E2E_LISTED: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'run' || 'skip' }}
+
 concurrency:
   group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
