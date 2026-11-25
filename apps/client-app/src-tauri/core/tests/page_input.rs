@@ -66,3 +66,22 @@ fn client_app_049_fetch_inputs_are_bounded() {
     let body = "x".repeat(BODY_MAX_BYTES + 1);
     assert_eq!(fetch_input(0, Some(&body)), Err(InputError::BodyTooLarge));
 }
+
+#[test]
+fn client_app_018_tab_commands_accept_only_known_intents_directions_and_plain_paths() {
+    use agent_board_client_core::page_input::{
+        TabIntent, tab_direction, tab_intent, tab_path, tab_title,
+    };
+    assert_eq!(tab_intent("open"), Ok(TabIntent::Open));
+    assert_eq!(tab_intent("route"), Ok(TabIntent::Route));
+    assert_eq!(tab_intent("new"), Ok(TabIntent::New));
+    assert_eq!(tab_intent("Open"), Err(InputError::TabIntent));
+    assert_eq!(tab_direction("next"), Ok(true));
+    assert_eq!(tab_direction("previous"), Ok(false));
+    assert_eq!(tab_direction("up"), Err(InputError::TabDirection));
+    assert_eq!(tab_path("/backlog?q=1"), Ok("/backlog?q=1".to_owned()));
+    assert_eq!(tab_path("//evil.test"), Err(InputError::TabPath));
+    assert_eq!(tab_path("https://evil.test"), Err(InputError::TabPath));
+    assert_eq!(tab_title("Backlog"), Ok("Backlog".to_owned()));
+    assert_eq!(tab_title("a\nb"), Err(InputError::TabTitle));
+}

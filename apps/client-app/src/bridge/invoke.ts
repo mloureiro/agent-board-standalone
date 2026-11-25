@@ -17,3 +17,12 @@ export async function call<T>(command: string, args: Record<string, unknown> = {
     throw failure instanceof Error ? failure : new Error(String(failure));
   }
 }
+
+export function currentWebviewLabel(): string | undefined {
+  const found = (
+    globalThis as {
+      __TAURI_INTERNALS__?: { metadata?: { currentWebview?: { label?: string } } };
+    }
+  ).__TAURI_INTERNALS__;
+  return found?.metadata?.currentWebview?.label;
+}

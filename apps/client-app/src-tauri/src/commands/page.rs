@@ -1,9 +1,10 @@
+use crate::commands::tabs;
 use crate::fetches::pump;
 use crate::state::AppState;
 use crate::{removals, windows};
 use agent_board_client_core::bridge::{BridgeError, Scope};
 use agent_board_client_core::headers::Header;
-use agent_board_client_core::page_input;
+use agent_board_client_core::page_input::{self, TabIntent};
 use agent_board_client_core::ports::PortError;
 use agent_board_client_core::servers::ServerEntry;
 use serde::Serialize;
@@ -192,10 +193,21 @@ pub async fn open_link(
 }
 
 #[tauri::command]
-pub async fn report_tab(path: String, title: String) -> Result<(), String> {
-    page_input::tab_report(&path, &title)
-        .map(|_| ())
-        .map_err(input)
+pub async fn report_tab(
+    app: AppHandle,
+    webview: Webview,
+    path: String,
+    title: String,
+) -> Result<(), String> {
+    let report = page_input::tab_report(&path, &title).map_err(input)?;
+    if let Some((server, tab)) = windows::tab_of_label(webview.label()) {
+        crate::server_tabs::dispatch(&app, server, move |tabs| {
+            let mut effects = tabs::navigate(tabs, tab, TabIntent::Route, &report.path);
+            effects.extend(tabs.title(tab, &report.title));
+            effects
+        });
+    }
+    Ok(())
 }
 
 #[tauri::command]

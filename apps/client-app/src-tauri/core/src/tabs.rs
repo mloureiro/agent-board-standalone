@@ -428,7 +428,8 @@ impl Tabs {
             return Vec::new();
         };
         match route {
-            Route::Home => pane.close_to_home(tab),
+            Route::Home if tab == pane.selected => pane.close_to_home(tab),
+            Route::Home => pane.close(tab),
             Route::Page(page) if current.path != path => {
                 let moved = current.identity() != pathname(path);
                 current.path = path.to_owned();
