@@ -76,3 +76,22 @@ button {
 [role='alert']:empty {
   display: none;
 }
+
+.problem {
+  margin: 8px 0 0;
+}
+
+.problem:empty {
+  display: none;
+}
+
+form.inline {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+}
+
+form.inline input {
+  flex: 1;
+  min-width: 0;
+}

@@ -3,10 +3,13 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import 'fake-indexeddb/auto';
+import { ADDRESS_PROBLEM_MESSAGES, BLANK_NAME_MESSAGE, serverNamespace } from '@agent-board/web';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { assembleFrontend } from '../scripts/assemble.js';
 import { createBridge } from '../src/bridge/bridge.js';
+import { mountList } from '../src/native/list/page.js';
 import { bytes, installInternals, readAll } from './fake-native.js';
 
 const shell = (...parts: string[]): string =>
@@ -76,6 +79,7 @@ describe('bundling', () => {
     }
     const added = (await filesUnder(outDir)).filter((name) => !(name in WEB_FILES));
     expect(added).toContain(path.join('_native', 'list.html'));
+    expect(added).toContain(path.join('_native', 'tabbar.html'));
     expect(added.every((name) => name.startsWith('_native'))).toBe(true);
     const page = await readFile(path.join(outDir, '_native', 'list.html'), 'utf8');
     expect(page).not.toMatch(/(?:src|href)="https?:/);
@@ -206,7 +210,7 @@ describe('bridge', () => {
     const own = ['list_add_server', 'list_remove_server', 'open_server', 'open_all_servers'];
     for (const command of own) expect(granted).not.toContain(permission(command));
 
-    for (const name of ['page', 'list', 'tabbar']) {
+    for (const name of ['page', 'list', 'tabbar', 'tab']) {
       const capability = await json('capabilities', `${name}.json`);
       expect(capability.windows, name).toBeUndefined();
       expect(capability.remote, name).toBeUndefined();
@@ -215,8 +219,17 @@ describe('bridge', () => {
     const list = await json('capabilities', 'list.json');
     expect(list.webviews).toEqual(['list']);
     expect(list.permissions).not.toContain(permission('server_fetch'));
+    const tab = await json('capabilities', 'tab.json');
+    expect(tab.webviews).toEqual(['tab-*']);
+    expect([...(tab.permissions as string[])].sort()).toEqual(
+      ['tab_navigate', 'tab_title', 'tab_cycle'].map(permission).sort(),
+    );
+    const tabbar = await json('capabilities', 'tabbar.json');
+    expect(tabbar.webviews).toEqual(['tabbar-*']);
+    expect(tabbar.permissions).not.toContain(permission('server_fetch'));
+    expect(tabbar.permissions).not.toContain(permission('tab_navigate'));
     const everyGranted = new Set<string>();
-    for (const name of ['page', 'list', 'tabbar']) {
+    for (const name of ['page', 'list', 'tabbar', 'tab']) {
       const capability = await json('capabilities', `${name}.json`);
       for (const entry of capability.permissions as string[]) everyGranted.add(entry);
     }
@@ -309,5 +322,246 @@ describe('sign-in', () => {
     });
     status = 'signed-in';
     await expect(bridge.handoffFinish('s', 'flow', 'verifier')).resolves.toBeUndefined();
+  });
+});
+
+const ALPHA = {
+  id: '6ba7b810-9dad-41d1-80b4-00c04fd430c8',
+  name: 'Alpha',
+  url: 'https://a.example.test/',
+};
+const BETA = {
+  id: '0b9e4c1a-7d2f-4a55-9c3e-5f1d8a7b6c42',
+  name: 'Beta',
+  url: 'https://b.example.test/',
+};
+
+type Entry = typeof ALPHA;
+
+async function seedNamespace(id: string): Promise<void> {
+  const namespace = serverNamespace(id);
+  namespace.local.set('theme', 'dark');
+  await namespace.secrets.put('token', 'x');
+}
+
+async function namespaceExists(id: string): Promise<boolean> {
+  const databases = await indexedDB.databases();
+  return (
+    databases.some((database) => database.name === `agent-board:${id}`) ||
+    localStorage.getItem(`ab:${id}:theme`) !== null
+  );
+}
+
+async function clearStorage(): Promise<void> {
+  localStorage.clear();
+  for (const database of await indexedDB.databases()) {
+    if (database.name !== undefined) indexedDB.deleteDatabase(database.name);
+  }
+}
+
+const argsOf = (internals: ReturnType<typeof installInternals>, command: string): unknown[] =>
+  internals.invoke.mock.calls.filter(([name]) => name === command).map(([, args]) => args);
+
+function press(root: ParentNode, label: string, index = 0): void {
+  const buttons = [...root.querySelectorAll('button')].filter(
+    (button) => button.textContent === label,
+  );
+  const button = buttons[index];
+  if (button === undefined) throw new Error(`no ${label} button`);
+  button.click();
+}
+
+const alertsText = (root: ParentNode): string =>
+  [...root.querySelectorAll('[role="alert"]')]
+    .map((alert) => alert.textContent ?? '')
+    .filter((text) => text !== '')
+    .join('\n');
+
+interface ListSetup {
+  servers: Entry[];
+  failures?: { name: string; text: string }[];
+  handlers?: Record<string, (args: Record<string, unknown>) => unknown>;
+  options?: Parameters<typeof mountList>[1];
+}
+
+async function mountPage(setup: ListSetup): Promise<{
+  root: HTMLElement;
+  internals: ReturnType<typeof installInternals>;
+}> {
+  const internals = installInternals((command, args) => {
+    const custom = setup.handlers?.[command];
+    if (custom) return custom(args);
+    if (command === 'list_servers') return setup.servers;
+    if (command === 'take_open_failures') return setup.failures ?? [];
+    if (command === 'list_is_complete') return true;
+    return undefined;
+  });
+  document.body.innerHTML = '<div id="root"></div>';
+  const root = document.getElementById('root') as HTMLElement;
+  await mountList(root, setup.options);
+  return { root, internals };
+}
+
+describe('server list page', () => {
+  afterEach(clearStorage);
+
+  it("[client-app-003] an open failure shows the error with the server's name", async () => {
+    const { root, internals } = await mountPage({
+      servers: [ALPHA],
+      handlers: {
+        open_server: () => {
+          throw 'Alpha could not be opened: the server did not answer';
+        },
+      },
+    });
+    expect(root.querySelectorAll('li')).toHaveLength(1);
+    press(root, 'Open');
+    await vi.waitFor(() => {
+      expect(alertsText(root)).toContain('Alpha could not be opened');
+    });
+    expect(argsOf(internals, 'open_server')).toEqual([{ serverId: ALPHA.id }]);
+  });
+
+  it('[client-app-007] removing from the list deletes the web namespace and offers Retry when it keeps failing', async () => {
+    await seedNamespace(ALPHA.id);
+    const listed = [ALPHA];
+    const handlers = {
+      list_servers: () => listed,
+      list_remove_server: () => {
+        listed.splice(0);
+        return { purge: ALPHA.id };
+      },
+    };
+    const { root } = await mountPage({ servers: listed, handlers });
+    expect(await namespaceExists(ALPHA.id)).toBe(true);
+    press(root, 'Remove');
+    await vi.waitFor(async () => {
+      expect(await namespaceExists(ALPHA.id)).toBe(false);
+    });
+    expect(root.querySelectorAll('li')).toHaveLength(0);
+    expect(alertsText(root)).toBe('');
+
+    listed.push(BETA);
+    let failing = true;
+    const destroyNamespace = vi.fn(async () => {
+      if (failing) throw new Error('blocked');
+    });
+    const failed = await mountPage({
+      servers: listed,
+      handlers: {
+        list_servers: () => listed,
+        list_remove_server: () => ({ purge: BETA.id }),
+      },
+      options: { destroyNamespace, retryDelaysMs: [0, 0] },
+    });
+    press(failed.root, 'Remove');
+    await vi.waitFor(() => {
+      expect(alertsText(failed.root)).toContain("Couldn't delete the stored data of Beta.");
+    });
+    expect(destroyNamespace).toHaveBeenCalledTimes(3);
+    expect(destroyNamespace).toHaveBeenCalledWith(BETA.id);
+
+    failing = false;
+    press(failed.root.querySelector('[role="alert"]') as HTMLElement, 'Retry');
+    await vi.waitFor(() => {
+      expect(destroyNamespace).toHaveBeenCalledTimes(4);
+    });
+    expect(alertsText(failed.root)).toBe('');
+  });
+
+  it('[client-app-008] the list page deletes namespaces of servers no longer listed', async () => {
+    await seedNamespace(ALPHA.id);
+    await seedNamespace(BETA.id);
+    localStorage.setItem('ab:device:theme', 'dark');
+    await mountPage({ servers: [ALPHA] });
+    await vi.waitFor(async () => {
+      expect(await namespaceExists(BETA.id)).toBe(false);
+    });
+    expect(await namespaceExists(ALPHA.id)).toBe(true);
+    expect(localStorage.getItem('ab:device:theme')).toBe('dark');
+  });
+
+  it('[client-app-008] nothing is deleted when the list cannot be read', async () => {
+    await seedNamespace(BETA.id);
+    const { root } = await mountPage({
+      servers: [],
+      handlers: {
+        list_servers: () => {
+          throw 'the list could not be read';
+        },
+      },
+    });
+    expect(alertsText(root)).toContain('the list could not be read');
+    expect(await namespaceExists(BETA.id)).toBe(true);
+  });
+
+  it('[client-app-008] nothing is deleted while the native list is incomplete', async () => {
+    await seedNamespace(BETA.id);
+    const { internals } = await mountPage({
+      servers: [ALPHA],
+      handlers: { list_is_complete: () => false },
+    });
+    expect(argsOf(internals, 'list_is_complete')).toHaveLength(1);
+    expect(await namespaceExists(BETA.id)).toBe(true);
+  });
+
+  it('[client-app-015] failures recorded before the list loaded are shown', async () => {
+    const { root, internals } = await mountPage({
+      servers: [],
+      failures: [
+        { name: 'Alpha', text: 'Alpha could not be opened: the server did not answer' },
+        {
+          name: 'Agent Board',
+          text: 'That link uses a handover version this app does not understand.',
+        },
+      ],
+    });
+    expect(alertsText(root)).toContain('Alpha could not be opened');
+    expect(alertsText(root)).toContain('handover version');
+    expect(argsOf(internals, 'take_open_failures')).toHaveLength(1);
+  });
+
+  it("[client-app-002] the add form uses the web client's texts for a blank name and an address problem", async () => {
+    const { root, internals } = await mountPage({
+      servers: [],
+      handlers: {
+        list_add_server: () => {
+          throw 'address insecure';
+        },
+      },
+    });
+    const [name, address] = [...root.querySelectorAll('form input')] as HTMLInputElement[];
+    const submit = (): void => {
+      root.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }));
+    };
+
+    submit();
+    expect(alertsText(root)).toContain(BLANK_NAME_MESSAGE);
+    expect(argsOf(internals, 'list_add_server')).toEqual([]);
+
+    (name as HTMLInputElement).value = 'Remote';
+    (address as HTMLInputElement).value = 'http://board.example.test';
+    submit();
+    await vi.waitFor(() => {
+      expect(alertsText(root)).toContain(ADDRESS_PROBLEM_MESSAGES.insecure);
+    });
+    expect(alertsText(root)).not.toContain(BLANK_NAME_MESSAGE);
+  });
+
+  it('[client-app-005] renaming from the list sends the new name and refuses a blank one', async () => {
+    const { root, internals } = await mountPage({ servers: [ALPHA] });
+    press(root, 'Rename');
+    const input = root.querySelector('form input') as HTMLInputElement;
+    expect(input.value).toBe('Alpha');
+    input.value = '  ';
+    root.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }));
+    expect(alertsText(root)).toContain(BLANK_NAME_MESSAGE);
+    expect(argsOf(internals, 'rename_server')).toEqual([]);
+
+    input.value = 'Gamma';
+    root.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }));
+    await vi.waitFor(() => {
+      expect(argsOf(internals, 'rename_server')).toEqual([{ serverId: ALPHA.id, name: 'Gamma' }]);
+    });
   });
 });

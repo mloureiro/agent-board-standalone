@@ -495,3 +495,16 @@ fn client_app_025_closing_a_tab_loads_an_unloaded_neighbour_only() {
     assert_eq!(tabs.close(1), vec![Effect::UpdateBar, Effect::WriteTabFile]);
     assert_eq!(tabs.selected(), 3);
 }
+
+#[test]
+fn client_app_019_a_background_tab_reaching_the_board_closes_without_moving_the_selection() {
+    let mut tabs = opened(&["/backlog", "/tasks/t-1"]);
+    tabs.select(1);
+
+    assert_eq!(
+        tabs.route(2, "/"),
+        vec![Effect::Close(2), Effect::UpdateBar, Effect::WriteTabFile]
+    );
+    assert_eq!(tabs.selected(), 1);
+    assert_eq!(ids(&tabs), vec![HOME, 1]);
+}

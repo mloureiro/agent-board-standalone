@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 import { build } from 'vite';
 
+import { NATIVE_PAGES, nativePageConfig } from './native.js';
+
 const PART_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 export interface AssembleOptions {
@@ -31,11 +33,10 @@ export async function assembleFrontend(options: AssembleOptions = defaultOptions
   await rm(options.outDir, { recursive: true, force: true });
   await mkdir(options.outDir, { recursive: true });
   await cp(options.webDist, options.outDir, { recursive: true });
-  await build({
-    configFile: path.join(PART_ROOT, 'vite.native.config.ts'),
-    logLevel: 'warn',
-    build: { outDir: path.join(options.outDir, '_native'), emptyOutDir: true },
-  });
+  const nativeDir = path.join(options.outDir, '_native');
+  for (const [index, page] of NATIVE_PAGES.entries()) {
+    await build(nativePageConfig(page, nativeDir, index === 0));
+  }
 }
 
 export async function buildBridgeScript(): Promise<void> {

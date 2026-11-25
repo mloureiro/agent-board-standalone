@@ -5,3 +5,4 @@ README.md
 **/src-tauri/target/**
 **/src-tauri/gen/**
 **/dist-bridge/**
+apps/migrate/fixtures/data

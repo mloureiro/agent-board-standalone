@@ -3,10 +3,15 @@ mod clock;
 mod commands;
 mod confirm;
 mod fetches;
+mod handover;
 mod keychain;
+mod legacy;
+mod links;
 mod menu;
 mod removals;
+mod server_tabs;
 mod state;
+mod tab_registry;
 mod windows;
 
 fn main() {

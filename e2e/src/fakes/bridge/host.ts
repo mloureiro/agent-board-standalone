@@ -36,6 +36,7 @@ export interface BridgeHostOptions {
   readonly servers?: readonly Omit<BridgeServerEntry, 'id'>[];
   readonly confirm?: (action: ConfirmAction) => boolean | Promise<boolean>;
   readonly clientVersion?: string;
+  readonly scope?: 'all' | 'window';
 }
 
 export interface BridgeHost {
@@ -57,6 +58,7 @@ export interface BridgeHost {
     push?: (id: string, delivery: StreamDelivery) => void,
   ): Promise<unknown>;
   attach(context: BrowserContext): Promise<void>;
+  scopedServerId(): string | null;
   deliverHandover(link: string): Promise<void>;
   stopStreams(): void;
 }
@@ -115,6 +117,9 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
   const refusals: { path: string; reason: string }[] = [];
   let confirm = options.confirm ?? (() => true);
   const clientVersion = options.clientVersion ?? PART_VERSION;
+  const windowScoped = options.scope === 'window';
+  let scopedId: string | null = null;
+  let attached: BrowserContext | null = null;
 
   const record = (value: unknown): void => {
     passedToPage.push(JSON.stringify(value) ?? 'undefined');
@@ -129,7 +134,10 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
     entries.set(created.id, created);
     return created;
   };
-  for (const entry of options.servers ?? []) seedServer(entry);
+  for (const entry of options.servers ?? []) {
+    const seeded = seedServer(entry);
+    scopedId ??= seeded.id;
+  }
 
   const serverOf = (serverId: unknown): BridgeServerEntry => {
     const found = typeof serverId === 'string' ? entries.get(serverId) : undefined;
@@ -211,7 +219,9 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
   ): Promise<unknown> => {
     switch (op) {
       case 'servers.list':
-        return [...entries.values()];
+        return windowScoped
+          ? [...entries.values()].filter((entry) => entry.id === scopedId)
+          : [...entries.values()];
       case 'servers.add': {
         const name = String(args.name);
         const url = String(args.address);
@@ -365,7 +375,9 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
       confirm = next;
     },
     handle,
+    scopedServerId: () => scopedId,
     async attach(context) {
+      attached = context;
       await context.exposeBinding(BRIDGE_BINDING, async (source, op, args) =>
         handle(op as BridgeOp, (args ?? {}) as Record<string, unknown>, (id, delivery) => {
           void source.page.evaluate(inbox, [BRIDGE_INBOX, id, delivery] as const);
@@ -378,12 +390,11 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
       const parsed = parseHandover(link);
       if (!parsed.ok) return;
       const url = parsed.url.replace(/\/+$/, '');
-      if ([...entries.values()].some((entry) => entry.url === url)) return;
-      const port = new URL(url).port;
-      seedServer({
-        name: port === '' ? new URL(url).hostname : `${new URL(url).hostname}:${port}`,
-        url,
-      });
+      const known = [...entries.values()].find((entry) => entry.url === url);
+      const opened = known ?? seedServer({ name: new URL(url).host, url });
+      if (!windowScoped) return;
+      scopedId = opened.id;
+      await Promise.all((attached?.pages() ?? []).map((page) => page.reload()));
     },
     stopStreams() {
       for (const controller of streams.values()) controller.abort();
