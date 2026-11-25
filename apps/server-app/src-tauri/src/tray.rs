@@ -1,7 +1,12 @@
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
+
 use agent_board_server_core::app::Running;
-use tauri::Manager;
+use agent_board_server_core::signals;
+use agent_board_server_core::supervisor::Supervisor;
 use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::TrayIconBuilder;
+use tauri::{Manager, RunEvent};
 
 #[cfg(target_os = "macos")]
 fn hide_from_dock(app: &mut tauri::App) {
@@ -11,7 +16,19 @@ fn hide_from_dock(app: &mut tauri::App) {
 #[cfg(not(target_os = "macos"))]
 fn hide_from_dock(_: &mut tauri::App) {}
 
+struct Supervision(Mutex<Option<Supervisor>>);
+
+impl Supervision {
+    fn stop(&self) {
+        let supervisor = self.0.lock().ok().and_then(|mut slot| slot.take());
+        if let Some(supervisor) = supervisor {
+            supervisor.stop();
+        }
+    }
+}
+
 pub fn run(running: Running) {
+    signals::install();
     let result = tauri::Builder::default()
         .setup(move |app| {
             hide_from_dock(app);
@@ -33,11 +50,39 @@ pub fn run(running: Running) {
             }
             tray.build(app)?;
             running.app_log.info("tray ready");
+            let supervisor = Supervisor::start(
+                running.plan.clone(),
+                running.app_log.clone(),
+                Arc::new(|_| {}),
+            );
+            app.manage(Supervision(Mutex::new(Some(supervisor))));
             app.manage(running);
+            let handle = app.handle().clone();
+            std::thread::spawn(move || {
+                loop {
+                    if let Some(signal) = signals::received() {
+                        if let Some(running) = handle.try_state::<Running>() {
+                            running
+                                .app_log
+                                .info(&format!("{} received, quitting", signals::name(signal)));
+                        }
+                        handle.exit(0);
+                        return;
+                    }
+                    std::thread::sleep(Duration::from_millis(100));
+                }
+            });
             Ok(())
         })
-        .run(tauri::generate_context!());
-    if let Err(error) = result {
-        eprintln!("{error}");
+        .build(tauri::generate_context!());
+    match result {
+        Ok(app) => app.run(|handle, event| {
+            if let RunEvent::Exit = event
+                && let Some(supervision) = handle.try_state::<Supervision>()
+            {
+                supervision.stop();
+            }
+        }),
+        Err(error) => eprintln!("{error}"),
     }
 }

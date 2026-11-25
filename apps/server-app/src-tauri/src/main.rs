@@ -28,8 +28,8 @@ fn main() -> ExitCode {
             exit(app::run_uninstall(&host, delete_data, &mut io::stdout()))
         }
         Invocation::Headless => {
-            let stdin = io::stdin();
-            exit(app::run_headless(&host, stdin.lock(), &mut io::stdout()))
+            let stdin = io::BufReader::new(io::stdin());
+            exit(app::run_headless(&host, stdin, &mut io::stdout()))
         }
         Invocation::Tray => match app::start(&host) {
             Ok(Start::Running(running)) => {
