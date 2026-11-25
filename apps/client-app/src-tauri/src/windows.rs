@@ -1,3 +1,4 @@
+use crate::links;
 use crate::server_tabs;
 use crate::state::AppState;
 use crate::tab_registry::TabRegistry;
@@ -9,7 +10,7 @@ use agent_board_client_core::servers::ServerEntry;
 use agent_board_client_core::tab_file;
 use agent_board_client_core::tabs::{HOME, TabId};
 use std::sync::Arc;
-use tauri::webview::{NewWindowResponse, WebviewBuilder};
+use tauri::webview::WebviewBuilder;
 use tauri::window::WindowBuilder;
 use tauri::{
     AppHandle, LogicalPosition, LogicalSize, Manager, Url, WebviewUrl, WebviewWindowBuilder,
@@ -110,8 +111,8 @@ pub fn show_all_servers(app: &AppHandle) -> tauri::Result<()> {
         .inner_size(1280.0, 860.0)
         .min_inner_size(480.0, 360.0)
         .initialization_script(BRIDGE_SCRIPT)
-        .on_navigation(server_tabs::guard(app_origin()))
-        .on_new_window(|_, _| NewWindowResponse::Deny)
+        .on_navigation(links::guard(app_origin()))
+        .on_new_window(links::on_new_window(app_origin(), |_| {}))
         .build()
         .map(|_| ())
 }
@@ -140,8 +141,8 @@ pub fn create_server_window(app: &AppHandle, entry: &ServerEntry) -> tauri::Resu
     let bar = layout::tab_bar(size.width, size.height);
     window.add_child(
         WebviewBuilder::new(tabbar_label(server), WebviewUrl::App(TABBAR_PAGE.into()))
-            .on_navigation(server_tabs::guard(origin.clone()))
-            .on_new_window(|_, _| NewWindowResponse::Deny),
+            .on_navigation(links::guard(origin.clone()))
+            .on_new_window(links::on_new_window(origin.clone(), |_| {})),
         LogicalPosition::new(bar.x, bar.y),
         LogicalSize::new(bar.width, bar.height),
     )?;

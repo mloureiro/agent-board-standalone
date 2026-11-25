@@ -1,6 +1,6 @@
 use agent_board_client_core::page_input::{
     BODY_MAX_BYTES, HEADERS_MAX, InputError, TITLE_MAX_CHARS, fetch_input, link, notification,
-    tab_report,
+    pairing, sign_in, tab_report,
 };
 
 #[test]
@@ -84,4 +84,35 @@ fn client_app_018_tab_commands_accept_only_known_intents_directions_and_plain_pa
     assert_eq!(tab_path("https://evil.test"), Err(InputError::TabPath));
     assert_eq!(tab_title("Backlog"), Ok("Backlog".to_owned()));
     assert_eq!(tab_title("a\nb"), Err(InputError::TabTitle));
+}
+
+#[test]
+fn client_app_002_sign_in_and_pairing_inputs_are_capped_and_free_of_control_characters() {
+    let verifier = "v".repeat(43);
+    assert!(sign_in("flow-1", &verifier).is_ok());
+    for (flow, verifier) in [
+        ("", "v"),
+        ("f", ""),
+        ("f\n", "v"),
+        ("f", "v\u{0}"),
+        (&"f".repeat(129), "v"),
+        ("f", &"v".repeat(129)),
+    ] {
+        assert_eq!(sign_in(flow, verifier), Err(InputError::SignIn), "{flow:?}");
+    }
+    assert!(pairing("ABCD-2345", "Mac").is_ok());
+    for (code, label) in [
+        ("", "Mac"),
+        ("ABCD-2345", ""),
+        ("ABCD-2345", &"l".repeat(65)),
+        (&"A".repeat(33), "Mac"),
+        ("ABCD\n2345", "Mac"),
+        ("ABCD-2345", "Ma\tc"),
+    ] {
+        assert_eq!(
+            pairing(code, label),
+            Err(InputError::Pairing),
+            "{code:?} {label:?}"
+        );
+    }
 }

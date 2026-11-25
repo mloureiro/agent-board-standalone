@@ -117,3 +117,52 @@ Expected: the old per-server stores, tab files and session items are deleted at 
 When `servers.json` cannot be read in full, the app keeps a copy as `servers.json.unreadable` next to it. While that
 copy exists, launch and the list page delete no store of servers missing from the list; delete the copy once the list
 is put right.
+
+## 033, 037, 038, 052: sign in through the hand-off, survive a restart and sign out
+
+Use a login-mode API that has a passkey or other account you can sign in with in your browser, and add it to the
+list.
+
+1. Open the server. The page shows "Sign in with your browser" and a code.
+2. Click the sign-in button. Your default browser opens the server's approval page on the server's own address, not
+   inside the app window. Sign in there by any method and approve the code.
+3. The app window signs in on its own within a few seconds and shows the board. The code was never typed in the app.
+4. Quit the app with Cmd-Q and launch it again. Open the same server. It is still signed in with no new code.
+5. In Keychain Access, search for `com.mloureiro.agent-board-client`. One item per signed-in server exists under the
+   `.client-token` service, with the server's id as account. If the server has the request signature on, a
+   `.signing-key` item exists as well.
+6. Use the sign-out button in the app. The page shows sign-in again, and both Keychain items for that server are gone.
+7. Click a link to another website inside a task. The default browser opens it and the app window stays responsive.
+
+Expected: the token is created and kept by the app alone, the approval page opens only in the default browser, a
+restart keeps the session, and sign-out deletes the token and the signing key of that server only.
+
+## 037: a revoked session returns to sign-in within 25 s
+
+1. Sign in to a login-mode server as above.
+2. In your browser, sign in to the same server and revoke the app's session in Settings.
+3. Within 25 seconds the app window shows sign-in again, and the `.client-token` item for that server is removed
+   from the Keychain.
+4. Sign in again through the hand-off. The expired notice disappears.
+
+Expected: a revoked session is noticed by the next request, the stored token is removed and a new sign-in clears the
+expired state.
+
+## 052: pair with a server app code
+
+Use a no-login API with the request signature on, for example the server app or `agent-board-api` started with
+`REQUEST_SIGNATURE=on`.
+
+1. Add the server and open it. The page shows `needs-pairing` and asks for a code.
+2. In the server app choose "Pair a device…" (or run `agent-board-api pair`) and read the `XXXX-XXXX` code.
+3. Enter the code in the app. The page leaves `needs-pairing` and shows the board.
+4. In Keychain Access, a `.signing-key` item exists for that server's id. Quit and relaunch the app: the board still
+   opens with no new code.
+5. Repeat with a wrong code. The page reports that pairing failed, and no new `.signing-key` item is left behind.
+6. In the server's Settings, revoke the device. The next request shows `needs-pairing` again.
+
+Expected: the key never leaves the Keychain except as its public half, a failed pairing leaves nothing, and
+revoking the device returns the page to `needs-pairing`.
+
+If macOS asks to allow access to a Keychain item after you rebuilt or updated the app, answer Allow. Answering Deny
+makes the app treat the item as absent: sign in or pair again.

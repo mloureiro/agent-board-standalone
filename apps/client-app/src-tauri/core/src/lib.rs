@@ -8,6 +8,7 @@ pub mod http;
 pub mod ids;
 pub mod layout;
 pub mod legacy;
+pub mod links;
 pub mod log;
 pub mod navigation;
 pub mod opening;
