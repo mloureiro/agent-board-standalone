@@ -1,0 +1,65 @@
+#![allow(dead_code)]
+
+use std::fs;
+use std::io;
+use std::path::{Path, PathBuf};
+use std::sync::Mutex;
+
+use agent_board_server_core::credentials::FileStore;
+use agent_board_server_core::launchctl::Launchctl;
+use agent_board_server_core::paths::Root;
+use tempfile::TempDir;
+
+#[derive(Default)]
+pub struct RecordingLaunchctl(pub Mutex<Vec<String>>);
+
+impl Launchctl for RecordingLaunchctl {
+    fn bootout(&self, label: &str) -> io::Result<()> {
+        self.0.lock().unwrap().push(label.to_string());
+        Ok(())
+    }
+}
+
+impl RecordingLaunchctl {
+    pub fn calls(&self) -> Vec<String> {
+        self.0.lock().unwrap().clone()
+    }
+}
+
+pub struct Bed {
+    pub dir: TempDir,
+    pub home: PathBuf,
+    pub agents: PathBuf,
+}
+
+impl Bed {
+    pub fn new() -> Bed {
+        let dir = tempfile::tempdir().unwrap();
+        let home = dir.path().join("home");
+        let agents = home.join("Library/LaunchAgents");
+        fs::create_dir_all(&home).unwrap();
+        Bed { dir, home, agents }
+    }
+
+    pub fn default_root(&self) -> Root {
+        Root::resolve(None, &self.home).unwrap()
+    }
+
+    pub fn custom_root(&self, name: &str) -> Root {
+        Root::resolve(Some(self.dir.path().join(name).as_os_str()), &self.home).unwrap()
+    }
+
+    pub fn store(&self) -> FileStore {
+        FileStore::new(self.dir.path().join("credentials.json"))
+    }
+
+    pub fn app_folder(&self, root: &Root) {
+        fs::create_dir_all(root.path().join("data/pglite")).unwrap();
+        fs::write(root.path().join("settings.json"), "{}\n").unwrap();
+        fs::write(root.path().join("data/pglite/file"), "row").unwrap();
+    }
+}
+
+pub fn exists(path: &Path) -> bool {
+    fs::symlink_metadata(path).is_ok()
+}

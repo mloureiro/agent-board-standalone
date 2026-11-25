@@ -70,7 +70,9 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: apps/client-app/src-tauri
+          workspaces: |
+            apps/client-app/src-tauri
+            apps/server-app/src-tauri
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
       - run: pnpm lint
@@ -157,6 +159,28 @@ jobs:
       - run: pnpm install --frozen-lockfile --filter "@agent-board/client-app..."
       - run: pnpm --filter "@agent-board/client-app..." --if-present run build
       - run: pnpm --filter @agent-board/client-app shell:check
+
+  server-app-macos:
+    name: server-app (macOS)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/server-app/src-tauri
+      - run: pnpm install --frozen-lockfile --filter "@agent-board/server-app..."
+      - run: pnpm --filter "@agent-board/server-app..." --if-present run build
+      - run: pnpm --filter @agent-board/server-app shell:check
+      - run: pnpm --filter @agent-board/server-app build:binary
+      - run: pnpm --filter @agent-board/server-app test
 
   sealing-runtimes:
     needs: changes
@@ -323,7 +347,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - if: matrix.package == 'client-app' || matrix.package == 'mobile'
+      - if: matrix.package == 'client-app' || matrix.package == 'server-app' || matrix.package == 'mobile'
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
