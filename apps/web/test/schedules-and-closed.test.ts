@@ -49,13 +49,13 @@ describe('schedules page', () => {
     const { user } = render('/schedules');
 
     expect(await screen.findByText('Nightly build')).toBeInTheDocument();
-    expect(screen.getByText('Weekly report')).toBeInTheDocument();
+    expect(await screen.findByText('Weekly report')).toBeInTheDocument();
 
     await user.click(screen.getByRole('combobox', { name: 'Project' }));
     await user.click(await screen.findByRole('option', { name: 'Work' }));
 
     await waitFor(() => expect(screen.queryByText('Nightly build')).not.toBeInTheDocument());
-    expect(screen.getByText('Weekly report')).toBeInTheDocument();
+    expect(await screen.findByText('Weekly report')).toBeInTheDocument();
   });
 
   it('[web-067] pauses and resumes a schedule', async () => {
@@ -164,12 +164,14 @@ describe('closed page', () => {
     });
     render('/closed');
 
-    await screen.findByText('New closed');
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('list', { name: 'Closed tasks' }))
+          .getAllByRole('link')
+          .map((link) => link.textContent),
+      ).toEqual(['New closed', 'Old closed']),
+    );
     const list = screen.getByRole('list', { name: 'Closed tasks' });
-    const names = within(list)
-      .getAllByRole('link')
-      .map((link) => link.textContent);
-    expect(names).toEqual(['New closed', 'Old closed']);
     expect(screen.queryByText('Still open')).not.toBeInTheDocument();
     expect(within(list).getByRole('link', { name: 'New closed' })).toHaveAttribute(
       'href',
