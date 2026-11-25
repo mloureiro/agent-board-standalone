@@ -52,7 +52,8 @@ async function main(): Promise<void> {
           `${fixture.name}: ${migrations.length} migrations at ${fixture.coreCommit}, expected ${fixture.migrations}`,
         );
       const content = await withSeededRandom(`agent-board-fixtures/${fixture.name}`, buildContent);
-      const { client } = await createDatabase(server, `fixture_${fixture.name.replace('-', '_')}`);
+      const databaseName = `fixture_${fixture.name.replaceAll('-', '_')}`;
+      const { client } = await createDatabase(server, databaseName);
       try {
         await applyMigrations(client, migrations);
         const report = await insertContent(client, content.inserts);
@@ -62,7 +63,7 @@ async function main(): Promise<void> {
       } finally {
         await client.end();
       }
-      const dump = normaliseDump(await server.dump(`fixture_${fixture.name.replace('-', '_')}`));
+      const dump = normaliseDump(await server.dump(databaseName));
       await writeFile(sqlPath(fixture.name), dump);
       await writeFile(
         credentialsPath(fixture.name),

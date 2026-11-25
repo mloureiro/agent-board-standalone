@@ -76,8 +76,13 @@ export async function materializePostgres(
   const database = `fixture_${randomBytes(6).toString('hex')}`;
   const admin = new pg.Client({ connectionString: adminUrl });
   await admin.connect();
-  await admin.query(CREATE_APP_ROLE);
-  await admin.query(`create database "${database}"`);
+  try {
+    await admin.query(CREATE_APP_ROLE);
+    await admin.query(`create database "${database}"`);
+  } catch (error) {
+    await admin.end();
+    throw error;
+  }
   const url = new URL(adminUrl);
   url.pathname = `/${database}`;
   const client = new pg.Client({ connectionString: url.toString() });

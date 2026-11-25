@@ -19,10 +19,10 @@ import {
   materializePglite,
   materializePostgres,
   openPglite,
+  SOURCE_TABLES,
   type QueryableDatabase,
 } from '../fixtures/materialize.js';
 import {
-  COUNTED_TABLES,
   SEALED_COLUMNS,
   readCredentials,
   readReadme,
@@ -65,7 +65,7 @@ describe.each(FIXTURES)('fixture $name', (fixture) => {
 
   it('lists in the README the row count of every table', async () => {
     const readme = readmeCounts(readReadme());
-    for (const table of COUNTED_TABLES) {
+    for (const table of SOURCE_TABLES) {
       const listed = readme.get(table)?.get(fixture.name);
       expect(listed, `${table} is listed for ${fixture.name}`).not.toBeUndefined();
       const [{ present }] = (await database.query<{ present: boolean }>(
@@ -249,7 +249,7 @@ describe.skipIf(POSTGRES_URL === undefined)('fixture hosted-main on a Postgres s
       );
       expect(rows[0]?.tasks).toBe(12);
       const readme = readmeCounts(readReadme());
-      for (const table of COUNTED_TABLES) {
+      for (const table of SOURCE_TABLES) {
         const listed = readme.get(table)?.get('hosted-main');
         const { rows: counted } = await client.query<{ total: number }>(
           `select count(*)::int as total from public.${table}`,

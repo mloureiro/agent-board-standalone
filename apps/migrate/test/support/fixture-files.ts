@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { credentialsPath, README_PATH } from '../../fixtures/fixtures.js';
+import { SOURCE_TABLES } from '../../fixtures/materialize.js';
 
 export interface FixtureCredentials {
   readonly owner: string;
@@ -14,21 +15,6 @@ export const readCredentials = (name: string): FixtureCredentials =>
   JSON.parse(readFileSync(credentialsPath(name), 'utf8')) as FixtureCredentials;
 
 export const readReadme = (): string => readFileSync(README_PATH, 'utf8');
-
-export const COUNTED_TABLES = [
-  'app_user',
-  'machine',
-  'task',
-  'schedule',
-  'note',
-  'task_pr',
-  'transcript_run',
-  'transcript_event',
-  'passkey',
-  'shared_agents',
-  'link_rules',
-  'title_rules',
-] as const;
 
 export function readmeCounts(readme: string): Map<string, Map<string, number | null>> {
   const rows = readme.split('\n').filter((line) => line.startsWith('|'));
@@ -45,7 +31,7 @@ export function readmeCounts(readme: string): Map<string, Map<string, number | n
       .slice(1, -1)
       .map((cell) => cell.trim());
     const table = cells[0]?.replace(/`/g, '');
-    if (table === undefined || !(COUNTED_TABLES as readonly string[]).includes(table)) continue;
+    if (table === undefined || !(SOURCE_TABLES as readonly string[]).includes(table)) continue;
     counts.set(
       table,
       new Map(

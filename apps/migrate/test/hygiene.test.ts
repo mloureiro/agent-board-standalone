@@ -9,6 +9,10 @@ const files = [
     text: readFileSync(`${DATA_DIRECTORY}${name}`, 'utf8'),
   })),
   { name: 'README.md', text: readFileSync(README_PATH, 'utf8') },
+  {
+    name: 'content.ts',
+    text: readFileSync(new URL('../fixtures/content.ts', import.meta.url), 'utf8'),
+  },
 ];
 
 const EMAIL = /[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}/g;
