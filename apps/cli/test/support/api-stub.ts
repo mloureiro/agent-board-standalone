@@ -6,6 +6,7 @@ import {
   type AnyRoute,
   type WireDirectory,
   type WireNote,
+  type WireSchedule,
   type WireTask,
 } from '@agent-board/contract';
 import {
@@ -75,6 +76,14 @@ export interface ApiStub {
   readonly notes: Map<string, WireNote[]>;
   readonly directories: Map<string, WireDirectory>;
   readonly watches: Map<string, string | null>;
+  readonly schedules: Map<string, WireSchedule>;
+  readonly converted: { directories: { id: string; path: string }[]; assign: unknown[] }[];
+  readonly published: { feeds: string[]; agents: { version: number; document: string }[] };
+  setLegacy(
+    document: string | null,
+    uses: { kind: 'task' | 'schedule'; id: string; legacyDirectory: string }[],
+  ): void;
+  setBoardAgents(version: number, document: string): void;
   commands(): string[];
   setGrant(granted: boolean): void;
   forbid(command: string): void;
@@ -105,6 +114,16 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
   const notes = new Map<string, WireNote[]>();
   const directories = new Map<string, WireDirectory>();
   const watches = new Map<string, string | null>();
+  const schedules = new Map<string, WireSchedule>();
+  const converted: ApiStub['converted'] = [];
+  const published: ApiStub['published'] = { feeds: [], agents: [] };
+  const dedupe = new Map<string, string>();
+  const legacy: {
+    document: string | null;
+    uses: { kind: 'task' | 'schedule'; id: string; legacyDirectory: string }[];
+  } = { document: null, uses: [] };
+  let boardAgents: { version: number; document: string } | null = null;
+  let feedsIndex: string | null = null;
   const streams = new Set<http.ServerResponse>();
   const commands: string[] = [];
   let noteSequence = 0;
@@ -227,6 +246,12 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
     notes.set(taskId, [...(notes.get(taskId) ?? []), wire]);
   };
 
+  const scheduleOf = (id: string): WireSchedule => {
+    const found = schedules.get(id);
+    if (found === undefined) throw new Refusal(404, 'not-found', `no schedule ${id}`);
+    return found;
+  };
+
   const taskOf = (id: string): WireTask => {
     const task = tasks.get(id);
     if (task === undefined) throw new Refusal(404, 'not-found', `no task ${id}`);
@@ -250,12 +275,17 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
     },
     'add-task': async (body) => {
       const id = body.id as string;
+      const key = body.dedupeKey as string | undefined;
+      const existingId = key === undefined ? undefined : dedupe.get(key);
+      if (existingId !== undefined) return { task: taskOf(existingId), created: false };
       const created = !tasks.has(id);
       if (created) {
+        if (key !== undefined) dedupe.set(key, id);
         const draft = await baseTask({
           id,
           status: (body.status as WireTask['status'] | undefined) ?? 'backlog',
           createdBy: (body.createdBy as WireTask['createdBy'] | undefined) ?? 'agent',
+          notBefore: (body.notBefore as string | undefined) ?? null,
           priority: (body.priority as WireTask['priority'] | undefined) ?? 'normal',
           projectId: (body.projectId as string | undefined) ?? DEFAULT_PROJECT,
           directoryId: (body.directoryId as string | null | undefined) ?? null,
@@ -268,6 +298,12 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
           icon: (body.icon as string | undefined) ?? null,
           labels: (body.labels as string | undefined) ?? null,
           requestedLane: (body.lane as string | undefined) ?? null,
+          agent: (body.agent as string | undefined) ?? null,
+          model: (body.model as string | undefined) ?? null,
+          effort: (body.effort as WireTask['effort'] | undefined) ?? null,
+          autoDone: body.autoDone === true,
+          head: (body.head as string | undefined) ?? null,
+          next: 'fresh',
           ...(body.parentId === undefined ? {} : { forkOf: undefined }),
         });
         parents.set(id, body.parentId as string | undefined);
@@ -411,16 +447,177 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
       return updated;
     },
     'set-dirs': (body) => {
-      const requested = body.directories as { id: string; path: string; repo: string | null }[];
+      const requested = body.directories as {
+        id: string;
+        path: string;
+        repo: string | null;
+        projectId?: string;
+      }[];
+      const kept = new Set(requested.map((entry) => entry.id));
+      for (const id of directories.keys()) {
+        const used = [...tasks.values()].some(
+          (task) => task.directoryId === id && task.status !== 'done',
+        );
+        if (!kept.has(id) && used) {
+          throw new Refusal(409, 'directory-in-use', 'open tasks use that directory');
+        }
+      }
       const rows = requested.map((entry) => ({
         id: entry.id,
         path: entry.path,
         repo: entry.repo,
-        projectId: directories.get(entry.id)?.projectId ?? DEFAULT_PROJECT,
+        projectId: directories.get(entry.id)?.projectId ?? entry.projectId ?? DEFAULT_PROJECT,
       }));
       directories.clear();
       for (const row of rows) directories.set(row.id, row);
       return { directories: rows };
+    },
+    'list-schedules': () => ({ schedules: [...schedules.values()] }),
+    'add-schedule': async (body) => {
+      const id = body.id as string;
+      const startAt = body.startAt as string | undefined;
+      const every = body.everyMs as number | undefined;
+      const wire = {
+        id,
+        title: body.title as string,
+        input: body.input as string,
+        agent: (body.agent as string | undefined) ?? null,
+        icon: (body.icon as string | undefined) ?? null,
+        labels: (body.labels as string | undefined) ?? null,
+        priority: (body.priority as WireSchedule['priority'] | undefined) ?? 'normal',
+        model: (body.model as string | undefined) ?? null,
+        effort: (body.effort as WireSchedule['effort'] | undefined) ?? null,
+        requestedLane: (body.lane as string | undefined) ?? null,
+        autoDone: body.autoDone === true,
+        machine: (body.machine as string | undefined) ?? null,
+        projectId: (body.projectId as string | undefined) ?? DEFAULT_PROJECT,
+        directoryId: (body.directoryId as string | undefined) ?? null,
+        legacyDirectory: null,
+        everyMs: every ?? null,
+        cron: (body.cron as string | undefined) ?? null,
+        moreCrons: (body.moreCrons as string[] | undefined) ?? [],
+        timezone: (body.timezone as string | undefined) ?? null,
+        after:
+          body.after === undefined
+            ? null
+            : {
+                scheduleId: (body.after as { scheduleId: string }).scheduleId,
+                delayMs: (body.after as { delayMs?: number }).delayMs ?? 0,
+              },
+        maxConcurrent: (body.maxConcurrent as number | undefined) ?? null,
+        anchorAt: startAt ?? '2026-01-01T00:00:00.000Z',
+        nextRunAt: body.after === undefined ? (startAt ?? '2026-01-01T01:00:00.000Z') : null,
+        remaining: (body.times as number | undefined) ?? null,
+        until: (body.until as string | undefined) ?? null,
+        paused: false,
+        ended: false,
+        occurrenceTaskId: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      } satisfies WireSchedule;
+      schedules.set(id, wire);
+      if (body.after !== undefined) return { schedule: wire, task: null };
+      const draft = await baseTask({ id: `occ-${id}`, status: 'todo', createdBy: 'user' });
+      tasks.set(draft.id, { ...draft, scheduleId: id, notBefore: wire.nextRunAt });
+      return { schedule: wire, task: tasks.get(draft.id) };
+    },
+    'update-schedule': (body) => {
+      const wire = scheduleOf(body.id as string);
+      const next = { ...wire, paused: body.paused === true };
+      schedules.set(wire.id, next);
+      return next;
+    },
+    'edit-schedule': (body) => {
+      const wire = scheduleOf(body.id as string);
+      const settings = body.settings as
+        | {
+            place: { machine: string; directoryId: string } | null;
+            priority: WireSchedule['priority'];
+            model: string | null;
+            effort?: WireSchedule['effort'];
+            lane?: string | null;
+            autoDone: boolean;
+            repeat: { everyMs?: number; cron?: string; moreCrons?: string[]; timezone?: string };
+            runsLeft: number | null;
+            until: string | null;
+            maxConcurrent: number | null;
+            agent?: string;
+            icon?: string | null;
+            labels?: string | null;
+          }
+        | undefined;
+      const next = {
+        ...wire,
+        title: body.title as string,
+        input: body.input as string,
+        ...(settings === undefined
+          ? {}
+          : {
+              machine: settings.place?.machine ?? null,
+              directoryId: settings.place?.directoryId ?? null,
+              priority: settings.priority,
+              model: settings.model,
+              effort: settings.effort ?? null,
+              requestedLane: settings.lane ?? null,
+              autoDone: settings.autoDone,
+              everyMs: settings.repeat.everyMs ?? null,
+              cron: settings.repeat.cron ?? null,
+              moreCrons: settings.repeat.moreCrons ?? [],
+              timezone: settings.repeat.timezone ?? null,
+              remaining: settings.runsLeft,
+              until: settings.until,
+              maxConcurrent: settings.maxConcurrent,
+              agent: settings.agent ?? null,
+              icon: settings.icon ?? null,
+              labels: settings.labels ?? null,
+            }),
+      } as WireSchedule;
+      schedules.set(wire.id, next);
+      return { schedule: next, pending: 'updated' };
+    },
+    'remove-schedule': (body) => {
+      scheduleOf(body.id as string);
+      schedules.delete(body.id as string);
+      return {};
+    },
+    'get-legacy-dirs': () => ({ document: legacy.document, tasks: legacy.uses }),
+    'convert-legacy-dirs': (body) => {
+      const incoming = body.directories as { id: string; path: string; repo: string | null }[];
+      const assign = body.assign as {
+        kind: 'task' | 'schedule';
+        id: string;
+        directoryId: string;
+      }[];
+      let inserted = 0;
+      for (const row of incoming) {
+        if (directories.has(row.id)) continue;
+        directories.set(row.id, { ...row, projectId: DEFAULT_PROJECT });
+        inserted += 1;
+      }
+      for (const pair of assign) {
+        if (pair.kind === 'task') {
+          const task = tasks.get(pair.id);
+          if (task !== undefined) tasks.set(pair.id, { ...task, directoryId: pair.directoryId });
+        }
+      }
+      converted.push({ directories: incoming, assign });
+      legacy.document = null;
+      legacy.uses = [];
+      return { inserted, assigned: assign.length };
+    },
+    'get-agents': () => ({ agents: boardAgents }),
+    'set-agents': (body) => {
+      const expected = body.expectedVersion as number;
+      if ((boardAgents?.version ?? 0) !== expected) {
+        throw new Refusal(409, 'version-conflict', 'the board agents changed');
+      }
+      boardAgents = { version: body.version as number, document: body.document as string };
+      published.agents.push(boardAgents);
+      return {};
+    },
+    'set-feeds': (body) => {
+      published.feeds.push(body.feeds as string);
+      feedsIndex = body.index as string;
+      return {};
     },
     answer: (body) => {
       const task = gate(body.id as string);
@@ -568,6 +765,11 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
 
   const board = await startBoard({
     ...options,
+    machineVersion: () => ({
+      legacyDirs: legacy.document !== null,
+      agentsVersion: boardAgents?.version ?? null,
+      feedsIndex,
+    }),
     extra: async (request): Promise<Answer | undefined> => {
       const pathname = request.path.split('?')[0] ?? '';
       if (request.method === 'GET' && pathname === '/api/machine/events') {
@@ -638,6 +840,16 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
     notes,
     directories,
     watches,
+    schedules,
+    converted,
+    published,
+    setLegacy: (document, uses) => {
+      legacy.document = document;
+      legacy.uses = uses;
+    },
+    setBoardAgents: (version, document) => {
+      boardAgents = { version, document };
+    },
     commands: () => commands,
     setGrant: (value) => {
       granted = value;

@@ -3,6 +3,13 @@ import { Command, CommanderError } from 'commander';
 import { CliError, EXIT } from '../errors.js';
 import type { Runtime } from '../runtime.js';
 import { buildContext, type Context, type GlobalOptions } from './context.js';
+import { registerAgents } from './agents/index.js';
+import { registerConfig } from './config/index.js';
+import { registerDirs } from './dirs/index.js';
+import { registerFeeds } from './feeds/index.js';
+import { registerPlugins } from './plugins/index.js';
+import { registerProjects } from './projects/index.js';
+import { registerSchedule } from './schedule/index.js';
 import { registerInit } from './setup/init.js';
 import { registerTaskCommands } from './tasks/index.js';
 import { registerUserCommands } from './user/index.js';
@@ -44,6 +51,13 @@ export function buildProgram(rt: Runtime): Command {
   registerInit(program, withContext);
   registerTaskCommands(program, withContext);
   registerUserCommands(program, withContext);
+  registerSchedule(program, withContext);
+  registerDirs(program, withContext);
+  registerProjects(program, withContext);
+  registerConfig(program, withContext);
+  registerAgents(program, withContext);
+  registerFeeds(program, withContext);
+  registerPlugins(program, withContext);
   return program;
 }
 

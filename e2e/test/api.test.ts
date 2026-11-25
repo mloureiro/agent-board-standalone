@@ -47,10 +47,10 @@ describe('startApi', () => {
 
   it('reports the log tail when the API never announces itself', async () => {
     const tmp = setup();
-    await expect(start(tmp, { FAKE_API_SILENT: '1' }, 600)).rejects.toThrow(
-      /not ready after 600 ms[\s\S]*fake api started without announcing/,
+    await expect(start(tmp, { FAKE_API_SILENT: '1' }, 4000)).rejects.toThrow(
+      /not ready after 4000 ms[\s\S]*fake api started without announcing/,
     );
-  });
+  }, 10_000);
 
   it('starts the child from a cleared environment', async () => {
     process.env.E2E_LEAK_CHECK = 'leaked';

@@ -18,7 +18,7 @@ import {
 import { localTime } from '../../domain/time.js';
 import {
   coveringDirectory,
-  machineDirectories,
+  syncDirectories,
   readLocalDirectories,
   type MachineDirectory,
 } from '../../directories/index.js';
@@ -271,7 +271,7 @@ async function directoryChange(
         : {}),
     };
   }
-  const rows = await machineDirectories(s, readLocalDirectories(ctx.dirs.config));
+  const { rows } = await syncDirectories(s, { configDir: ctx.dirs.config, say: ctx.err });
   const row = chosenDirectory(ctx, rows, requested);
   if (row.projectId !== null && row.projectId !== wire.projectId) {
     throw new UsageError(
@@ -301,7 +301,7 @@ async function projectChange(
   }
   if (wire.projectId === project)
     return { config: {}, done: '', already: `${id} is already in that project` };
-  const rows = await machineDirectories(s, readLocalDirectories(ctx.dirs.config));
+  const { rows } = await syncDirectories(s, { configDir: ctx.dirs.config, say: ctx.err });
   const inProject = rows.filter((row) => row.projectId === project);
   const pick =
     inProject.find((row) => row.isDefault) ?? (inProject.length === 1 ? inProject[0] : undefined);

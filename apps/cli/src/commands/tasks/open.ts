@@ -58,6 +58,7 @@ export function inputBinding(
   wire: WireTask,
   agent: string | null,
   origin: 'task' | 'schedule',
+  withDirectory = true,
 ): Binding {
   return bindings.input({
     origin:
@@ -67,7 +68,7 @@ export function inputBinding(
     creator: wire.createdBy,
     forkOf: wire.forkOf ?? null,
     agent,
-    directoryId: wire.directoryId,
+    directoryId: withDirectory ? wire.directoryId : null,
   });
 }
 
@@ -90,6 +91,12 @@ export async function openTask(keys: Keys, wire: WireTask): Promise<OpenTask> {
   let input = await attempt(keys, inputBinding(wire, agent, 'task'), wire.input);
   if (input === null && wire.scheduleId !== null) {
     input = await attempt(keys, inputBinding(wire, agent, 'schedule'), wire.input);
+  }
+  if (input === null && wire.directoryId !== null) {
+    input = await attempt(keys, inputBinding(wire, agent, 'task', false), wire.input);
+    if (input === null && wire.scheduleId !== null) {
+      input = await attempt(keys, inputBinding(wire, agent, 'schedule', false), wire.input);
+    }
   }
   track('input', input, true);
   const icon =

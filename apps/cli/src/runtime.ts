@@ -1,6 +1,7 @@
 import { execFile, spawn } from 'node:child_process';
 import { constants as osConstants } from 'node:os';
 import os from 'node:os';
+import { createInterface } from 'node:readline/promises';
 
 export interface ExecOptions {
   readonly stdin?: string;
@@ -31,6 +32,7 @@ export interface Runtime {
   readonly interrupt: AbortSignal;
   cwd(): string;
   readStdin(): Promise<string>;
+  ask(question: string): Promise<string | null>;
   spawnInteractive(
     file: string,
     args: readonly string[],
@@ -43,7 +45,7 @@ export interface Runtime {
   exec(file: string, args: readonly string[], options: ExecOptions): Promise<ExecResult>;
 }
 
-function execFileText(
+export function execFileText(
   file: string,
   args: readonly string[],
   options: ExecOptions,
@@ -95,6 +97,16 @@ async function readProcessStdin(): Promise<string> {
   return Buffer.concat(chunks).toString('utf8');
 }
 
+async function askOnTerminal(question: string): Promise<string | null> {
+  if (!process.stdin.isTTY || !process.stderr.isTTY) return null;
+  const lines = createInterface({ input: process.stdin, output: process.stderr });
+  try {
+    return await lines.question(question);
+  } finally {
+    lines.close();
+  }
+}
+
 function interruptSignal(): AbortSignal {
   const controller = new AbortController();
   const stop = (): void => {
@@ -112,6 +124,7 @@ export function systemRuntime(): Runtime {
     interrupt: interruptSignal(),
     cwd: () => process.cwd(),
     readStdin: readProcessStdin,
+    ask: askOnTerminal,
     spawnInteractive,
     io: {
       stdout: (text) => {

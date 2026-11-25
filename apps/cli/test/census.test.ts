@@ -24,7 +24,14 @@ const BUILT = [
   'CMD-15',
   'CMD-16',
   'CMD-17',
+  'CMD-18',
+  'CMD-19',
+  'CMD-20',
   'CMD-21',
+  'CMD-22',
+  'CMD-23',
+  'CMD-24',
+  'CMD-25',
   'CMD-26',
 ] as const;
 
@@ -110,6 +117,7 @@ describe('the census of cli-review section 1', () => {
       'fork',
       'transcript',
       'machines',
+      'projects',
     ]);
     for (const command of program.commands) {
       expect(known.has(command.name()) || added.has(command.name()), command.name()).toBe(true);
