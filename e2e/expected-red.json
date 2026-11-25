@@ -2,8 +2,23 @@
   "files": {
     "blackbox/account-move.test.ts": "*",
     "blackbox/events-projects.test.ts": "*",
-    "blackbox/handshake.test.ts": "*",
-    "blackbox/harness.test.ts": "*",
+    "blackbox/handshake.test.ts": [
+      "handshake over HTTP › [api-098] a client below MIN_CLIENT gets 412 upgrade-required with an upgrade hint and nothing is written @matrix",
+      "handshake over HTTP › [api-098] a machine request below MIN_CLIENT gets the same 412 @matrix",
+      "handshake over HTTP › [api-098] a client route and a machine route without x-board-contract get 412 naming the missing header @matrix",
+      "handshake in the CLI › [cli-004] the first call of a process is the version command, before any other @matrix",
+      "handshake in the CLI › [cli-004] a server with a higher contract is refused, naming both versions @matrix",
+      "handshake in the CLI › [cli-004] a data key whose derived key id differs from the server is refused @matrix",
+      "handshake in the CLI › [cli-011] board version prints the CLI version, its contract range and the server verdict compatible",
+      "handshake in the CLI › [cli-011] through a proxy with a higher contract the verdict says the CLI is too old",
+      "handshake in the CLI › [cli-011] board version --json carries the same fields",
+      "handshake in the CLI › [cli-011] board version --json through a proxy with a higher contract reports client-too-old"
+    ],
+    "blackbox/harness.test.ts": [
+      "[harness] fixtures on a no-login board › [harness] the no-login user, key, task and enrolled machine work together",
+      "[harness] fixtures on a no-login board › [harness] the version proxy rewrites the version a real API answers",
+      "[harness] fixtures on a login board › [harness] a signed-in user holds a cookie session and a client token user holds abc_"
+    ],
     "blackbox/legacy-dirs.test.ts": "*",
     "blackbox/machine-lifecycle.test.ts": "*",
     "blackbox/matrix-refusal.test.ts": "*",
