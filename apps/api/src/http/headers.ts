@@ -9,7 +9,9 @@ export const registerHeaders = (app: FastifyInstance, context: ServerContext): v
   const { signIn } = context.config;
   const hsts = signIn.mode === 'login' && signIn.scheme === 'https';
   app.addHook('onSend', async (request, reply, payload) => {
-    const table = TABLES[request.routeOptions.config.answer ?? 'data'];
+    const answer = request.routeOptions.config.answer ?? 'data';
+    const html = String(reply.getHeader('content-type') ?? '').startsWith('text/html');
+    const table = TABLES[answer === 'asset' && html ? 'page' : answer];
     for (const [name, value] of Object.entries(table)) {
       if (name === 'content-type' && reply.hasHeader('content-type')) continue;
       reply.header(name, value);
