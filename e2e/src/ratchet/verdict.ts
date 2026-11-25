@@ -42,6 +42,10 @@ export function judgeResult(result: TestResult, listed: boolean, options: Verdic
 
   if (result.outcome === 'failed') return verdict('fail', result, 'unlisted test failed');
 
+  if (options.matrixCell && result.skipReason === null) {
+    return verdict('ok', result, 'outside the @matrix subset');
+  }
+
   const reason = result.skipReason ?? 'no reason recorded';
   const kind = skipKind(result.skipReason);
   const message = `unlisted test skipped: ${reason}`;

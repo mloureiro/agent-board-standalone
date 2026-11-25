@@ -1,0 +1,31 @@
+name: Release assets
+
+on:
+  push:
+    tags:
+      - 'contract-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  openapi:
+    name: attach openapi.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter @agent-board/contract...
+      - run: pnpm --filter @agent-board/contract run build
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            gh release create "$TAG" --verify-tag --title "$TAG" --notes-from-tag
+          fi
+          gh release upload "$TAG" packages/contract/dist/openapi.json --clobber
