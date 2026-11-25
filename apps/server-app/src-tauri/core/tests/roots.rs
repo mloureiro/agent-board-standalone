@@ -26,22 +26,26 @@ fn env_of<'a>(pairs: &'a [(&'a str, &'a str)]) -> impl Fn(&str) -> Option<String
 
 #[test]
 fn server_app_069_without_the_variable_the_root_is_the_default_folder() {
-    let root = Root::resolve(None, Path::new("/Users/ines")).unwrap();
+    let root = Root::resolve(None, Path::new("/var/folders/ines")).unwrap();
     assert!(root.is_default());
     assert_eq!(
         root.path(),
-        Path::new("/Users/ines/Library/Application Support/Agent Board Server")
+        Path::new("/var/folders/ines/Library/Application Support/Agent Board Server")
     );
     assert_eq!(root.keychain_service(), IDENTIFIER);
     assert_eq!(IDENTIFIER, "dev.mloureiro.agent-board-server");
-    let empty = Root::resolve(Some(OsStr::new("")), Path::new("/Users/ines")).unwrap();
+    let empty = Root::resolve(Some(OsStr::new("")), Path::new("/var/folders/ines")).unwrap();
     assert!(empty.is_default());
 }
 
 #[test]
 fn server_app_069_the_variable_moves_the_whole_root_and_gives_it_its_own_keychain_service() {
     assert_eq!(ROOT_ENV, "AGENT_BOARD_SERVER_ROOT");
-    let root = Root::resolve(Some(OsStr::new("/tmp/board-a/")), Path::new("/Users/ines")).unwrap();
+    let root = Root::resolve(
+        Some(OsStr::new("/tmp/board-a/")),
+        Path::new("/var/folders/ines"),
+    )
+    .unwrap();
     assert!(!root.is_default());
     assert_eq!(root.path(), Path::new("/tmp/board-a"));
     assert_eq!(
@@ -58,20 +62,25 @@ fn server_app_069_the_variable_moves_the_whole_root_and_gives_it_its_own_keychai
         format!("{IDENTIFIER}.root:/tmp/board-a")
     );
 
-    let other = Root::resolve(Some(OsStr::new("/tmp/board-b")), Path::new("/Users/ines")).unwrap();
+    let other = Root::resolve(
+        Some(OsStr::new("/tmp/board-b")),
+        Path::new("/var/folders/ines"),
+    )
+    .unwrap();
     assert_ne!(root.keychain_service(), other.keychain_service());
 }
 
 #[test]
 fn server_app_069_a_relative_root_is_refused() {
-    let error = Root::resolve(Some(OsStr::new("board")), Path::new("/Users/ines")).unwrap_err();
+    let error =
+        Root::resolve(Some(OsStr::new("board")), Path::new("/var/folders/ines")).unwrap_err();
     assert!(error.to_string().contains(ROOT_ENV));
 }
 
 #[test]
 fn server_app_054_the_default_root_uses_the_bare_service_name_and_any_other_a_suffixed_one() {
-    let home = Path::new("/Users/ines");
-    let default_path = "/Users/ines/Library/Application Support/Agent Board Server";
+    let home = Path::new("/var/folders/ines");
+    let default_path = "/var/folders/ines/Library/Application Support/Agent Board Server";
     let same = Root::resolve(Some(OsStr::new(default_path)), home).unwrap();
     assert_eq!(same.keychain_service(), IDENTIFIER);
     let other = Root::resolve(Some(OsStr::new("/Volumes/x/board")), home).unwrap();
