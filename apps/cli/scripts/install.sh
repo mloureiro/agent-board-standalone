@@ -56,15 +56,13 @@ if [ -z "$VERSION" ]; then
     | tail -n 1)"
   [ -n "$VERSION" ] || fail "this repository has no cli-v* release yet"
 fi
-case "$VERSION" in
-  [0-9]*.[0-9]*.[0-9]*) ;;
-  *) fail "\"$VERSION\" is not an x.y.z version" ;;
-esac
+printf '%s\n' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || fail "\"$VERSION\" is not an x.y.z version"
 
 TAG="cli-v${VERSION}"
 ASSET="board-${TARGET}"
 WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT INT TERM
+trap 'rm -rf "$WORK"' EXIT
+trap 'exit 130' INT TERM
 
 curl -fsSL -o "$WORK/SHA256SUMS" "$DOWNLOAD_URL/$TAG/SHA256SUMS" || fail "could not download SHA256SUMS of $TAG"
 curl -fsSL -o "$WORK/$ASSET" "$DOWNLOAD_URL/$TAG/$ASSET" || fail "could not download $ASSET of $TAG"

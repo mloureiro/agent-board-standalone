@@ -169,7 +169,11 @@ export function restoreBackup(
   const replacements: Replacement[] = [];
   const kept = new Set<string>();
   for (const entry of backup.manifest.entries) {
-    const target = path.join(areaRoot(dirs, entry.area), entry.rel);
+    const root = areaRoot(dirs, entry.area);
+    const target = path.join(root, entry.rel);
+    if (path.relative(root, target).startsWith('..') || path.isAbsolute(entry.rel)) {
+      throw new CliError(`${backup.name} names a file outside its profile: ${entry.rel}`);
+    }
     kept.add(target);
     replacements.push({
       target,

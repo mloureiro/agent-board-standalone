@@ -8,16 +8,26 @@ import { buildContext } from '../src/commands/context.js';
 import { runCli } from '../src/commands/program.js';
 import { completeIds } from '../src/completion/index.js';
 import { EXIT } from '../src/errors.js';
-import { createRunFiles, shutdownWorkers, type ProcessOps } from '../src/shutdown/index.js';
+import {
+  createRunFiles,
+  parseElapsed,
+  shutdownWorkers,
+  systemProcessOps,
+  type ProcessOps,
+} from '../src/shutdown/index.js';
 import { useRig } from './support/harness.js';
 import { testRuntime } from './support/runtime.js';
 
 const rig = useRig();
 
-function fakeProcesses(alive: Set<number>, onSignal?: (pid: number, signal: string) => void) {
+function fakeProcesses(
+  alive: Set<number>,
+  onSignal?: (pid: number, signal: string) => void,
+  startedAt = 0,
+) {
   const signals: string[] = [];
   const ops: ProcessOps = {
-    alive: (pid) => alive.has(pid),
+    startedAt: (pid) => (alive.has(pid) ? startedAt : null),
     signal: (pid, signal) => {
       signals.push(`${pid}:${signal}`);
       onSignal?.(pid, signal);
@@ -172,6 +182,38 @@ describe('board internal shutdown', () => {
     expect(results.get('taskdddd')).toBe('stopped');
     expect(signals).toEqual(['-4030:SIGKILL']);
     test.dispose();
+  });
+
+  it('[cli-055] signals no process that started after its run file was written', async () => {
+    const test = testRuntime();
+    const dir = test.path('run');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(path.join(dir, 'taskffff.pid'), '4040');
+    writeFileSync(path.join(dir, 'taskffff.pgid'), '4041');
+    writeFileSync(path.join(dir, 'taskgggg.pgid'), '1');
+    const { ops, signals } = fakeProcesses(new Set([4040, 4041]), undefined, Date.now() + 60_000);
+    const lines: string[] = [];
+    await shutdownWorkers({
+      files: createRunFiles(dir),
+      processes: ops,
+      graceMs: 2_000,
+      ...clockOf(),
+      print: (line) => lines.push(line),
+    });
+    expect(signals).toEqual([]);
+    expect(lines).not.toContain('taskffff paused');
+    expect(existsSync(path.join(dir, 'taskffff.pid'))).toBe(false);
+    test.dispose();
+  });
+
+  it('[cli-055] reads the start of a process from ps', () => {
+    expect(parseElapsed('   05:07\n')).toBe(307);
+    expect(parseElapsed('02:05:07')).toBe(7507);
+    expect(parseElapsed('1-02:05:07')).toBe(93907);
+    expect(parseElapsed('')).toBeNull();
+    const started = systemProcessOps.startedAt(process.pid);
+    expect(started).not.toBeNull();
+    expect(started).toBeLessThanOrEqual(Date.now());
   });
 
   it('[cli-055] reports that no worker runs, and exits 0', async () => {

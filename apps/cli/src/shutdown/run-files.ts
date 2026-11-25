@@ -1,19 +1,35 @@
-import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 export interface ProcessOps {
-  alive(pid: number): boolean;
+  startedAt(pid: number): number | null;
   signal(pid: number, signal: NodeJS.Signals): void;
 }
 
+export function parseElapsed(text: string): number | null {
+  const match = /^(?:(\d+)-)?(?:(\d+):)?(\d+):(\d+)$/.exec(text.trim());
+  if (match === null) return null;
+  const [, days, hours, minutes, seconds] = match;
+  return (
+    ((Number(days ?? 0) * 24 + Number(hours ?? 0)) * 60 + Number(minutes)) * 60 + Number(seconds)
+  );
+}
+
 export const systemProcessOps: ProcessOps = {
-  alive(pid) {
+  startedAt(pid) {
+    let output: string;
     try {
-      process.kill(pid, 0);
-      return true;
-    } catch (error) {
-      return (error as NodeJS.ErrnoException).code === 'EPERM';
+      output = execFileSync('ps', ['-o', 'etime=', '-p', String(pid)], {
+        encoding: 'utf8',
+        timeout: 5_000,
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+    } catch {
+      return null;
     }
+    const elapsed = parseElapsed(output);
+    return elapsed === null ? null : Date.now() - elapsed * 1000;
   },
   signal(pid, signal) {
     try {
@@ -28,9 +44,14 @@ export type RunFileKind = 'pid' | 'pgid' | 'shutdown';
 
 const SUFFIXES: readonly RunFileKind[] = ['pid', 'pgid', 'shutdown'];
 
+export interface RunFile {
+  readonly id: number;
+  readonly writtenAt: number;
+}
+
 export interface RunFiles {
   tasksWith(kind: RunFileKind): string[];
-  pidOf(task: string, kind: 'pid' | 'pgid'): number | null;
+  pidOf(task: string, kind: 'pid' | 'pgid'): RunFile | null;
   requestShutdown(task: string, deadline: Date): void;
   clear(task: string): void;
 }
@@ -48,8 +69,9 @@ export function createRunFiles(dir: string): RunFiles {
     },
     pidOf(task, kind) {
       try {
-        const pid = Number.parseInt(readFileSync(file(task, kind), 'utf8'), 10);
-        return Number.isInteger(pid) && pid > 0 ? pid : null;
+        const id = Number.parseInt(readFileSync(file(task, kind), 'utf8'), 10);
+        const writtenAt = statSync(file(task, kind)).mtimeMs;
+        return Number.isInteger(id) && id > 1 ? { id, writtenAt } : null;
       } catch {
         return null;
       }

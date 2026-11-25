@@ -3,6 +3,7 @@ import type { ProcessOps, RunFiles } from './run-files.js';
 export const DEFAULT_SHUTDOWN_GRACE_S = 20;
 const POLL_MS = 250;
 const REPORT_RESERVE_MS = 5_000;
+const ELAPSED_RESOLUTION_MS = 2_000;
 export const PAUSE_SIGNAL: NodeJS.Signals = 'SIGUSR2';
 
 export interface ShutdownDeps {
@@ -17,21 +18,36 @@ export interface ShutdownDeps {
 
 type Outcome = 'paused' | 'stopped' | 'gone';
 
+function startedBeforeWritten(deps: ShutdownDeps, id: number, writtenAt: number): boolean | null {
+  const startedAt = deps.processes.startedAt(id);
+  if (startedAt === null) return null;
+  return startedAt <= writtenAt + ELAPSED_RESOLUTION_MS;
+}
+
+function workerPid(deps: ShutdownDeps, task: string): number | null {
+  const file = deps.files.pidOf(task, 'pid');
+  if (file === null) return null;
+  return startedBeforeWritten(deps, file.id, file.writtenAt) === true ? file.id : null;
+}
+
+function agentGroup(deps: ShutdownDeps, task: string): number | null {
+  const file = deps.files.pidOf(task, 'pgid');
+  if (file === null) return null;
+  return startedBeforeWritten(deps, file.id, file.writtenAt) === false ? null : file.id;
+}
+
 function liveWorkers(deps: ShutdownDeps): string[] {
-  return deps.files.tasksWith('pid').filter((task) => {
-    const pid = deps.files.pidOf(task, 'pid');
-    return pid !== null && deps.processes.alive(pid);
-  });
+  return deps.files.tasksWith('pid').filter((task) => workerPid(deps, task) !== null);
 }
 
 function killAgents(deps: ShutdownDeps, task: string): void {
-  const group = deps.files.pidOf(task, 'pgid');
+  const group = agentGroup(deps, task);
   if (group !== null) deps.processes.signal(-group, 'SIGKILL');
 }
 
 function stop(deps: ShutdownDeps, task: string): void {
   killAgents(deps, task);
-  const pid = deps.files.pidOf(task, 'pid');
+  const pid = workerPid(deps, task);
   if (pid !== null) deps.processes.signal(pid, 'SIGKILL');
   deps.files.clear(task);
 }
@@ -55,7 +71,7 @@ export async function shutdownWorkers(deps: ShutdownDeps): Promise<Map<string, O
     deps.print(`pausing ${running.length} running worker(s), up to ${deps.graceMs / 1000} s`);
   }
   for (const task of running) {
-    const pid = deps.files.pidOf(task, 'pid');
+    const pid = workerPid(deps, task);
     if (pid === null) {
       results.set(task, 'gone');
       continue;
