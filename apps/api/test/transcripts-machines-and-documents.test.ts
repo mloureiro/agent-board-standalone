@@ -124,6 +124,20 @@ describe('transcripts', () => {
     expect(other.status).toBe(400);
   });
 
+  it('[api-081] a run belongs to the machine that started it', async () => {
+    const owner = await enrolled();
+    const intruder = await enrolled();
+    const taskId = uniqueName('task');
+    await seedTask(board, { id: taskId });
+    const runId = uniqueName('run');
+    expect((await upload(owner.token, taskId, runId, [event(0)])).status).toBe(200);
+    const refused = await upload(intruder.token, taskId, runId, [event(1)]);
+    expect(refused.status).toBe(403);
+    expect(refused.body.error?.code).toBe('forbidden');
+    const listed = await call(board, 'client.transcript.events', { runId } as never);
+    expect(listed.body.events.map((entry) => entry.seq)).toEqual([0]);
+  });
+
   it('[api-082] loads one tool output on demand and returns the latest context reading', async () => {
     const { token } = await enrolled();
     const taskId = uniqueName('task');
