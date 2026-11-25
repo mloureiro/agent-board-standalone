@@ -65,21 +65,63 @@
     "browser/new-task.spec.ts": "*",
     "browser/parity.spec.ts": "*",
     "browser/projects.spec.ts": [
-      "project filter on the task, schedule and event queries › [api-104] client.events with a project raises changed only for that project's changes",
-      "projects in the browser client › [web-081] the board shows the tasks of all projects together",
-      "projects in the browser client › [web-081] the project filter narrows the board to one project",
-      "projects in the browser client › [web-081] the chosen project survives a reload on the same device",
-      "projects in the browser client › [web-081] the chosen project is absent in a new browser context",
-      "projects in the browser client › [web-082] the sidebar lists the projects and navigates by project",
+      {
+        "title": "project filter on the task, schedule and event queries › [api-104] client.events with a project raises changed only for that project's changes",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-081] the board shows the tasks of all projects together",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-081] the project filter narrows the board to one project",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-081] the chosen project survives a reload on the same device",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-081] the chosen project is absent in a new browser context",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-082] the sidebar lists the projects and navigates by project",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
       "projects in the browser client › [web-082] the sidebar is a drawer on a phone @phone",
-      "projects in the browser client › [web-083] a project is created from the client with its name sealed",
-      "projects in the browser client › [web-083] a project is renamed from the client with the new name sealed",
-      "projects in the browser client › [web-083] a project gets a new icon from the client with the icon sealed",
-      "projects in the browser client › [web-083] an archived project leaves the switcher",
-      "projects in the browser client › [web-083] an empty project is deleted from the client",
-      "projects in the browser client › [web-083] deleting a project with tasks asks what happens to them and moves them to the default project",
-      "projects in the browser client › [web-083] deleting a project with tasks can delete the tasks too",
-      "projects of several servers in the sidebar › [web-082] the sidebar lists the projects of each open server and navigates by project"
+      {
+        "title": "projects in the browser client › [web-083] a project is created from the client with its name sealed",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-083] a project is renamed from the client with the new name sealed",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-083] a project gets a new icon from the client with the icon sealed",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-083] an archived project leaves the switcher",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-083] an empty project is deleted from the client",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-083] deleting a project with tasks asks what happens to them and moves them to the default project",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-083] deleting a project with tasks can delete the tasks too",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects of several servers in the sidebar › [web-082] the sidebar lists the projects of each open server and navigates by project",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      }
     ],
     "browser/proposals.spec.ts": "*",
     "browser/questions.spec.ts": "*",
