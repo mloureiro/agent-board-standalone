@@ -194,3 +194,91 @@ revoking the device returns the page to `needs-pairing`.
 If macOS asks to allow access to a Keychain item after you rebuilt or updated the app, answer Allow. Answering Deny
 leaves the item in place and unused: a denied session token shows sign-in, and a denied signing key makes every
 request to that server fail until you relaunch the app and answer Allow. A denied key is never replaced.
+
+## 040: a notification arrives when another app is in front and when the window is minimised
+
+Use a server that lets you move a task to Needs me (for example by running a machine that asks for input). The first
+notification asks for permission: allow it in the system prompt. Quit the app and open it again with the permission
+already given before the steps below.
+
+1. Open the server window and select its home tab. Bring another app (for example Notes) to the front, then make a
+   task need you.
+2. A banner shows with the task title as its title and the server's name under it, and it plays the default sound.
+3. Minimise the server window with the yellow button and make another task need you.
+4. A second banner shows with that task's title and the same server name.
+5. Make the same task need you again within a minute (move it out of Needs me and back). No second banner shows for
+   it. After a minute the same change raises a banner again.
+6. Run `log stream --predicate 'process == "agent-board-client"' | grep -i "notification"` while repeating a step:
+   no line holds a task title.
+
+Expected: every notification carries the task title and the server's name, repeats of one task within 60 seconds are
+dropped across tabs and windows, and nothing sealed reaches the log.
+
+## 041: no notification while the server's home tab is in front, and one prompt only
+
+Start with the notification permission still unanswered: remove the app from System Settings › Notifications, or use a
+Mac user that never opened the app.
+
+1. Launch the app and open a server. No permission prompt shows at launch.
+2. With the server window in front and its home tab selected, make a task need you. No banner shows and no prompt
+   shows.
+3. Select a task tab (or open another server's window) and make a task need you again. The system asks for
+   permission once, and after you allow it the banner shows.
+4. Select home in the key window again and repeat. No banner shows.
+5. Open a second server window and keep it in front with its own home selected. A task of the first server that needs
+   you now raises a banner, because only the server of the key window is silent.
+6. Deny the permission in System Settings › Notifications and repeat step 3. Nothing shows, and
+   `log stream --predicate 'process == "agent-board-client"'` shows "notification permission denied" once for the
+   run.
+
+Expected: nothing is requested at launch, the prompt appears with the first raised notification, a home tab in the
+key window stays silent, and a denial is logged once.
+
+## 042: clicking a notification opens the task
+
+1. Raise a banner for a task of an open server while another app is in front, then click it.
+2. The server window comes to the front and the task's tab is selected. If the task had no tab yet one opens for it.
+3. Raise a banner for a task that already has a tab open and click it. That existing tab is selected and no second
+   tab opens.
+4. Minimise the window, raise a banner and click it. The window is restored and shows the task tab.
+5. Raise a banner for server A, then remove server A from the list and click the banner (from Notification Centre).
+   Nothing happens and no window opens.
+6. Quit the app, then click a banner left in Notification Centre. The app does not open a task and no window for a
+   removed server appears.
+
+Expected: a click lands on the task of that server and only on a server that has a window in this run.
+
+## 016, 050: a minimised window for ten minutes still notifies
+
+1. Open a server and select home. Minimise its window and leave it for ten minutes.
+2. Make a task need you every few minutes, at least once after the first five minutes. Each one raises a banner
+   within a few seconds, and clicking it restores the window with the task tab selected.
+3. Restore the window and check that the board shows the changes made meanwhile without a reload.
+4. Where the live view of a hidden window is still throttled by macOS, the log shows "window throttled, polling
+   attention" for the server. From then on a task that needs you raises "A task needs you on <server>" within 30
+   seconds. A task that needed you before the poll started raises none of them.
+5. Restore the window. The log line does not repeat and polling stops: no further banner with the generic text shows.
+6. Sign the server out of its token from another device so the session ends, and leave the window minimised. Restore
+   it and check that the tab bar shows "Your session expired. Sign in again to keep receiving notifications."
+
+Expected: a hidden or minimised window keeps raising notifications, the generic poll runs only while heartbeats are
+missed, and an expired session shows the banner in the tab bar until the next sign-in.
+
+## 045: zoom acts on every tab of the key server window and not on the tab bar
+
+Open three tabs in a server window and a second server window.
+
+1. Press Cmd-= (and Cmd-Shift-= on a keyboard where the plus key needs shift). The pages of all three tabs grow one
+   step. The tab bar keeps its size and its text.
+2. Open View › Zoom In, Zoom Out and Actual Size with the same window in front. Each moves the pages along the
+   25 to 500 percent ladder (… 90, 100, 110, 125 …) and Actual Size returns to 100 percent.
+3. Open a new tab while the window is zoomed. The new tab opens at the same zoom.
+4. Switch to the second server window. Its pages are still at 100 percent. Zoom it out and go back to the first one:
+   it keeps its own level.
+5. With the server list in front, press Cmd-=. Nothing zooms.
+6. Quit and open the app again. Every server starts at 100 percent.
+7. Click the board background and press Backspace. The page does not go back. Type in a text field and press
+   Backspace: characters are deleted as usual.
+
+Expected: zoom follows the key server window, covers all its tabs including new ones, never scales the tab bar, is not
+remembered, and Backspace outside a field never navigates back.

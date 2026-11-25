@@ -27,6 +27,7 @@ pub mod tab_file;
 pub mod tabs;
 pub mod throttle;
 pub mod tokens;
+pub mod watch;
 pub mod zoom;
 
 pub const BUNDLE_ID: &str = "com.mloureiro.agent-board-client";

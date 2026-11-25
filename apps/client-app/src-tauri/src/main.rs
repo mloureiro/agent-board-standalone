@@ -1,3 +1,4 @@
+mod alerts;
 mod app;
 mod clock;
 mod commands;
@@ -8,10 +9,12 @@ mod keychain;
 mod legacy;
 mod links;
 mod menu;
+mod notifications;
 mod removals;
 mod server_tabs;
 mod state;
 mod tab_registry;
+mod webkit;
 mod windows;
 
 fn main() {

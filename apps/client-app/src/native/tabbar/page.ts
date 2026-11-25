@@ -38,7 +38,14 @@ function edges(split: readonly number[]): number[] {
 
 export async function mountTabbar(root: HTMLElement, backend: TabbarBackend): Promise<void> {
   const bar = h('div', { class: 'bar' });
-  root.replaceChildren(bar);
+  const banner = h('div', { class: 'banner', role: 'status', hidden: '' });
+  root.replaceChildren(h('div', { class: 'strip' }, bar, banner));
+
+  function showBanner(text: string | null): void {
+    banner.textContent = text ?? '';
+    banner.title = text ?? '';
+    banner.hidden = text === null;
+  }
 
   const fail = (action: string) => (): void => {
     console.error(`${action} failed`);
@@ -359,4 +366,12 @@ export async function mountTabbar(root: HTMLElement, backend: TabbarBackend): Pr
   });
   const snapshot = await backend.snapshot();
   if (!live) render(snapshot);
+
+  let bannerLive = false;
+  await backend.onBanner((text) => {
+    bannerLive = true;
+    showBanner(text);
+  });
+  const initialBanner = await backend.banner();
+  if (!bannerLive) showBanner(initialBanner);
 }
