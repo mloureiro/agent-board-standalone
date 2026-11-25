@@ -29,9 +29,9 @@ import {
   createPostgresDatabase,
   type PostgresDatabase,
 } from './targets.js';
+import { migrationsBeforeTheNewest, previousReleaseMigrations } from './previous-release.js';
 import { envelope, rowsOf, seedUser } from './support.js';
 
-const FIXTURE = join(import.meta.dirname, '..', 'fixtures', 'previous-release');
 const postgresEnabled = POSTGRES_URL !== undefined;
 
 const cleanups: (() => Promise<void>)[] = [];
@@ -311,7 +311,24 @@ describe('upgrade from the previous release', () => {
     const dataDir = join(tempDir(), 'db');
     const previous = await PGlite.create(dataDir);
     await previous.exec('create role board_app nologin');
-    await migratePglite(drizzlePglite(previous), { migrationsFolder: FIXTURE });
+    await migratePglite(drizzlePglite(previous), {
+      migrationsFolder: previousReleaseMigrations(tempDir()).folder,
+    });
+    await seedPreviousRelease((statement) => previous.exec(statement));
+    await previous.close();
+
+    const database = await openPgliteDatabase({ kind: 'pglite', dataDir });
+    cleanups.push(() => database.close());
+    await expectUpgraded(database);
+  });
+
+  it('[api-018] a PGlite database one migration behind the checked-in history migrates and keeps its rows', async () => {
+    const behind = migrationsBeforeTheNewest(tempDir());
+    if (behind === null) return;
+    const dataDir = join(tempDir(), 'db');
+    const previous = await PGlite.create(dataDir);
+    await previous.exec('create role board_app nologin');
+    await migratePglite(drizzlePglite(previous), { migrationsFolder: behind });
     await seedPreviousRelease((statement) => previous.exec(statement));
     await previous.close();
 
@@ -330,7 +347,9 @@ describe('upgrade from the previous release', () => {
         await admin.query(
           `do $$ begin if not exists (select from pg_roles where rolname = 'board_app') then create role board_app login password '${APP_PASSWORD}'; end if; end $$`,
         );
-        await migratePg(drizzlePg(admin), { migrationsFolder: FIXTURE });
+        await migratePg(drizzlePg(admin), {
+          migrationsFolder: previousReleaseMigrations(tempDir()).folder,
+        });
         await seedPreviousRelease((statement) => admin.query(statement));
       } finally {
         await admin.end();
