@@ -8,8 +8,6 @@
     ],
     "blackbox/legacy-dirs.test.ts": "*",
     "blackbox/machine-lifecycle.test.ts": [
-      "self-update --server › [cli-059] moves the machine to the other server after checking owner, key id and token",
-      "self-update --server › [cli-059] warns when other machines are active",
       "worker check in board doctor › [server-app-056] reports ok after a dispatch tick",
       "worker check in board doctor › [server-app-056] reports refused with the 401 reason once the token is re-issued",
       "worker check in board doctor › [server-app-056] reports refused naming the wrong machine for another machine’s token",
