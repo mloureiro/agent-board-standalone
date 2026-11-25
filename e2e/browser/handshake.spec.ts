@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { startVersionProxy, type VersionOverride } from '../src/fixtures/version-proxy.js';
 import { useBoard } from '../src/harness/playwright.js';
+import { versionNamed } from '../src/steps/signature.js';
 
 test.describe('browser client handshake', () => {
   const harness = useBoard({ parts: ['api', 'web'], features: [], auth: 'no-login' });
@@ -32,8 +33,8 @@ test.describe('browser client handshake', () => {
     await openThroughProxy(page, { minClient: { web: CONTRACT + 1 } });
     await expect(page.getByText(/client too old/i).first()).toBeVisible();
     const text = await page.locator('body').innerText();
-    expect(text).toContain(String(CONTRACT));
-    expect(text).toContain(String(CONTRACT + 1));
+    expect(text).toMatch(versionNamed(CONTRACT));
+    expect(text).toMatch(versionNamed(CONTRACT + 1));
   });
 
   test('[web-078] a server with a lower contract shows "server too old" naming both versions @matrix', async ({
@@ -42,8 +43,8 @@ test.describe('browser client handshake', () => {
     await openThroughProxy(page, { contract: CONTRACT - 1 });
     await expect(page.getByText(/server too old/i).first()).toBeVisible();
     const text = await page.locator('body').innerText();
-    expect(text).toContain(String(CONTRACT));
-    expect(text).toContain(String(CONTRACT - 1));
+    expect(text).toMatch(versionNamed(CONTRACT));
+    expect(text).toMatch(versionNamed(CONTRACT - 1));
   });
 
   test('[web-078] against the real server the board loads @matrix', async ({ page }) => {

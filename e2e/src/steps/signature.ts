@@ -18,6 +18,16 @@ export function shortTempPath(label: string): string {
   return path.join(os.tmpdir(), `ab-e2e-${label}-${randomBytes(4).toString('hex')}`);
 }
 
+export const SEMVER = /(?<![\d.])\d+\.\d+\.\d+(?![\d.])/;
+
+export function versionNamed(version: number): RegExp {
+  return new RegExp(`(?<![\\d:/]|\\d\\.)${version}(?!\\d|\\.\\d)`);
+}
+
+export function jsonNumber(value: number): RegExp {
+  return new RegExp(`[:[,]${value}[,}\\]]`);
+}
+
 export function pairCodeIn(text: string): string | null {
   return PAIR_CODE.exec(text)?.[0] ?? null;
 }

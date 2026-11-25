@@ -68,7 +68,9 @@ test.describe('browser client request signature', () => {
       .getByRole('alertdialog')
       .or(page.getByRole('dialog'))
       .getByRole('button', { name: /revoke/i });
+    const pairing = page.getByLabel(/pairing code|code/i);
+    await expect(confirm.or(pairing).first()).toBeVisible();
     if (await confirm.isVisible()) await confirm.click();
-    await expect(page.getByLabel(/pairing code|code/i)).toBeVisible();
+    await expect(pairing).toBeVisible();
   });
 });

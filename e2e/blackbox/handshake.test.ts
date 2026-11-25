@@ -15,7 +15,13 @@ import {
 import { noLoginUser, type BoardUser } from '../src/fixtures/users.js';
 import { startVersionProxy, type VersionProxy } from '../src/fixtures/version-proxy.js';
 import { useBoard } from '../src/harness/vitest.js';
-import { readLines, shortTempPath } from '../src/steps/signature.js';
+import {
+  SEMVER,
+  jsonNumber,
+  readLines,
+  shortTempPath,
+  versionNamed,
+} from '../src/steps/signature.js';
 
 const MISSING_HEADER_MESSAGE = /did not send its contract version/i;
 
@@ -153,8 +159,8 @@ describe('handshake in the CLI', () => {
     const result = await machine.cli(['tasks', '--json']);
     expect(result.code).not.toBe(0);
     const output = `${result.stdout}${result.stderr}`;
-    expect(output).toContain(String(CONTRACT));
-    expect(output).toContain(String(CONTRACT + 1));
+    expect(output).toMatch(versionNamed(CONTRACT));
+    expect(output).toMatch(versionNamed(CONTRACT + 1));
     expect(output).toMatch(/too old|upgrade/i);
   });
 
@@ -188,7 +194,7 @@ describe('handshake in the CLI', () => {
     const served = await call(harness.board, 'public.version', {});
     const result = await machine.cli(['version']);
     expect(result.code).toBe(0);
-    expect(result.stdout).toMatch(/\d+\.\d+\.\d+/);
+    expect(result.stdout).toMatch(SEMVER);
     expect(result.stdout).toMatch(/contract/i);
     expect(result.stdout).toContain(harness.board.url);
     expect(result.stdout).toMatch(/compatible/i);
@@ -204,7 +210,7 @@ describe('handshake in the CLI', () => {
     const result = await machine.cli(['version']);
     const output = `${result.stdout}${result.stderr}`;
     expect(output).toMatch(/too old/i);
-    expect(output).toContain(String(CONTRACT + 1));
+    expect(output).toMatch(versionNamed(CONTRACT + 1));
   });
 
   it('[cli-011] board version --json carries the same fields', async () => {
@@ -213,7 +219,8 @@ describe('handshake in the CLI', () => {
     const result = await machine.cli(['version', '--json']);
     expect(result.code).toBe(0);
     const text = JSON.stringify(JSON.parse(result.stdout));
-    expect(text).toContain(`${CONTRACT}`);
+    expect(text).toMatch(SEMVER);
+    expect(text).toMatch(jsonNumber(CONTRACT));
     expect(text).toContain('compatible');
     expect(text).toContain(harness.board.url);
     for (const feature of served.body?.features ?? []) expect(text).toContain(feature);
@@ -228,6 +235,6 @@ describe('handshake in the CLI', () => {
     const result = await machine.cli(['version', '--json']);
     const text = JSON.stringify(JSON.parse(result.stdout));
     expect(text).toContain('client-too-old');
-    expect(text).toContain(`${CONTRACT + 1}`);
+    expect(text).toMatch(jsonNumber(CONTRACT + 1));
   });
 });
