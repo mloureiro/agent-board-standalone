@@ -27,7 +27,7 @@ const EVENT_BATCH = 500;
 
 function log(entry: Record<string, unknown>): void {
   if (logPath === undefined || logPath === '') return;
-  appendFileSync(logPath, `${JSON.stringify({ ...entry, at: Date.now() })}\n`);
+  appendFileSync(logPath, `${JSON.stringify({ pid: process.pid, ...entry, at: Date.now() })}\n`);
 }
 
 function argValue(flag: string): string | undefined {
@@ -207,7 +207,8 @@ async function execute(directive: Directive, state: RunState): Promise<'continue
         const end = Math.min(start + EVENT_BATCH, directive.count);
         let chunk = '';
         for (let index = start; index < end; index += 1) {
-          chunk += `${JSON.stringify(assistantText(sessionId, `event ${index}`, usageOf(0)))}\n`;
+          const text = `event ${index}`.padEnd(directive.bytes ?? 0, '.');
+          chunk += `${JSON.stringify(assistantText(sessionId, text, usageOf(0)))}\n`;
         }
         process.stdout.write(chunk);
       }

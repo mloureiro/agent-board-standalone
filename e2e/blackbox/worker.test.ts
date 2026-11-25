@@ -5,7 +5,6 @@ import { isEnvelope } from '@agent-board/sealing';
 import { describe, expect, it } from 'vitest';
 
 import { setClockOffset } from '../src/harness/clock.js';
-import { freePort } from '../src/harness/ports.js';
 import type { Board } from '../src/harness/board.js';
 import { useBoard } from '../src/harness/vitest.js';
 import { startVersionProxy } from '../src/fixtures/version-proxy.js';
@@ -31,7 +30,7 @@ import {
   settle,
   sleep,
   startEntries,
-  startProxyOn,
+  startRefusingServer,
   stdinTexts,
   transcriptRuns,
   waitForStatus,
@@ -41,6 +40,11 @@ import type { BoardUser } from '../src/fixtures/users.js';
 import type { UnlockedKey } from '../src/fixtures/keys.js';
 
 const FEATURES = ['transcripts', 'run-inbox', 'directories'] as const;
+const BACKOFF_MAX_MS = 60_000;
+const TIMING_TOLERANCE_MS = 1_000;
+const LARGE_EVENT_BYTES = 1_048_576;
+const LARGE_EVENT_COUNT = 40;
+const STORED_BYTES_LIMIT = 32 * 1_048_576;
 
 interface Env {
   readonly user: BoardUser;
@@ -56,6 +60,11 @@ async function withWorker(board: Board, body: (env: Env) => Promise<void>): Prom
   } finally {
     await worker.dispose();
   }
+}
+
+async function storedEvents(user: BoardUser, taskId: string): Promise<number> {
+  const runs = await transcriptRuns(user, taskId);
+  return runs.reduce((sum, run) => sum + run.eventCount, 0);
 }
 
 function lastRun<T extends { eventCount: number }>(runs: readonly T[]): T {
@@ -112,11 +121,16 @@ describe('worker runs', () => {
       });
 
       const before = stdinTexts(worker.entries()).length;
-      await worker.machine.cli(['internal', 'shutdown', '--grace', '5'], { timeoutMs: 45_000 });
-      await pollUntil(() => stdinTexts(worker.entries()).length > before, {
+      const shutdown = await worker.machine.cli(['internal', 'shutdown', '--grace', '5'], {
+        timeoutMs: 45_000,
+      });
+      expect(shutdown.code, `${shutdown.stdout}${shutdown.stderr}`).toBe(0);
+      const notice = await pollUntil(() => stdinTexts(worker.entries())[before], {
         timeoutMs: 30_000,
         what: 'the pause notice on the stub stdin',
       });
+      expect(notice).toMatch(/paus/i);
+      expect(notice).not.toContain(message);
     });
   }, 120_000);
 
@@ -151,8 +165,13 @@ describe('worker runs', () => {
         if ((await user.ok('client.tasks.get', { id: task.id })).task.status !== 'running') break;
         await sleep(500);
       }
-      await sleep(3_000);
-      const final = lastRun(await transcriptRuns(user, task.id)).eventCount;
+      const final = await pollUntil(
+        async () => {
+          const count = lastRun(await transcriptRuns(user, task.id)).eventCount;
+          return count >= 12 ? count : null;
+        },
+        { timeoutMs: 30_000, what: 'the final upload of the transcript' },
+      );
 
       expect(growth.length).toBeGreaterThanOrEqual(2);
       const [first = 0, second = 0] = growth;
@@ -189,18 +208,34 @@ describe('worker runs', () => {
       await waitForStatus(user, task.id, 'done', 90_000);
       const count = await pollUntil(
         async () => {
-          const runs = await transcriptRuns(user, task.id);
-          const total = runs.reduce((sum, run) => sum + run.eventCount, 0);
+          const total = await storedEvents(user, task.id);
           return total >= TRANSCRIPT_EVENT_LIMIT ? total : null;
         },
         { timeoutMs: 60_000, what: 'the capped transcript' },
-      ).catch(async () =>
-        (await transcriptRuns(user, task.id)).reduce((sum, run) => sum + run.eventCount, 0),
       );
-      expect(count).toBeLessThanOrEqual(TRANSCRIPT_EVENT_LIMIT);
-      expect(count).toBeGreaterThan(TRANSCRIPT_EVENT_LIMIT / 2);
+      expect(count).toBe(TRANSCRIPT_EVENT_LIMIT);
     });
   }, 180_000);
+
+  it('[cli-077] a run whose events pass 32 MB stores fewer events than it emitted', async () => {
+    await withWorker(harness.board, async ({ user, key, worker }) => {
+      const task = await createWorkerTask(user, key, {
+        prompt: `#stub: events ${LARGE_EVENT_COUNT} ${LARGE_EVENT_BYTES}`,
+      });
+      worker.listen();
+      await waitForStatus(user, task.id, 'done', 150_000);
+      const stored = await pollUntil(
+        async () => {
+          const total = await storedEvents(user, task.id);
+          return total > 0 ? total : null;
+        },
+        { timeoutMs: 120_000, what: 'the uploaded large events' },
+      );
+      expect(stored).toBeLessThan(LARGE_EVENT_COUNT);
+      expect(stored).toBeLessThanOrEqual(Math.floor(STORED_BYTES_LIMIT / LARGE_EVENT_BYTES));
+      expect(stored).toBeGreaterThanOrEqual(16);
+    });
+  }, 300_000);
 
   it('[cli-078] the context usage the server holds is the main agent only', async () => {
     await withWorker(harness.board, async ({ user, key, worker }) => {
@@ -273,62 +308,69 @@ describe('listener', () => {
   it('[cli-065] the listener backs off while the API is down and resumes after it is back', async () => {
     const board = harness.board;
     const { user, key } = await ownerOf(board);
-    const live = await startVersionProxy({ target: board.url });
-    const { port } = live;
-    const worker = await enrolWorker(board, user, key, { url: live.url });
+    const proxy = await startVersionProxy({ target: board.url });
+    const refusing = await startRefusingServer();
+    const worker = await enrolWorker(board, user, key, { url: proxy.url });
     const { other, createElsewhere } = await elsewhere(board, user, key);
-    const unreachable = `http://127.0.0.1:${await freePort()}`;
-    let current = live;
     try {
       worker.listen();
-      await pollUntil(() => requestsTo(live, EVENTS_PATH) >= 1, { what: 'the event stream' });
-      await settle(() => requestsTo(live, TICK_PATH), 2_000);
+      await pollUntil(() => requestsTo(proxy, EVENTS_PATH) >= 1, { what: 'the event stream' });
+      await settle(() => requestsTo(proxy, TICK_PATH), 2_000);
 
-      await live.stop();
-      current = await startProxyOn(
-        (listening) => startVersionProxy({ target: unreachable, port: listening }),
-        port,
+      const downSince = Date.now();
+      proxy.retarget(refusing.url);
+      const attempts = await pollUntil(
+        () => {
+          const times = proxy.seen
+            .filter((request) => request.path === EVENTS_PATH && request.at >= downSince)
+            .map((request) => request.at);
+          return times.length >= 4 ? times : null;
+        },
+        { timeoutMs: 90_000, what: 'four reconnect attempts while the API is down' },
       );
-      const down = current;
-      await sleep(6_000);
-      expect(down.seen.length).toBeGreaterThanOrEqual(1);
-      expect(down.seen.length).toBeLessThanOrEqual(10);
+      const gaps = attempts.slice(1).map((at, index) => at - (attempts[index] ?? at));
+      for (let index = 1; index < gaps.length; index += 1) {
+        expect(gaps[index]).toBeGreaterThanOrEqual((gaps[index - 1] ?? 0) - TIMING_TOLERANCE_MS);
+      }
+      for (const gap of gaps) {
+        expect(gap).toBeLessThanOrEqual(BACKOFF_MAX_MS + TIMING_TOLERANCE_MS);
+      }
+      expect((gaps.at(-1) ?? 0) - (gaps[0] ?? 0)).toBeGreaterThan(TIMING_TOLERANCE_MS / 2);
 
-      await down.stop();
-      const back = await startProxyOn(
-        (listening) => startVersionProxy({ target: board.url, port: listening }),
-        port,
+      const restored = Date.now();
+      proxy.retarget(board.url);
+      await pollUntil(
+        () => proxy.seen.some((request) => request.path === EVENTS_PATH && request.at > restored),
+        { timeoutMs: 90_000, what: 'the listener to hold the event stream again' },
       );
-      current = back;
-      await pollUntil(() => requestsTo(back, EVENTS_PATH) >= 1, {
-        timeoutMs: 45_000,
-        what: 'the listener to hold the event stream again',
-      });
-      const baseline = await settle(() => requestsTo(back, TICK_PATH), 2_500);
+      const baseline = await settle(() => requestsTo(proxy, TICK_PATH), 2_500);
       await createElsewhere();
-      await pollUntil(() => requestsTo(back, TICK_PATH) > baseline, {
+      await pollUntil(() => requestsTo(proxy, TICK_PATH) > baseline, {
         timeoutMs: 8_000,
         what: 'a tick after the restart',
       });
     } finally {
       await worker.dispose();
       await other.dispose();
-      await current.stop();
+      await proxy.stop();
+      await refusing.stop();
     }
-  }, 150_000);
+  }, 240_000);
 
   it('[cli-065] the listener exits 1 once the server no longer serves its token', async () => {
     const board = harness.board;
     const { user, key } = await ownerOf(board);
-    const worker = await enrolWorker(board, user, key);
+    const proxy = await startVersionProxy({ target: board.url });
+    const worker = await enrolWorker(board, user, key, { url: proxy.url });
     try {
       const listener = worker.listen();
-      await sleep(2_000);
+      await pollUntil(() => requestsTo(proxy, EVENTS_PATH) >= 1, { what: 'the event stream' });
       await user.ok('client.machines.revoke', { name: worker.name });
       const result = await Promise.race([listener.exited, sleep(45_000).then(() => null)]);
       expect(result?.code).toBe(1);
     } finally {
       await worker.dispose();
+      await proxy.stop();
     }
   }, 90_000);
 });
@@ -367,9 +409,9 @@ describe('sweep', () => {
         'dispatch',
       );
 
-      await waitForStatus(user, task.id, ['needs-me', 'todo', 'backlog'], 30_000);
+      await waitForStatus(user, task.id, 'needs-me', 30_000);
       const notes = await openThread(user, key, task.id);
-      expect(notes.some((note) => note.body.includes('sweepmarker'))).toBe(true);
+      expect(notes.filter((note) => note.body.includes('sweepmarker'))).toHaveLength(1);
     } finally {
       setClockOffset(board, 0);
       await worker.dispose();
@@ -394,10 +436,17 @@ describe('stop', () => {
         what: 'the stub start',
       });
       const pid = pidOf(start);
-      await pollUntil(() => worker.entries().some((entry) => entry.kind === 'directive'), {
-        what: 'the stub to run its directives',
-      });
-      await sleep(500);
+      await pollUntil(
+        () =>
+          worker
+            .entries()
+            .some(
+              (entry) =>
+                entry.kind === 'directive' &&
+                (entry.directive as { kind?: string } | undefined)?.kind === 'sleep',
+            ),
+        { what: 'the stub to start sleeping' },
+      );
 
       await user.ok('client.tasks.stop', { id: task.id });
       const interrupt = await pollUntil(
@@ -467,7 +516,10 @@ describe('two workers', () => {
         }),
       );
       await Promise.all(tasks.map((task) => waitForStatus(user, task.id, 'done', 120_000)));
-      await sleep(2_000);
+      await settle(
+        () => workers.reduce((total, worker) => total + stdinTexts(worker.entries()).length, 0),
+        1_000,
+      );
 
       const ranBy = new Map<string, string[]>();
       for (const task of tasks) {

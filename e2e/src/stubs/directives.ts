@@ -7,7 +7,7 @@ export type Directive =
   | { readonly kind: 'tool'; readonly name: string }
   | { readonly kind: 'subagent' }
   | { readonly kind: 'usage'; readonly tokens: number }
-  | { readonly kind: 'events'; readonly count: number }
+  | { readonly kind: 'events'; readonly count: number; readonly bytes?: number }
   | { readonly kind: 'ignore-interrupt' };
 
 export class DirectiveError extends Error {
@@ -68,8 +68,12 @@ function parseLine(name: string, rest: string | undefined): Directive {
       return { kind: 'sleep', seconds: count(name, rest, true) };
     case 'usage':
       return { kind: 'usage', tokens: count(name, rest) };
-    case 'events':
-      return { kind: 'events', count: count(name, rest) };
+    case 'events': {
+      const [amount, size] = (rest ?? '').split(/\s+/);
+      return size === undefined
+        ? { kind: 'events', count: count(name, amount) }
+        : { kind: 'events', count: count(name, amount), bytes: count(name, size) };
+    }
     case 'tool':
       if (rest === undefined || rest === '') throw new DirectiveError('#stub: tool needs a name');
       return { kind: 'tool', name: rest };

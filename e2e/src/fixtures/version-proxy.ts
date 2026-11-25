@@ -21,6 +21,7 @@ export interface SeenRequest {
   readonly method: string;
   readonly path: string;
   readonly rewritten: boolean;
+  readonly at: number;
 }
 
 export interface VersionProxy {
@@ -28,6 +29,7 @@ export interface VersionProxy {
   readonly port: number;
   readonly seen: readonly SeenRequest[];
   override(next: VersionOverride): void;
+  retarget(url: string): void;
   stop(): Promise<void>;
 }
 
@@ -110,7 +112,7 @@ function forwardedHeaders(
 }
 
 export async function startVersionProxy(options: VersionProxyOptions): Promise<VersionProxy> {
-  const target = new URL(options.target);
+  let target = new URL(options.target);
   let current: VersionOverride = options.override ?? {};
   const seen: SeenRequest[] = [];
   let proxyOrigin = '';
@@ -119,7 +121,12 @@ export async function startVersionProxy(options: VersionProxyOptions): Promise<V
     const method = request.method ?? 'GET';
     const incoming = new URL(request.url ?? '/', 'http://proxy.invalid');
     const rewrite = isVersionRequest(method, incoming.pathname);
-    seen.push({ method, path: `${incoming.pathname}${incoming.search}`, rewritten: rewrite });
+    seen.push({
+      method,
+      path: `${incoming.pathname}${incoming.search}`,
+      rewritten: rewrite,
+      at: Date.now(),
+    });
 
     const upstream = http.request(
       {
@@ -182,6 +189,10 @@ export async function startVersionProxy(options: VersionProxyOptions): Promise<V
     seen,
     override: (next) => {
       current = next;
+    },
+    retarget: (url) => {
+      target = new URL(url);
+      server.closeAllConnections();
     },
     stop: () =>
       new Promise<void>((resolve) => {
