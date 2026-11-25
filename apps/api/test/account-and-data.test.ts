@@ -21,6 +21,7 @@ import {
   readBoardFile,
 } from '../src/modules/board-export/index.js';
 import type { Database } from '../src/modules/database/index.js';
+import { createMemoryEvents } from '../src/modules/events/index.js';
 import { bootOn, CLIENT_HEADERS } from './fixtures/board.js';
 import {
   countsOf,
@@ -428,6 +429,21 @@ describe.each(TARGETS)('account export and import on $name', (target) => {
         rows,
       });
       expect(again.body).toEqual({ inserted: 0, existing: rows.length, invalid: 0, orphaned: 0 });
+    });
+
+    it('[api-099] an import announces a task change to the owner', async () => {
+      const events = createMemoryEvents();
+      const app = await bootOn(destination.database, owner, undefined, events);
+      const seen: string[] = [];
+      await events.subscribe(owner, (message) => seen.push(message.kind));
+      const answer = await call(app, '/api/client/account/import', {
+        keyId: '0123456789abcdef',
+        table: 'task',
+        rows: await exportAll(sourceApp, 'task'),
+      });
+      await app.close();
+      expect(answer.status).toBe(200);
+      expect(seen).toContain('tasks');
     });
 
     it('[api-099] rows that break the format or point at a missing parent are counted, not inserted', async () => {

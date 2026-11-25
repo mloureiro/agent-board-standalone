@@ -12,6 +12,7 @@ import * as schema from '../src/db/schema/index.js';
 import { importBoard, readBoardFile } from '../src/modules/board-export/index.js';
 import { hasLegacyDirs } from '../src/modules/machine-directories/index.js';
 import type { Database } from '../src/modules/database/index.js';
+import { createMemoryEvents } from '../src/modules/events/index.js';
 import { bootOn, machineCredentials, MACHINE_HEADERS } from './fixtures/board.js';
 import {
   envelope,
@@ -220,6 +221,32 @@ describe.each(TARGETS)('legacy directories on $name', (target) => {
         tx.select().from(schema.task).where(eq(schema.task.id, 't-child')),
       );
       expect(child).toMatchObject({ directoryId: null, legacyDirectory: envelope('legacy-child') });
+    });
+
+    it('[api-116] set-dirs and convert-legacy-dirs announce a change to the owner', async () => {
+      const owner = 'legacy-announce';
+      await seed(database, owner);
+      const events = createMemoryEvents();
+      const app = await bootOn(database, owner, machineCredentials(owner, 'alpha'), events);
+      apps.push(app);
+      const seen: string[] = [];
+      await events.subscribe(owner, (message) => seen.push(message.kind));
+      const send = (command: string, payload: unknown) =>
+        app.inject({
+          method: 'POST',
+          url: `/api/machine/${command}`,
+          headers: MACHINE_HEADERS,
+          payload: JSON.stringify(payload),
+        });
+      const setDirs = await send('set-dirs', {
+        directories: [{ id: randomUUID(), path: envelope('announced'), repo: null }],
+      });
+      expect(setDirs.statusCode).toBe(200);
+      expect(seen).toContain('change');
+      seen.length = 0;
+      const converted = await send('convert-legacy-dirs', { directories: [], assign: [] });
+      expect(converted.statusCode).toBe(200);
+      expect(seen).toContain('tasks');
     });
 
     it('[api-116] set-dirs writes the machine directories, updates them and refuses removing one that tasks use', async () => {

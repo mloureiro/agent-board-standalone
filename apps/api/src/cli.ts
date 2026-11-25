@@ -10,11 +10,6 @@ export type Subcommand = (typeof SUBCOMMANDS)[number];
 const isSubcommand = (value: string): value is Subcommand =>
   (SUBCOMMANDS as readonly string[]).includes(value);
 
-const notYet = (name: string): number => {
-  process.stderr.write(`agent-board-api: ${name} is not available in this build yet\n`);
-  return 2;
-};
-
 const pair = async (env: Env): Promise<number> => {
   const socket = env.CONTROL_SOCKET?.trim();
   if (socket === undefined || socket === '') {
@@ -45,6 +40,5 @@ export const runCli = async (args: readonly string[], env: Env): Promise<number>
   }
   if (first === 'serve') return serve(env);
   if (first === 'pair') return pair(env);
-  if (first === 'import') return runImport(args.slice(1), env);
-  return notYet(first);
+  return runImport(args.slice(1), env);
 };
