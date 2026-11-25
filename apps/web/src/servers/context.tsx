@@ -27,6 +27,9 @@ export interface ServersValue {
   readonly ready: boolean;
   readonly servers: readonly ServerEntry[];
   readonly active: ServerEntry | null;
+  readonly viewed: readonly ServerEntry[];
+  readonly selection: string | null;
+  select(serverId: string | null): void;
   readonly transportContext: TransportContext;
   hasAnswered(serverId: string): boolean;
   recheck(serverId: string): void;
@@ -103,6 +106,19 @@ function Monitor(props: {
 const featuresOf = (view: ConnectionState | undefined): readonly string[] =>
   view !== undefined && 'server' in view ? view.server.server.features : [];
 
+export function ServerScope(props: {
+  readonly server: ServerEntry;
+  readonly children: ReactNode;
+}): ReactNode {
+  const parent = useServers();
+  const { server, children } = props;
+  const value = useMemo<ServersValue>(
+    () => ({ ...parent, active: server, viewed: [server], selection: server.id }),
+    [parent, server],
+  );
+  return <ServersContext.Provider value={value}>{children}</ServersContext.Provider>;
+}
+
 export function ServersProvider(props: ServersProviderProps): ReactNode {
   const { registry, context, children } = props;
   const upIntervalMs = props.upIntervalMs ?? UP_INTERVAL_MS;
@@ -112,6 +128,7 @@ export function ServersProvider(props: ServersProviderProps): ReactNode {
   const [unknownKeys, setUnknownKeys] = useState<Record<string, true>>({});
   const [answered, setAnswered] = useState<Record<string, true>>({});
   const [nonces, setNonces] = useState<Record<string, number>>({});
+  const [selected, setSelected] = useState<string | null>(null);
   const signing = useRef<Record<string, boolean>>({});
 
   const check = useMemo<ConnectionCheck>(
@@ -151,10 +168,15 @@ export function ServersProvider(props: ServersProviderProps): ReactNode {
   const value = useMemo<ServersValue>(() => {
     const list = servers ?? [];
     const own = list.find((server) => new URL(server.url).origin === context.pageOrigin);
+    const home = context.bridge === null ? (own ?? list[0] ?? null) : (list[0] ?? null);
+    const chosen = list.find((server) => server.id === selected) ?? null;
     return {
       ready: servers !== null,
       servers: list,
-      active: context.bridge === null ? (own ?? list[0] ?? null) : (list[0] ?? null),
+      active: chosen ?? home,
+      viewed: chosen === null ? list : [chosen],
+      selection: chosen?.id ?? null,
+      select: setSelected,
       transportContext: context,
       hasAnswered: (serverId) => answered[serverId] === true,
       recheck: onWake,
@@ -201,7 +223,18 @@ export function ServersProvider(props: ServersProviderProps): ReactNode {
         return removed;
       },
     };
-  }, [servers, results, unknownKeys, answered, transports, registry, refresh, context, onWake]);
+  }, [
+    servers,
+    selected,
+    results,
+    unknownKeys,
+    answered,
+    transports,
+    registry,
+    refresh,
+    context,
+    onWake,
+  ]);
 
   return (
     <ServersContext.Provider value={value}>

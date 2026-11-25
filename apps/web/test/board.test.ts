@@ -450,6 +450,10 @@ describe('proposals', () => {
     const { user } = openBoard();
     await findTitle('Proposed work');
     await dragCard(cardNamed('Proposed work'), columnNamed(COLUMN.todo));
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() =>
+      expect(within(dialog).getByRole('textbox', { name: 'Prompt' })).toHaveFocus(),
+    );
 
     await user.keyboard('{Escape}');
 

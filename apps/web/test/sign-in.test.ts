@@ -66,7 +66,7 @@ describe('sign-in page', () => {
     expect(screen.queryByRole('button', { name: 'Create account' })).toBeNull();
     expect(screen.getAllByRole('button')).toHaveLength(
       screen.getAllByRole('button', {
-        name: /sign in with your browser|colour scheme|new task|projects/i,
+        name: /sign in with your browser|colour scheme|new task|projects|servers/i,
       }).length,
     );
   });

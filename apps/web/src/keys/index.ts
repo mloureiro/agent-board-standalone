@@ -1,5 +1,5 @@
 export { KeyGate } from './KeyGate.js';
-export { KeysProvider, useKeys } from './KeysProvider.js';
+export { KeysProvider, useKeys, useKeysOf } from './KeysProvider.js';
 export type { KeysValue } from './KeysProvider.js';
 export { LockButton } from './LockButton.js';
 export { inspectKeys } from './inspect.js';

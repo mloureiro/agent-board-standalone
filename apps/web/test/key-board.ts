@@ -9,7 +9,7 @@ import {
 } from '@agent-board/sealing';
 
 import { FakeBoard, json, type FakeSession } from './fake-board.js';
-import { versionDocument } from './render.js';
+import { versionDocument } from './versions.js';
 
 export const TEST_KDF: KdfParams = { m: 8192, t: 1, p: 1 };
 

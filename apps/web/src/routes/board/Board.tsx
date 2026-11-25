@@ -1,10 +1,11 @@
-import { Alert, Box, Stack, Text, Title, VisuallyHidden } from '@mantine/core';
+import { Alert, Box, Stack, Text } from '@mantine/core';
 import type { TaskStatus } from '@agent-board/contract';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 
-import { useBoardActions, useBoardData, type BoardData } from './board-data.js';
+import { useBoardActions, type BoardData } from './board-data.js';
 import type { CardEditValue } from './CardEditDialog.js';
 import {
+  cardUid,
   openPrompt,
   sealIcon,
   sealLabels,
@@ -31,6 +32,7 @@ const LAYOUT: readonly (readonly TaskStatus[])[] = [
 ];
 
 interface PendingStart {
+  readonly source: BoardData;
   readonly card: BoardCard;
   readonly move: MoveRequest;
   readonly prompt: OpenedPrompt;
@@ -49,74 +51,110 @@ export function CliBanner(props: { readonly data: BoardData }): ReactNode {
 
 export function Board(props: {
   readonly only?: readonly TaskStatus[];
-  readonly data: BoardData;
+  readonly sources: readonly BoardData[];
+  readonly showServers?: boolean;
 }): ReactNode {
-  const { data, only } = props;
-  const actions = useBoardActions(data);
+  const { sources, only } = props;
+  const actions = useBoardActions();
   const now = useNow();
   const [pending, setPending] = useState<PendingStart | null>(null);
-  const cards = useMemo(() => data.cards ?? [], [data.cards]);
+  const several = props.showServers === true || sources.length > 1;
+  const cards = useMemo(() => sources.flatMap((source) => source.cards ?? []), [sources]);
   const groups = useMemo(() => groupByStatus(cards), [cards]);
-  const showProjects = data.projectNames !== null && data.projectNames.size > 1;
+  const sourceOf = useCallback(
+    (card: BoardCard): BoardData | undefined =>
+      sources.find((source) => source.serverId === card.serverId) ?? sources[0],
+    [sources],
+  );
+
+  const projectNameFor = useCallback(
+    (card: BoardCard): string | null => {
+      const names = sourceOf(card)?.projectNames ?? null;
+      return names !== null && names.size > 1 ? (names.get(card.task.projectId) ?? null) : null;
+    },
+    [sourceOf],
+  );
+  const serverNameFor = useCallback(
+    (card: BoardCard): string | null => (several ? (sourceOf(card)?.serverName ?? null) : null),
+    [several, sourceOf],
+  );
 
   const usageHoldFor = useCallback(
     (card: BoardCard): number | null => {
-      for (const machine of data.machines) {
+      for (const machine of sourceOf(card)?.machines ?? []) {
         const until = machine.heldUntil.get(card.task.id);
         if (until !== undefined) return until;
       }
       return null;
     },
-    [data.machines],
+    [sourceOf],
   );
 
   const onDrop = useCallback(
     async (activeId: string, target: DropTarget): Promise<void> => {
-      const card = cards.find((candidate) => candidate.task.id === activeId);
-      if (card === undefined || !canDropOn(target.status)) return;
-      const move = moveFor(activeId, target, groups[target.status]);
-      if (move === null) return;
+      const card = cards.find((candidate) => cardUid(candidate) === activeId);
+      const source = card === undefined ? undefined : sourceOf(card);
+      if (card === undefined || source === undefined || !canDropOn(target.status)) return;
+      const sameServer = (other: BoardCard): boolean => other.serverId === card.serverId;
+      const requested = moveFor(activeId, target, groups[target.status].filter(sameServer));
+      if (requested === null) return;
+      const anchor = (uid: string | undefined): string | undefined =>
+        cards.find((other) => cardUid(other) === uid && sameServer(other))?.task.id;
+      const beforeId = anchor(requested.beforeId);
+      const afterId = anchor(requested.afterId);
+      const move: MoveRequest = {
+        id: card.task.id,
+        status: requested.status,
+        ...(beforeId === undefined ? {} : { beforeId }),
+        ...(afterId === undefined ? {} : { afterId }),
+      };
       if (card.task.proposed && card.task.status === 'backlog' && target.status === 'todo') {
-        const prompt = await openPrompt(data.keys, card.task);
+        const prompt = await openPrompt(source.keys, card.task);
         if (prompt !== null) {
-          setPending({ card, move, prompt });
+          setPending({ card, move, prompt, source });
           return;
         }
       }
-      await actions.move(move);
+      await actions.move(source, move);
     },
-    [cards, groups, data.keys, actions],
+    [cards, groups, sourceOf, actions],
   );
 
   const onEdit = useCallback(
     async (card: BoardCard, value: CardEditValue): Promise<void> => {
+      const source = sourceOf(card);
+      if (source === undefined) return;
       const id = card.task.id;
-      await actions.configure({
+      await actions.configure(source, {
         id,
         ...(value.icon === undefined
           ? {}
-          : { icon: value.icon === null ? null : await sealIcon(data.keys, id, value.icon) }),
+          : { icon: value.icon === null ? null : await sealIcon(source.keys, id, value.icon) }),
         ...(value.labels === undefined
           ? {}
           : {
-              labels: value.labels === null ? null : await sealLabels(data.keys, id, value.labels),
+              labels:
+                value.labels === null ? null : await sealLabels(source.keys, id, value.labels),
             }),
       });
     },
-    [actions, data.keys],
+    [actions, sourceOf],
   );
 
   const merged = groups['needs-me'].filter(isMergedOnly);
   const moveMerged = async (): Promise<void> => {
-    for (const card of merged) await actions.done(card.task.id);
+    for (const card of merged) {
+      const source = sourceOf(card);
+      if (source !== undefined) await actions.done(source, card.task.id);
+    }
   };
 
   const start = async (text: string): Promise<void> => {
     if (pending === null) return;
-    const { card, move, prompt } = pending;
+    const { card, move, prompt, source } = pending;
     setPending(null);
-    const startInput = await sealPromptAsUser(data.keys, card.task.id, prompt.shape, text);
-    await actions.move({ ...move, startInput });
+    const startInput = await sealPromptAsUser(source.keys, card.task.id, prompt.shape, text);
+    await actions.move(source, { ...move, startInput });
   };
 
   const columns = LAYOUT.map((stack) =>
@@ -125,13 +163,15 @@ export function Board(props: {
 
   return (
     <Stack gap="sm">
-      {data.refreshFailed ? (
+      {sources.some((source) => source.refreshFailed) ? (
         <Alert role="alert" color="orange" variant="light">
           {REFRESH_WARNING}
         </Alert>
       ) : null}
-      <CliBanner data={data} />
-      {data.cards === undefined && !data.refreshFailed ? (
+      {sources.map((source) => (
+        <CliBanner key={source.serverId} data={source} />
+      ))}
+      {sources.every((source) => source.cards === undefined && !source.refreshFailed) ? (
         <Text c="dimmed" size="sm">
           Loading the board…
         </Text>
@@ -155,8 +195,8 @@ export function Board(props: {
                   status={status}
                   cards={groups[status]}
                   now={now}
-                  projectNames={data.projectNames}
-                  showProjects={showProjects}
+                  projectNameFor={projectNameFor}
+                  serverNameFor={serverNameFor}
                   usageHoldFor={usageHoldFor}
                   onEdit={(card, value) => void onEdit(card, value)}
                   {...(status === 'needs-me'
@@ -178,22 +218,5 @@ export function Board(props: {
         onStart={(text) => void start(text)}
       />
     </Stack>
-  );
-}
-
-export function BoardView(props: {
-  readonly heading: string;
-  readonly only?: readonly TaskStatus[];
-}): ReactNode {
-  const data = useBoardData();
-  return (
-    <>
-      <VisuallyHidden>
-        <Title order={1}>{props.heading}</Title>
-      </VisuallyHidden>
-      {data === null ? null : (
-        <Board data={data} {...(props.only === undefined ? {} : { only: props.only })} />
-      )}
-    </>
   );
 }

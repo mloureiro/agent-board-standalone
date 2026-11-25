@@ -4,3 +4,4 @@ dist/
 .beads/
 wiki/
 .claude/worktrees/
+test-results/

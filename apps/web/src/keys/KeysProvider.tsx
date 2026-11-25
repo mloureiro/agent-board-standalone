@@ -14,6 +14,7 @@ import {
 import { useServers } from '../servers/index.js';
 import { isKeyUnknown } from '../session/api-error.js';
 import { serverNamespace } from '../storage/index.js';
+import type { ServerClient } from '../transport/client.js';
 import { inspectKeys, type KeyInspector, type KeysState } from './inspect.js';
 import { removeStoredKeys, writeStoredKeys } from './stored-keys.js';
 
@@ -28,48 +29,46 @@ export interface KeysValue {
   reinspect(): void;
 }
 
-const KeysContext = createContext<KeysValue | null>(null);
+const IDLE: KeysState = { status: 'idle' };
 
-export const useKeys = (): KeysValue => {
-  const value = useContext(KeysContext);
-  if (value === null) throw new Error('useKeys needs a KeysProvider');
-  return value;
+const KeysContext = createContext<{ of(serverId: string | null): KeysValue } | null>(null);
+
+export const useKeysOf = (serverId: string | null): KeysValue => {
+  const registry = useContext(KeysContext);
+  if (registry === null) throw new Error('useKeys needs a KeysProvider');
+  return registry.of(serverId);
 };
 
-export function KeysProvider(props: {
-  readonly inspect?: KeyInspector;
-  readonly kdf?: KdfParams;
-  readonly children: ReactNode;
-}): ReactNode {
-  const inspect = props.inspect ?? inspectKeys;
-  const kdf = props.kdf ?? PRODUCTION_KDF;
-  const { active, connectionOf, clientOf, reportKeyUnknown } = useServers();
-  const queryClient = useQueryClient();
-  const [state, setState] = useState<KeysState>({ status: 'idle' });
-  const [nonce, setNonce] = useState(0);
-  const [epoch, setEpoch] = useState(0);
-  const dataKeyRef = useRef<{ keyId: string; text: string } | null>(null);
-  const activeId = active?.id ?? null;
-  const up = activeId !== null && connectionOf(activeId).state === 'up';
-  const servers = useRef({ clientOf, reportKeyUnknown });
-  servers.current = { clientOf, reportKeyUnknown };
+export const useKeys = (): KeysValue => useKeysOf(useServers().active?.id ?? null);
 
+function Inspector(props: {
+  readonly serverId: string;
+  readonly up: boolean;
+  readonly nonce: number;
+  readonly inspect: KeyInspector;
+  readonly clientOf: (serverId: string) => ServerClient | null;
+  readonly reportKeyUnknown: (serverId: string) => void;
+  readonly onState: (serverId: string, state: KeysState) => void;
+}): null {
+  const { serverId, up, nonce, inspect } = props;
+  const latest = useRef(props);
+  latest.current = props;
   useEffect(() => {
-    if (!up || activeId === null) {
-      setState({ status: 'idle' });
+    if (!up) {
+      latest.current.onState(serverId, IDLE);
       return undefined;
     }
-    const client = servers.current.clientOf(activeId);
+    const client = latest.current.clientOf(serverId);
     if (client === null) return undefined;
     let cancelled = false;
-    inspect({ serverId: activeId, client }).then(
+    inspect({ serverId, client }).then(
       (next) => {
-        if (!cancelled) setState(next);
+        if (!cancelled) latest.current.onState(serverId, next);
       },
       (cause: unknown) => {
         if (cancelled) return;
-        if (isKeyUnknown(cause)) servers.current.reportKeyUnknown(activeId);
-        setState({
+        if (isKeyUnknown(cause)) latest.current.reportKeyUnknown(serverId);
+        latest.current.onState(serverId, {
           status: 'failed',
           message: cause instanceof Error ? cause.message : 'The key could not be checked.',
         });
@@ -78,50 +77,97 @@ export function KeysProvider(props: {
     return () => {
       cancelled = true;
     };
-  }, [up, activeId, nonce, inspect]);
+  }, [up, serverId, nonce, inspect]);
+  return null;
+}
 
-  const reinspect = useCallback(() => setNonce((previous) => previous + 1), []);
+export function KeysProvider(props: {
+  readonly inspect?: KeyInspector;
+  readonly kdf?: KdfParams;
+  readonly children: ReactNode;
+}): ReactNode {
+  const inspect = props.inspect ?? inspectKeys;
+  const kdf = props.kdf ?? PRODUCTION_KDF;
+  const { servers, connectionOf, clientOf, reportKeyUnknown } = useServers();
+  const queryClient = useQueryClient();
+  const [states, setStates] = useState<Record<string, KeysState>>({});
+  const [nonces, setNonces] = useState<Record<string, number>>({});
+  const [epoch, setEpoch] = useState(0);
+  const dataKeys = useRef<Record<string, { keyId: string; text: string } | undefined>>({});
+  const serverCount = useRef(servers.length);
+  serverCount.current = servers.length;
 
-  const adopt = useCallback(
-    async (keys: Keys, dataKey?: string) => {
-      if (activeId === null) return;
-      dataKeyRef.current = dataKey === undefined ? null : { keyId: keys.keyId, text: dataKey };
-      await writeStoredKeys(activeId, keys);
-      setState({ status: 'unlocked', keys });
-    },
-    [activeId],
+  const onState = useCallback(
+    (serverId: string, next: KeysState) =>
+      setStates((previous) => ({ ...previous, [serverId]: next })),
+    [],
+  );
+  const reinspect = useCallback(
+    (serverId: string) =>
+      setNonces((previous) => ({ ...previous, [serverId]: (previous[serverId] ?? 0) + 1 })),
+    [],
   );
 
-  const forget = useCallback(async () => {
-    if (activeId === null) return;
-    dataKeyRef.current = null;
-    await removeStoredKeys(activeId);
-    setState({ status: 'idle' });
-    reinspect();
-  }, [activeId, reinspect]);
+  const registry = useMemo(() => {
+    const build = (serverId: string): KeysValue => {
+      const state = states[serverId] ?? IDLE;
+      return {
+        state,
+        kdf,
+        epoch,
+        adopt: async (keys, dataKey) => {
+          dataKeys.current[serverId] =
+            dataKey === undefined ? undefined : { keyId: keys.keyId, text: dataKey };
+          await writeStoredKeys(serverId, keys);
+          onState(serverId, { status: 'unlocked', keys });
+        },
+        dataKey: () => {
+          const held = dataKeys.current[serverId];
+          return state.status === 'unlocked' && held?.keyId === state.keys.keyId ? held.text : null;
+        },
+        forget: async () => {
+          dataKeys.current[serverId] = undefined;
+          await removeStoredKeys(serverId);
+          onState(serverId, IDLE);
+          reinspect(serverId);
+        },
+        lock: async () => {
+          dataKeys.current[serverId] = undefined;
+          if (serverCount.current > 1)
+            queryClient.removeQueries({ predicate: (query) => query.queryKey.includes(serverId) });
+          else queryClient.clear();
+          serverNamespace(serverId).local.clear();
+          await removeStoredKeys(serverId);
+          setEpoch((previous) => previous + 1);
+          onState(serverId, IDLE);
+          reinspect(serverId);
+        },
+        reinspect: () => reinspect(serverId),
+      };
+    };
+    const built = new Map(servers.map((server) => [server.id, build(server.id)]));
+    const absent = build('');
+    return {
+      of: (serverId: string | null): KeysValue =>
+        serverId === null ? absent : (built.get(serverId) ?? absent),
+    };
+  }, [servers, states, kdf, epoch, onState, reinspect, queryClient]);
 
-  const lock = useCallback(async () => {
-    if (activeId === null) return;
-    dataKeyRef.current = null;
-    queryClient.clear();
-    serverNamespace(activeId).local.clear();
-    await removeStoredKeys(activeId);
-    setEpoch((previous) => previous + 1);
-    setState({ status: 'idle' });
-    reinspect();
-  }, [activeId, queryClient, reinspect]);
-
-  const dataKey = useCallback(
-    () =>
-      state.status === 'unlocked' && dataKeyRef.current?.keyId === state.keys.keyId
-        ? dataKeyRef.current.text
-        : null,
-    [state],
+  return (
+    <KeysContext.Provider value={registry}>
+      {servers.map((server) => (
+        <Inspector
+          key={server.id}
+          serverId={server.id}
+          up={connectionOf(server.id).state === 'up'}
+          nonce={nonces[server.id] ?? 0}
+          inspect={inspect}
+          clientOf={clientOf}
+          reportKeyUnknown={reportKeyUnknown}
+          onState={onState}
+        />
+      ))}
+      {props.children}
+    </KeysContext.Provider>
   );
-
-  const value = useMemo<KeysValue>(
-    () => ({ state, kdf, epoch, adopt, dataKey, forget, lock, reinspect }),
-    [state, kdf, epoch, adopt, dataKey, forget, lock, reinspect],
-  );
-  return <KeysContext.Provider value={value}>{props.children}</KeysContext.Provider>;
 }

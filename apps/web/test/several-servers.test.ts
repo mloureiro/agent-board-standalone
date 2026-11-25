@@ -437,9 +437,13 @@ describe('server namespaces', () => {
       kind: 'client-app',
       listServers: async () => stored,
       addServer: vi.fn(async () => null),
-      removeServer: vi.fn(async () => true),
+      removeServer: vi.fn(async () => {
+        draftsAtRemoval.push(...serverNamespace('native-1').local.keys());
+        return true;
+      }),
       renameServer: vi.fn(async () => undefined),
     } as unknown as AgentBoardBridge;
+    const draftsAtRemoval: string[] = [];
     const registry = createNativeRegistry(bridge);
     serverNamespace('native-1').local.set('draft:new', 'x');
 
@@ -450,5 +454,7 @@ describe('server namespaces', () => {
     });
     expect(await registry.remove('native-1')).toBe(true);
     expect(serverNamespace('native-1').local.keys()).toEqual([]);
+    expect(draftsAtRemoval).toEqual([]);
+    expect(await registry.remove('unknown')).toBe(false);
   });
 });
