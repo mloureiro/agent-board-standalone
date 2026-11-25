@@ -29,7 +29,7 @@ import { project } from './projects.js';
 import { envelopeCondition, sealedChecks, tenantPolicy } from './tenancy.js';
 import { maxLengthOf } from '../sealed-columns.js';
 
-const SERVER_NOTE_MAX_LENGTH = 2000;
+const SERVER_NOTE_MAX_LENGTH = maxLengthOf('note.body');
 
 export const task = pgTable(
   'task',
@@ -92,7 +92,7 @@ export const task = pgTable(
   (t) => [
     primaryKey({ columns: [t.owner, t.id] }),
     unique('task_owner_dedupe_key_unique').on(t.owner, t.dedupeKey),
-    check('task_watch_stops_count', sql`cardinality(${t.watchStops}) <= 32`),
+    check('task_watch_stops_count', sql`cardinality(${t.watchStops}) <= 256`),
     foreignKey({
       name: 'task_project_fk',
       columns: [t.owner, t.projectId],
