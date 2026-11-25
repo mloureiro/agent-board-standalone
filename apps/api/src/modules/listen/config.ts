@@ -1,9 +1,10 @@
-import { csv, envObject, refuse } from '../env.js';
+import { csv, envObject, onOff, refuse } from '../env.js';
 
 export interface ListenConfig {
   host: string | null;
   port: number;
   allowedHosts: string[];
+  trustProxy: boolean;
 }
 
 export const DEFAULT_PORT = 4000;
@@ -35,7 +36,12 @@ export const listenSchema = envObject.transform((env, ctx): ListenConfig => {
       refuse(ctx, 'ALLOWED_HOSTS', `${entry} is not a host name: list names only, without a port`);
     }
   }
-  return { host: env.HOST ?? null, port, allowedHosts };
+  return {
+    host: env.HOST ?? null,
+    port,
+    allowedHosts,
+    trustProxy: onOff(env, 'TRUST_PROXY', false, ctx),
+  };
 });
 
 export const effectiveHost = (listen: ListenConfig, login: boolean): string =>

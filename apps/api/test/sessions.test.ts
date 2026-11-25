@@ -636,6 +636,27 @@ describe('rate limiting', () => {
     }
   });
 
+  it('[api-041] the client address comes from X-Forwarded-For only when TRUST_PROXY is on', async () => {
+    const start = (board: Board, forwarded: string) =>
+      post(
+        board.app,
+        '/api/auth/handoff/start',
+        { challenge: PKCE_CHALLENGE },
+        { 'x-forwarded-for': forwarded },
+      ).then((answer) => answer.statusCode);
+
+    const direct = await started(login(), { rateLimit: { max: 1, windowMs: MINUTE } });
+    expect(await start(direct, '203.0.113.1')).toBe(200);
+    expect(await start(direct, '203.0.113.2')).toBe(429);
+
+    const proxied = await started(login({ TRUST_PROXY: 'on' }), {
+      rateLimit: { max: 1, windowMs: MINUTE },
+    });
+    expect(await start(proxied, '203.0.113.1')).toBe(200);
+    expect(await start(proxied, '203.0.113.2')).toBe(200);
+    expect(await start(proxied, '203.0.113.1')).toBe(429);
+  });
+
   it('[api-041] the window resets after its length', async () => {
     const board = await started(login(), { rateLimit: { max: 1, windowMs: 50 } });
     expect(

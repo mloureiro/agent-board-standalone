@@ -153,7 +153,7 @@ naming the variables involved (api-021).
 | ----------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------- | --------------------- |
 | database          | `DATABASE_URL` (`postgres://…` or `pglite://<dir>`), `DATABASE_ADMIN_URL`                                        | required                  | api-001, 002, 015–018 |
 | sign-in           | `AUTH_MODE` (`login`, `no-login`), `NO_LOGIN_USER`, `PUBLIC_URL`, `PASSKEYS`, `OIDC_*`, `SAML_*`, `SIGNUP_TOKEN` | required                  | api-005–007, 025–042  |
-| listen            | `HOST`, `PORT`, `ALLOWED_HOSTS`                                                                                  | loopback in no-login      | api-013, 014, 121     |
+| listen            | `HOST`, `PORT`, `ALLOWED_HOSTS`, `TRUST_PROXY` (`on`, `off`)                                                     | loopback in no-login      | api-013, 014, 121     |
 | cross-origin      | `ALLOWED_ORIGINS`                                                                                                | empty (same origin only)  | api-113, 114          |
 | request signature | `REQUEST_SIGNATURE` (`on`, `off`)                                                                                | `off`                     | api-022, 120, 122     |
 | events            | `EVENTS_DRIVER` (`memory`, `postgres`)                                                                           | `memory`                  | api-024, 094, 095     |
@@ -226,6 +226,11 @@ it. The public finish, called with the verifier, returns either a cookie (same o
 in the body when the request asks for `tokenKind: "client"` (api-114). When the server has the request signature
 on, the finish carries the client's public key and binds it to the new session. In the wrappers, Rust calls the
 finish itself, so the token never reaches page code (client-app-037).
+
+The public sign-in routes are rate limited per process and per client address: the counters live in memory, so
+several API processes each count on their own. The address is the socket's, which behind a reverse proxy is the
+proxy's. With `TRUST_PROXY=on` the address comes from `X-Forwarded-For` instead, so turn it on only when a
+proxy that overwrites that header is the sole way in.
 
 ### Request signature
 
