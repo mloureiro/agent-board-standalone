@@ -18,6 +18,8 @@ const SWEEP_AT = 10_000;
 export const isSignInRoute = (route: AnyRoute): boolean =>
   route.name.startsWith('auth.') && !NOT_SIGN_IN_ROUTES.has(route.name);
 
+const PAIR_ROUTE = 'public.pair';
+
 interface Window {
   count: number;
   resetAt: number;
@@ -33,8 +35,10 @@ export const registerSignInGuards = (
 
   app.addHook('onRequest', async (request, reply) => {
     const route = request.routeOptions.config.route;
-    if (route === undefined || !isSignInRoute(route)) return;
-    if (context.config.signIn.mode === 'no-login')
+    if (route === undefined) return;
+    const pairing = route.name === PAIR_ROUTE;
+    if (!pairing && !isSignInRoute(route)) return;
+    if (!pairing && context.config.signIn.mode === 'no-login')
       throw new ApiError('not-found', NO_LOGIN_MESSAGE);
     if (route.auth !== 'public') return;
 
@@ -52,7 +56,7 @@ export const registerSignInGuards = (
     current.count += 1;
     if (current.count > limit.max) {
       reply.header('retry-after', Math.max(1, Math.ceil((current.resetAt - now) / 1000)));
-      throw new ApiError('too-many-requests', 'too many sign-in attempts: wait and try again');
+      throw new ApiError('too-many-requests', 'too many attempts: wait and try again');
     }
   });
 };
