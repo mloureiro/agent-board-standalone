@@ -124,6 +124,9 @@ pub fn heartbeat(app: &AppHandle, server: ServerId) {
 
 fn sample(app: &AppHandle) -> Vec<ServerId> {
     let alerts = app.state::<Alerts>();
+    if let Some(notifier) = &alerts.notifier {
+        notifier.refresh();
+    }
     let now = SystemClock.now_secs();
     let hidden: Vec<(ServerId, bool)> = open_server_windows(app)
         .into_iter()

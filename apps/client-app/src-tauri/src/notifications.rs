@@ -105,7 +105,8 @@ pub struct Notifier {
 }
 
 fn bundled() -> bool {
-    NSBundle::mainBundle().bundleIdentifier().is_some()
+    let bundle = NSBundle::mainBundle();
+    bundle.bundleIdentifier().is_some() && bundle.bundlePath().to_string().ends_with(".app")
 }
 
 fn store(permission: &AtomicU8, status: UNAuthorizationStatus) {
@@ -127,20 +128,26 @@ impl Notifier {
         let center = UNUserNotificationCenter::currentNotificationCenter();
         let delegate = Delegate::new(clicked);
         center.setDelegate(Some(ProtocolObject::from_ref(&*delegate)));
-        let permission = Arc::new(AtomicU8::new(UNKNOWN));
-        let observed = Arc::clone(&permission);
+        let notifier = Self {
+            center: Arc::new(Center(center)),
+            permission: Arc::new(AtomicU8::new(UNKNOWN)),
+            _delegate: Held(delegate),
+        };
+        notifier.refresh();
+        Some(notifier)
+    }
+
+    pub fn refresh(&self) {
+        let observed = Arc::clone(&self.permission);
         let settings = RcBlock::new(move |settings: NonNull<UNNotificationSettings>| {
             store(
                 &observed,
                 unsafe { settings.as_ref() }.authorizationStatus(),
             );
         });
-        center.getNotificationSettingsWithCompletionHandler(&settings);
-        Some(Self {
-            center: Arc::new(Center(center)),
-            permission,
-            _delegate: Held(delegate),
-        })
+        self.center
+            .0
+            .getNotificationSettingsWithCompletionHandler(&settings);
     }
 
     pub fn permission(&self) -> Permission {
