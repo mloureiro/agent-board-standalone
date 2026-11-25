@@ -159,6 +159,20 @@ describe('authentication mode', () => {
     });
   });
 
+  it('[api-007] refuses allowed groups together with SAML, naming both variables', () => {
+    const message = refusal(
+      loginEnv({
+        ALLOWED_GROUPS: 'admins',
+        OIDC_ISSUER: 'https://idp.example',
+        OIDC_CLIENT_ID: 'board',
+        OIDC_CLIENT_SECRET: 'secret',
+        SAML_IDP_METADATA_URL: 'https://saml.example/metadata',
+      }),
+    );
+    expect(message).toContain('ALLOWED_GROUPS');
+    expect(message).toContain('SAML_IDP_METADATA_URL');
+  });
+
   it('[api-007] refuses a sign-up token under 32 characters and one next to passkeys off', () => {
     expect(refusal(loginEnv({ SIGNUP_TOKEN: 'short' }))).toContain(
       'SIGNUP_TOKEN: must be at least 32',
