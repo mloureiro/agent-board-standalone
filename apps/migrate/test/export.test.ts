@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -165,6 +165,8 @@ describe('export command', () => {
         sourceVersion: string;
       };
       expect(plan.sourceVersion).toBe('local-v2');
+      expect((await stat(out)).mode & 0o777).toBe(0o600);
+      expect((await stat(`${out}.plan.json`)).mode & 0o777).toBe(0o600);
     } finally {
       await source.dispose();
     }

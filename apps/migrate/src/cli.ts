@@ -27,7 +27,9 @@ export async function run(argv: readonly string[]): Promise<string> {
     if (values.out === undefined) throw new UsageError('--out is required');
     const plan = await exportSource(values.source, values.out);
     if (values['dry-run'] === true)
-      await writeFile(`${values.out}.plan.json`, `${JSON.stringify(plan, null, 2)}\n`);
+      await writeFile(`${values.out}.plan.json`, `${JSON.stringify(plan, null, 2)}\n`, {
+        mode: 0o600,
+      });
     return formatPlan(plan);
   }
   throw new UsageError(`unknown command "${command ?? ''}"`);

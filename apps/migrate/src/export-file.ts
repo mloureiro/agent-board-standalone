@@ -14,7 +14,7 @@ import { exportRecords } from './transform/records.js';
 
 export async function writeExport(reader: SourceReader, outFile: string): Promise<PlanReport> {
   const detected = await detectSourceVersion(reader);
-  const out = createWriteStream(outFile, { encoding: 'utf8' });
+  const out = createWriteStream(outFile, { encoding: 'utf8', mode: 0o600 });
   const failed = once(out, 'error').then(([error]) => Promise.reject(error as Error));
   failed.catch(() => undefined);
   const write = async (value: unknown, index: number, context: string): Promise<void> => {

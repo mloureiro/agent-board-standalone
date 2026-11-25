@@ -48,7 +48,27 @@ async function hasUserSource(reader: SourceReader): Promise<boolean> {
   return rows.length > 0;
 }
 
+async function refuseHiddenRows(reader: SourceReader): Promise<void> {
+  const rows = await reader.query(
+    `select c.relname as name from pg_class c
+     join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity
+       and not exists (
+         select 1 from pg_roles r where r.rolname = current_user and (r.rolsuper or r.rolbypassrls)
+       )
+       and (c.relforcerowsecurity or not pg_has_role(current_user, c.relowner, 'USAGE'))
+     order by c.relname`,
+  );
+  if (rows.length > 0) {
+    const tables = rows.map((row) => String(row.name)).join(', ');
+    throw new SourceError(
+      `row-level security hides rows of ${tables} from this role: read the source through the admin URL`,
+    );
+  }
+}
+
 export async function detectSourceVersion(reader: SourceReader): Promise<DetectedSource> {
+  await refuseHiddenRows(reader);
   const journal = await journalCount(reader);
   const tables = await presentTables(reader);
   const signIn = tables.has('passkey') && (await hasUserSource(reader));

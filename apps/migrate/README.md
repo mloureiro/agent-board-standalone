@@ -25,7 +25,8 @@ too.
 ### Reading
 
 - **Postgres** is read through the admin URL in one `REPEATABLE READ`, `READ ONLY` transaction with
-  `default_transaction_read_only` on, so a write errors and every table is read from one snapshot.
+  `default_transaction_read_only` on, so a write errors and every table is read from one snapshot. A role that
+  row-level security applies to (such as `board_app`) is refused, because it would read an empty board.
 - **PGlite** folders are never opened in place, because opening writes to the data folder. The reader copies the folder
   to a temporary directory, opens the copy (also in a read-only transaction) and deletes the copy on close. Stop the
   process that owns the folder first: a copy of a folder that is being written can be inconsistent.
@@ -36,7 +37,8 @@ too.
 ## What the export carries
 
 Every table of the old board maps to export records, grouped by owner in the order of the contract's `EXPORT_TABLES`.
-Sealed values and blind indexes are copied byte for byte. Timestamps are written as ISO 8601 with milliseconds in UTC.
+Sealed values and blind indexes are copied byte for byte. The export and its plan are written readable by their owner
+only, since they hold machine token hashes and wrapped key slots. Timestamps are written as ISO 8601 with milliseconds in UTC.
 
 - The owner's default project is one record with an id derived from the owner name, `isDefault` true and no name or
   icon. Every task and schedule belongs to it, with `directoryId` null.

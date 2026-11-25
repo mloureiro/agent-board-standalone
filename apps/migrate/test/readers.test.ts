@@ -1,4 +1,6 @@
+import { randomBytes } from 'node:crypto';
 import { mkdir, mkdtemp, readdir, writeFile } from 'node:fs/promises';
+import pg from 'pg';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FIXTURES } from '../fixtures/fixtures.js';
@@ -9,6 +11,8 @@ import {
   inspectSource,
   openSource,
   SourceError,
+  type SourceReader,
+  type SourceRow,
 } from '../src/index.js';
 import { readmeCounts, readReadme } from './support/fixture-files.js';
 import { hashFolder, materializeFolder, type MaterializedFolder } from './support/folders.js';
@@ -95,6 +99,26 @@ describe('PGlite folder refusals', () => {
     }
   });
 
+  it('refuses a role that row-level security hides rows from', async () => {
+    const scratch = await materializeFolder('local-v2');
+    const { PGlite } = await import('pglite-0-5-17');
+    const database = new PGlite(scratch.folder);
+    try {
+      await database.exec('set role board_app');
+      const reader: SourceReader = {
+        kind: 'pglite',
+        query: async (sql, params = []) => (await database.query<SourceRow>(sql, [...params])).rows,
+        close: async () => undefined,
+      };
+      const error = await detectSourceVersion(reader).catch((caught: unknown) => caught);
+      expect(error).toBeInstanceOf(SourceError);
+      expect((error as Error).message).toMatch(/row-level security hides rows of .*task/);
+    } finally {
+      await database.close();
+      await scratch.dispose();
+    }
+  });
+
   it('refuses an unknown schema version by its journal count', async () => {
     const scratch = await materializeFolder('local-v2');
     try {
@@ -145,6 +169,27 @@ describe.skipIf(postgresUrl === undefined)('Postgres reader', () => {
       );
     } finally {
       await reader.close();
+    }
+  });
+
+  it('refuses a role that row-level security applies to', async () => {
+    const role = `migrate_reader_${randomBytes(4).toString('hex')}`;
+    const admin = new pg.Client({ connectionString: postgresUrl });
+    await admin.connect();
+    try {
+      await admin.query(`create role ${role} login password 'reader' in role board_app`);
+      const url = new URL(database.url);
+      url.username = role;
+      url.password = 'reader';
+      const reader = await openSource(url.toString());
+      try {
+        await expect(detectSourceVersion(reader)).rejects.toThrow(/row-level security hides rows/);
+      } finally {
+        await reader.close();
+      }
+    } finally {
+      await admin.query(`drop role if exists ${role}`);
+      await admin.end();
     }
   });
 });
