@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -99,7 +99,8 @@ describe('board init', () => {
   it('[cli-046] refuses a token file with mode 644', async () => {
     const { board, identity, tmp, run } = await fresh('init-loose-token');
     const enrolment = await prepareEnrolment(tmp, identity);
-    writeFileSync(enrolment.tokenFile, `${enrolment.token}\n`, { mode: 0o644 });
+    writeFileSync(enrolment.tokenFile, `${enrolment.token}\n`);
+    chmodSync(enrolment.tokenFile, 0o644);
     const before = snapshotOf(scopesOf(tmp));
     const result = await run(initArgs(board.url, enrolment));
     expect(result.code).not.toBe(0);

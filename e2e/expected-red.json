@@ -19,7 +19,6 @@
     ],
     "blackbox/matrix-refusal.test.ts": "*",
     "blackbox/migrate.test.ts": "*",
-    "blackbox/profiles.test.ts": ["board init › [cli-046] refuses a token file with mode 644"],
     "blackbox/schedules.test.ts": [
       "[cli-036] board schedule › [cli-036] creates a one-off task bound to this machine, an allowed directory and the project",
       "[cli-036] board schedule › [cli-036] creates a repeating schedule bound to this machine, an allowed directory and the project",
