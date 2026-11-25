@@ -5,6 +5,7 @@ import { UNLOCK_NAMES, unlockInPage } from '../fixtures/browser.js';
 import { DEFAULT_PASSPHRASE, unlockedKey, type UnlockedKey } from '../fixtures/keys.js';
 import { noLoginUser, type BoardUser } from '../fixtures/users.js';
 import type { Board } from '../harness/board.js';
+import { SERVER_LIST_KEY } from './servers.js';
 
 export const SETUP_NAMES = {
   passphrase: /^passphrase$/i,
@@ -26,7 +27,7 @@ export const SETTINGS_NAMES = {
   change: /^(change|save)( passphrase)?$/i,
 } as const;
 
-export const WRONG_PASSPHRASE = /wrong/i;
+export const WRONG_PASSPHRASE = /^wrong passphrase\.?$/i;
 export const FORBIDDEN_WRONG_DETAIL =
   /attempt|lock(ed|out)|too many|try again in|slot|argon|decrypt|salt/i;
 export const UI_TIMEOUT_MS = 15_000;
@@ -227,15 +228,12 @@ export async function runJourney(page: Page, journey: JourneyMarker): Promise<vo
 }
 
 export async function clearWebStorageKeepingServerList(page: Page): Promise<string[]> {
-  return page.evaluate(() => {
-    const kept: [string, string][] = [];
-    for (let index = 0; index < localStorage.length; index += 1) {
-      const key = localStorage.key(index);
-      if (key !== null && /servers?/i.test(key)) kept.push([key, localStorage.getItem(key) ?? '']);
-    }
+  return page.evaluate((listKey) => {
+    const kept = localStorage.getItem(listKey);
     localStorage.clear();
     sessionStorage.clear();
-    for (const [key, value] of kept) localStorage.setItem(key, value);
-    return kept.map(([key]) => key);
-  });
+    if (kept === null) return [];
+    localStorage.setItem(listKey, kept);
+    return [listKey];
+  }, SERVER_LIST_KEY);
 }

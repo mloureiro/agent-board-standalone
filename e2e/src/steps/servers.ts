@@ -1,13 +1,15 @@
 import type { Feature } from '@agent-board/contract';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
-import { startBoardPair, type BoardPair } from '../fixtures/boards.js';
+import { postgresAllowedIn, startBoardPair, type BoardPair } from '../fixtures/boards.js';
 import { UNLOCK_NAMES, unlockInPage } from '../fixtures/browser.js';
 import { unlockedKey, type UnlockedKey } from '../fixtures/keys.js';
 import { noLoginUser, type BoardUser } from '../fixtures/users.js';
-import { resolveDatabaseKind, type Board } from '../harness/board.js';
+import type { Board } from '../harness/board.js';
 import { missingParts, type PartName } from '../harness/paths.js';
 import { featureSkipReason, partSkipReason, recordSkip } from '../harness/skip.js';
+
+export const SERVER_LIST_KEY = 'ab:servers';
 
 export const SERVER_UI = {
   openList: /^servers$/i,
@@ -22,6 +24,7 @@ export const SERVER_UI = {
   serverFilter: /^server( filter)?$/i,
   allServers: /^all servers$/i,
   newTask: /^new task$/i,
+  boardLink: 'Board',
   draftField: /prompt|new task|task/i,
 } as const;
 
@@ -35,7 +38,7 @@ export interface PairHandle {
 }
 
 const START_TIMEOUT_MS = 180_000;
-const POSTGRES_PROJECT = 'chromium-desktop';
+const UNLOCK_TIMEOUT_MS = 15_000;
 
 export function usePair(declaration: PairDeclaration): PairHandle {
   let pair: BoardPair | null = null;
@@ -53,7 +56,7 @@ export function usePair(declaration: PairDeclaration): PairHandle {
       auth: 'no-login',
       web: declaration.parts.includes('web'),
       features: declaration.features,
-      database: resolveDatabaseKind({}, testInfo.project.name === POSTGRES_PROJECT),
+      postgresAllowed: postgresAllowedIn(testInfo.project.name),
     });
     const lacking = [...pair.a.missingFeatures, ...pair.b.missingFeatures];
     if (lacking.length > 0) reason = featureSkipReason(lacking);
@@ -123,15 +126,17 @@ export async function closeServerList(page: Page): Promise<void> {
 
 export async function unlockAll(page: Page, passphrase: string): Promise<void> {
   const field = page.getByLabel(UNLOCK_NAMES.passphrase).first();
+  const board = page.getByRole('link', { name: SERVER_UI.boardLink, exact: true });
   for (let round = 0; round < 6; round += 1) {
-    const shown = await field.waitFor({ state: 'visible', timeout: 2_500 }).then(
-      () => true,
-      () => false,
-    );
-    if (!shown) return;
+    await expect(field.or(board).first()).toBeVisible({ timeout: UNLOCK_TIMEOUT_MS });
+    if (!(await field.isVisible())) {
+      await page.waitForLoadState('networkidle');
+      if (!(await field.isVisible())) return;
+    }
     await unlockInPage(page, passphrase);
     await expect(field).toBeHidden();
   }
+  throw new Error('the client kept asking for the passphrase after six unlocks');
 }
 
 export async function openClient(page: Page, url: string, passphrase: string): Promise<void> {
@@ -176,7 +181,7 @@ export async function typeDraft(page: Page, text: string): Promise<void> {
 }
 
 export async function readServerEntries(page: Page): Promise<ServerEntry[]> {
-  return page.evaluate(() => {
+  return page.evaluate((listKey) => {
     const found = new Map<string, { id: string; name: string; url: string }>();
     const visit = (value: unknown): void => {
       if (Array.isArray(value)) {
@@ -197,18 +202,16 @@ export async function readServerEntries(page: Page): Promise<ServerEntry[]> {
       }
       Object.values(candidate).forEach(visit);
     };
-    for (let index = 0; index < localStorage.length; index += 1) {
-      const key = localStorage.key(index);
-      const raw = key === null ? null : localStorage.getItem(key);
-      if (raw === null) continue;
+    const raw = localStorage.getItem(listKey);
+    if (raw !== null) {
       try {
         visit(JSON.parse(raw));
       } catch {
-        continue;
+        return [];
       }
     }
     return [...found.values()];
-  });
+  }, SERVER_LIST_KEY);
 }
 
 export async function serverEntry(page: Page, name: string): Promise<ServerEntry> {

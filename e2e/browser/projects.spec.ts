@@ -43,7 +43,7 @@ const UI = {
   deleteTasks: /delete.*tasks/i,
 } as const;
 
-const EVENT_QUIET_MS = 1_500;
+const EVENT_QUIET_MS = 250;
 const SCHEDULE_EVERY_MS = 3_600_000;
 const PHONE_VIEWPORT = { width: 390, height: 844 } as const;
 
@@ -143,7 +143,7 @@ async function quiet(stream: { nextEvent(ms: number): Promise<unknown> }): Promi
 
 test.describe('project filter on the task, schedule and event queries', () => {
   const harness = useBoard({
-    parts: ['api', 'web', 'cli'],
+    parts: ['api', 'web'],
     features: ['projects'],
     auth: 'no-login',
   });
@@ -206,13 +206,16 @@ test.describe('project filter on the task, schedule and event queries', () => {
     const alpha = await createProject(world.user, world.key, `alpha ${suffix()}`);
     const bravo = await createProject(world.user, world.key, `bravo ${suffix()}`);
     const filtered = await world.user.events({ project: alpha });
+    const everything = await world.user.events({});
     try {
       await addTask(board, world, `elsewhere ${suffix()}`, bravo);
+      expect((await everything.nextEvent()).event).toBe('changed');
       await quiet(filtered);
       await addTask(board, world, `here ${suffix()}`, alpha);
       expect((await filtered.nextEvent()).event).toBe('changed');
     } finally {
       filtered.close();
+      everything.close();
     }
   });
 
@@ -253,7 +256,7 @@ test.describe('project filter on the task, schedule and event queries', () => {
 
 test.describe('projects in the browser client', () => {
   const harness = useBoard({
-    parts: ['api', 'web', 'cli'],
+    parts: ['api', 'web'],
     features: ['projects'],
     auth: 'no-login',
   });

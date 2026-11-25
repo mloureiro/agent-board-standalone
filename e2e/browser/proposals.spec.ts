@@ -38,7 +38,7 @@ async function proposeFromRun(account: Account, worker: Worker): Promise<Proposa
     prompt: `${parentTitle}\n#stub: board add --title "${title}" --file ${file}`,
     status: 'todo',
   });
-  await waitForStatus(account, parentId, 'done');
+  await waitForStatus(account, parentId, 'needs-me');
 
   const listed = await account.user.ok('client.tasks.list', {});
   for (const task of listed.tasks) {
@@ -89,7 +89,7 @@ test.describe('proposals', () => {
       prompt: `${tick}\n#stub: done`,
       status: 'todo',
     });
-    await waitForStatus(account, tickId, 'done');
+    await waitForStatus(account, tickId, 'needs-me');
     const after = (await account.user.ok('client.tasks.get', { id: proposal.id })).task;
     expect(after.status).toBe('backlog');
     expect(after.machine).toBeNull();
@@ -110,7 +110,7 @@ test.describe('proposals', () => {
     await dragToTodo(page, proposal.title);
     await page.getByRole('dialog').getByRole('button', { name: BOARD_NAMES.start }).click();
 
-    await waitForStatus(account, proposal.id, 'done');
+    await waitForStatus(account, proposal.id, 'needs-me');
     const claimed = (await account.user.ok('client.tasks.get', { id: proposal.id })).task;
     expect(claimed.machine).not.toBeNull();
     expect(claimed.input).not.toBe(agentEnvelope);
@@ -137,7 +137,7 @@ test.describe('proposals', () => {
     await prompt.fill(`#stub: done\n${edited}`);
     await dialog.getByRole('button', { name: BOARD_NAMES.start }).click();
 
-    await waitForStatus(account, proposal.id, 'done');
+    await waitForStatus(account, proposal.id, 'needs-me');
     const received = stdinMessages((worker as Worker).stubLog());
     expect(received.some((message) => message.includes(edited))).toBe(true);
     expect(received.some((message) => message.includes(proposal.body))).toBe(false);

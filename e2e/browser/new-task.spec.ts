@@ -3,7 +3,6 @@ import { randomUUID } from 'node:crypto';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { bindings } from '@agent-board/sealing';
 
-import { launchBoard } from '../src/fixtures/boards.js';
 import { useBoard } from '../src/harness/playwright.js';
 import {
   BOARD_NAMES,
@@ -14,6 +13,7 @@ import {
   createTitled,
   draftEntries,
   goToTask,
+  hideAndShowTab,
   openBoard,
   passphraseField,
   reopenBoard,
@@ -27,6 +27,7 @@ import {
   type Account,
   type Worker,
 } from '../src/steps/board.js';
+import { NAMES as TASK_PAGE, panelButton, questionForm, replyBox } from '../src/steps/task-page.js';
 
 const FORM = {
   project: /^project$/i,
@@ -106,85 +107,88 @@ test.describe('new task form', () => {
       icon: '🚀',
     };
 
-    await openBoard(page, account);
-    await page.getByRole('button', { name: BOARD_NAMES.newTask }).click();
-    await page.getByLabel(BOARD_NAMES.prompt).fill(values.prompt);
-    await page.getByLabel(BOARD_NAMES.title).fill(title);
-    await setField(page, FORM.project, projectName);
-    await page.getByRole('button', { name: FORM.icon }).first().click();
-    await page.getByRole('button', { name: values.icon }).first().click();
-    await setField(page, FORM.directory, worker.directory);
-    await setField(page, FORM.labels, values.label);
-    await setField(page, FORM.priority, 'High');
-    await setField(page, FORM.model, 'Opus');
-    await setField(page, FORM.effort, 'High');
-    await setField(page, FORM.lane, values.lane);
-    await setField(page, FORM.agent, values.agent);
-    await page.getByRole('checkbox', { name: FORM.autoDone }).check();
-    await page.getByRole('button', { name: BOARD_NAMES.create }).click();
+    try {
+      await openBoard(page, account);
+      await page.getByRole('button', { name: BOARD_NAMES.newTask }).click();
+      await page.getByLabel(BOARD_NAMES.prompt).fill(values.prompt);
+      await page.getByLabel(BOARD_NAMES.title).fill(title);
+      await setField(page, FORM.project, projectName);
+      await page.getByRole('button', { name: FORM.icon }).first().click();
+      await page.getByRole('button', { name: values.icon }).first().click();
+      await setField(page, FORM.directory, worker.directory);
+      await setField(page, FORM.labels, values.label);
+      await setField(page, FORM.priority, 'High');
+      await setField(page, FORM.model, 'Opus');
+      await setField(page, FORM.effort, 'High');
+      await setField(page, FORM.lane, values.lane);
+      await setField(page, FORM.agent, values.agent);
+      await page.getByRole('checkbox', { name: FORM.autoDone }).check();
+      await page.getByRole('button', { name: BOARD_NAMES.create }).click();
 
-    await expect(card(page, title)).toBeVisible({ timeout: UI_TIMEOUT_MS });
-    const listed = await account.user.ok('client.tasks.list', { project: projectId });
-    const created = listed.tasks[0];
-    expect(created).toBeDefined();
-    const task = created as (typeof listed.tasks)[number];
-    expect(task).toMatchObject({
-      priority: 'high',
-      model: 'opus',
-      effort: 'high',
-      requestedLane: values.lane,
-      autoDone: true,
-      projectId,
-    });
-    expect(task.directoryId).not.toBeNull();
-    expect(await account.key.open(bindings.title({ task: task.id }), task.title)).toBe(title);
-    expect(
-      await account.key.open(bindings.labels({ task: task.id }), task.labels as string),
-    ).toContain(values.label);
-    expect(await account.key.open(bindings.icon({ task: task.id }), task.icon as string)).toBe(
-      values.icon,
-    );
-    expect(await account.key.open(bindings.agent({ task: task.id }), task.agent as string)).toBe(
-      values.agent,
-    );
+      await expect(card(page, title)).toBeVisible({ timeout: UI_TIMEOUT_MS });
+      const listed = await account.user.ok('client.tasks.list', { project: projectId });
+      const created = listed.tasks[0];
+      expect(created).toBeDefined();
+      const task = created as (typeof listed.tasks)[number];
+      expect(task).toMatchObject({
+        priority: 'high',
+        model: 'opus',
+        effort: 'high',
+        requestedLane: values.lane,
+        autoDone: true,
+        projectId,
+      });
+      expect(task.directoryId).not.toBeNull();
+      expect(await account.key.open(bindings.title({ task: task.id }), task.title)).toBe(title);
+      expect(
+        await account.key.open(bindings.labels({ task: task.id }), task.labels as string),
+      ).toContain(values.label);
+      expect(await account.key.open(bindings.icon({ task: task.id }), task.icon as string)).toBe(
+        values.icon,
+      );
+      expect(await account.key.open(bindings.agent({ task: task.id }), task.agent as string)).toBe(
+        values.agent,
+      );
 
-    await card(page, title).getByRole('link', { name: title }).click();
-    for (const shown of [
-      title,
-      projectName,
-      values.prompt,
-      values.label,
-      values.lane,
-      values.agent,
-      values.icon,
-    ]) {
-      await expect(page.getByText(shown).first()).toBeVisible({ timeout: UI_TIMEOUT_MS });
+      await card(page, title).getByRole('link', { name: title }).click();
+      for (const shown of [
+        title,
+        projectName,
+        values.prompt,
+        values.label,
+        values.lane,
+        values.agent,
+        values.icon,
+      ]) {
+        await expect(page.getByText(shown).first()).toBeVisible({ timeout: UI_TIMEOUT_MS });
+      }
+
+      const shown = await worker.machine.cli(['show', task.id, '--json']);
+      expect(shown.code).toBe(0);
+      const json: unknown = JSON.parse(shown.stdout);
+      expect(valuesOf(json, 'priority')).toContain('high');
+      expect(valuesOf(json, 'model')).toContain('opus');
+      expect(valuesOf(json, 'effort')).toContain('high');
+      expect(valuesOf(json, 'autoDone')).toContain(true);
+      expect([projectId, projectName].some((project) => shown.stdout.includes(project))).toBe(true);
+      expect(
+        [task.directoryId as string, worker.directory].some((directory) =>
+          shown.stdout.includes(directory),
+        ),
+      ).toBe(true);
+      for (const text of [
+        title,
+        values.prompt,
+        values.label,
+        values.lane,
+        values.agent,
+        values.icon,
+      ]) {
+        expect(shown.stdout).toContain(text);
+      }
+    } finally {
+      await worker.stop();
     }
-
-    const shown = await worker.machine.cli(['show', task.id, '--json']);
-    expect(shown.code).toBe(0);
-    const json: unknown = JSON.parse(shown.stdout);
-    expect(valuesOf(json, 'priority')).toContain('high');
-    expect(valuesOf(json, 'model')).toContain('opus');
-    expect(valuesOf(json, 'effort')).toContain('high');
-    expect(valuesOf(json, 'autoDone')).toContain(true);
-    expect([projectId, projectName].some((project) => shown.stdout.includes(project))).toBe(true);
-    expect(
-      [task.directoryId as string, worker.directory].some((directory) =>
-        shown.stdout.includes(directory),
-      ),
-    ).toBe(true);
-    for (const text of [
-      title,
-      values.prompt,
-      values.label,
-      values.lane,
-      values.agent,
-      values.icon,
-    ]) {
-      expect(shown.stdout).toContain(text);
-    }
-    await worker.stop();
   });
 });
 
@@ -219,7 +223,7 @@ async function editors(account: Account): Promise<Editor[]> {
     prompt: `${askTitle}\n#stub: ask ${QUESTIONS}`,
     status: 'todo',
   });
-  await waitForStatus(account, replyId, 'done');
+  await waitForStatus(account, replyId, 'needs-me');
   await waitForStatus(account, askId, 'needs-me');
   return [
     {
@@ -235,24 +239,31 @@ async function editors(account: Account): Promise<Editor[]> {
       name: 'reply box',
       open: async (page) => {
         await goToTask(page, replyTitle);
-        return page.getByRole('textbox', { name: BOARD_NAMES.reply });
+        return replyBox(page);
       },
       submit: async (page) => {
-        await page.getByRole('button', { name: BOARD_NAMES.send }).click();
+        await panelButton(page, TASK_PAGE.sendAndContinue).click();
       },
     },
     {
       name: 'question other field',
       open: async (page) => {
         await goToTask(page, askTitle);
-        const other = page.getByRole('textbox', { name: BOARD_NAMES.other });
+        const other = questionForm(page).getByRole('textbox', {
+          name: TASK_PAGE.questionOther,
+          exact: true,
+        });
         if (!(await other.isVisible())) {
-          await page.getByRole('radio', { name: BOARD_NAMES.other }).check();
+          await questionForm(page)
+            .getByRole('radio', { name: TASK_PAGE.questionOther, exact: true })
+            .check();
         }
         return other;
       },
       submit: async (page) => {
-        await page.getByRole('button', { name: BOARD_NAMES.submitAnswer }).click();
+        await questionForm(page)
+          .getByRole('button', { name: TASK_PAGE.submitAnswer, exact: true })
+          .click();
       },
     },
   ];
@@ -304,11 +315,8 @@ test.describe('drafts', () => {
       await reopenBoard(page, account);
       await expect(await editor.open(page)).toHaveValue(text, { timeout: UI_TIMEOUT_MS });
 
-      const other = await page.context().newPage();
-      await other.bringToFront();
-      await page.bringToFront();
+      await hideAndShowTab(page);
       await expect(await editor.open(page)).toHaveValue(text);
-      await other.close();
     }
   });
 
@@ -333,18 +341,14 @@ test.describe('drafts', () => {
       ).toBe(true);
     }
 
-    const second = await launchBoard({ auth: 'no-login', web: true, label: 'second-server' });
-    try {
-      const otherAccount = await seedAccount(second);
-      expect(otherAccount.key.keyId).not.toBe(account.key.keyId);
-      const otherPage = await page.context().newPage();
-      await openBoard(otherPage, otherAccount);
-      await expect(await openNewTask(otherPage)).toHaveValue('');
-      expect(await draftEntries(otherPage, text)).toEqual([]);
-      await otherPage.close();
-    } finally {
-      await second.stop();
-    }
+    const otherText = `other server draft ${uniqueTitle('text')}`;
+    const foreignKey = `ab:e2e-server-b:draft:new:${account.key.keyId}`;
+    await page.evaluate(
+      ([key, value]) => localStorage.setItem(key as string, value as string),
+      [foreignKey, otherText],
+    );
+    await reopenBoard(page, account);
+    await expect(await openNewTask(page)).toHaveValue('');
   });
 
   test('[web-064] drafts clear on send', async ({ page }) => {

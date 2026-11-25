@@ -1,11 +1,13 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { sessionCookieName } from '@agent-board/contract';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
 import {
   OIDC_REDIRECT_PATH,
   startLoginBoard,
+  startLoginBoardPair,
   type LoginBoard,
   type LoginBoardOptions,
 } from '../src/fixtures/login-board.js';
@@ -14,16 +16,15 @@ import {
   APPROVAL_PATH,
   withVirtualAuthenticator,
 } from '../src/fixtures/browser.js';
-import { originOf } from '../src/fixtures/boards.js';
+import { postgresAllowedIn } from '../src/fixtures/boards.js';
 import { signedInUser, type BoardUser } from '../src/fixtures/users.js';
 import { missingParts, partPath, type PartName } from '../src/harness/paths.js';
-import { freePort } from '../src/harness/ports.js';
 import { featureSkipReason, partSkipReason, recordSkip } from '../src/harness/skip.js';
+import { addServer } from '../src/steps/servers.js';
 import {
   HANDOFF_BUTTON,
   HANDOFF_CODE_PATTERN,
   SIGN_UP_TOKEN,
-  addServerInClient,
   authLabels,
   bearerSessionState,
   bearerTokensSentTo,
@@ -54,7 +55,7 @@ interface Started<T> {
 
 function useStarted<T>(
   parts: readonly PartName[],
-  start: () => Promise<Started<T>>,
+  start: (context: { postgresAllowed: boolean }) => Promise<Started<T>>,
 ): { readonly value: T } {
   let started: Started<T> | null = null;
   let reason: string | null = null;
@@ -67,7 +68,7 @@ function useStarted<T>(
       reason = partSkipReason(missing);
       return;
     }
-    started = await start();
+    started = await start({ postgresAllowed: postgresAllowedIn(testInfo.project.name) });
     if (started.missing.length > 0) reason = featureSkipReason(started.missing);
   });
 
@@ -97,8 +98,8 @@ function useStarted<T>(
 }
 
 function useLoginBoard(options: LoginBoardOptions): { readonly value: LoginBoard } {
-  return useStarted(['api', 'web'], async () => {
-    const board = await startLoginBoard({ ...options, web: true, features: [] });
+  return useStarted(['api', 'web'], async ({ postgresAllowed }) => {
+    const board = await startLoginBoard({ ...options, web: true, features: [], postgresAllowed });
     return { value: board, missing: board.missingFeatures, stop: () => board.stop() };
   });
 }
@@ -265,17 +266,17 @@ test.describe('sign-in page', () => {
     await page.getByRole('button', { name: HANDOFF_BUTTON }).click();
     await expect(page.getByText(CODE_TEXT)).toBeVisible();
     await page.clock.pauseAt(new Date(Date.now() + 10_000));
-    await page.waitForTimeout(500);
+    await polls.settled();
 
     const beforeFocus = polls.count();
     await page.evaluate(() => window.dispatchEvent(new Event('focus')));
     await expect.poll(() => polls.count()).toBeGreaterThan(beforeFocus);
 
-    await page.waitForTimeout(500);
+    await polls.settled();
     const beforeTick = polls.count();
     await page.clock.runFor(2000);
     await expect.poll(() => polls.count()).toBe(beforeTick + 1);
-    await page.waitForTimeout(500);
+    await polls.settled();
     expect(polls.count()).toBe(beforeTick + 1);
   });
 
@@ -376,7 +377,7 @@ test.describe('sign-in page', () => {
     const board = harness.value;
     const labels = await authLabels(board);
     await context.addCookies([
-      { name: 'board-session', value: `abs_${'x'.repeat(43)}`, url: board.url },
+      { name: sessionCookieName('http'), value: `abs_${'x'.repeat(43)}`, url: board.url },
     ]);
     await page.goto(board.url);
 
@@ -388,65 +389,45 @@ test.describe('sign-in page', () => {
 });
 
 test.describe('another server', () => {
-  const pair = useStarted(['api', 'web'], async () => {
-    const [portA, portB] = [await freePort(), await freePort()];
-    const a = await startLoginBoard({
-      port: portA,
+  const pair = useStarted(['api', 'web'], async ({ postgresAllowed }) => {
+    const boards = await startLoginBoardPair({
       web: true,
       oidc: true,
       features: ['client-tokens'],
+      postgresAllowed,
     });
-    let b: LoginBoard;
-    try {
-      b = await startLoginBoard({
-        port: portB,
-        web: true,
-        oidc: true,
-        features: ['client-tokens'],
-        allowedOrigins: [originOf('login', portA)],
-      });
-    } catch (error) {
-      await a.stop();
-      throw error;
-    }
     return {
-      value: { a, b },
-      missing: [...a.missingFeatures, ...b.missingFeatures],
-      stop: async () => {
-        await Promise.all([a.stop(), b.stop()]);
-      },
+      value: { a: boards.a, b: boards.b },
+      missing: [...boards.a.missingFeatures, ...boards.b.missingFeatures],
+      stop: () => boards.stop(),
     };
   });
 
-  test('[web-103] the other server offers only the hand-off, which opens its approval page in a new page', async ({
+  test('[web-103] every sign-in method on the other server opens its approval page in a new page', async ({
     page,
     context,
   }) => {
     const { a, b } = pair.value;
     const labels = await authLabels(b);
     await page.goto(a.url);
-    await addServerInClient(page, b.url, 'Server B');
+    await addServer(page, { name: 'Server B', url: b.url });
     await selectServerInClient(page, 'Server B');
 
-    await expect(page.getByRole('button', { name: HANDOFF_BUTTON })).toBeVisible();
     const methods = await signInMethods(b);
     expect(methods).toContain('oidc');
-    for (const method of methods.filter((name) => name !== 'handoff')) {
-      await expect(
-        page.getByRole('button', { name: methodButtonName(method, labels) }),
-        `the ${method} button`,
-      ).toHaveCount(0);
+    for (const method of methods) {
+      const button = page.getByRole('button', { name: methodButtonName(method, labels) });
+      await expect(button, `the ${method} button`).toBeVisible();
+      const popup = context.waitForEvent('page');
+      await button.click();
+      const approval = await popup;
+      await approval.waitForLoadState();
+      const url = new URL(approval.url());
+      expect(url.origin, `the ${method} approval origin`).toBe(b.origin);
+      expect(url.pathname, `the ${method} approval path`).toBe(APPROVAL_PATH);
+      expect(url.searchParams.get('code')).toMatch(HANDOFF_CODE_PATTERN);
+      await approval.close();
     }
-
-    const popup = context.waitForEvent('page');
-    await page.getByRole('button', { name: HANDOFF_BUTTON }).click();
-    const approval = await popup;
-    await approval.waitForLoadState();
-    const url = new URL(approval.url());
-    expect(url.origin).toBe(b.origin);
-    expect(url.pathname).toBe(APPROVAL_PATH);
-    expect(url.searchParams.get('code')).toMatch(HANDOFF_CODE_PATTERN);
-    await approval.close();
     await expect(page.getByRole('button', { name: HANDOFF_BUTTON })).toBeVisible();
   });
 
@@ -459,7 +440,7 @@ test.describe('another server', () => {
     const approver = await signedInUser(b);
     const sent = bearerTokensSentTo(page, b.origin);
     await page.goto(a.url);
-    await addServerInClient(page, b.url, 'Server B');
+    await addServer(page, { name: 'Server B', url: b.url });
     await selectServerInClient(page, 'Server B');
     await page.evaluate(() => {
       (window as unknown as { e2eMarker: boolean }).e2eMarker = true;
@@ -494,6 +475,6 @@ test.describe('another server', () => {
     await expect.poll(() => sent.tokens()).toContain(token);
 
     const cookies = await context.cookies(b.url);
-    expect(cookies.map((cookie) => cookie.name)).not.toContain('board-session');
+    expect(cookies.map((cookie) => cookie.name)).not.toContain(sessionCookieName('http'));
   });
 });
