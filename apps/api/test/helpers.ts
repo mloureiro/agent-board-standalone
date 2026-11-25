@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { emptyCredentialStore, type CredentialStore } from '../src/auth/index.js';
 import { HANDLER_SETS } from '../src/handlers/index.js';
 import type { HandlerSet } from '../src/http/handler.js';
+import { createMemoryEvents } from '../src/modules/events/index.js';
 import { stubDatabase } from '../src/modules/database/index.js';
 import { loadConfig, type Env } from '../src/modules/index.js';
 import { createServer } from '../src/server.js';
@@ -60,6 +61,7 @@ export const boot = async (
       }),
       credentials: options.credentials ?? emptyCredentialStore,
       streams,
+      events: createMemoryEvents(),
     },
     { handlerSets: [...HANDLER_SETS, ...(options.handlers ?? [testHandlers])] },
   );

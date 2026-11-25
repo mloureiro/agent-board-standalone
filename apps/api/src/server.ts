@@ -79,6 +79,7 @@ export const createServer = async (
     services.streams.endAll();
   });
   app.addHook('onClose', async () => {
+    await services.events.close();
     await services.database.close();
   });
   return app;

@@ -5,6 +5,7 @@ import type { ServerServices } from './context.js';
 import { ANY_HOST, effectiveHost } from './modules/listen/index.js';
 import { DatabaseRefusal, openDatabase, type OpenDatabase } from './modules/database/index.js';
 import { ConfigError, loadConfig, type Env } from './modules/index.js';
+import { openEvents } from './modules/events/index.js';
 import { createServer } from './server.js';
 import { createOpenStreams } from './streams.js';
 
@@ -38,6 +39,7 @@ export const startServer = async (env: Env, options: StartOptions = {}): Promise
         config.signIn.mode === 'login' ? config.signIn.sessionDays : DEFAULT_SESSION_DAYS,
     }),
     streams: createOpenStreams(),
+    events: await openEvents(config),
   };
   const app = await createServer(config, services, { clock });
   const host = effectiveHost(config.listen, config.signIn.mode === 'login');
