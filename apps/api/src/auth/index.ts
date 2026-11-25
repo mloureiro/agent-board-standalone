@@ -42,7 +42,7 @@ export {
   readFlow,
   startFlow,
   takeFlow,
-  updateFlow,
+  approveFlow,
   verifierMatches,
   type StartedFlow,
 } from './flows.js';

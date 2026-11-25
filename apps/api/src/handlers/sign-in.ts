@@ -15,7 +15,7 @@ import {
   sessionCookie,
   startFlow,
   takeFlow,
-  updateFlow,
+  approveFlow,
   verifierMatches,
   type SessionDeps,
   type SessionMethod,
@@ -148,7 +148,7 @@ export const signInHandlers: HandlerSet = (context) => ({
             system.lookupSession(credential.hash),
           );
     if (stored === null) throw new ApiError('forbidden', 'sign in to approve this code');
-    const changed = await updateFlow(context, input.flow, principal.owner, {
+    const changed = await approveFlow(context, input.flow, principal.owner, {
       ...flow.data,
       method: stored.method,
     });

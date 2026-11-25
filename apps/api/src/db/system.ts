@@ -82,6 +82,7 @@ export interface SystemFunctions {
   getAuthFlow(id: string): Promise<AuthFlow | null>;
   getAuthFlowByCode(codeHash: string): Promise<AuthFlow | null>;
   updateAuthFlow(id: string, owner: string | null, data: Json): Promise<boolean>;
+  approveAuthFlow(id: string, owner: string, data: Json): Promise<boolean>;
   takeAuthFlow(id: string): Promise<AuthFlow | null>;
   takeAuthFlowByCode(codeHash: string): Promise<AuthFlow | null>;
   purgeExpired(now: Date): Promise<Purged>;
@@ -187,6 +188,13 @@ export const systemFunctions = (tx: ScopedDatabase): SystemFunctions => ({
     const rows = await rowsOf(
       tx,
       sql`select auth_flow_update(${id}, ${owner}, ${JSON.stringify(data)}::jsonb) as changed`,
+    );
+    return rows[0]?.changed === true;
+  },
+  approveAuthFlow: async (id, owner, data) => {
+    const rows = await rowsOf(
+      tx,
+      sql`select auth_flow_approve(${id}, ${owner}, ${JSON.stringify(data)}::jsonb) as changed`,
     );
     return rows[0]?.changed === true;
   },

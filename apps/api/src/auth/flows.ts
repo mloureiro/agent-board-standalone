@@ -93,10 +93,10 @@ export const takeFlow = async (
     kind,
   );
 
-export const updateFlow = (
+export const approveFlow = (
   context: ServerContext,
   id: string,
-  owner: string | null,
+  owner: string,
   data: Json,
 ): Promise<boolean> =>
-  context.services.database.withSystem((system) => system.updateAuthFlow(id, owner, data));
+  context.services.database.withSystem((system) => system.approveAuthFlow(id, owner, data));
