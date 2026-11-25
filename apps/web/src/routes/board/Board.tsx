@@ -170,7 +170,9 @@ export function Board(props: {
       </BoardDnd>
       <ProposalStartDialog
         proposal={
-          pending === null ? null : { title: pending.card.title, text: pending.prompt.text }
+          pending === null
+            ? null
+            : { id: pending.card.task.id, title: pending.card.title, text: pending.prompt.text }
         }
         onClose={() => setPending(null)}
         onStart={(text) => void start(text)}

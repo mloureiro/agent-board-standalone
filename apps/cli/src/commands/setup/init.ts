@@ -3,8 +3,12 @@ import path from 'node:path';
 
 import type { Command } from 'commander';
 
-import { CliError, UsageError } from '../../errors.js';
+import { formatResult, hasFailure, runChecks, summary } from '../../doctor/index.js';
+import { CliError, EXIT, ReportedFailure, UsageError } from '../../errors.js';
+import type { Prompter } from '../../input/prompter.js';
 import {
+  CREDENTIALS_COMMAND_ENV,
+  loadCredentials,
   validateDataKey,
   validateToken,
   DATA_KEY_KEY,
@@ -42,9 +46,9 @@ import { assertCompatible } from '../../transport/compatibility.js';
 import type { Context } from '../context.js';
 
 export interface InitOptions {
-  readonly url: string;
-  readonly tokenFile: string;
-  readonly dataKeyFile: string;
+  readonly url?: string;
+  readonly tokenFile?: string;
+  readonly dataKeyFile?: string;
   readonly force?: boolean;
   readonly machine?: string;
   readonly keychain?: boolean;
@@ -135,15 +139,76 @@ function refuseExisting(ctx: Context, options: InitOptions): void {
   }
 }
 
+async function answerFor(
+  ctx: Context,
+  given: string | undefined,
+  flag: string,
+  ask: (prompts: Prompter) => Promise<string | null>,
+): Promise<string> {
+  if (given !== undefined) return given;
+  const { prompts } = ctx.rt;
+  if (prompts === null)
+    throw new UsageError(`${flag} is required (there is no terminal to ask on)`);
+  const answer = await ask(prompts);
+  if (answer === null || answer.trim() === '') throw new CliError('cancelled');
+  return answer.trim();
+}
+
+function usesCredentialsCommand(ctx: Context): boolean {
+  const command = ctx.rt.env[CREDENTIALS_COMMAND_ENV];
+  return command !== undefined && command !== '';
+}
+
+async function secretsFor(
+  ctx: Context,
+  options: InitOptions,
+): Promise<{ token: string; dataKey: string }> {
+  if (usesCredentialsCommand(ctx)) {
+    for (const [value, flag] of [
+      [options.tokenFile, '--token-file'],
+      [options.dataKeyFile, '--data-key-file'],
+    ] as const) {
+      if (value !== undefined) {
+        throw new UsageError(
+          `${flag} cannot be used while ${CREDENTIALS_COMMAND_ENV} is set: the command supplies the credentials`,
+        );
+      }
+    }
+    if (options.keychain === true) {
+      throw new UsageError(`--keychain cannot be used while ${CREDENTIALS_COMMAND_ENV} is set`);
+    }
+    const loaded = await loadCredentials(ctx.rt, ctx.dirs);
+    return { token: loaded.token, dataKey: loaded.dataKey };
+  }
+  const token =
+    options.tokenFile === undefined
+      ? await answerFor(ctx, undefined, '--token-file', (prompts) =>
+          prompts.secret('Machine token (starts with abm_)'),
+        )
+      : readSecretFromFile(options.tokenFile, 'token');
+  const dataKey =
+    options.dataKeyFile === undefined
+      ? await answerFor(ctx, undefined, '--data-key-file', (prompts) =>
+          prompts.secret('Data key (starts with abk1_)'),
+        )
+      : readSecretFromFile(options.dataKeyFile, 'data key');
+  return { token: validateToken(token), dataKey: validateDataKey(dataKey) };
+}
+
 export async function runInit(ctx: Context, options: InitOptions): Promise<void> {
   if (ctx.inRun) throw new CliError('`board init` cannot run inside a board run');
-  const url = normalizeServerUrl(options.url);
+  const url = normalizeServerUrl(
+    await answerFor(ctx, options.url, '--url', (prompts) =>
+      prompts.text('Board URL', 'https://board.example.com'),
+    ),
+  );
   refuseExisting(ctx, options);
-  const token = validateToken(readSecretFromFile(options.tokenFile, 'token'));
-  const dataKey = validateDataKey(readSecretFromFile(options.dataKeyFile, 'data key'));
   if (options.keychain === true && ctx.rt.platform !== 'darwin') {
     throw new UsageError('--keychain is only available on macOS');
   }
+  const secrets = await secretsFor(ctx, options);
+  const { token, dataKey } = secrets;
+  const external = usesCredentialsCommand(ctx);
 
   const signer = await bindSigningKey(ctx, url, token);
   const info = await handshake(machineCaller(httpDeps(ctx.rt, url), token, signer), dataKey);
@@ -169,7 +234,7 @@ export async function runInit(ctx: Context, options: InitOptions): Promise<void>
   if (options.keychain === true) {
     await writeKeychain(ctx.rt, dirs.profile, 'token', token);
     await writeKeychain(ctx.rt, dirs.profile, 'data-key', dataKey);
-  } else {
+  } else if (!external) {
     writeSecretFile(
       path.join(dirs.config, ENV_FILE),
       renderEnvFile({ [TOKEN_KEY]: token, [DATA_KEY_KEY]: dataKey }),
@@ -198,15 +263,19 @@ export async function runInit(ctx: Context, options: InitOptions): Promise<void>
     const report = await convertLegacyDirectories(opened, dirs.config);
     if (report !== null) reportLegacy(report, ctx.out);
   }
+  const results = await runChecks(ctx);
+  for (const result of results) ctx.out(formatResult(result));
+  ctx.out(summary(results));
+  if (hasFailure(results)) throw new ReportedFailure(EXIT.failure);
 }
 
 export function registerInit(program: Command, withContext: (command: Command) => Context): void {
   program
     .command('init')
     .description('Connect this host to a board and write the profile files')
-    .requiredOption('--url <url>', 'the board URL (https, or http for localhost)')
-    .requiredOption('--token-file <path>', 'file holding the machine token (mode 600 or 400)')
-    .requiredOption('--data-key-file <path>', 'file holding the data key (mode 600 or 400)')
+    .option('--url <url>', 'the board URL (https, or http for localhost); asked for when missing')
+    .option('--token-file <path>', 'file holding the machine token (mode 600 or 400)')
+    .option('--data-key-file <path>', 'file holding the data key (mode 600 or 400)')
     .option('--machine <name>', 'check the machine name the board reports for the token')
     .option('--force', 'replace an existing setup, keeping a backup of each file')
     .option('--keychain', 'keep the token and data key in the macOS Keychain')

@@ -295,7 +295,7 @@ describe('board init', () => {
 
   it('keeps credentials in the Keychain with --keychain on macOS', async () => {
     const server = await board();
-    const test = runtime({ platform: 'darwin', exec: () => ({ code: 0, stdout: '' }) });
+    const test = runtime({ platform: 'darwin', exec: keychainExec(server) });
     expect(await runCli(initArgs(server.url, secrets(test, server), ['--keychain']), test.rt)).toBe(
       0,
     );
@@ -303,12 +303,12 @@ describe('board init', () => {
     expect(readFileSync(test.path('config', 'config.yaml'), 'utf8')).toContain(
       'credentials: keychain',
     );
-    expect(test.execCalls).toHaveLength(2);
+    expect(test.execCalls.filter((call) => call.args[0] === '-i')).toHaveLength(2);
   });
 
   it('switches the credential store on --force and keeps the rest of config.yaml', async () => {
     const server = await board();
-    const test = runtime({ platform: 'darwin', exec: () => ({ code: 0, stdout: '' }) });
+    const test = runtime({ platform: 'darwin', exec: keychainExec(server) });
     const files = secrets(test, server);
     expect(await runCli(initArgs(server.url, files), test.rt)).toBe(0);
     const configFile = test.path('config', 'config.yaml');
@@ -360,3 +360,10 @@ describe('profiles', () => {
     expect(existsSync(test.path('xdg-state'))).toBe(false);
   });
 });
+
+function keychainExec(server: FakeBoard) {
+  return (_file: string, args: readonly string[]) => {
+    if (args[0] !== 'find-generic-password') return { code: 0, stdout: '' };
+    return { code: 0, stdout: `${args.includes('token') ? TEST_TOKEN : server.dataKey}\n` };
+  };
+}

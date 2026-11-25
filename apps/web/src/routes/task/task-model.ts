@@ -1,7 +1,14 @@
 import type { PrState, UiTask, UiTaskDetail, UiThreadNote } from '@agent-board/contract';
 import { bindings, type Keys } from '@agent-board/sealing';
 
-import { attempt, openPrompt, parseLabels, UNREADABLE_TITLE } from '../board/card-model.js';
+import {
+  attempt,
+  openPrompt,
+  parseLabels,
+  UNREADABLE_TITLE,
+  type InputShape,
+  type OpenedPrompt,
+} from '../board/card-model.js';
 
 export interface TaskPr {
   readonly id: string;
@@ -21,6 +28,7 @@ export interface ThreadEntry {
   readonly body: string | null;
   readonly questions: string | null;
   readonly answers: string | null;
+  readonly suggestion: string | null;
 }
 
 export interface RelatedTask {
@@ -34,6 +42,9 @@ export interface TaskView {
   readonly icon: string | null;
   readonly labels: readonly string[];
   readonly prompt: string | null;
+  readonly promptShape: InputShape | null;
+  readonly parentTask: UiTask | null;
+  readonly parentPrompt: OpenedPrompt | null;
   readonly legacyDirectory: string | null;
   readonly prs: readonly TaskPr[];
   readonly watches: readonly TaskWatch[];
@@ -116,16 +127,17 @@ async function relatedOf(keys: Keys, task: UiTask): Promise<RelatedTask> {
 
 async function entryOf(keys: Keys, taskId: string, note: UiThreadNote): Promise<ThreadEntry> {
   if (note.author === 'server') {
-    return { note, body: note.body, questions: null, answers: null };
+    return { note, body: note.body, questions: null, answers: null, suggestion: null };
   }
-  const binding = (field: 'note.body' | 'note.questions' | 'note.answers') =>
+  const binding = (field: 'note.body' | 'note.questions' | 'note.answers' | 'note.suggestion') =>
     bindings.note({ field, taskId, author: note.author, kind: note.kind });
-  const [body, questions, answers] = await Promise.all([
+  const [body, questions, answers, suggestion] = await Promise.all([
     attempt(keys, binding('note.body'), note.body),
     attempt(keys, binding('note.questions'), note.questions),
     attempt(keys, binding('note.answers'), note.answers),
+    attempt(keys, binding('note.suggestion'), note.suggestion),
   ]);
-  return { note, body, questions, answers };
+  return { note, body, questions, answers, suggestion };
 }
 
 export async function decryptTask(keys: Keys, detail: UiTaskDetail): Promise<TaskView> {
@@ -141,6 +153,7 @@ export async function decryptTask(keys: Keys, detail: UiTaskDetail): Promise<Tas
     thread,
     followUps,
     parent,
+    parentPrompt,
   ] = await Promise.all([
     attempt(keys, bindings.title({ task: task.id }), task.title),
     attempt(keys, bindings.icon({ task: task.id }), task.icon),
@@ -152,6 +165,7 @@ export async function decryptTask(keys: Keys, detail: UiTaskDetail): Promise<Tas
     Promise.all(detail.thread.map((note) => entryOf(keys, task.id, note))),
     Promise.all(detail.followUps.map((followUp) => relatedOf(keys, followUp))),
     detail.parent === null ? Promise.resolve(null) : relatedOf(keys, detail.parent),
+    detail.parent === null ? Promise.resolve(null) : openPrompt(keys, detail.parent),
   ]);
 
   const alerts: string[] = [];
@@ -197,6 +211,9 @@ export async function decryptTask(keys: Keys, detail: UiTaskDetail): Promise<Tas
     icon: icon === null || icon === '' ? null : icon,
     labels: parseLabels(labels),
     prompt: prompt?.text ?? null,
+    promptShape: prompt?.shape ?? null,
+    parentTask: detail.parent,
+    parentPrompt,
     legacyDirectory,
     prs,
     watches,

@@ -4,6 +4,7 @@ export interface ServerVersion {
   readonly server: ServerSide;
   readonly session: SessionState;
   readonly requestSignature: boolean;
+  readonly commit: string | null;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -32,5 +33,6 @@ export const parseServerVersion = (document: unknown): ServerVersion | null => {
     },
     session: state,
     requestSignature: isRecord(modules) && modules.requestSignature === true,
+    commit: typeof server.commit === 'string' && server.commit !== '' ? server.commit : null,
   };
 };

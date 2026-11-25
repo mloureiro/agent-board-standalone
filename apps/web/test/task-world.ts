@@ -1,14 +1,29 @@
 import {
+  answerClientTaskRoute,
+  applyPolishClientTaskRoute,
+  catalogsClientMachinesRoute,
   clientTranscriptEventsRoute,
   clientTranscriptOutputRoute,
   clientTranscriptRunsRoute,
   configureClientTaskRoute,
+  dismissQuestionClientTaskRoute,
+  editClientTaskRoute,
+  forkClientTaskRoute,
+  getClientLinksRoute,
   getClientTaskRoute,
   listClientDirectoriesRoute,
   removePrClientTaskRoute,
+  replyClientTaskRoute,
+  rerunClientTaskRoute,
+  sendClientTaskRoute,
+  setClosedClientTaskRoute,
+  setNotBeforeClientTaskRoute,
   setPriorityClientTaskRoute,
   setProjectClientTaskRoute,
+  stopClientTaskRoute,
   stopWatchClientTaskRoute,
+  takeBackClientTaskRoute,
+  wakeNowClientTaskRoute,
   type NoteKind,
   type UiTaskListItem,
 } from '@agent-board/contract';
@@ -31,6 +46,7 @@ export interface SeedNote {
   readonly by?: string | null;
   readonly questions?: unknown;
   readonly answers?: unknown;
+  readonly suggestion?: string;
   readonly pending?: boolean;
   readonly queued?: boolean;
   readonly deliveredAt?: string;
@@ -55,6 +71,27 @@ interface StoredEvent {
   readonly outputSize: number | null;
 }
 
+export interface Command {
+  readonly path: string;
+  readonly body: Record<string, unknown>;
+}
+
+const COMMANDS: readonly string[] = [
+  answerClientTaskRoute.path,
+  applyPolishClientTaskRoute.path,
+  dismissQuestionClientTaskRoute.path,
+  editClientTaskRoute.path,
+  forkClientTaskRoute.path,
+  replyClientTaskRoute.path,
+  rerunClientTaskRoute.path,
+  sendClientTaskRoute.path,
+  setClosedClientTaskRoute.path,
+  setNotBeforeClientTaskRoute.path,
+  stopClientTaskRoute.path,
+  takeBackClientTaskRoute.path,
+  wakeNowClientTaskRoute.path,
+];
+
 const taskOnly = (task: UiTaskListItem) =>
   Object.fromEntries(
     Object.entries(task).filter(([key]) => key !== 'lastNote' && key !== 'context'),
@@ -70,6 +107,21 @@ export class TaskWorld extends BoardWorld {
   readonly projectChanges: Record<string, unknown>[] = [];
   readonly prRemovals: Record<string, unknown>[] = [];
   readonly watchStopped: Record<string, unknown>[] = [];
+  readonly commands: Command[] = [];
+  readonly parentOf = new Map<string, string>();
+  linkRules: string | null = null;
+  catalogs: { name: string; catalog: string }[] = [];
+  failCommand: string | null = null;
+
+  private parentTask(id: string): Record<string, unknown> | null {
+    const parentId = this.parentOf.get(id);
+    const parent = this.tasks.find((candidate) => candidate.id === parentId);
+    return parent === undefined ? null : taskOnly(parent);
+  }
+
+  commandsTo(route: { path: string }): Record<string, unknown>[] {
+    return this.commands.filter((command) => command.path === route.path).map((c) => c.body);
+  }
 
   task(id: string): UiTaskListItem {
     const found = this.tasks.find((task) => task.id === id);
@@ -103,6 +155,15 @@ export class TaskWorld extends BoardWorld {
         ...(note.answers === undefined || answersBinding === null
           ? {}
           : { answers: await seal(keys, answersBinding, JSON.stringify(note.answers)) }),
+        ...(note.suggestion === undefined
+          ? {}
+          : {
+              suggestion: await seal(
+                keys,
+                bindings.note({ field: 'note.suggestion', taskId, author: 'agent', kind }),
+                note.suggestion,
+              ),
+            }),
         ...(note.pending === undefined ? {} : { pending: note.pending }),
         ...(note.queued === undefined ? {} : { queued: note.queued }),
         ...(note.deliveredAt === undefined ? {} : { deliveredAt: note.deliveredAt }),
@@ -169,7 +230,36 @@ export class TaskWorld extends BoardWorld {
         task: taskOnly(task),
         thread: this.threads.get(task.id) ?? [],
         followUps: [],
-        parent: null,
+        parent: this.parentTask(task.id),
+      });
+    }
+    if (method === 'GET' && path === getClientLinksRoute.path) {
+      const keys = await OWNER_KEYS;
+      return json(200, {
+        document:
+          this.linkRules === null
+            ? null
+            : {
+                document: await seal(keys, bindings.links(1), this.linkRules),
+                version: 1,
+                updatedAt: isoAt(-hours(1)),
+              },
+      });
+    }
+    if (method === 'GET' && path === catalogsClientMachinesRoute.path) {
+      const keys = await OWNER_KEYS;
+      return json(200, {
+        catalogs: await Promise.all(
+          this.catalogs.map(async (entry) => ({
+            name: entry.name,
+            catalog: await seal(
+              keys,
+              bindings.machineDocument('machine.catalog', entry.name),
+              entry.catalog,
+            ),
+            catalogUpdatedAt: isoAt(-hours(1)),
+          })),
+        ),
       });
     }
     if (method === 'GET' && path === listClientDirectoriesRoute.path) {
@@ -218,6 +308,34 @@ export class TaskWorld extends BoardWorld {
         (event) => event.seq === Number(query.get('seq')),
       );
       return json(200, { output: found?.output ?? null });
+    }
+    if (method === 'POST' && COMMANDS.includes(path)) {
+      this.commands.push({ path, body: body ?? {} });
+      if (this.failCommand === path) {
+        return json(409, { error: { code: 'conflict', message: 'The task changed.' } });
+      }
+      const task = this.tasks.find((candidate) => candidate.id === body?.id);
+      if (path === forkClientTaskRoute.path) {
+        const parent = this.tasks.find((candidate) => candidate.id === body?.parentId);
+        return json(200, taskOnly({ ...(parent ?? this.tasks[0]!), id: String(body?.id) }));
+      }
+      if (task === undefined)
+        return json(404, { error: { code: 'not-found', message: 'no task' } });
+      if (path === setClosedClientTaskRoute.path) task.closed = body?.closed === true;
+      if (path === rerunClientTaskRoute.path) task.status = 'todo';
+      if (path === replyClientTaskRoute.path && body?.resume === true) task.status = 'todo';
+      if (path === stopClientTaskRoute.path) task.status = 'needs-me';
+      if (path === takeBackClientTaskRoute.path) task.status = 'needs-me';
+      if (path === setNotBeforeClientTaskRoute.path) task.notBefore = null;
+      if (path === wakeNowClientTaskRoute.path) task.status = 'todo';
+      if (path === answerClientTaskRoute.path || path === dismissQuestionClientTaskRoute.path) {
+        task.openQuestion = false;
+      }
+      if (path === editClientTaskRoute.path) {
+        task.title = String(body?.title);
+        task.input = String(body?.input);
+      }
+      return json(200, taskOnly(task));
     }
     if (method === 'POST') {
       const task = this.tasks.find((candidate) => candidate.id === body?.id);

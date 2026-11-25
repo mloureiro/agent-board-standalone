@@ -1,4 +1,4 @@
-import { Button, Modal, Stack, Textarea } from '@mantine/core';
+import { Button } from '@mantine/core';
 import {
   createContext,
   useCallback,
@@ -8,6 +8,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+
+import { NewTaskDialog } from '../new-task/index.js';
 
 interface NewTaskValue {
   readonly opened: boolean;
@@ -48,20 +50,8 @@ export function NewTaskProvider({ children }: { readonly children: ReactNode }):
   return (
     <NewTaskContext.Provider value={value}>
       {children}
-      <NewTaskDialog />
+      <NewTaskDialog opened={opened} onClose={close} />
     </NewTaskContext.Provider>
-  );
-}
-
-function NewTaskDialog(): ReactNode {
-  const { opened, close } = useNewTask();
-  return (
-    <Modal opened={opened} onClose={close} title="New task" centered>
-      <Stack>
-        <Textarea label="Prompt" autosize minRows={4} data-autofocus />
-        <Button disabled>Create task</Button>
-      </Stack>
-    </Modal>
   );
 }
 

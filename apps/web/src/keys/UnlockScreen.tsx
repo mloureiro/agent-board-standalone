@@ -42,7 +42,10 @@ function PassphraseForm(props: {
   const [passphrase, setPassphrase] = useState('');
   const submit = (event: FormEvent): void => {
     event.preventDefault();
-    void run(async (client) => adopt(await unlockWithPassphrase(client, owner, passphrase)));
+    void run(async (client) => {
+      const unlocked = await unlockWithPassphrase(client, owner, passphrase);
+      await adopt(unlocked.keys, unlocked.dataKey);
+    });
   };
   return (
     <form onSubmit={submit} aria-label="Unlock">

@@ -1,9 +1,15 @@
-import { Badge, Box, Group, Paper, Stack, Text } from '@mantine/core';
+import { Badge, Box, Button, Group, Paper, Stack, Text } from '@mantine/core';
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import { Markdown } from '../../components/index.js';
 import { agoText, parseTime } from '../board/format.js';
+import type { PolishRewrite, PolishState } from './action-model.js';
 import { describeValue, type ThreadEntry } from './task-model.js';
+
+export interface PolishSupport {
+  stateOf(entry: ThreadEntry): PolishState;
+  apply(entry: ThreadEntry, rewrite: PolishRewrite): void;
+}
 
 const AUTHOR_LABELS = { user: 'You', agent: 'Agent', system: 'System', server: 'Server' } as const;
 const KIND_LABELS = {
@@ -63,6 +69,25 @@ function Questions(props: { readonly source: string }): ReactNode {
   );
 }
 
+function answersText(source: string): string {
+  const parsed = parseJson(source);
+  if (!Array.isArray(parsed)) return describeValue(parsed);
+  return parsed
+    .map((entry: unknown, index) => {
+      const body =
+        entry !== null && typeof entry === 'object' ? (entry as Record<string, unknown>) : null;
+      if (body === null || !Array.isArray(body.picks)) return describeValue(entry);
+      const given = [
+        body.picks.map(describeValue).join(', '),
+        typeof body.other === 'string' ? body.other : '',
+      ]
+        .filter((part) => part !== '')
+        .join('; ');
+      return `${index + 1}. ${given === '' ? '(none)' : given}`;
+    })
+    .join('\n');
+}
+
 function deliveryLabel(entry: ThreadEntry): string | null {
   const { note } = entry;
   if (note.author !== 'user') return null;
@@ -72,8 +97,43 @@ function deliveryLabel(entry: ThreadEntry): string | null {
   return null;
 }
 
-function NoteView(props: { readonly entry: ThreadEntry; readonly now: number }): ReactNode {
-  const { entry, now } = props;
+function PolishBody(props: {
+  readonly entry: ThreadEntry;
+  readonly polish: PolishSupport;
+}): ReactNode {
+  const { entry, polish } = props;
+  const state = polish.stateOf(entry);
+  if (!state.usable) {
+    return (
+      <Stack gap={4}>
+        <Markdown>{entry.body ?? ''}</Markdown>
+        <Text size="xs" c="dimmed">
+          {state.reason}
+        </Text>
+      </Stack>
+    );
+  }
+  return (
+    <Stack gap="xs">
+      <Text size="sm" fw={600}>
+        {state.rewrite.title}
+      </Text>
+      <Markdown>{state.rewrite.prompt}</Markdown>
+      <Group>
+        <Button size="xs" onClick={() => polish.apply(entry, state.rewrite)}>
+          Apply polished prompt
+        </Button>
+      </Group>
+    </Stack>
+  );
+}
+
+function NoteView(props: {
+  readonly entry: ThreadEntry;
+  readonly now: number;
+  readonly polish: PolishSupport | null;
+}): ReactNode {
+  const { entry, now, polish } = props;
   const { note } = entry;
   const kind = KIND_LABELS[note.kind];
   const delivery = deliveryLabel(entry);
@@ -117,13 +177,15 @@ function NoteView(props: { readonly entry: ThreadEntry; readonly now: number }):
         <Text size="sm" c="dimmed">
           {entry.body}
         </Text>
+      ) : note.kind === 'polish' && polish !== null ? (
+        <PolishBody entry={entry} polish={polish} />
       ) : (
         <Markdown>{entry.body}</Markdown>
       )}
       {entry.questions === null ? null : <Questions source={entry.questions} />}
       {entry.answers === null ? null : (
         <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>
-          {describeValue(parseJson(entry.answers))}
+          {answersText(entry.answers)}
         </Text>
       )}
     </Paper>
@@ -133,8 +195,9 @@ function NoteView(props: { readonly entry: ThreadEntry; readonly now: number }):
 export function Thread(props: {
   readonly entries: readonly ThreadEntry[];
   readonly now: number;
+  readonly polish?: PolishSupport | null;
 }): ReactNode {
-  const { entries, now } = props;
+  const { entries, now, polish = null } = props;
   const end = useRef<HTMLDivElement>(null);
   const seen = useRef(entries.length);
   useEffect(() => {
@@ -150,7 +213,7 @@ export function Thread(props: {
           </Text>
         ) : null}
         {entries.map((entry) => (
-          <NoteView key={entry.note.id} entry={entry} now={now} />
+          <NoteView key={entry.note.id} entry={entry} now={now} polish={polish} />
         ))}
         <div ref={end} />
       </Stack>

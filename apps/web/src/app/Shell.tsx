@@ -11,6 +11,7 @@ import {
   ErrorBoundaryPanel,
   NewTaskProvider,
   ServerStatePanel,
+  NeedsMeNotifier,
   Toasts,
   panelFor,
 } from '../components/index.js';
@@ -46,6 +47,7 @@ export function Shell(): ReactNode {
       <Box component="main" p="md">
         <Content />
       </Box>
+      <NeedsMeNotifier />
       <Toasts />
     </NewTaskProvider>
   );

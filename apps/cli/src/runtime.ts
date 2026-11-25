@@ -1,7 +1,10 @@
 import { execFile, spawn } from 'node:child_process';
 import { constants as osConstants } from 'node:os';
 import os from 'node:os';
+import { existsSync, realpathSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
+
+import { terminalPrompter, type Prompter } from './input/prompter.js';
 
 export interface ExecOptions {
   readonly stdin?: string;
@@ -42,6 +45,9 @@ export interface Runtime {
   readonly platform: NodeJS.Platform;
   readonly homedir: string;
   readonly hostname: string;
+  readonly uid: number;
+  readonly self: readonly string[];
+  readonly prompts: Prompter | null;
   exec(file: string, args: readonly string[], options: ExecOptions): Promise<ExecResult>;
 }
 
@@ -118,6 +124,12 @@ function interruptSignal(): AbortSignal {
   return controller.signal;
 }
 
+function selfCommand(): readonly string[] {
+  const script = process.argv[1];
+  if (script === undefined || !existsSync(script)) return [process.execPath];
+  return [process.execPath, realpathSync(script)];
+}
+
 export function systemRuntime(): Runtime {
   return {
     env: process.env,
@@ -140,6 +152,9 @@ export function systemRuntime(): Runtime {
     platform: process.platform,
     homedir: os.homedir(),
     hostname: os.hostname(),
+    uid: process.getuid?.() ?? 0,
+    self: selfCommand(),
+    prompts: process.stdin.isTTY && process.stderr.isTTY ? terminalPrompter() : null,
     exec: execFileText,
   };
 }

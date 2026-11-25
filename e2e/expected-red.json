@@ -2,17 +2,12 @@
   "files": {
     "blackbox/events-projects.test.ts": [
       "board events › [cli-023] board events streams the changes made on the board",
-      "board projects › [cli-039] a default project set on the host receives board schedule without --project",
       "board projects › [cli-039] board projects lists the server's projects",
+      "board projects › [cli-039] a default project set on the host receives board schedule without --project",
       "board projects › [cli-039] the host default project does not override the parent's project for an in-run board add"
     ],
     "blackbox/legacy-dirs.test.ts": "*",
     "blackbox/machine-lifecycle.test.ts": [
-      "board uninstall › [cli-052] deletes the installed binary copy and the units and keeps config and state",
-      "board uninstall › [cli-052] --include-optional removes config and state",
-      "board uninstall › [cli-052] refuses when a directory to remove resolves to $HOME",
-      "board uninstall › [cli-052] revokes the machine token on the server and reports it",
-      "board uninstall with the server stopped › [cli-052] still completes and reports the revocation failure",
       "self-update --server › [cli-059] moves the machine to the other server after checking owner, key id and token",
       "self-update --server › [cli-059] refuses a server whose owner differs and leaves the config unchanged",
       "self-update --server › [cli-059] refuses a server whose key id differs and leaves the config unchanged",
@@ -25,10 +20,6 @@
     ],
     "blackbox/matrix-refusal.test.ts": "*",
     "blackbox/migrate.test.ts": "*",
-    "blackbox/profiles.test.ts": [
-      "board init › [cli-046] refuses a token file with mode 644",
-      "machine name › [server-app-049] a token issued for another name enrols under the server’s name"
-    ],
     "blackbox/schedules.test.ts": [
       "[cli-036] board schedule › [cli-036] a key answers created, exists, rescheduled and requeued and always exits 0",
       "[api-077] an after schedule › [api-077] fires once when the upstream task moves from running to done",

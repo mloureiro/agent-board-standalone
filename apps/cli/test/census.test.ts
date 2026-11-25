@@ -33,6 +33,11 @@ const BUILT = [
   'CMD-24',
   'CMD-25',
   'CMD-26',
+  'CMD-27',
+  'CMD-28',
+  'CMD-29',
+  'CMD-30',
+  'CMD-31',
 ] as const;
 
 const DROPPED = ['CMD-38'] as const;
