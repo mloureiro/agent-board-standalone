@@ -1,0 +1,68 @@
+use agent_board_client_core::page_input::{
+    BODY_MAX_BYTES, HEADERS_MAX, InputError, TITLE_MAX_CHARS, fetch_input, link, notification,
+    tab_report,
+};
+
+#[test]
+fn client_app_002_notifications_cap_the_title_and_refuse_odd_task_ids() {
+    let long = "t".repeat(TITLE_MAX_CHARS + 50);
+    let accepted = notification("task_1-A", &format!("{long}\n")).unwrap();
+    assert_eq!(accepted.title.chars().count(), TITLE_MAX_CHARS);
+    assert!(!accepted.title.contains('\n'));
+    assert!(notification("4f0d6a1e-7c7a-4a52-9d6e-0a7b8c9d0e1f", "x").is_ok());
+    for bad in ["", "a b", "../x", "x\n", &"a".repeat(65), "é"] {
+        assert_eq!(notification(bad, "x"), Err(InputError::TaskId), "{bad:?}");
+    }
+}
+
+#[test]
+fn client_app_002_links_are_http_or_https_with_a_host_only() {
+    assert!(link("https://example.test/a?b=1").is_ok());
+    assert!(link("http://localhost:3000/").is_ok());
+    for bad in [
+        "javascript:alert(1)",
+        "file:///etc/passwd",
+        "data:text/html,x",
+        "mailto:a@b.test",
+        "about:blank",
+        "https://",
+        "not a url",
+        "https://example.test/\u{7}",
+        &format!("https://example.test/{}", "a".repeat(2100)),
+    ] {
+        assert_eq!(link(bad).map(|_| ()), Err(InputError::Link), "{bad:?}");
+    }
+}
+
+#[test]
+fn client_app_002_tab_reports_are_paths_with_a_capped_title() {
+    assert!(tab_report("/tasks/1?x=2", "Title").is_ok());
+    for bad in [
+        "tasks",
+        "//evil.test",
+        "/a\nb",
+        &format!("/{}", "a".repeat(2100)),
+    ] {
+        assert!(
+            matches!(tab_report(bad, "t"), Err(InputError::TabPath)),
+            "{bad:?}"
+        );
+    }
+    assert!(matches!(
+        tab_report("/", "bad\ntitle"),
+        Err(InputError::TabTitle)
+    ));
+    let capped = tab_report("/", &"é".repeat(300)).unwrap();
+    assert_eq!(capped.title.chars().count(), TITLE_MAX_CHARS);
+}
+
+#[test]
+fn client_app_049_fetch_inputs_are_bounded() {
+    assert!(fetch_input(HEADERS_MAX, Some("{}")).is_ok());
+    assert_eq!(
+        fetch_input(HEADERS_MAX + 1, None),
+        Err(InputError::TooManyHeaders)
+    );
+    let body = "x".repeat(BODY_MAX_BYTES + 1);
+    assert_eq!(fetch_input(0, Some(&body)), Err(InputError::BodyTooLarge));
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "page",
+  "description": "The bundled browser client in a tab or in the All servers window: the bridge commands only. Matched by webview label only.",
+  "webviews": ["tab-*", "all-servers"],
+  "permissions": [
+    "allow-server-fetch",
+    "allow-server-fetch-cancel",
+    "allow-handoff-finish",
+    "allow-pair",
+    "allow-sign-out",
+    "allow-notify",
+    "allow-open-link",
+    "allow-report-tab",
+    "allow-list-servers",
+    "allow-page-add-server",
+    "allow-page-remove-server",
+    "allow-rename-server"
+  ]
+}
