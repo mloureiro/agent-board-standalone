@@ -6,7 +6,7 @@ import { registerErrors } from './http/errors.js';
 import { registerGuards } from './http/guards.js';
 import type { HandlerSet, HandlerTable } from './http/handler.js';
 import { registerHeaders } from './http/headers.js';
-import { registerRoutes } from './http/routes.js';
+import { PUBLIC_BODY_LIMIT, registerRoutes } from './http/routes.js';
 import { MODULES, type ApiConfig } from './modules/registry.js';
 
 export interface ServerOptions {
@@ -39,7 +39,7 @@ export const createServer = async (
   services: ServerServices,
   options: ServerOptions = {},
 ): Promise<FastifyInstance> => {
-  const app = Fastify({ logger: false, trustProxy: false });
+  const app = Fastify({ logger: false, trustProxy: false, bodyLimit: PUBLIC_BODY_LIMIT });
   const context: ServerContext = {
     config,
     services,

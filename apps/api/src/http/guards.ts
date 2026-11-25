@@ -24,7 +24,8 @@ const contentTypeOf = (request: FastifyRequest): string =>
 
 export const registerGuards = (app: FastifyInstance, context: ServerContext): void => {
   app.addHook('onRequest', async (request) => {
-    if (SAFE_METHODS.has(request.method) || !request.url.startsWith('/api/')) return;
+    const path = request.routeOptions.url ?? request.url;
+    if (SAFE_METHODS.has(request.method) || !path.startsWith('/api/')) return;
     const form = request.routeOptions.config.route?.bodyType === 'form';
     const acceptable = form
       ? contentTypeOf(request) === FORM_CONTENT_TYPE

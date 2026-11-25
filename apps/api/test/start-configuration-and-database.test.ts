@@ -229,6 +229,28 @@ describe('API errors', () => {
     }
   });
 
+  it('[api-011] a percent-encoded API path still needs a JSON content type', async () => {
+    const { app } = await started(noLoginEnv());
+    const answer = await app.inject({
+      method: 'POST',
+      url: '/%61pi/auth/logout',
+      headers: { 'content-type': 'application/x-www-form-urlencoded', ...CONTRACT_HEADERS },
+      payload: '',
+    });
+    expect(answer.statusCode).toBe(415);
+  });
+
+  it('[api-012] a body to an unknown path is refused past the public body limit', async () => {
+    const { app } = await started(noLoginEnv());
+    const answer = await app.inject({
+      method: 'POST',
+      url: '/nowhere',
+      headers: JSON_HEADERS,
+      payload: ' '.repeat(128 * 1024),
+    });
+    expect(answer.statusCode).toBe(413);
+  });
+
   it('[api-011] a JSON content type with a charset passes and a GET needs none', async () => {
     const { app } = await started(noLoginEnv());
     const posted = await app.inject({

@@ -11,7 +11,7 @@ import { ApiError } from '../errors.js';
 import type { ApiConfig } from '../modules/registry.js';
 import type { HandlerTable } from './handler.js';
 
-const PUBLIC_BODY_LIMIT = 64 * 1024;
+export const PUBLIC_BODY_LIMIT = 64 * 1024;
 
 const bodyLimitOf = (route: AnyRoute): number =>
   route.bodyLimit ??
