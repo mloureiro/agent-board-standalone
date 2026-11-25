@@ -1,18 +1,26 @@
 import { randomUUID } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 
 import { bindings } from '@agent-board/sealing';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { unlockedKey } from '../src/fixtures/keys.js';
+import { apiEnv } from '../src/harness/api.js';
+import { createDatabase } from '../src/harness/database.js';
+import { missingParts, partPath } from '../src/harness/paths.js';
+import { freePort } from '../src/harness/ports.js';
+import { createTmp } from '../src/harness/tmp.js';
 import { killStubTree } from '../src/harness/run.js';
 import {
   accountCounts,
   exportCounts,
   existingMachine,
+  fixtureSkipReason,
+  loadFixture,
   openMigrated,
   outputOf,
   rowsOf,
+  runMigrate,
   skipVitest,
   waitFor,
   type MigratedBoard,
@@ -77,7 +85,7 @@ describe('migrating the source fixture', () => {
       expect(tables.has(table), table).toBe(true);
     }
     const kinds = new Set(rowsOf(source, 'document').map(({ row }) => row.kind));
-    expect([...kinds].sort()).toEqual(['agents', 'links', 'settings', 'titles']);
+    expect([...kinds].sort()).toEqual(['agents', 'links', 'titles']);
     expect(rowsOf(source, 'task').some(({ row }) => row.watches !== null)).toBe(true);
     expect(rowsOf(source, 'note').some(({ row }) => row.questions !== null)).toBe(true);
     expect(rowsOf(source, 'machine').every(({ row }) => /^[0-9a-f]{64}$/.test(row.tokenHash))).toBe(
@@ -170,6 +178,7 @@ describe('a worker after the migration', () => {
           ),
           when: 'now',
           priority: 'urgent',
+          autoDone: true,
           place: { machine: machine.name, directoryId },
         });
 
@@ -189,6 +198,79 @@ describe('a worker after the migration', () => {
       } finally {
         killStubTree(machine.stubLog);
         await live.stop();
+      }
+    },
+    RUN_TIMEOUT_MS,
+  );
+});
+
+describe('the target rules of the migration run', () => {
+  async function target(noLoginUser: string) {
+    const missing = missingParts(['api', 'migrate']);
+    const fixture = loadFixture();
+    if (missing.length > 0 || fixture === null) return { unavailable: fixtureSkipReason() };
+    const tmp = createTmp('migrate-rules');
+    const database = await createDatabase('pglite', tmp);
+    const env = apiEnv(
+      { tmp, database, auth: 'no-login', env: { NO_LOGIN_USER: noLoginUser } },
+      await freePort(),
+    );
+    const args = (...extra: string[]) => [
+      'run',
+      '--source',
+      fixture.source,
+      '--api',
+      partPath('api'),
+      '--target-db',
+      database.appUrl,
+      ...extra,
+    ];
+    return { tmp, database, env, args };
+  }
+
+  it(
+    '[migrate-002] a no-login target whose user differs from the exported owner is refused before anything is written',
+    async (context) => {
+      const rules = await target('someone-else');
+      if ('unavailable' in rules) return skipVitest(context, rules.unavailable);
+      try {
+        const result = await runMigrate(rules.tmp, rules.args(), rules.env);
+        const output = outputOf(result);
+        expect(result.code, output).not.toBe(0);
+        expect(output).toContain('someone-else');
+        expect(output).toContain('fixture-owner');
+        expect(output).toMatch(/NO_LOGIN_USER/);
+        expect(readdirSync(rules.database.dataDir)).toEqual([]);
+      } finally {
+        await rules.database.drop();
+        rules.tmp.remove();
+      }
+    },
+    RUN_TIMEOUT_MS,
+  );
+
+  it(
+    '[migrate-006] a dry run writes the export and the plan, imports nothing and leaves the target empty',
+    async (context) => {
+      const rules = await target('fixture-owner');
+      if ('unavailable' in rules) return skipVitest(context, rules.unavailable);
+      try {
+        const out = rules.tmp.path('dry', 'board.jsonl');
+        const result = await runMigrate(
+          rules.tmp,
+          rules.args('--dry-run', '--out', out),
+          rules.env,
+        );
+        const output = outputOf(result);
+        expect(result.code, output).toBe(0);
+        expect(output).toMatch(/owner check: ok/);
+        expect(output).toMatch(/dry run: nothing imported/);
+        expect(existsSync(out)).toBe(true);
+        expect(existsSync(`${out}.plan.json`)).toBe(true);
+        expect(readdirSync(rules.database.dataDir)).toEqual([]);
+      } finally {
+        await rules.database.drop();
+        rules.tmp.remove();
       }
     },
     RUN_TIMEOUT_MS,

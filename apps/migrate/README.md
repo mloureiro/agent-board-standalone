@@ -5,11 +5,13 @@ Reads an existing board and writes a `BoardExport` file that `agent-board-api im
 ```bash
 agent-board-migrate inspect --source <postgres-url | pglite-dir>
 agent-board-migrate export --source <postgres-url | pglite-dir> --out <file> [--dry-run]
+agent-board-migrate run --source <postgres-url | pglite-dir> --api <agent-board-api path> \
+  --target-db <postgres-url | pglite://dir> [--out <file>] [--keep-export] [--dry-run]
 ```
 
 From a checkout: `pnpm --filter @agent-board/migrate migrate inspect --source <...>`. `export` prints the plan report
-(per owner, per table counts). With `--dry-run` it also writes the report as `<file>.plan.json`. Neither command
-imports anything.
+(per owner, per table counts). With `--dry-run` it also writes the report as `<file>.plan.json`. Neither
+`inspect` nor `export` imports anything. `run` does; it is described below.
 
 ## Sources
 
@@ -59,3 +61,55 @@ only, since they hold machine token hashes and wrapped key slots. Timestamps are
 | sessions and auth flows                                                                  | sign-in state, never part of a board                            |
 
 Timestamps lose microsecond precision, which JavaScript dates cannot hold.
+
+## Running a migration
+
+`run` exports the source, checks the target, imports through the API executable and compares counts. The tool imports
+no API code: `--api` is the built `agent-board-api` (a `.js` file is run with the current Node, anything else is run
+as a program) and the tool starts it as `agent-board-api import --file <export>`.
+
+The API reads its target from the environment, so give `run` the same variables the server will use: `NO_LOGIN_USER`
+(or `PUBLIC_URL` for a login target) and anything else the API needs. `--target-db` becomes `DATABASE_URL` for the
+import, and `DATABASE_ADMIN_URL` is dropped for a `pglite://` target.
+
+Order of work:
+
+1. A `pglite://` target folder that holds `postmaster.pid` is refused: another process has it open, or one stopped
+   without closing it. A PGlite folder has one process at a time, so stop it first.
+2. The source is read and the export is written to a temporary file (owner-only, in a private temporary
+   directory) that is deleted afterwards. `--keep-export` keeps it and prints its path, and `--out <file>` writes it to
+   `<file>` and keeps it.
+3. The export is compared with the source: per table, the exported rows, summed over owners, must equal the rows the
+   source holds (`machine` documents with a `dirs` value count against `legacy_dirs`; there is one `project` per
+   user). Any difference stops the run before the target is touched.
+4. **Owner rule.** For a no-login target (`NO_LOGIN_USER`, or `AUTH_MODE=no-login`), every exported owner must equal
+   `NO_LOGIN_USER`. The run is refused, naming both names, before the API starts. Content keys derive from the owner
+   name, so a different name would open nothing. With several owners the target is refused too. A login target has no
+   such rule.
+5. The API imports in one transaction and prints per-table, per-owner counts. A non-zero exit is reported with the
+   API's message; the target holds no board rows from this run (a fresh PGlite folder may have its schema created).
+6. The counts the API printed are compared with the export, table by table and owner by owner, with the API's own names
+   (`legacy_dirs`, `shared_agents`, `link_rules`, `title_rules`, `machine`, and so on). A difference is printed as a table and
+   the run exits 3.
+
+`--dry-run` does steps 1 to 4 and writes the export and `<out>.plan.json`, so `--out` is required with it. It never starts
+the API and never creates the target.
+
+Output holds counts and names only. Exit codes: 0 done, 1 import or other failure, 2 refused or bad arguments (a source
+that cannot be read, an owner that differs, a held target folder), 3 count difference.
+
+**A count difference after the import** means the target now holds the data, because the import already committed. The
+tool says so and exits 3. Recover by restoring the scratch copy of the target (or dropping the database) and running
+again. Run into a scratch copy first, never into the only copy of a data folder.
+
+### Tasks that were running
+
+The old board's run state is not exported. A task that was `running` in the source imports as `running` with no run, and
+the plan report warns with the count. Stop the workers before migrating so no task is running; a task that is left
+running is handled by the new board's stale-run sweep once its worker connects, or can be reset by hand.
+
+## Build
+
+`pnpm --filter @agent-board/migrate build` bundles the tool into `dist/main.js` and builds the end-to-end source board in
+`test/fixtures/source-board` (the `local-v2` fixture as a PGlite folder with a manifest of its passphrase and machine
+tokens; the folder is git-ignored).
