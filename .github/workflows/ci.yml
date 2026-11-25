@@ -41,6 +41,27 @@ jobs:
       - run: pnpm test
       - run: pnpm catalogue:check --check-column
 
+  mobile-rust:
+    name: mobile (rust)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/mobile/src-tauri
+      - run: pnpm install --frozen-lockfile --filter @agent-board/contract...
+      - run: pnpm --filter @agent-board/contract run build
+      - run: pnpm --filter @agent-board/mobile lint:rust
+      - run: pnpm --filter @agent-board/mobile test:rust
+
   sealing-runtimes:
     runs-on: ubuntu-latest
     steps:

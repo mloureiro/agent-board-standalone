@@ -7,7 +7,9 @@
   "main": "./src/index.ts",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml --locked",
+    "lint:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml --check && cargo clippy --manifest-path src-tauri/Cargo.toml --locked --all-targets -- -D warnings"
   },
   "dependencies": {
     "@agent-board/web": "workspace:^0.0.0"
