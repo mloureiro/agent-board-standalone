@@ -1,5 +1,4 @@
-import { mkdir, readdir, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, mkdtemp, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FIXTURES } from '../fixtures/fixtures.js';
@@ -43,15 +42,17 @@ describe.each(FIXTURES)('PGlite reader on $name', (fixture) => {
 
   it('leaves the original folder byte for byte unchanged and removes its working copy', async () => {
     const before = await hashFolder(source.folder);
-    const scratchBefore = (await readdir(tmpdir())).filter((name) =>
-      name.startsWith('agent-board-migrate-'),
-    );
-    await inspectSource(source.folder);
+    const workspace = await mkdtemp(join(source.scratch, 'tmp-'));
+    const previous = process.env.TMPDIR;
+    process.env.TMPDIR = workspace;
+    try {
+      await inspectSource(source.folder);
+    } finally {
+      if (previous === undefined) delete process.env.TMPDIR;
+      else process.env.TMPDIR = previous;
+    }
     expect(await hashFolder(source.folder)).toBe(before);
-    const scratchAfter = (await readdir(tmpdir())).filter((name) =>
-      name.startsWith('agent-board-migrate-'),
-    );
-    expect(scratchAfter.length).toBeLessThanOrEqual(scratchBefore.length);
+    expect(await readdir(workspace)).toEqual([]);
   });
 
   it('refuses writes', async () => {
