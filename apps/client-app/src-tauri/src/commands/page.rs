@@ -192,8 +192,7 @@ pub async fn open_link(
 }
 
 #[tauri::command]
-pub async fn report_tab(webview: Webview, path: String, title: String) -> Result<(), String> {
-    let _ = webview;
+pub async fn report_tab(path: String, title: String) -> Result<(), String> {
     page_input::tab_report(&path, &title)
         .map(|_| ())
         .map_err(input)

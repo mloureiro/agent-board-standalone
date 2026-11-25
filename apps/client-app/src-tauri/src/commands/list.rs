@@ -79,10 +79,7 @@ pub async fn open_server(
                 .record_handshake(server, Handshake { request_signature });
             windows::create_server_window(&app, &entry).map_err(|error| failed(error.to_string()))
         }
-        Opening::ListError { name, text } => {
-            let _ = name;
-            Err(text)
-        }
+        Opening::ListError { text, .. } => Err(text),
     }
 }
 
