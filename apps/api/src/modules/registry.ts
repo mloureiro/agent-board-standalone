@@ -2,6 +2,7 @@ import type { z } from 'zod';
 
 import { accessLogModule } from './access-log/index.js';
 import { buildModule } from './build/index.js';
+import { cleanupModule } from './cleanup/index.js';
 import { controlModule } from './control/index.js';
 import { crossOriginModule } from './cross-origin/index.js';
 import { databaseModule } from './database/index.js';
@@ -26,6 +27,7 @@ export const MODULES = [
   schedulingModule,
   feedsModule,
   webModule,
+  cleanupModule,
   accessLogModule,
 ] as const;
 
