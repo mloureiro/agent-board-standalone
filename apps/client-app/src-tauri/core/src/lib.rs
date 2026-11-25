@@ -9,6 +9,7 @@ pub mod ids;
 pub mod log;
 pub mod opening;
 pub mod orphans;
+pub mod page_input;
 pub mod paths;
 pub mod ports;
 pub mod removal;
