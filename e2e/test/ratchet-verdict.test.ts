@@ -107,6 +107,12 @@ describe('ratchet outcome table', () => {
     expect(exitCode(verdicts)).toBe(1);
   });
 
+  it('[repo-009] a listed test never reached after a failure in its file is red as listed', () => {
+    expect(judgeResult(result('skipped', null), true, ci, true).level).toBe('ok');
+    expect(judgeResult(result('skipped', null), true, ci, false).level).toBe('fail');
+    expect(judgeResult(result('skipped', 'because'), true, ci, true).level).toBe('fail');
+  });
+
   it('[repo-009] names the cause in the failing message', () => {
     expect(judgeResult(result('skipped', PART), false, ci).message).toContain(
       'unlisted test skipped: part missing',
