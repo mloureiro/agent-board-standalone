@@ -264,7 +264,14 @@ async fn fetch_adds_the_credential_and_drops_the_pages_own() {
     assert_eq!(header(sent, "authorization"), Some("Bearer abc_token"));
     assert_eq!(header(sent, "cookie"), None);
     assert_eq!(header(sent, "host"), None);
-    assert_eq!(header(sent, "x-board-sig"), None);
+    assert_ne!(header(sent, "x-board-sig"), Some("forged"));
+    assert_ne!(header(sent, "x-board-key"), Some("forged"));
+    assert_eq!(
+        sent.iter()
+            .filter(|(name, _)| name == "x-board-sig")
+            .count(),
+        1
+    );
     assert_eq!(header(sent, "x-board-contract"), Some("1"));
     assert_eq!(header(sent, "x-board-client"), Some("web/1.0.0"));
     assert_eq!(header(sent, "content-type"), Some("application/json"));
@@ -347,7 +354,7 @@ async fn pairing_binds_the_key_and_later_requests_are_signed() {
 }
 
 #[tokio::test]
-async fn a_rejected_pairing_leaves_the_server_unsigned() {
+async fn client_routes_are_signed_before_pairing_so_the_server_can_ask_for_it() {
     let (bridge, http, ..) = setup(true);
     let id = add(&bridge);
     http.answer("/api/pair", 403, "{}");
@@ -356,11 +363,21 @@ async fn a_rejected_pairing_leaves_the_server_unsigned() {
         Err(BridgeError::Rejected(403))
     );
     bridge
+        .server_fetch(&id, "GET", "/api/client/me", &[], None)
+        .await
+        .unwrap();
+    bridge
         .server_fetch(&id, "GET", "/healthz", &[], None)
         .await
         .unwrap();
+    bridge
+        .server_fetch(&id, "GET", "/api/version", &[], None)
+        .await
+        .unwrap();
     let seen = http.seen.lock().unwrap();
-    assert_eq!(header(&seen[1].2, "x-board-sig"), None);
+    assert!(header(&seen[1].2, "x-board-sig").is_some());
+    assert_eq!(header(&seen[2].2, "x-board-sig"), None);
+    assert_eq!(header(&seen[3].2, "x-board-sig"), None);
 }
 
 #[tokio::test]

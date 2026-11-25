@@ -194,7 +194,7 @@ impl<H: Http, K: KeyStore, C: Confirm, E: Env, S: Store> Bridge<H, K, C, E, S> {
         if let Some(token) = self.keys.token(server_id) {
             out.push(("authorization".into(), format!("Bearer {token}")));
         }
-        if entry.signed {
+        if signs(&path) {
             out.extend(
                 signing_headers(
                     &self.keys,
@@ -294,9 +294,6 @@ impl<H: Http, K: KeyStore, C: Confirm, E: Env, S: Store> Bridge<H, K, C, E, S> {
                 self.keys
                     .set_token(server_id, &token)
                     .map_err(BridgeError::Native)?;
-                if signed {
-                    self.mark_signed(server_id)?;
-                }
                 Ok(())
             }
             ("pending", _) => Err(BridgeError::Pending),
@@ -315,7 +312,7 @@ impl<H: Http, K: KeyStore, C: Confirm, E: Env, S: Store> Bridge<H, K, C, E, S> {
         if status >= 400 {
             return Err(BridgeError::Rejected(status));
         }
-        self.mark_signed(server_id)
+        Ok(())
     }
 
     pub async fn sign_out(&self, server_id: &str) -> Result<(), BridgeError> {
@@ -334,12 +331,10 @@ impl<H: Http, K: KeyStore, C: Confirm, E: Env, S: Store> Bridge<H, K, C, E, S> {
             .delete_token(server_id)
             .map_err(BridgeError::Native)
     }
+}
 
-    fn mark_signed(&self, server_id: &str) -> Result<(), BridgeError> {
-        let mut list = self.list.lock().unwrap();
-        list.mark_signed(server_id);
-        self.persist(&list)
-    }
+fn signs(path: &str) -> bool {
+    path.starts_with("/api/client/") || path.starts_with("/api/auth/logout")
 }
 
 async fn collect(response: HttpResponse) -> Result<Vec<u8>, BridgeError> {
