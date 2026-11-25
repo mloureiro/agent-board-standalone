@@ -1,4 +1,5 @@
-import { rmSync } from 'node:fs';
+import { existsSync, rmSync } from 'node:fs';
+import path from 'node:path';
 
 import { routeByName } from '@agent-board/contract';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -20,10 +21,10 @@ import {
   pairCodeIn,
   pairedDevice,
   shortTempPath,
-  signingKeyFiles,
 } from '../src/steps/signature.js';
 
 const controlSocket = shortTempPath('control.sock');
+const SIGNING_KEY_FILE = 'signing-key.jwk';
 
 const mePath = routeByName('client.me').path;
 const issuePath = routeByName('client.machines.issue').path;
@@ -186,14 +187,14 @@ describe('request signature on a no-login server', () => {
     const machine = await enrolledMachine(harness.board, user, { key, name: 'signing-cli' });
 
     const configDir = machine.tmp.path('cli', 'config');
-    const keyFiles = signingKeyFiles(configDir);
-    expect(keyFiles.length).toBeGreaterThan(0);
-    for (const file of keyFiles) expect(modeOf(file)).toBe(0o600);
+    const keyFile = path.join(configDir, SIGNING_KEY_FILE);
+    expect(existsSync(keyFile), `${keyFile} is missing`).toBe(true);
+    expect(modeOf(keyFile)).toBe(0o600);
 
     const signed = await machine.cli(['tasks', '--json']);
     expect(signed.code).toBe(0);
 
-    for (const file of keyFiles) rmSync(file);
+    rmSync(keyFile);
     const unsigned = await machine.cli(['tasks', '--json']);
     expect(unsigned.code).not.toBe(0);
     expect(`${unsigned.stdout}${unsigned.stderr}`).toMatch(/401|unauthori[sz]ed/i);

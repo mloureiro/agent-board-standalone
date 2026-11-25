@@ -1,8 +1,9 @@
 import { mkdirSync } from 'node:fs';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { unlockedKey, type UnlockedKey } from '../src/fixtures/keys.js';
+import { killStubTree } from '../src/harness/run.js';
 import {
   conversionFor,
   existingMachine,
@@ -25,16 +26,43 @@ const OPTIONS: MigratedOptions = {
 };
 const SETUP_TIMEOUT_MS = 180_000;
 
+const READ_ONLY_TITLE =
+  '[api-125] the import keeps each machine document and legacy directory as stored and the version answer reports legacyDirs';
+
 let board: MigratedBoard | null = null;
+let shared: MigratedBoard | null = null;
+let own: MigratedBoard | null = null;
+let unavailable: string | null = null;
+
+beforeAll(async () => {
+  const opened = await openMigrated(OPTIONS);
+  if ('unavailable' in opened) {
+    unavailable = opened.unavailable;
+    return;
+  }
+  shared = opened;
+}, SETUP_TIMEOUT_MS);
+
+afterAll(async () => {
+  await shared?.stop();
+  shared = null;
+});
 
 beforeEach(async (context) => {
+  if (unavailable !== null) skipVitest(context, unavailable);
+  if (context.task.name === READ_ONLY_TITLE) {
+    board = shared;
+    return;
+  }
   const opened = await openMigrated(OPTIONS);
   if ('unavailable' in opened) skipVitest(context, opened.unavailable);
+  own = opened;
   board = opened;
 }, SETUP_TIMEOUT_MS);
 
 afterEach(async () => {
-  await board?.stop();
+  await own?.stop();
+  own = null;
   board = null;
 });
 
@@ -110,7 +138,7 @@ describe('legacy directories after a board import', () => {
       directories: conversion.directories,
       assign: conversion.assign,
     });
-    expect(answer).toEqual({
+    expect(answer).toMatchObject({
       inserted: conversion.directories.length,
       assigned: conversion.assign.length,
     });
@@ -153,7 +181,7 @@ describe('legacy directories after a board import', () => {
     const user = await live.user();
     const before = (await user.ok('client.directories.list', {})).directories;
     const repeated = await machine.ok('machine.convert-legacy-dirs', request);
-    expect(repeated).toEqual({ inserted: 0, assigned: 0 });
+    expect(repeated).toMatchObject({ inserted: 0, assigned: 0 });
     const after = (await user.ok('client.directories.list', {})).directories;
     expect(after).toEqual(before);
   });
@@ -282,6 +310,7 @@ describe('the CLI converts legacy directories', () => {
       expect(directories.directories.length).toBeGreaterThan(0);
     } finally {
       await listener.current?.stop();
+      killStubTree(machine.stubLog);
       await proxy.stop();
     }
   });

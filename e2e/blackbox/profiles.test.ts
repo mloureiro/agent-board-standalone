@@ -242,9 +242,16 @@ describe('machine name', () => {
     const issuedFor = uniqueName('issued-for');
     const enrolment = await prepareEnrolment(tmp, identity, { name: issuedFor });
     const dirs = overrideDirs(tmp);
-    const result = await cliIn(tmp)(initArgs(boards.a.url, enrolment));
+    const localName = uniqueName('local-name');
+    const run = cliIn(tmp);
+    const result = await run(initArgs(boards.a.url, enrolment, ['--machine', localName]));
     expect(result.code, combined(result)).toBe(0);
-    expect(textOfTree(dirs.config)).toContain(issuedFor);
+    const config = textOfTree(dirs.config);
+    expect(config).toContain(issuedFor);
+    expect(config).not.toContain(localName);
+    const doctor = await run(['doctor', '--json']);
+    expect(combined(doctor)).toContain(issuedFor);
+    expect(combined(doctor)).not.toContain(localName);
     const listed = await identity.user.ok('client.machines.list', {});
     expect(listed.machines.map((machine) => machine.name)).toContain(issuedFor);
   });
