@@ -41,6 +41,7 @@ export function useMachines(): MachinesData | null {
     mutationFn: async (name: string) =>
       (await (page as NonNullable<typeof page>).call(issueClientMachineRoute, { name })).token,
     onSettled: settled,
+    gcTime: 0,
   });
   const revoke = useMutation({
     mutationFn: (name: string) =>
@@ -58,7 +59,7 @@ export function useMachines(): MachinesData | null {
     machines: list.data,
     failed: list.isError,
     grants: page.features.includes('machine-grant'),
-    issue: (name) => issue.mutateAsync(name),
+    issue: (name) => issue.mutateAsync(name).finally(() => issue.reset()),
     revoke: (name) => revoke.mutateAsync(name),
     setGrant: (name, value) => grant.mutateAsync({ name, grant: value }),
   };
