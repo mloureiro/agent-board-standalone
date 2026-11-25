@@ -34,7 +34,7 @@ and `Q<n>` refer to the plan's requirements and the owner's decisions.
 | Sources | Inventory rows, plan requirements, ADRs and other catalogue rows it derives from |
 | Today | Status of today's implementation, the weakest among the sources: `works`, `unproven`, `broken`, `not built` (discussed, never built), `new` (a requirement of this plan) |
 | Test | Where the test lives: `e2e` (the suite connecting API, CLI and browser client), `part` (the owning part's own suite, wrappers included), `manual: <reason>` (a written manual walk, R4.5), or `retired` (no test) |
-| Test ids | Written by `pnpm catalogue:fill`: the test files whose titles carry the row id, joined by `, `; `planned: <path>` from [test-plan.json](test-plan.json) while none exists; `—` for `manual` and `retired` rows |
+| Test ids | Written by `pnpm catalogue:fill`: the test files whose titles carry the row id, joined by `, `; `planned: <path>` from [test-plan.json](test-plan.json) while none exists; `—` for `manual` and `retired` rows. `pnpm catalogue:check --check-column` fails when a cell differs from what the fill would write, and every `e2e` row names a test in `e2e/browser` or `e2e/blackbox`. |
 
 The Test column is the catalogue's proposal; step 4 may move a row between `e2e` and `part` when it writes the test.
 A retired row needs no test.
