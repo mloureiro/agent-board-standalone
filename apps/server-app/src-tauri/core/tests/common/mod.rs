@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+pub mod worker;
 
 use std::fs;
 use std::io;

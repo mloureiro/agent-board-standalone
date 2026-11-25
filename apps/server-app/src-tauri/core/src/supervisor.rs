@@ -110,13 +110,34 @@ enum Phase {
     Stopped,
 }
 
-struct Node {
-    spec: ChildSpec,
+pub(crate) struct Node {
+    pub(crate) spec: ChildSpec,
     phase: Phase,
     crashes: u32,
 }
 
 impl Node {
+    pub(crate) fn signal(&self, signal: i32) {
+        if let Phase::Live(live) = &self.phase {
+            let _ = crate::process_group::signal_group(live.group, signal);
+        }
+    }
+
+    pub(crate) fn exited(&self) -> bool {
+        match &self.phase {
+            Phase::Live(live) => !crate::process_group::group_is_alive(live.group),
+            _ => true,
+        }
+    }
+
+    pub(crate) fn gave_up(&self) -> bool {
+        matches!(self.phase, Phase::GaveUp)
+    }
+
+    pub(crate) fn waiting(&self) -> bool {
+        matches!(self.phase, Phase::Waiting(_))
+    }
+
     fn ready(&self) -> bool {
         match &self.phase {
             Phase::Live(live) => self.spec.health_port.is_none() || live.healthy_since.is_some(),
@@ -137,7 +158,7 @@ struct Loop {
     stopping: bool,
 }
 
-fn node(spec: ChildSpec) -> Node {
+pub(crate) fn node(spec: ChildSpec) -> Node {
     Node {
         spec,
         phase: Phase::Pending,
@@ -267,7 +288,7 @@ impl Loop {
     }
 }
 
-fn row(node: &Node, retries: u32, stopping: bool) -> Row {
+pub(crate) fn row(node: &Node, retries: u32, stopping: bool) -> Row {
     match &node.phase {
         Phase::Pending => Row::new(RowState::Starting, "Starting"),
         Phase::Live(_) if stopping => Row::new(RowState::Stopping, "Stopping"),
@@ -294,7 +315,7 @@ fn open_log(spec: &ChildSpec) -> io::Result<std::fs::File> {
     OpenOptions::new().create(true).append(true).open(&spec.log)
 }
 
-fn spawn(spec: &ChildSpec) -> io::Result<Child> {
+pub(crate) fn spawn(spec: &ChildSpec) -> io::Result<Child> {
     let log = open_log(spec)?;
     let mut command = Command::new(&spec.program);
     command
@@ -382,7 +403,12 @@ fn crash(
     }
 }
 
-fn stop_node(node: &mut Node, durations: &Durations, run_dir: &std::path::Path, log: &AppLog) {
+pub(crate) fn stop_node(
+    node: &mut Node,
+    durations: &Durations,
+    run_dir: &std::path::Path,
+    log: &AppLog,
+) {
     if let Phase::Live(live) = &mut node.phase {
         let outcome = stop_child(
             &mut live.child,
@@ -401,7 +427,7 @@ fn stop_node(node: &mut Node, durations: &Durations, run_dir: &std::path::Path, 
     node.phase = Phase::Stopped;
 }
 
-fn advance_node(
+pub(crate) fn advance_node(
     node: &mut Node,
     gate_open: bool,
     durations: &Durations,

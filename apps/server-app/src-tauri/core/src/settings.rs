@@ -12,6 +12,7 @@ pub const MIN_PORT: u64 = 1024;
 pub const MAX_PORT: u64 = 65535;
 pub const MAX_REMOTE_HOSTS: usize = 8;
 pub const USER_NAME_MAX: usize = 64;
+pub const MAX_WORKER_PATH_ENTRIES: usize = 32;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SettingsError(String);
@@ -37,9 +38,16 @@ pub struct Settings {
     pub backup_dir: PathBuf,
     pub port: u16,
     pub start_at_login: bool,
-    pub worker_path: Option<PathBuf>,
+    pub worker_path: Vec<PathBuf>,
     pub remote_hosts: Vec<String>,
     pub request_signature: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum RawWorkerPath {
+    One(String),
+    Many(Vec<String>),
 }
 
 #[derive(Deserialize)]
@@ -50,7 +58,7 @@ struct RawSettings {
     backup_dir: Option<String>,
     port: Option<u64>,
     start_at_login: Option<bool>,
-    worker_path: Option<String>,
+    worker_path: Option<RawWorkerPath>,
     remote_hosts: Option<Vec<String>>,
     request_signature: Option<bool>,
 }
@@ -89,6 +97,31 @@ fn absolute_dir(
         )));
     }
     Ok(path.components().collect())
+}
+
+fn worker_path_entries(raw: Option<RawWorkerPath>) -> Result<Vec<PathBuf>, SettingsError> {
+    let entries = match raw {
+        None => Vec::new(),
+        Some(RawWorkerPath::One(entry)) => vec![entry],
+        Some(RawWorkerPath::Many(entries)) => entries,
+    };
+    if entries.len() > MAX_WORKER_PATH_ENTRIES {
+        return Err(SettingsError::new(format!(
+            "settings.json: workerPath takes at most {MAX_WORKER_PATH_ENTRIES} entries, got {}",
+            entries.len()
+        )));
+    }
+    entries
+        .into_iter()
+        .map(|entry| {
+            if entry.contains(':') {
+                return Err(SettingsError::new(format!(
+                    "settings.json: workerPath entry {entry:?} must not contain `:`"
+                )));
+            }
+            absolute_dir("workerPath", Some(entry), PathBuf::new())
+        })
+        .collect()
 }
 
 impl Settings {
@@ -216,10 +249,7 @@ impl Settings {
             backup_dir: absolute_dir("backupDir", raw.backup_dir, paths.default_backup_dir())?,
             port,
             start_at_login: raw.start_at_login.unwrap_or(true),
-            worker_path: raw
-                .worker_path
-                .map(|value| absolute_dir("workerPath", Some(value), PathBuf::new()))
-                .transpose()?,
+            worker_path: worker_path_entries(raw.worker_path)?,
             remote_hosts: remote_hosts
                 .iter()
                 .map(|host| host.to_ascii_lowercase())

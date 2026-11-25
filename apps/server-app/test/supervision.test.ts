@@ -107,7 +107,7 @@ describe('supervision through the headless runner', () => {
     await running(session);
 
     expect(await healthz()).toBe(200);
-    expect(supervision(session)?.worker).toEqual({ state: 'off', text: 'Not set up' });
+    expect(supervision(session)?.worker).toEqual({ state: 'off', text: 'Worker not connected' });
     session.send('quit');
     expect(await session.closed).toBe(0);
     expect(session.events.at(-1)).toEqual({ type: 'quit' });

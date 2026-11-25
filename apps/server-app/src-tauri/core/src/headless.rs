@@ -8,19 +8,12 @@ use serde_json::{Value, json};
 
 use crate::app::Running;
 use crate::opener::{self, Opener, SystemOpener};
+use crate::services::Services;
 use crate::signals;
 use crate::status::Status;
-use crate::supervisor::Supervisor;
+use crate::worker_actions;
 
-const NOT_IMPLEMENTED: [&str; 7] = [
-    "open-board",
-    "backup-now",
-    "restart-worker",
-    "disconnect-worker",
-    "check-worker",
-    "connect-worker",
-    "pair-device",
-];
+const NOT_IMPLEMENTED: [&str; 3] = ["open-board", "backup-now", "pair-device"];
 
 const POLL: Duration = Duration::from_millis(25);
 
@@ -84,10 +77,9 @@ pub fn serve_with(
         let _ = lines.send(Input::Closed);
     });
     let changes = sender;
-    let supervisor = Supervisor::start(
-        running.plan.clone(),
-        running.app_log.clone(),
-        Arc::new(move |_| {
+    let services = Services::start(
+        running,
+        Arc::new(move || {
             let _ = changes.send(Input::Status);
         }),
     );
@@ -106,7 +98,7 @@ pub fn serve_with(
         };
         let line = match received {
             Input::Status => {
-                emit(out, &state(running, &supervisor.status()));
+                emit(out, &state(running, &services.status()));
                 continue;
             }
             Input::Closed => break,
@@ -116,9 +108,9 @@ pub fn serve_with(
         let name = action.split_whitespace().next().unwrap_or("");
         match name {
             "" => {}
-            "state" => emit(out, &state(running, &supervisor.status())),
+            "state" => emit(out, &state(running, &services.status())),
             "restart-server" => {
-                supervisor.restart_server();
+                services.supervisor().restart_server();
                 emit(
                     out,
                     &json!({ "type": "action", "action": "restart-server", "ok": true }),
@@ -138,6 +130,24 @@ pub fn serve_with(
                     opener::open_settings_file(&running.paths, opener),
                 ),
             ),
+            "connect-worker" => {
+                let mut parts = action.split_whitespace().skip(1);
+                let event = match (parts.next(), parts.next(), parts.next()) {
+                    (Some(token), Some(data_key), None) => {
+                        worker_actions::connect_worker(&services.worker, token, data_key)
+                    }
+                    _ => json!({
+                        "type": "action",
+                        "action": "connect-worker",
+                        "ok": false,
+                        "message": "connect-worker needs a token and a data key",
+                    }),
+                };
+                emit(out, &event);
+            }
+            "disconnect-worker" => emit(out, &worker_actions::disconnect_worker(&services.worker)),
+            "restart-worker" => emit(out, &worker_actions::restart_worker(&services.worker)),
+            "check-worker" => emit(out, &worker_actions::check_worker(&services.worker, opener)),
             "quit" => break,
             deferred if NOT_IMPLEMENTED.contains(&deferred) => emit(
                 out,
@@ -153,7 +163,7 @@ pub fn serve_with(
             ),
         }
     }
-    let last = supervisor.stop();
+    let last = services.stop();
     let changed = inbox
         .try_iter()
         .any(|received| matches!(received, Input::Status));

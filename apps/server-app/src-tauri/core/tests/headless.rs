@@ -29,7 +29,10 @@ fn host(bed: &Bed) -> Host {
         home: bed.home.clone(),
         login_name: "Ines".to_string(),
         root_env: Some(bed.dir.path().join("board-root").into_os_string()),
-        overrides: Overrides::default(),
+        overrides: Overrides {
+            credential_store_file: Some(bed.dir.path().join("credentials.json")),
+            ..Overrides::default()
+        },
         build: Build::Debug,
         executable: PathBuf::from("/x/board"),
     }
@@ -210,17 +213,16 @@ fn server_app_022_the_actions_of_later_iterations_are_parsed_and_refused_for_now
     let running = start(&host(&bed));
     let events = drive(
         &running,
-        "open-board\nbackup-now\nrestart-worker\ndisconnect-worker\ncheck-worker\nconnect-worker tok key\npair-device\n",
+        "open-board\nbackup-now\npair-device\n",
         &Recorder::default(),
     );
 
     let errors: Vec<&Value> = events.iter().filter(|e| e["type"] == "error").collect();
-    assert_eq!(errors.len(), 7);
+    assert_eq!(errors.len(), 3);
     assert_eq!(
-        errors[5]["message"],
-        "connect-worker is not implemented in this build"
+        errors[2]["message"],
+        "pair-device is not implemented in this build"
     );
-    assert!(!serde_json::to_string(&events).unwrap().contains("tok"));
 }
 
 #[test]
@@ -237,7 +239,7 @@ fn server_app_022_the_state_line_carries_the_supervision_rows() {
             .starts_with("API executable missing")
     );
     assert_eq!(supervision["api"]["state"], "failed");
-    assert_eq!(supervision["worker"]["text"], "Not set up");
+    assert_eq!(supervision["worker"]["text"], "Worker not connected");
     assert_eq!(supervision["gaveUp"]["api"], false);
     assert!(supervision["blocked"].is_null());
 }

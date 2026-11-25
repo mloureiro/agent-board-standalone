@@ -1,0 +1,11 @@
+[
+  "launchd agents",
+  "unit agent-board-intake",
+  "listen command",
+  "watch command",
+  "dispatch command",
+  "listen state",
+  "watch state",
+  "dispatch state",
+  "auto-update"
+]

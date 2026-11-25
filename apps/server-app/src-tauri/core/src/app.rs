@@ -1,6 +1,7 @@
 use std::ffi::OsString;
 use std::io::{self, BufRead, Write};
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use crate::account;
 use crate::credentials;
@@ -15,6 +16,8 @@ use crate::settings::{Settings, SettingsError};
 use crate::spec;
 use crate::supervisor::Plan;
 use crate::uninstall;
+use crate::worker_paths::WorkerPaths;
+use crate::worker_setup::{CLI_RELATIVE, WorkerSetup};
 
 pub struct Host {
     pub home: PathBuf,
@@ -68,6 +71,7 @@ pub struct Running {
     pub app_log: AppLog,
     pub access_log: LogFile,
     pub plan: Plan,
+    pub worker: WorkerSetup,
     _lock: InstanceLock,
 }
 
@@ -120,6 +124,30 @@ pub fn start(host: &Host) -> io::Result<Start> {
         run_dir: spec::run_dir(&paths),
     };
 
+    let worker = WorkerSetup {
+        root: root.path().to_path_buf(),
+        app_paths: paths.clone(),
+        paths: WorkerPaths::new(root.path()),
+        service: root.keychain_service(),
+        store: Arc::from(credentials::open_store(&host.overrides)),
+        store_file: host.overrides.credential_store_file.clone(),
+        cli_source: host.resources_dir().join(CLI_RELATIVE),
+        executable: host.executable.clone(),
+        home: host.home.clone(),
+        api_url: match &settings {
+            Ok(settings) => Ok(format!("http://127.0.0.1:{}", settings.port)),
+            Err(error) => Err(error.to_string()),
+        },
+        path_entries: settings
+            .as_ref()
+            .map(|settings| settings.worker_path.clone())
+            .unwrap_or_default(),
+        durations: plan.durations.clone(),
+        log: app_log.clone(),
+        run_dir: plan.run_dir.clone(),
+        inherited: Arc::new(|name| std::env::var(name).ok()),
+    };
+
     Ok(Start::Running(Box::new(Running {
         root,
         paths,
@@ -127,6 +155,7 @@ pub fn start(host: &Host) -> io::Result<Start> {
         app_log,
         access_log,
         plan,
+        worker,
         _lock: lock,
     })))
 }
