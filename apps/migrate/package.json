@@ -1,6 +1,6 @@
 {
   "name": "@agent-board/migrate",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -10,7 +10,8 @@
     "build": "tsx scripts/build.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "fixtures:build": "tsx fixtures/build.ts"
+    "fixtures:build": "tsx fixtures/build.ts",
+    "release": "tsx scripts/release.ts"
   },
   "dependencies": {
     "@agent-board/contract": "workspace:^1.0.0",
