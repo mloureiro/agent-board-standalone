@@ -3,14 +3,18 @@ mod common;
 use agent_board_client_core::address::AddressProblem;
 use agent_board_client_core::bridge::{BridgeError, Scope};
 use agent_board_client_core::files::DirStore;
+use agent_board_client_core::handover::{
+    EarlyLinks, HandoverPlan, UNKNOWN_VERSION_MESSAGE, plan as plan_handover,
+};
 use agent_board_client_core::handshake::RETRY_DELAYS as HANDSHAKE_DELAYS;
+use agent_board_client_core::legacy::{session_service, stores_to_delete, sweep_sessions};
 use agent_board_client_core::opening::{
     LaunchWindow, Opening, WindowAction, launch_plan, plan_open, window_error,
 };
 use agent_board_client_core::orphans::{orphans, sweep, tab_file_name};
 use agent_board_client_core::ports::{FileStore, PortError};
 use agent_board_client_core::removal::{Effect, RETRY_DELAYS, Removal};
-use agent_board_client_core::servers::{SERVERS_FILE, ServerError, Servers};
+use agent_board_client_core::servers::{ASIDE_FILE, SERVERS_FILE, ServerError, Servers};
 use agent_board_client_core::tokens::{key_service, token_service};
 use common::*;
 use std::time::Duration;
@@ -455,5 +459,133 @@ fn client_app_002_page_names_are_capped_and_refuse_control_characters() {
             .page_add_server(&scope, &longest, "https://ok.example.test")
             .unwrap()
             .is_some()
+    );
+}
+
+const LINK_A: &str = "agentboard://open?v=1&url=http%3A%2F%2Flocalhost%3A4000%2F";
+const LINK_B: &str = "agentboard://open?v=1&url=http%3A%2F%2Flocalhost%3A4001%2F";
+
+#[test]
+fn client_app_015_links_before_setup_are_held_then_handled() {
+    let links = EarlyLinks::holding();
+    assert_eq!(links.deliver(vec![LINK_A.to_owned()]), None);
+    assert_eq!(links.deliver(vec![LINK_B.to_owned()]), None);
+    assert_eq!(links.release(), vec![LINK_A.to_owned(), LINK_B.to_owned()]);
+    assert_eq!(
+        plan_handover([LINK_A, LINK_B], &[]),
+        HandoverPlan::Add {
+            name: "localhost:4000".to_owned(),
+            url: "http://localhost:4000/".to_owned()
+        }
+    );
+    assert_eq!(
+        links.deliver(vec![LINK_B.to_owned()]),
+        Some(vec![LINK_B.to_owned()])
+    );
+    assert!(links.release().is_empty());
+}
+
+#[test]
+fn client_app_014_an_unacceptable_link_only_brings_the_list_forward() {
+    let listed = [entry(FIRST_ID, "Alpha", "http://localhost:4000/")];
+    let nothing = HandoverPlan::ShowList { message: None };
+    for link in [
+        "https://example.test/",
+        "agentboard://open?v=1&url=http%3A%2F%2F192.168.1.10%3A4000%2F",
+        "agentboard://open?v=1&url=http%3A%2F%2Fuser%3Asecret%40localhost%3A2%2F",
+        "agentboard://open?v=1",
+    ] {
+        assert_eq!(plan_handover([link], &listed), nothing, "{link}");
+    }
+    assert_eq!(plan_handover([], &listed), nothing);
+    assert_eq!(
+        plan_handover(
+            ["agentboard://open?v=2&url=http%3A%2F%2Flocalhost%3A1%2F"],
+            &listed
+        ),
+        HandoverPlan::ShowList {
+            message: Some(UNKNOWN_VERSION_MESSAGE.to_owned())
+        }
+    );
+    assert_eq!(
+        plan_handover(
+            [
+                "agentboard://open?v=2&url=http%3A%2F%2Flocalhost%3A1%2F",
+                LINK_A
+            ],
+            &listed
+        ),
+        HandoverPlan::Open(id(FIRST_ID))
+    );
+}
+
+#[test]
+fn client_app_013_a_known_address_opens_and_an_unknown_one_is_added() {
+    let listed = [
+        entry(FIRST_ID, "Alpha", "http://localhost:4000/"),
+        entry(SECOND_ID, "localhost:4001", "https://board.example.test/"),
+    ];
+    assert_eq!(
+        plan_handover([LINK_A], &listed),
+        HandoverPlan::Open(id(FIRST_ID))
+    );
+    assert_eq!(
+        plan_handover(
+            ["agentboard://open?v=1&url=HTTP%3A%2F%2FLOCALHOST%3A4000"],
+            &listed
+        ),
+        HandoverPlan::Open(id(FIRST_ID))
+    );
+    assert_eq!(
+        plan_handover([LINK_B], &listed),
+        HandoverPlan::Add {
+            name: "localhost:4001 (2)".to_owned(),
+            url: "http://localhost:4001/".to_owned()
+        }
+    );
+}
+
+#[test]
+fn client_app_008_legacy_stores_are_listed_for_deletion() {
+    let first = *uuid::Uuid::parse_str(FIRST_ID).unwrap().as_bytes();
+    let second = *uuid::Uuid::parse_str(SECOND_ID).unwrap().as_bytes();
+    let not_a_server = *uuid::Uuid::from_u128(1).as_bytes();
+    assert_eq!(
+        stores_to_delete([first, second, first, not_a_server]),
+        vec![id(SECOND_ID), id(FIRST_ID)]
+    );
+    assert!(stores_to_delete([]).is_empty());
+
+    let secrets = MemorySecrets::default();
+    let service = session_service();
+    assert_eq!(service, "com.mloureiro.agent-board-client.session");
+    secrets.put(&service, FIRST_ID, b"old");
+    secrets.put(&service, "legacy-account", b"old");
+    secrets.put(&token_service(), FIRST_ID, b"current");
+    assert_eq!(sweep_sessions(&secrets), 2);
+    assert!(secrets.peek(&service, FIRST_ID).is_none());
+    assert!(secrets.peek(&token_service(), FIRST_ID).is_some());
+}
+
+#[test]
+fn client_app_002_an_unreadable_servers_file_is_kept_aside_before_the_next_write() {
+    let directory = tempfile::tempdir().unwrap();
+    std::fs::write(directory.path().join(SERVERS_FILE), b"{nope").unwrap();
+    let store = Servers::open(DirStore::new(directory.path()));
+    assert!(store.list().is_empty());
+    assert_eq!(
+        std::fs::read(directory.path().join(ASIDE_FILE)).unwrap(),
+        b"{nope"
+    );
+    store
+        .add(id(FIRST_ID), "Alpha", "https://a.example.test")
+        .unwrap();
+    assert_eq!(
+        std::fs::read(directory.path().join(ASIDE_FILE)).unwrap(),
+        b"{nope"
+    );
+    assert_eq!(
+        Servers::open(DirStore::new(directory.path())).list().len(),
+        1
     );
 }

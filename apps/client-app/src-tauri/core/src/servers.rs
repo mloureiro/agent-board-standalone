@@ -6,6 +6,7 @@ use serde_json::Value;
 use std::sync::Mutex;
 
 pub const SERVERS_FILE: &str = "servers.json";
+pub const ASIDE_FILE: &str = "servers.json.unreadable";
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct ServerEntry {
@@ -42,15 +43,26 @@ fn parse_entry(value: &Value) -> Option<ServerEntry> {
     })
 }
 
-fn parse_list(contents: &[u8]) -> Vec<ServerEntry> {
-    let Ok(document) = serde_json::from_slice::<Value>(contents) else {
-        return Vec::new();
+struct Parsed {
+    entries: Vec<ServerEntry>,
+    intact: bool,
+}
+
+fn parse_list(contents: &[u8]) -> Parsed {
+    let listed = serde_json::from_slice::<Value>(contents)
+        .ok()
+        .and_then(|document| document.get("servers").and_then(Value::as_array).cloned());
+    let Some(listed) = listed else {
+        return Parsed {
+            entries: Vec::new(),
+            intact: false,
+        };
     };
-    document
-        .get("servers")
-        .and_then(Value::as_array)
-        .map(|entries| entries.iter().filter_map(parse_entry).collect())
-        .unwrap_or_default()
+    let entries: Vec<ServerEntry> = listed.iter().filter_map(parse_entry).collect();
+    Parsed {
+        intact: entries.len() == listed.len(),
+        entries,
+    }
 }
 
 pub const NAME_MAX_CHARS: usize = 100;
@@ -73,12 +85,20 @@ pub struct Servers<F> {
 
 impl<F: FileStore> Servers<F> {
     pub fn open(files: F) -> Self {
-        let entries = files
+        let parsed = files
             .read(SERVERS_FILE)
             .ok()
             .flatten()
-            .map(|contents| parse_list(&contents))
-            .unwrap_or_default();
+            .map(|contents| (parse_list(&contents), contents));
+        let entries = match parsed {
+            Some((parsed, contents)) => {
+                if !parsed.intact {
+                    let _ = files.write(ASIDE_FILE, &contents);
+                }
+                parsed.entries
+            }
+            None => Vec::new(),
+        };
         Self {
             files,
             entries: Mutex::new(entries),
