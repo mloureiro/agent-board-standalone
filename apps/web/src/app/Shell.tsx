@@ -21,10 +21,17 @@ import { useServers } from '../servers/index.js';
 import { useEnvironment } from '../session/index.js';
 
 function Content(): ReactNode {
-  const { active, connectionOf, hasAnswered } = useServers();
+  const { active, connectionOf, hasAnswered, viewed } = useServers();
   const environment = useEnvironment();
   const location = useLocation();
   const view = active === null ? null : connectionOf(active.id);
+  if (viewed.length > 1 && (location.pathname === '/' || location.pathname === '/backlog')) {
+    return (
+      <ErrorBoundaryPanel onReload={environment.reload} resetKey={location.pathname}>
+        <Outlet />
+      </ErrorBoundaryPanel>
+    );
+  }
   if (active !== null && view?.state === 'signed-out') {
     return <SignInPage server={active} signedOut={hasAnswered(active.id)} />;
   }

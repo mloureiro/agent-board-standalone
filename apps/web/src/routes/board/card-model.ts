@@ -4,6 +4,7 @@ import { bindings, open, seal, type Binding, type Keys } from '@agent-board/seal
 export const UNREADABLE_TITLE = 'Unreadable task';
 
 export interface BoardCard {
+  readonly serverId?: string;
   readonly task: UiTaskListItem;
   readonly title: string;
   readonly icon: string | null;
@@ -22,6 +23,9 @@ export interface OpenedPrompt {
   readonly text: string;
   readonly shape: InputShape;
 }
+
+export const cardUid = (card: BoardCard): string =>
+  card.serverId === undefined ? card.task.id : `${card.serverId}:${card.task.id}`;
 
 export const attempt = async (
   keys: Keys,

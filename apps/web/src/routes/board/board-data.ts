@@ -61,6 +61,7 @@ export const featuresOf = (
 
 export interface BoardData {
   readonly serverId: string;
+  readonly serverName: string;
   readonly keys: Keys;
   readonly cards: readonly BoardCard[] | undefined;
   readonly machines: readonly BoardMachine[];
@@ -140,7 +141,9 @@ export function useBoardData(): BoardData | null {
       const client = clientRef.current;
       if (client === null || keys === null) return [];
       const answer = await callRoute(client, listClientTasksRoute, {});
-      return Promise.all(answer.tasks.map((task) => decryptCard(keys, task)));
+      return Promise.all(
+        answer.tasks.map(async (task) => ({ ...(await decryptCard(keys, task)), serverId: scope })),
+      );
     },
   });
 
@@ -196,6 +199,7 @@ export function useBoardData(): BoardData | null {
         ? null
         : {
             serverId,
+            serverName: active?.name ?? '',
             keys,
             cards,
             machines: machines.data ?? [],
@@ -206,6 +210,7 @@ export function useBoardData(): BoardData | null {
           },
     [
       serverId,
+      active?.name,
       keys,
       cards,
       tasks.isError,
@@ -218,13 +223,18 @@ export function useBoardData(): BoardData | null {
   );
 }
 
-const callMove = (client: ServerClient, move: MoveRequest & { startInput?: string }) =>
-  callRoute(client, moveClientTaskRoute, move);
+export interface BoardSource {
+  readonly serverId: string;
+  readonly keys: Keys;
+}
 
 export interface BoardActions {
-  move(move: MoveRequest & { startInput?: string }): Promise<unknown>;
-  configure(input: { id: string; icon?: string | null; labels?: string | null }): Promise<unknown>;
-  done(id: string): Promise<unknown>;
+  move(source: BoardSource, move: MoveRequest & { startInput?: string }): Promise<unknown>;
+  configure(
+    source: BoardSource,
+    input: { id: string; icon?: string | null; labels?: string | null },
+  ): Promise<unknown>;
+  done(source: BoardSource, id: string): Promise<unknown>;
 }
 
 const optimistic = async (
@@ -238,37 +248,59 @@ const optimistic = async (
   return previous;
 };
 
-export function useBoardActions(data: BoardData): BoardActions {
+interface Rollback {
+  readonly key: readonly unknown[];
+  readonly previous: BoardCard[] | undefined;
+}
+
+export function useBoardActions(): BoardActions {
   const { clientOf } = useServers();
   const queryClient = useQueryClient();
-  const key = tasksKey(data.serverId, data.keys.keyId);
-  const clientFor = (): ServerClient => {
-    const client = clientOf(data.serverId);
+  const keyOf = (source: BoardSource) => tasksKey(source.serverId, source.keys.keyId);
+  const clientFor = (source: BoardSource): ServerClient => {
+    const client = clientOf(source.serverId);
     if (client === null) throw new Error('The server is not available.');
     return client;
   };
-  const rollback = (previous: BoardCard[] | undefined): void => {
-    if (previous !== undefined) queryClient.setQueryData(key, previous);
+  const rollback = (context: Rollback | undefined): void => {
+    if (context?.previous !== undefined) queryClient.setQueryData(context.key, context.previous);
   };
 
   const move = useMutation({
-    mutationFn: (input: MoveRequest & { startInput?: string }) => callMove(clientFor(), input),
-    onMutate: (input) => optimistic(queryClient, key, (cards) => applyMove(cards, input)),
-    onError: (_error, _input, previous) => rollback(previous),
+    mutationFn: (input: { source: BoardSource; move: MoveRequest & { startInput?: string } }) =>
+      callRoute(clientFor(input.source), moveClientTaskRoute, input.move),
+    onMutate: async (input): Promise<Rollback> => {
+      const key = keyOf(input.source);
+      return {
+        key,
+        previous: await optimistic(queryClient, key, (cards) => applyMove(cards, input.move)),
+      };
+    },
+    onError: (_error, _input, context) => rollback(context),
   });
   const configure = useMutation({
-    mutationFn: (input: { id: string; icon?: string | null; labels?: string | null }) =>
-      callRoute(clientFor(), configureClientTaskRoute, input),
+    mutationFn: (input: {
+      source: BoardSource;
+      change: { id: string; icon?: string | null; labels?: string | null };
+    }) => callRoute(clientFor(input.source), configureClientTaskRoute, input.change),
   });
   const done = useMutation({
-    mutationFn: (id: string) => callRoute(clientFor(), doneClientTaskRoute, { id }),
-    onMutate: (id) =>
-      optimistic(queryClient, key, (cards) => applyMove(cards, { id, status: 'done' })),
-    onError: (_error, _id, previous) => rollback(previous),
+    mutationFn: (input: { source: BoardSource; id: string }) =>
+      callRoute(clientFor(input.source), doneClientTaskRoute, { id: input.id }),
+    onMutate: async (input): Promise<Rollback> => {
+      const key = keyOf(input.source);
+      return {
+        key,
+        previous: await optimistic(queryClient, key, (cards) =>
+          applyMove(cards, { id: input.id, status: 'done' }),
+        ),
+      };
+    },
+    onError: (_error, _input, context) => rollback(context),
   });
   return {
-    move: (input) => move.mutateAsync(input).catch(() => undefined),
-    configure: (input) => configure.mutateAsync(input).catch(() => undefined),
-    done: (id) => done.mutateAsync(id).catch(() => undefined),
+    move: (source, request) => move.mutateAsync({ source, move: request }).catch(() => undefined),
+    configure: (source, change) => configure.mutateAsync({ source, change }).catch(() => undefined),
+    done: (source, id) => done.mutateAsync({ source, id }).catch(() => undefined),
   };
 }

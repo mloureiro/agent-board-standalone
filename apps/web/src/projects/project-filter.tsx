@@ -8,42 +8,41 @@ export interface ProjectFilterValue {
   choose(projectId: string | null): void;
 }
 
-interface Chosen {
-  readonly serverId: string;
-  readonly projectId: string | null;
+interface Registry {
+  of(serverId: string): string | null;
+  choose(serverId: string, projectId: string | null): void;
 }
 
-const ProjectFilterContext = createContext<ProjectFilterValue | null>(null);
+const ProjectFilterContext = createContext<Registry | null>(null);
 
 export const useProjectFilter = (): ProjectFilterValue => {
-  const value = useContext(ProjectFilterContext);
-  if (value === null) throw new Error('useProjectFilter needs a ProjectFilterProvider');
-  return value;
+  const registry = useContext(ProjectFilterContext);
+  if (registry === null) throw new Error('useProjectFilter needs a ProjectFilterProvider');
+  const serverId = useServers().active?.id ?? null;
+  const projectId = serverId === null ? null : registry.of(serverId);
+  const choose = useCallback(
+    (next: string | null) => {
+      if (serverId !== null) registry.choose(serverId, next);
+    },
+    [registry, serverId],
+  );
+  return useMemo(() => ({ projectId, choose }), [projectId, choose]);
 };
 
 export function ProjectFilterProvider(props: { readonly children: ReactNode }): ReactNode {
-  const { active } = useServers();
-  const serverId = active?.id ?? null;
-  const [chosen, setChosen] = useState<Chosen | null>(null);
-  const projectId = useMemo(
-    () =>
-      serverId === null
-        ? null
-        : chosen?.serverId === serverId
-          ? chosen.projectId
-          : projectFilterStore(serverId).read(),
-    [serverId, chosen],
+  const [chosen, setChosen] = useState<Readonly<Record<string, string | null>>>({});
+  const registry = useMemo<Registry>(
+    () => ({
+      of: (serverId) =>
+        serverId in chosen ? (chosen[serverId] ?? null) : projectFilterStore(serverId).read(),
+      choose: (serverId, projectId) => {
+        projectFilterStore(serverId).write(projectId);
+        setChosen((previous) => ({ ...previous, [serverId]: projectId }));
+      },
+    }),
+    [chosen],
   );
-  const choose = useCallback(
-    (next: string | null) => {
-      if (serverId === null) return;
-      projectFilterStore(serverId).write(next);
-      setChosen({ serverId, projectId: next });
-    },
-    [serverId],
-  );
-  const value = useMemo(() => ({ projectId, choose }), [projectId, choose]);
   return (
-    <ProjectFilterContext.Provider value={value}>{props.children}</ProjectFilterContext.Provider>
+    <ProjectFilterContext.Provider value={registry}>{props.children}</ProjectFilterContext.Provider>
   );
 }

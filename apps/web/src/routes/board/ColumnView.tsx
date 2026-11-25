@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 import { CardView } from './CardView.js';
 import type { CardEditValue } from './CardEditDialog.js';
-import type { BoardCard } from './card-model.js';
+import { cardUid, type BoardCard } from './card-model.js';
 import { COLUMN_LABELS, canDropOn } from './columns.js';
 import { useColumnDrop } from './drag.js';
 
@@ -12,8 +12,8 @@ export interface ColumnViewProps {
   readonly status: TaskStatus;
   readonly cards: readonly BoardCard[];
   readonly now: number;
-  readonly projectNames: ReadonlyMap<string, string> | null;
-  readonly showProjects: boolean;
+  readonly projectNameFor: (card: BoardCard) => string | null;
+  readonly serverNameFor: (card: BoardCard) => string | null;
   readonly usageHoldFor: (card: BoardCard) => number | null;
   readonly onEdit: (card: BoardCard, value: CardEditValue) => void;
   readonly mergedCount?: number;
@@ -21,7 +21,7 @@ export interface ColumnViewProps {
 }
 
 export function ColumnView(props: ColumnViewProps): ReactNode {
-  const { status, cards, now, projectNames, showProjects, usageHoldFor, onEdit } = props;
+  const { status, cards, now, projectNameFor, serverNameFor, usageHoldFor, onEdit } = props;
   const drop = useColumnDrop(status, canDropOn(status));
   const label = COLUMN_LABELS[status];
   const idle = status === 'waiting' && cards.length === 0;
@@ -57,10 +57,11 @@ export function ColumnView(props: ColumnViewProps): ReactNode {
         )}
         {cards.map((card) => (
           <CardView
-            key={card.task.id}
+            key={cardUid(card)}
             card={card}
             now={now}
-            projectName={showProjects ? (projectNames?.get(card.task.projectId) ?? null) : null}
+            projectName={projectNameFor(card)}
+            serverName={serverNameFor(card)}
             usageHoldUntil={usageHoldFor(card)}
             onEdit={(value) => onEdit(card, value)}
           />
