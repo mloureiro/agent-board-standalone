@@ -64,7 +64,7 @@ export const createTaskActionHandlers =
       work: (tx: ScopedDatabase) => Promise<T>,
     ): Promise<T> => {
       const result = await database.withOwner(owner, work);
-      await announceTaskChange(context, owner);
+      await announceTaskChange();
       return result;
     };
 
