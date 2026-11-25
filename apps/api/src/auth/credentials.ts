@@ -10,6 +10,7 @@ import type { FastifyRequest } from 'fastify';
 export interface PresentedCredential {
   kind: TokenKind;
   hash: string;
+  token: string;
 }
 
 const BEARER = /^Bearer ([^\s]+)$/;
@@ -43,10 +44,10 @@ export const readCredential = async (
     const kind = tokenKind(bearer);
     if (kind === null || !(AUTHORIZATION_TOKEN_KINDS as readonly TokenKind[]).includes(kind))
       return null;
-    return { kind, hash: await tokenHash(bearer) };
+    return { kind, hash: await tokenHash(bearer), token: bearer };
   }
   const cookie = cookieValue(request.headers.cookie, sessionCookieName(scheme));
   if (cookie !== null && tokenKind(cookie) === 'session')
-    return { kind: 'session', hash: await tokenHash(cookie) };
+    return { kind: 'session', hash: await tokenHash(cookie), token: cookie };
   return null;
 };

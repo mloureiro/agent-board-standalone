@@ -232,17 +232,23 @@ describe('sessions', () => {
         .find((row) => row.tokenHash === hash)
         ?.expiresAt.getTime() ?? 0;
     const start = board.clock.now().getTime();
-    const use = async () =>
-      (await board.app.inject({ url: '/api/client/me', headers: cookieOf(token) })).statusCode;
+    const useResponse = () =>
+      board.app.inject({ url: '/api/client/me', headers: cookieOf(token) });
+    const use = async () => (await useResponse()).statusCode;
 
     expect(await expiryOf()).toBe(start + 7 * DAY_MS);
 
     board.clock.set(new Date(start + 30 * MINUTE));
-    expect(await use()).toBe(200);
+    const notSlid = await useResponse();
+    expect(notSlid.statusCode).toBe(200);
+    expect(notSlid.headers['set-cookie']).toBeUndefined();
     expect(await expiryOf()).toBe(start + 7 * DAY_MS);
 
     board.clock.set(new Date(start + SESSION_SLIDE_MS));
-    expect(await use()).toBe(200);
+    const slid = await useResponse();
+    expect(slid.statusCode).toBe(200);
+    expect(slid.headers['set-cookie']).toContain(`=${token}; `);
+    expect(slid.headers['set-cookie']).toContain(`Max-Age=${7 * 24 * 60 * 60}`);
     expect(await expiryOf()).toBe(start + SESSION_SLIDE_MS + 7 * DAY_MS);
 
     board.clock.set(new Date(start + SESSION_SLIDE_MS + 7 * DAY_MS + 1));
