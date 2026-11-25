@@ -19,3 +19,51 @@ export type {
   TaskValues,
   Transition,
 } from './types.js';
+export { taskDetail } from './detail.js';
+export { addNote, readNotes, toThreadNote, toWireNote } from './notes.js';
+export {
+  addTaskPr,
+  ackWatchStops,
+  removeTaskPr,
+  setTaskPrStates,
+  setTaskWatches,
+  stopTaskWatch,
+} from './pull-requests.js';
+export {
+  MAX_WAIT_DAYS,
+  ackRunMessages,
+  askTask,
+  failTask,
+  heartbeatTask,
+  pauseTask,
+  readRunInbox,
+  stoppedTask,
+  waitTask,
+  wakeTask,
+  type RunInbox,
+} from './run-actions.js';
+export { configureTask, editPrompt, setTaskProject, type TaskSettings } from './settings.js';
+export {
+  answerQuestion,
+  dismissQuestion,
+  forkTask,
+  markTaskDone,
+  replyToTask,
+  rerunTask,
+  sendToTask,
+  setTaskClosed,
+  setTaskNotBefore,
+  setTaskPriority,
+  stopTask,
+  takeBackTask,
+  wakeTaskNow,
+  type ForkInput,
+} from './user-actions.js';
+export {
+  TASK_VOCABULARY,
+  onlyKnown,
+  requireKnown,
+  unknownValue,
+  type Vocabulary,
+} from './vocabulary.js';
+export type { Actor, NoteDraft, NoteRow } from './types.js';

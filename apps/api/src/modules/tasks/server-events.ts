@@ -5,7 +5,7 @@ import type { Priority, TaskStatus } from '@agent-board/contract';
 import { note } from '../../db/schema/index.js';
 import type { ScopedDatabase } from '../database/index.js';
 
-export const TAKE_BACK_MINUTES = 15;
+export const TAKE_BACK_MINUTES = 20;
 
 export type ServerEvent =
   | { type: 'done' }

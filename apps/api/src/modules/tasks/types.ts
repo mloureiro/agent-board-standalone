@@ -1,8 +1,35 @@
-import type { TaskActor, TaskCreator, TaskStatus } from '@agent-board/contract';
+import type {
+  NoteAuthor,
+  NoteKind,
+  TaskActor,
+  TaskCreator,
+  TaskStatus,
+} from '@agent-board/contract';
 
-import type { task } from '../../db/schema/index.js';
+import type { note, task } from '../../db/schema/index.js';
 
 export type TaskRow = typeof task.$inferSelect;
+export type NoteRow = typeof note.$inferSelect;
+
+export interface Actor {
+  by: string;
+  via?: string | undefined;
+}
+
+export interface NoteDraft {
+  author: NoteAuthor | 'server';
+  kind: NoteKind;
+  body: string;
+  preview?: string | null | undefined;
+  suggestion?: string | undefined;
+  questions?: string | undefined;
+  answers?: string | undefined;
+  questionNoteId?: string | undefined;
+  by: string | null;
+  via?: string | undefined;
+  pending?: boolean | undefined;
+}
+
 export type TaskValues = Partial<typeof task.$inferInsert>;
 
 export type Edge = 'top' | 'bottom';
