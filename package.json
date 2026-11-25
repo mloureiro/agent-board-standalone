@@ -11,6 +11,8 @@
   "scripts": {
     "lint": "eslint .",
     "release:tags": "node tools/repo/src/release-tags.ts",
+    "catalogue:check": "node tools/repo/src/catalogue.ts --check",
+    "catalogue:fill": "node tools/repo/src/catalogue.ts --fill",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "pnpm -r --workspace-concurrency=4 run typecheck",
