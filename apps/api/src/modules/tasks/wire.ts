@@ -1,0 +1,57 @@
+import type { UiTaskListItem, WireTask, WireTaskPr } from '@agent-board/contract';
+
+import type { TaskRow } from './types.js';
+
+type UiTask = Omit<UiTaskListItem, 'lastNote' | 'context'>;
+
+export const toWireTask = (row: TaskRow, prs: WireTaskPr[] = []): WireTask => ({
+  id: row.id,
+  title: row.title,
+  input: row.input,
+  status: row.status,
+  createdBy: row.createdBy,
+  priority: row.priority,
+  model: row.model,
+  effort: row.effort,
+  requestedLane: row.requestedLane,
+  autoDone: row.autoDone,
+  agent: row.agent,
+  icon: row.icon,
+  labels: row.labels,
+  closed: row.closed,
+  machine: row.machine,
+  sessionId: row.sessionId,
+  projectId: row.projectId,
+  directoryId: row.directoryId,
+  legacyDirectory: row.legacyDirectory,
+  next: row.next,
+  head: row.head,
+  openQuestion: row.openQuestionNoteId !== null,
+  lane: row.lane,
+  borrowed: row.borrowed,
+  lastActiveAt: row.lastActiveAt?.toISOString() ?? null,
+  runStartedAt: row.runStartedAt?.toISOString() ?? null,
+  ...(row.runId === null ? {} : { run: row.runId }),
+  paused: row.pausedAt !== null,
+  notBefore: row.notBefore?.toISOString() ?? null,
+  scheduleId: row.scheduleId,
+  wakeAt: row.wakeAt?.toISOString() ?? null,
+  waitCheck: row.waitCheck,
+  woken: row.wokenAt !== null,
+  prs,
+  promptPrState: row.prState,
+  watches: row.watches,
+  watchStops: row.watchStops,
+  ...(row.forkOf === null ? {} : { forkOf: row.forkOf }),
+  ...(row.stopRequestedAt === null ? {} : { stopRequested: true as const }),
+  ...(row.movedBy === null ? {} : { movedBy: row.movedBy }),
+});
+
+export const toUiTask = (row: TaskRow, prs: WireTaskPr[] = []): UiTask => ({
+  ...toWireTask(row, prs),
+  proposed: row.proposed,
+  started: row.lastActiveAt !== null || row.sessionId !== null,
+  parentId: row.parentId,
+  createdAt: row.createdAt.toISOString(),
+  updatedAt: row.updatedAt.toISOString(),
+});

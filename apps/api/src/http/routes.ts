@@ -6,6 +6,7 @@ import {
 } from '@agent-board/contract';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
+import { asWrite } from '../auth/index.js';
 import type { ServerContext } from '../context.js';
 import { ApiError } from '../errors.js';
 import type { ApiConfig } from '../modules/registry.js';
@@ -56,7 +57,9 @@ export const registerRoutes = (
         ];
         if (handler === undefined)
           throw new ApiError('unavailable', `${route.name} is not served by this build yet`);
-        return handler({ input, principal: request.principal, request, reply, context });
+        return asWrite(route.method !== 'GET', () =>
+          handler({ input, principal: request.principal, request, reply, context }),
+        );
       },
     });
   }

@@ -69,12 +69,12 @@ export const registerGuards = (app: FastifyInstance, context: ServerContext): vo
       throw new ApiError('upgrade-required', `${verdict.message} Upgrade the client.`);
   });
 
-  app.addHook('onRequest', async (request) => {
+  app.addHook('onRequest', async (request, reply) => {
     const route = request.routeOptions.config.route;
     if (route === undefined || route.auth === 'public') return;
     request.principal =
       route.auth === 'machine'
         ? await authenticateMachine(context, request)
-        : await authenticateClient(context, request);
+        : await authenticateClient(context, request, reply);
   });
 };
