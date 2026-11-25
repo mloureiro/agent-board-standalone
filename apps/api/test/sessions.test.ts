@@ -232,8 +232,7 @@ describe('sessions', () => {
         .find((row) => row.tokenHash === hash)
         ?.expiresAt.getTime() ?? 0;
     const start = board.clock.now().getTime();
-    const useResponse = () =>
-      board.app.inject({ url: '/api/client/me', headers: cookieOf(token) });
+    const useResponse = () => board.app.inject({ url: '/api/client/me', headers: cookieOf(token) });
     const use = async () => (await useResponse()).statusCode;
 
     expect(await expiryOf()).toBe(start + 7 * DAY_MS);

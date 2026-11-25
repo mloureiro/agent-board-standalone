@@ -31,7 +31,11 @@ export const createServer = async (
   provided: ServerServices,
   options: ServerOptions = {},
 ): Promise<FastifyInstance> => {
-  const app = Fastify({ logger: false, trustProxy: config.listen.trustProxy, bodyLimit: PUBLIC_BODY_LIMIT });
+  const app = Fastify({
+    logger: false,
+    trustProxy: config.listen.trustProxy,
+    bodyLimit: PUBLIC_BODY_LIMIT,
+  });
   const services: ServerServices =
     config.signIn.mode === 'no-login'
       ? {
