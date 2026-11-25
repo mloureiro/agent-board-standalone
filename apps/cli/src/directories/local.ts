@@ -11,6 +11,9 @@ export interface LocalDirectory {
   readonly path: string;
   readonly repo: string | null;
   readonly isDefault: boolean;
+  readonly label: string | null;
+  readonly lane: string | null;
+  readonly ciIgnore: readonly string[];
 }
 
 export interface LocalDirectories {
@@ -19,9 +22,22 @@ export interface LocalDirectories {
   readonly defaultProject: string | null;
 }
 
+export function normalizePath(target: string): string {
+  const resolved = path.resolve(target);
+  return resolved.length > 1 && resolved.endsWith('/') ? resolved.slice(0, -1) : resolved;
+}
+
 function entryOf(value: unknown): LocalDirectory | null {
   if (value === null || typeof value !== 'object') return null;
-  const { id, path: directory, repo, default: isDefault } = value as Record<string, unknown>;
+  const {
+    id,
+    path: directory,
+    repo,
+    default: isDefault,
+    label,
+    lane,
+    ciIgnore,
+  } = value as Record<string, unknown>;
   if (typeof directory !== 'string' || !path.isAbsolute(directory)) return null;
   if (typeof id !== 'string' || !directoryId.safeParse(id).success) return null;
   return {
@@ -29,6 +45,11 @@ function entryOf(value: unknown): LocalDirectory | null {
     path: directory,
     repo: typeof repo === 'string' ? repo : null,
     isDefault: isDefault === true,
+    label: typeof label === 'string' ? label : null,
+    lane: typeof lane === 'string' ? lane : null,
+    ciIgnore: Array.isArray(ciIgnore)
+      ? ciIgnore.filter((pattern): pattern is string => typeof pattern === 'string')
+      : [],
   };
 }
 

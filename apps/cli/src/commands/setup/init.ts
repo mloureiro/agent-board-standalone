@@ -36,7 +36,8 @@ import { ApiError } from '../../transport/errors.js';
 import { handshake } from '../../transport/handshake.js';
 import { sendRequest } from '../../transport/request.js';
 import { parsePublicVersion } from '../../transport/server-info.js';
-import { httpDeps, machineCaller } from '../../transport/session.js';
+import { httpDeps, machineCaller, openSession } from '../../transport/session.js';
+import { convertLegacyDirectories, reportLegacy } from '../../directories/index.js';
 import { assertCompatible } from '../../transport/compatibility.js';
 import type { Context } from '../context.js';
 
@@ -192,6 +193,11 @@ export async function runInit(ctx: Context, options: InitOptions): Promise<void>
       signer === null ? '' : ` (requests are signed; key in ${SIGNING_KEY_FILE})`
     }`,
   );
+  if (info.legacyDirs) {
+    const opened = await openSession({ rt: ctx.rt, dirs, dryRun: false });
+    const report = await convertLegacyDirectories(opened, dirs.config);
+    if (report !== null) reportLegacy(report, ctx.out);
+  }
 }
 
 export function registerInit(program: Command, withContext: (command: Command) => Context): void {

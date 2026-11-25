@@ -35,10 +35,16 @@ export interface TestRuntimeOptions {
   readonly env?: Readonly<Record<string, string | undefined>>;
   readonly platform?: NodeJS.Platform;
   readonly fetch?: typeof fetch;
-  readonly exec?: (file: string, args: readonly string[], options: ExecOptions) => ExecResult;
+  readonly exec?: (
+    file: string,
+    args: readonly string[],
+    options: ExecOptions,
+  ) => ExecResult | Promise<ExecResult>;
   readonly overrideDirs?: boolean;
   readonly cwd?: string;
   readonly stdin?: string;
+  readonly answers?: readonly string[];
+  readonly tty?: boolean;
   readonly interrupt?: AbortSignal;
   readonly spawn?: (
     file: string,
@@ -63,11 +69,16 @@ export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
           AGENT_BOARD_STATE_DIR: path.join(root, 'state'),
           AGENT_BOARD_RUN_DIR: path.join(root, 'run'),
         };
+  const pending = [...(options.answers ?? [])];
   const rt: Runtime = {
     env: { ...dirEnv, ...options.env },
     interrupt: options.interrupt ?? new AbortController().signal,
     cwd: () => options.cwd ?? root,
     readStdin: () => Promise.resolve(options.stdin ?? ''),
+    ask: (question) => {
+      captured.stderr += question;
+      return Promise.resolve(pending.shift() ?? null);
+    },
     spawnInteractive: (file, args, spawnOptions) => {
       spawnCalls.push({ file, args, options: spawnOptions });
       return Promise.resolve(options.spawn?.(file, args, spawnOptions) ?? 0);
@@ -79,7 +90,7 @@ export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
       stderr: (text) => {
         captured.stderr += text;
       },
-      stdoutIsTty: false,
+      stdoutIsTty: options.tty === true,
       stderrIsTty: false,
     },
     fetch: options.fetch ?? globalThis.fetch,

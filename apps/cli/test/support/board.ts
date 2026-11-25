@@ -14,6 +14,7 @@ export interface FakeBoardOptions {
   readonly features?: readonly string[];
   readonly extra?: (request: SeenRequest) => Answer | undefined | Promise<Answer | undefined>;
   readonly keyId?: string | null;
+  readonly machineVersion?: () => Record<string, unknown>;
 }
 
 export interface FakeBoard extends FakeServer {
@@ -79,6 +80,7 @@ export async function startBoard(options: FakeBoardOptions = {}): Promise<FakeBo
           legacyDirs: false,
           grant: false,
           requestSignature: signature,
+          ...options.machineVersion?.(),
         },
       };
     }

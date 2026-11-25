@@ -12,6 +12,9 @@ export interface ServerInfo {
   readonly keyId: string | null;
   readonly machine: string | null;
   readonly grant: boolean;
+  readonly legacyDirs: boolean;
+  readonly agentsVersion: number | null;
+  readonly feedsIndex: string | null;
 }
 
 function record(value: unknown, what: string): Record<string, unknown> {
@@ -56,6 +59,9 @@ export function parsePublicVersion(json: unknown): ServerInfo {
     keyId: null,
     machine: null,
     grant: false,
+    legacyDirs: false,
+    agentsVersion: null,
+    feedsIndex: null,
   };
 }
 
@@ -68,5 +74,8 @@ export function parseMachineVersion(json: unknown): ServerInfo {
     keyId: typeof body.keyId === 'string' ? body.keyId : null,
     machine: typeof body.machine === 'string' ? body.machine : null,
     grant: body.grant === true,
+    legacyDirs: body.legacyDirs === true,
+    agentsVersion: typeof body.agentsVersion === 'number' ? body.agentsVersion : null,
+    feedsIndex: typeof body.feedsIndex === 'string' ? body.feedsIndex : null,
   };
 }

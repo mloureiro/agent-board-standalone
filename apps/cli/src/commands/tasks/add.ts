@@ -15,7 +15,7 @@ import {
   coveringDirectory,
   readLocalDirectories,
   type LocalDirectories,
-  machineDirectories,
+  syncDirectories,
   type MachineDirectory,
 } from '../../directories/index.js';
 import { readNoteFile } from '../../input/note-file.js';
@@ -63,12 +63,12 @@ function proposalDirectory(
   return row;
 }
 
-interface Placement {
+export interface Placement {
   readonly directoryId: string | null;
   readonly projectId: string | undefined;
 }
 
-async function place(
+export async function place(
   ctx: Context,
   s: Session,
   options: {
@@ -78,13 +78,12 @@ async function place(
     defaultProject: string | null;
   },
 ): Promise<Placement> {
-  const local = readLocalDirectories(ctx.dirs.config);
   const fallbackProject =
     options.explicitProject ?? options.parent?.projectId ?? options.defaultProject ?? undefined;
-  if (!local.configured || !s.supports('directories')) {
+  if (!readLocalDirectories(ctx.dirs.config).configured || !s.supports('directories')) {
     return { directoryId: null, projectId: fallbackProject };
   }
-  const rows = await machineDirectories(s, local);
+  const { local, rows } = await syncDirectories(s, { configDir: ctx.dirs.config, say: ctx.err });
   const parentDirectory = options.parent?.directoryId ?? null;
   const inherited =
     options.here || parentDirectory === null
