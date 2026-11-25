@@ -214,6 +214,10 @@ export class WatchStore {
     renameSync(staging, file);
   }
 
+  deleteEvent(event: Pick<WatchEvent, 'id' | 'task'>): void {
+    rmSync(path.join(this.eventsDir, event.task, `${event.id}.json`), { force: true });
+  }
+
   events(task: string): WatchEvent[] {
     const directory = path.join(this.eventsDir, task);
     if (!existsSync(directory)) return [];

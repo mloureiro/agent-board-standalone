@@ -23,6 +23,12 @@ fn main() {
         "tab_select",
         "tab_close",
         "tab_cycle",
+        "tab_split",
+        "tab_move",
+        "pane_close",
+        "pane_focus",
+        "split_resize",
+        "tab_focused",
         "tab_navigate",
         "tab_title",
     ]);

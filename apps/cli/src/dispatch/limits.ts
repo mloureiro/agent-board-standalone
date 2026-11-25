@@ -14,6 +14,7 @@ export const TASK_FILES_KEEP_MS = 14 * 24 * 60 * 60 * 1000;
 export const TASK_LOOKUPS_PER_TICK = 20;
 export const PR_REFRESH_INTERVAL_MS = 10 * 60_000;
 export const PR_LOOKUP_TIMEOUT_MS = 30_000;
+export const PR_REFRESH_BUDGET_MS = 30_000;
 export const GH_MAX_BYTES = 8 * 1024 * 1024;
 
 export const WATCH_HEARTBEAT_STALE_MS = 30_000;

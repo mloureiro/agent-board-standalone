@@ -3,7 +3,7 @@ use crate::tab_registry::TabRegistry;
 use crate::windows;
 use agent_board_client_core::ids::ServerId;
 use agent_board_client_core::page_input::{self, TabIntent};
-use agent_board_client_core::tabs::{Effect, HOME, PaneView, TabId, Tabs};
+use agent_board_client_core::tabs::{Effect, HOME, LayoutView, TabId, Tabs};
 use tauri::{AppHandle, State, Webview};
 
 const UNKNOWN: &str = "unknown server";
@@ -28,7 +28,7 @@ pub fn navigate(tabs: &mut Tabs, tab: TabId, intent: TabIntent, path: &str) -> V
 pub async fn tabs_snapshot(
     webview: Webview,
     registry: State<'_, TabRegistry>,
-) -> Result<PaneView, String> {
+) -> Result<LayoutView, String> {
     registry
         .view(server_of(&webview)?)
         .ok_or_else(|| UNKNOWN.to_owned())
@@ -50,6 +50,62 @@ pub async fn tab_close(app: AppHandle, webview: Webview, tab: TabId) -> Result<(
 pub async fn tab_cycle(app: AppHandle, webview: Webview, dir: String) -> Result<(), String> {
     let next = page_input::tab_direction(&dir).map_err(input)?;
     dispatch(&app, server_of(&webview)?, move |tabs| tabs.cycle(next));
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn tab_split(app: AppHandle, webview: Webview) -> Result<(), String> {
+    dispatch(&app, server_of(&webview)?, Tabs::split_tab);
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn tab_move(
+    app: AppHandle,
+    webview: Webview,
+    tab: TabId,
+    pane: usize,
+) -> Result<(), String> {
+    dispatch(&app, server_of(&webview)?, move |tabs| {
+        tabs.move_tab(tab, pane)
+    });
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn pane_close(app: AppHandle, webview: Webview, pane: usize) -> Result<(), String> {
+    dispatch(&app, server_of(&webview)?, move |tabs| {
+        tabs.close_pane(pane)
+    });
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn pane_focus(app: AppHandle, webview: Webview, pane: usize) -> Result<(), String> {
+    dispatch(&app, server_of(&webview)?, move |tabs| {
+        tabs.focus_pane(pane)
+    });
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn split_resize(
+    app: AppHandle,
+    webview: Webview,
+    index: usize,
+    ratio: f64,
+    commit: bool,
+) -> Result<(), String> {
+    dispatch(&app, server_of(&webview)?, move |tabs| {
+        tabs.resize(index, ratio, commit)
+    });
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn tab_focused(app: AppHandle, webview: Webview) -> Result<(), String> {
+    let (server, tab) = windows::tab_of_label(webview.label()).ok_or_else(|| UNKNOWN.to_owned())?;
+    dispatch(&app, server, move |tabs| tabs.focus_tab(tab));
     Ok(())
 }
 

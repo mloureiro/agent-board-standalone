@@ -8,7 +8,7 @@ use agent_board_client_core::layout;
 use agent_board_client_core::log::line;
 use agent_board_client_core::servers::ServerEntry;
 use agent_board_client_core::tab_file;
-use agent_board_client_core::tabs::{HOME, TabId};
+use agent_board_client_core::tabs::TabId;
 use std::sync::Arc;
 use tauri::webview::WebviewBuilder;
 use tauri::window::WindowBuilder;
@@ -50,6 +50,10 @@ pub fn tab_of_label(label: &str) -> Option<(ServerId, TabId)> {
 
 pub fn server_of_label(label: &str) -> Option<ServerId> {
     server_of_bar_label(label).or_else(|| tab_of_label(label).map(|(server, _)| server))
+}
+
+pub fn server_of_window_label(label: &str) -> Option<ServerId> {
+    ServerId::parse(label.strip_prefix(SERVER_PREFIX)?).ok()
 }
 
 pub fn focused_server(app: &AppHandle) -> Option<ServerId> {
@@ -151,7 +155,7 @@ pub fn create_server_window(app: &AppHandle, entry: &ServerEntry) -> tauri::Resu
     if let Some(event) = restored.log {
         eprintln!("{}", line(server, event));
     }
-    let home_selected = restored.tabs.selected() == HOME;
+    let home_selected = restored.tabs.home_selected();
     app.state::<TabRegistry>()
         .insert(server, restored.tabs, origin.clone());
 
