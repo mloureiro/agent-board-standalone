@@ -24,8 +24,9 @@ afterAll(async () => {
   await fake.stop();
 });
 
-function authnRequest(id: string): string {
-  const xml = `<samlp:AuthnRequest xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="${id}" Version="2.0" IssueInstant="${new Date().toISOString()}" AssertionConsumerServiceURL="${ACS_URL}" ProtocolBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"><saml:Issuer>${SP_ENTITY_ID}</saml:Issuer></samlp:AuthnRequest>`;
+function authnRequest(id: string, acsUrl = ACS_URL): string {
+  const idAttribute = id === '' ? '' : ` ID="${id}"`;
+  const xml = `<samlp:AuthnRequest xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"${idAttribute} Version="2.0" IssueInstant="${new Date().toISOString()}" AssertionConsumerServiceURL="${acsUrl}" ProtocolBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"><saml:Issuer>${SP_ENTITY_ID}</saml:Issuer></samlp:AuthnRequest>`;
   return deflateRawSync(Buffer.from(xml)).toString('base64');
 }
 
@@ -112,6 +113,12 @@ describe('fake SAML IdP', () => {
     const url = new URL(`${fake.url}/sso`);
     url.searchParams.set('SAMLRequest', Buffer.from('not deflated').toString('base64'));
     expect((await fetch(url)).status).toBe(400);
+    url.searchParams.set('SAMLRequest', authnRequest(''));
+    expect((await fetch(url)).status).toBe(400);
+    url.searchParams.set('SAMLRequest', authnRequest('_request-8', 'http://evil.test/acs'));
+    const foreign = await fetch(url);
+    expect(foreign.status).toBe(400);
+    expect(await foreign.text()).not.toContain('SAMLResponse');
   });
 
   it('answers the next request with a signed failure status once, then recovers', async () => {
