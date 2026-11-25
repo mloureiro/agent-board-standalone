@@ -8,4 +8,6 @@ export { ErrorBoundaryPanel } from './ErrorBoundaryPanel.js';
 export { SignOutButton } from './SignOutButton.js';
 export { ToastProvider, Toasts, createToastHub, useToastHub, useToasts } from './toasts.js';
 export type { Toast, ToastHub } from './toasts.js';
-export { Markdown } from './Markdown.js';
+export { LinkRulesProvider, Markdown } from './Markdown.js';
+export { parseLinkRules } from './link-rules.js';
+export type { LinkRule } from './link-rules.js';
