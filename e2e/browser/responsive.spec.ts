@@ -7,7 +7,9 @@ import {
   answerJourney,
   boardJourney,
   expectStdinContaining,
+  insideVisualViewport,
   newTaskJourney,
+  openKeyboard,
   openTask,
   projectFilterJourney,
   releaseTask,
@@ -41,18 +43,13 @@ test.describe('phone viewport journeys on a no-login board', () => {
       await openTask(page, w, marker);
       const reply = replyBox(page);
       await reply.focus();
-      const viewport = page.viewportSize();
-      if (viewport === null) throw new Error('the phone project sets a viewport');
-      await page.setViewportSize({
-        width: viewport.width,
-        height: Math.round(viewport.height * KEYBOARD_HEIGHT_RATIO),
-      });
+      await openKeyboard(page, KEYBOARD_HEIGHT_RATIO);
       await expect(reply).toBeFocused();
-      await expect(actionPanel(page)).toBeInViewport({ ratio: 1 });
-      await expect(sendButton(page)).toBeInViewport({ ratio: 1 });
+      await expect.poll(() => insideVisualViewport(actionPanel(page))).toBe(true);
+      await expect.poll(() => insideVisualViewport(sendButton(page))).toBe(true);
       const text = `typed with the keyboard open ${marker}`;
       await reply.fill(text);
-      await expect(actionPanel(page)).toBeInViewport({ ratio: 1 });
+      await expect.poll(() => insideVisualViewport(actionPanel(page))).toBe(true);
       await sendButton(page).click();
       await expectStdinContaining(w, text);
     } finally {

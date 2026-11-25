@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 
 import { enrolledMachine } from '../src/fixtures/machines.js';
 import { useBoard } from '../src/harness/playwright.js';
+import { settleFrames } from '../src/steps/polling.js';
 import {
   CLIENT_PATHS,
   POLL_TIMEOUT_MS,
@@ -23,6 +24,8 @@ import {
   uniqueTitle,
   waitForStatus,
 } from '../src/steps/board.js';
+
+const REFRESH_FAILURE = /refresh|could(n.t| not)|unable|failed|not answering|retry/i;
 
 test.describe('board', () => {
   const harness = useBoard({ parts: ['api', 'web', 'cli'], features: [], auth: 'no-login' });
@@ -60,6 +63,8 @@ test.describe('board', () => {
     await openBoard(page, account);
     await expect(cardIn(page, 'backlog', stale)).toBeVisible({ timeout: UI_TIMEOUT_MS });
 
+    const refreshWarning = page.getByRole('alert').filter({ hasText: REFRESH_FAILURE });
+    await expect(refreshWarning).toHaveCount(0);
     await page.route(`**${CLIENT_PATHS.list}*`, (route) =>
       route.fulfill({
         status: 503,
@@ -70,7 +75,7 @@ test.describe('board', () => {
     const fresh = uniqueTitle('unseen card');
     await createTitled(account, fresh, { prompt: fresh, status: 'backlog' });
 
-    await expect(page.getByRole('alert')).toBeVisible({ timeout: UI_TIMEOUT_MS });
+    await expect(refreshWarning).toBeVisible({ timeout: UI_TIMEOUT_MS });
     await expect(cardIn(page, 'backlog', stale)).toBeVisible();
     await expect(card(page, fresh)).toHaveCount(0);
   });
@@ -149,27 +154,31 @@ test.describe('board', () => {
 
     for (const refused of ['running', 'waiting'] as const) {
       await mouseDrag(page, cardIn(page, 'todo', title), column(page, refused));
-      await page.waitForTimeout(500);
+      await settleFrames(page);
       await expect(cardIn(page, 'todo', title)).toBeVisible();
       await expect(cardIn(page, refused, title)).toHaveCount(0);
       expect(await statusOf(account, id)).toBe('todo');
     }
   });
 
-  test('[web-029] a touch drag moves a card between columns on a phone @phone', async ({
-    page,
-  }) => {
-    const account = await seedAccount(harness.board);
-    const title = uniqueTitle('touch moves');
-    const id = await createTitled(account, title, { prompt: title, status: 'backlog' });
-    await openBoard(page, account);
-    await expect(cardIn(page, 'backlog', title)).toBeVisible({ timeout: UI_TIMEOUT_MS });
+  test(
+    '[web-029] a touch drag moves a card between columns on a phone @phone',
+    {
+      tag: '@phone-only',
+    },
+    async ({ page }) => {
+      const account = await seedAccount(harness.board);
+      const title = uniqueTitle('touch moves');
+      const id = await createTitled(account, title, { prompt: title, status: 'backlog' });
+      await openBoard(page, account);
+      await expect(cardIn(page, 'backlog', title)).toBeVisible({ timeout: UI_TIMEOUT_MS });
 
-    await touchDrag(page, cardIn(page, 'backlog', title), column(page, 'todo'));
+      await touchDrag(page, cardIn(page, 'backlog', title), column(page, 'todo'));
 
-    await expect(cardIn(page, 'todo', title)).toBeVisible({ timeout: UI_TIMEOUT_MS });
-    await expect.poll(() => statusOf(account, id)).toBe('todo');
-  });
+      await expect(cardIn(page, 'todo', title)).toBeVisible({ timeout: UI_TIMEOUT_MS });
+      await expect.poll(() => statusOf(account, id)).toBe('todo');
+    },
+  );
 
   test('[web-032] a banner names a machine whose CLI is no longer accepted', async ({ page }) => {
     const account = await seedAccount(harness.board);

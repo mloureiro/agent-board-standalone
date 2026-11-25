@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 
 import { BOARD_EXPORT_FORMAT, parseBoardExportLine } from '@agent-board/contract';
 import { bindings, wrapSlot } from '@agent-board/sealing';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
 import {
   call,
@@ -31,6 +31,22 @@ import {
 const TOKEN_TEXT = /abm_[A-Za-z0-9_-]{43}/;
 const DATA_KEY_TEXT = /abk1_[A-Za-z0-9_-]{43}/;
 const NOTIFICATION_SETTING = 'notifications.desktop';
+
+const openContexts: BrowserContext[] = [];
+
+async function openSignedIn(
+  ...args: Parameters<typeof signedInPage>
+): ReturnType<typeof signedInPage> {
+  const opened = await signedInPage(...args);
+  openContexts.push(opened.context);
+  return opened;
+}
+
+test.afterEach(async () => {
+  await Promise.all(
+    openContexts.splice(0).map((context) => context.close().catch(() => undefined)),
+  );
+});
 
 function unique(prefix: string): string {
   return `${prefix}-${randomBytes(3).toString('hex')}`;
@@ -85,18 +101,18 @@ test.describe('[web-069] [web-070] [web-073] Settings', () => {
       expect(stored?.clientStatus).toBe('current');
       expect(stored?.usage).not.toBeNull();
 
-      const { page } = await signedInPage(browser, harness.board, user, key);
+      const { page } = await openSignedIn(browser, harness.board, user, key);
       await openSettings(page, SETTINGS_PAGES.machines);
       const row = rowOf(page, name);
       await expect(row).toBeVisible();
       await expect(row).toContainText(/current/i);
-      await expect(row).toContainText(/usage/i);
+      await expect(row).toContainText(/12,?345/);
     });
 
     test('[web-069] adds a machine and shows its token and data key once', async ({ browser }) => {
       const { user, key } = await prepare();
       const name = unique('added');
-      const { page } = await signedInPage(browser, harness.board, user, key);
+      const { page } = await openSignedIn(browser, harness.board, user, key);
       await openSettings(page, SETTINGS_PAGES.machines);
 
       await page.getByRole('button', { name: /^add machine$/i }).click();
@@ -130,7 +146,7 @@ test.describe('[web-069] [web-070] [web-073] Settings', () => {
       const before = await machine.cli(['tasks']);
       expect(before.code, before.stderr).toBe(0);
 
-      const { page } = await signedInPage(browser, harness.board, user, key);
+      const { page } = await openSignedIn(browser, harness.board, user, key);
       await openSettings(page, SETTINGS_PAGES.machines);
       await rowOf(page, name)
         .getByRole('button', { name: /^re-?issue/i })
@@ -154,7 +170,7 @@ test.describe('[web-069] [web-070] [web-073] Settings', () => {
       const name = unique('revoked');
       const machine = await enrolledMachine(harness.board, user, { key, name, init: false });
 
-      const { page } = await signedInPage(browser, harness.board, user, key);
+      const { page } = await openSignedIn(browser, harness.board, user, key);
       await openSettings(page, SETTINGS_PAGES.machines);
       await expect(rowOf(page, name)).toBeVisible();
       await rowOf(page, name)
@@ -234,13 +250,18 @@ test.describe('[web-069] [web-070] [web-073] Settings', () => {
     test("[web-070] shows each machine's feeds with their status", async ({ browser }) => {
       const { user, key } = await prepare();
       const target = await publish('idle');
-      const { page } = await signedInPage(browser, harness.board, user, key);
+      const { page } = await openSignedIn(browser, harness.board, user, key);
       await openSettings(page, SETTINGS_PAGES.feeds);
 
       await expect(page.getByText(target.name)).toBeVisible();
       const row = rowOf(page, feedName);
       await expect(row).toBeVisible();
-      await expect(row).toContainText(/idle|ok|paused|running|error|never/i);
+      await expect(row).toContainText(/idle/i);
+
+      await publish('paused');
+      await page.reload();
+      await openSettings(page, SETTINGS_PAGES.feeds);
+      await expect(rowOf(page, feedName)).toContainText(/paused/i);
     });
 
     test('[web-070] Run now, Pause and Resume each send their request for the feed', async ({
@@ -249,7 +270,7 @@ test.describe('[web-069] [web-070] [web-073] Settings', () => {
       const { user, key } = await prepare();
       const target = await publish('idle');
       await acknowledge(target);
-      const { page } = await signedInPage(browser, harness.board, user, key);
+      const { page } = await openSignedIn(browser, harness.board, user, key);
       await openSettings(page, SETTINGS_PAGES.feeds);
       const row = rowOf(page, feedName);
 
@@ -276,7 +297,7 @@ test.describe('[web-069] [web-070] [web-073] Settings', () => {
 
     const enable = async (browser: Parameters<typeof signedInPage>[0]): Promise<void> => {
       const { user, key } = await prepare();
-      const { context, page } = await signedInPage(browser, harness.board, user, key, {
+      const { context, page } = await openSignedIn(browser, harness.board, user, key, {
         notifications: 'granted',
         spy: true,
       });
@@ -288,72 +309,86 @@ test.describe('[web-069] [web-070] [web-073] Settings', () => {
       await context.close();
     };
 
-    test('[web-073] a task newly in Needs me fires a notification while the page is unfocused', async ({
-      browser,
-    }) => {
-      const { user, key } = await prepare();
-      const { page } = await signedInPage(browser, harness.board, user, key, {
-        notifications: 'granted',
-        spy: true,
-      });
-      await openSettings(page, SETTINGS_PAGES.notifications);
-      await toggle(page).check();
-      await expect
-        .poll(async () => settingValue(await readSettings(user, key), NOTIFICATION_SETTING))
-        .toBe(true);
+    test(
+      '[web-073] a task newly in Needs me fires a notification while the page is unfocused',
+      {
+        tag: '@chromium',
+      },
+      async ({ browser }) => {
+        const { user, key } = await prepare();
+        const { page } = await openSignedIn(browser, harness.board, user, key, {
+          notifications: 'granted',
+          spy: true,
+        });
+        await openSettings(page, SETTINGS_PAGES.notifications);
+        await toggle(page).check();
+        await expect
+          .poll(async () => settingValue(await readSettings(user, key), NOTIFICATION_SETTING))
+          .toBe(true);
 
-      await loseFocus(page);
-      const before = await notificationCount(page);
-      await createTask(harness.board, user, key, {
-        prompt: 'needs attention',
-        title: unique('attention'),
-        status: 'needs-me',
-      });
-      await expect.poll(() => notificationCount(page)).toBe(before + 1);
-    });
+        await loseFocus(page);
+        const before = await notificationCount(page);
+        await createTask(harness.board, user, key, {
+          prompt: 'needs attention',
+          title: unique('attention'),
+          status: 'needs-me',
+        });
+        await expect.poll(() => notificationCount(page)).toBe(before + 1);
+      },
+    );
 
-    test('[web-073] the on and off setting is read back from the server in a new context', async ({
-      browser,
-    }) => {
-      const { user, key } = await prepare();
-      await enable(browser);
+    test(
+      '[web-073] the on and off setting is read back from the server in a new context',
+      {
+        tag: '@chromium',
+      },
+      async ({ browser }) => {
+        const { user, key } = await prepare();
+        await enable(browser);
 
-      const second = await signedInPage(browser, harness.board, user, key, {
-        notifications: 'granted',
-        spy: true,
-      });
-      await openSettings(second.page, SETTINGS_PAGES.notifications);
-      await expect(toggle(second.page)).toBeChecked();
-      await toggle(second.page).uncheck();
-      await expect
-        .poll(async () => settingValue(await readSettings(user, key), NOTIFICATION_SETTING))
-        .toBe(false);
-      await second.context.close();
+        const second = await openSignedIn(browser, harness.board, user, key, {
+          notifications: 'granted',
+          spy: true,
+        });
+        await openSettings(second.page, SETTINGS_PAGES.notifications);
+        await expect(toggle(second.page)).toBeChecked();
+        await toggle(second.page).uncheck();
+        await expect
+          .poll(async () => settingValue(await readSettings(user, key), NOTIFICATION_SETTING))
+          .toBe(false);
+        await second.context.close();
 
-      const third = await signedInPage(browser, harness.board, user, key, {
-        notifications: 'granted',
-        spy: true,
-      });
-      await openSettings(third.page, SETTINGS_PAGES.notifications);
-      await expect(toggle(third.page)).not.toBeChecked();
-      await third.context.close();
-    });
+        const third = await openSignedIn(browser, harness.board, user, key, {
+          notifications: 'granted',
+          spy: true,
+        });
+        await openSettings(third.page, SETTINGS_PAGES.notifications);
+        await expect(toggle(third.page)).not.toBeChecked();
+        await third.context.close();
+      },
+    );
 
-    test('[web-073] a context without the permission grant does not fire', async ({ browser }) => {
-      const { user, key } = await prepare();
-      await enable(browser);
+    test(
+      '[web-073] a context without the permission grant does not fire',
+      {
+        tag: '@chromium',
+      },
+      async ({ browser }) => {
+        const { user, key } = await prepare();
+        await enable(browser);
 
-      const { page } = await signedInPage(browser, harness.board, user, key, { spy: true });
-      await loseFocus(page);
-      const title = unique('ungranted');
-      await createTask(harness.board, user, key, {
-        prompt: 'needs attention',
-        title,
-        status: 'needs-me',
-      });
-      await expect(page.getByText(title).first()).toBeVisible();
-      expect(await notificationCount(page)).toBe(0);
-    });
+        const { page } = await openSignedIn(browser, harness.board, user, key, { spy: true });
+        await loseFocus(page);
+        const title = unique('ungranted');
+        await createTask(harness.board, user, key, {
+          prompt: 'needs attention',
+          title,
+          status: 'needs-me',
+        });
+        await expect(page.getByText(title).first()).toBeVisible();
+        expect(await notificationCount(page)).toBe(0);
+      },
+    );
   });
 });
 
@@ -403,7 +438,7 @@ test.describe('[web-075] Settings › Account', () => {
 
   test('[web-075] adds and removes a passkey @chromium', async ({ browser }) => {
     const { user, key } = await prepare();
-    const { page } = await signedInPage(browser, harness.board, user, key);
+    const { page } = await openSignedIn(browser, harness.board, user, key);
     const authenticator = await withVirtualAuthenticator(page);
     const name = unique('e2e-passkey');
     await openSettings(page, SETTINGS_PAGES.account);
@@ -433,7 +468,7 @@ test.describe('[web-075] Settings › Account', () => {
 
   test('[web-075] exports the account as a downloaded file', async ({ browser }) => {
     const { user, key, taskIds } = await prepare();
-    const { page } = await signedInPage(browser, harness.board, user, key);
+    const { page } = await openSignedIn(browser, harness.board, user, key);
     await openSettings(page, SETTINGS_PAGES.account);
 
     const download = page.waitForEvent('download');
@@ -459,7 +494,7 @@ test.describe('[web-075] Settings › Account', () => {
     browser,
   }) => {
     const { user, key } = await prepare();
-    const { page } = await signedInPage(browser, harness.board, user, key);
+    const { page } = await openSignedIn(browser, harness.board, user, key);
     await openSettings(page, SETTINGS_PAGES.account);
 
     await page.getByRole('button', { name: /^delete account$/i }).click();
@@ -492,7 +527,7 @@ test.describe('[web-075] Settings › Account', () => {
         ),
       ],
     });
-    const { page } = await signedInPage(browser, harness.board, user, key);
+    const { page } = await openSignedIn(browser, harness.board, user, key);
     await openSettings(page, SETTINGS_PAGES.account);
 
     const chooser = page.waitForEvent('filechooser');

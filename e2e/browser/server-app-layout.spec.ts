@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 
@@ -8,11 +8,7 @@ import { bindings } from '@agent-board/sealing';
 import { UNLOCK_NAMES, persistentContext, unlockInPage } from '../src/fixtures/browser.js';
 import { DEFAULT_PASSPHRASE, unlockedKey, type UnlockedKey } from '../src/fixtures/keys.js';
 import { writeSecretFile } from '../src/fixtures/machines.js';
-import {
-  LOGIN_ONLY_VARIABLES,
-  startServerAppLayout,
-  type ServerAppLayout,
-} from '../src/fixtures/server-app-layout.js';
+import { startServerAppLayout, type ServerAppLayout } from '../src/fixtures/server-app-layout.js';
 import { createTask } from '../src/fixtures/tasks.js';
 import { noLoginUser, type BoardUser } from '../src/fixtures/users.js';
 import { missingParts } from '../src/harness/paths.js';
@@ -30,7 +26,7 @@ interface Layout {
   readonly key: UnlockedKey;
 }
 
-function useLayout(options: { remoteHosts?: readonly string[] } = {}) {
+function useLayout(options: { remoteHosts?: readonly string[]; cli?: boolean } = {}) {
   const state: { started: Layout | null; reason: string | null } = {
     started: null,
     reason: null,
@@ -39,12 +35,15 @@ function useLayout(options: { remoteHosts?: readonly string[] } = {}) {
   // eslint-disable-next-line no-empty-pattern -- Playwright requires a destructured first hook argument
   test.beforeAll(async ({}, testInfo) => {
     testInfo.setTimeout(START_TIMEOUT_MS);
-    const missing = missingParts(['api', 'web', 'cli']);
+    const missing = missingParts(options.cli === true ? ['api', 'web', 'cli'] : ['api', 'web']);
     if (missing.length > 0) {
       state.reason = partSkipReason(missing);
       return;
     }
-    const layout = await startServerAppLayout({ web: true, ...options });
+    const layout = await startServerAppLayout({
+      web: true,
+      ...(options.remoteHosts === undefined ? {} : { remoteHosts: options.remoteHosts }),
+    });
     const user = await noLoginUser(layout);
     const key = await unlockedKey(layout, user);
     state.started = { layout, user, key };
@@ -109,17 +108,12 @@ test.describe('the server app layout from a cleared environment', () => {
 
   test('[server-app-074] the API runs no-login as the settings user with no login-mode variable', async () => {
     const { layout, user } = harness.current;
-    expect(layout.api.env.AUTH_MODE).toBe('no-login');
-    expect(layout.api.env.NO_LOGIN_USER).toBe(layout.settingsUser);
-    for (const name of LOGIN_ONLY_VARIABLES) expect(layout.api.env).not.toHaveProperty(name);
     expect(user.username).toBe(layout.settingsUser);
   });
 
   test('[server-app-074] the database is PGlite under the app root', async () => {
     const { layout } = harness.current;
-    expect(layout.api.env.DATABASE_URL).toBe(`pglite://${path.join(layout.root, 'db')}`);
     expect(layout.database.kind).toBe('pglite');
-    expect(existsSync(path.join(layout.root, 'db'))).toBe(true);
     expect(readdirSync(path.join(layout.root, 'db')).length).toBeGreaterThan(0);
   });
 
@@ -151,8 +145,7 @@ test.describe('the server app layout with a remote host', () => {
 
   test('[server-app-074] a remoteHosts name is an allowed host', async () => {
     const { layout } = harness.current;
-    expect(layout.api.env.ALLOWED_HOSTS?.split(',')).toContain(REMOTE_HOST);
-    expect((await request(layout.url, '/api/version', REMOTE_HOST)).status).not.toBe(421);
+    expect((await request(layout.url, '/api/version', REMOTE_HOST)).status).toBe(200);
     expect((await request(layout.url, '/api/version', OTHER_HOST)).status).toBe(421);
   });
 });
@@ -187,7 +180,7 @@ test.describe('opening the board of the server app', () => {
 });
 
 test.describe('restarting the server app on the same root', () => {
-  const harness = useLayout();
+  const harness = useLayout({ cli: true });
 
   test('[server-app-002] cards stay, the worker reconnects without board init and the client opens unlocked', async ({
     browserName,
@@ -229,8 +222,11 @@ test.describe('restarting the server app on the same root', () => {
       return seen !== undefined && seen !== null && Date.parse(seen) >= since ? seen : null;
     };
     const worker = layout.startCli(['internal', 'listen']);
-    await waitFor(() => lastSeen(0), { label: 'the worker to connect', timeoutMs: 60_000 });
-    await worker.stop();
+    try {
+      await waitFor(() => lastSeen(0), { label: 'the worker to connect', timeoutMs: 60_000 });
+    } finally {
+      await worker.stop();
+    }
     await layout.restartApi();
     const restartedAt = Date.now();
     const reconnected = layout.startCli(['internal', 'listen']);

@@ -6,9 +6,8 @@ import { runApi } from '../src/harness/api.js';
 import { useBoard } from '../src/harness/playwright.js';
 import { pairCodeIn, readBrowserKeyStorage, shortTempPath } from '../src/steps/signature.js';
 
-const controlSocket = shortTempPath('web-control.sock');
-
-test.describe('browser client request signature', () => {
+function useSigningBoard(label: string) {
+  const controlSocket = shortTempPath(label);
   const harness = useBoard({
     parts: ['api', 'web'],
     features: ['request-signature', 'pairing', 'devices'],
@@ -20,20 +19,26 @@ test.describe('browser client request signature', () => {
     rmSync(controlSocket, { force: true });
   });
 
-  async function pairWithCode(page: Page): Promise<void> {
-    const printed = await runApi(harness.board.api, ['pair']);
-    const code = pairCodeIn(printed.stdout);
-    expect(code).not.toBeNull();
-    await page.getByLabel(/pairing code|code/i).fill(code as string);
-    await page.getByRole('button', { name: /^pair/i }).click();
-  }
+  return harness;
+}
+
+async function pairWithCode(page: Page, harness: ReturnType<typeof useBoard>): Promise<void> {
+  const printed = await runApi(harness.board.api, ['pair']);
+  const code = pairCodeIn(printed.stdout);
+  expect(code).not.toBeNull();
+  await page.getByLabel(/pairing code|code/i).fill(code as string);
+  await page.getByRole('button', { name: /^pair/i }).click();
+}
+
+test.describe('browser client request signature', () => {
+  const harness = useSigningBoard('web-control.sock');
 
   test('[web-104] a signing server asks for pairing, accepts a code from pair and then loads the board', async ({
     page,
   }) => {
     await page.goto(harness.board.url);
     await expect(page.getByLabel(/pairing code|code/i)).toBeVisible();
-    await pairWithCode(page);
+    await pairWithCode(page, harness);
     await expect(page.getByRole('main')).toBeVisible();
     await expect(page.getByLabel(/pairing code|code/i)).toHaveCount(0);
   });
@@ -42,19 +47,24 @@ test.describe('browser client request signature', () => {
     page,
   }) => {
     await page.goto(harness.board.url);
-    await pairWithCode(page);
+    await pairWithCode(page, harness);
     await expect(page.getByRole('main')).toBeVisible();
     const storage = await readBrowserKeyStorage(page);
     expect(storage.databases).toHaveLength(1);
-    expect(storage.keys).toHaveLength(1);
-    expect(storage.keys[0]?.extractable).toBe(false);
+    const privateKeys = storage.keys.filter((key) => key.type === 'private');
+    expect(privateKeys).toHaveLength(1);
+    expect(privateKeys[0]?.extractable).toBe(false);
   });
+});
+
+test.describe('browser client request signature', () => {
+  const harness = useSigningBoard('web-revoke.sock');
 
   test('[web-104] Settings › Devices lists the key and revoking it returns the client to pairing', async ({
     page,
   }) => {
     await page.goto(harness.board.url);
-    await pairWithCode(page);
+    await pairWithCode(page, harness);
     await expect(page.getByRole('main')).toBeVisible();
     await page.getByRole('link', { name: /settings/i }).click();
     await page

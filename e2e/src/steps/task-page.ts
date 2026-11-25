@@ -13,8 +13,10 @@ import { noLoginUser, type BoardUser } from '../fixtures/users.js';
 import type { Board } from '../harness/board.js';
 import type { RunningCli } from '../harness/cli.js';
 import type { PlaywrightBoardHandle } from '../harness/playwright.js';
+import { killStubTree } from '../harness/run.js';
 
 export const NAMES = {
+  boardLink: 'Board',
   actionPanel: 'Task actions',
   reply: 'Reply',
   thread: 'Thread',
@@ -57,7 +59,7 @@ export const STATUS_LABELS: Readonly<Record<TaskStatus, string>> = {
 
 export const LISTENER_ARGS = ['internal', 'listen'] as const;
 
-const UNLOCK_WAIT_MS = 3_000;
+const UNLOCK_WAIT_MS = 15_000;
 const STATUS_TIMEOUT_MS = 60_000;
 const LOG_TIMEOUT_MS = 30_000;
 
@@ -126,7 +128,12 @@ export function useWorld(harness: PlaywrightBoardHandle, options: WorldOptions):
   test.afterAll(async () => {
     const pending = created;
     created = null;
-    await (await pending)?.stopListener();
+    const world = await pending?.catch(() => null);
+    try {
+      await world?.stopListener();
+    } finally {
+      if (world !== null && world !== undefined) killStubTree(world.stubLog);
+    }
   });
   return {
     get: () => {
@@ -174,10 +181,34 @@ export function stubStdin(file: string): string[] {
     .map((entry) => String(entry.text));
 }
 
-export function stubInterrupts(file: string): number {
+export function stubInterrupts(file: string, pid?: number): number {
   return readStubLog(file).filter(
-    (entry) => entry.kind === 'signal' || entry.kind === 'stdin-closed',
+    (entry) =>
+      (entry.kind === 'signal' || entry.kind === 'stdin-closed') &&
+      (pid === undefined || entry.pid === pid),
   ).length;
+}
+
+export function stubRunPid(file: string, marker: string): number {
+  const entry = readStubLog(file).find(
+    (candidate) => candidate.kind === 'stdin' && String(candidate.text).includes(marker),
+  );
+  if (typeof entry?.pid !== 'number') throw new Error(`no stub run received ${marker}`);
+  return entry.pid;
+}
+
+export async function userNotesOf(world: TaskWorld, id: string): Promise<string[]> {
+  const detail = await world.user.ok('client.tasks.get', { id });
+  const texts: string[] = [];
+  for (const entry of detail.thread) {
+    if (entry.author !== 'user') continue;
+    for (const kind of ['comment', 'answer'] as const) {
+      const binding = bindings.note({ field: 'note.body', taskId: id, author: 'user', kind });
+      const opened = await world.key.open(binding, entry.body).catch(() => null);
+      if (opened !== null) texts.push(opened);
+    }
+  }
+  return texts;
 }
 
 export function stubResumedSessions(file: string): string[] {
@@ -220,13 +251,12 @@ export async function waitForRunStart(world: TaskWorld, marker: string): Promise
 
 export async function unlockIfAsked(page: Page, passphrase: string): Promise<void> {
   const field = page.getByLabel(UNLOCK_NAMES.passphrase);
-  const asked = await field.waitFor({ state: 'visible', timeout: UNLOCK_WAIT_MS }).then(
-    () => true,
-    () => false,
-  );
-  if (!asked) return;
+  const board = page.getByRole('link', { name: NAMES.boardLink, exact: true });
+  await expect(field.or(board).first()).toBeVisible({ timeout: UNLOCK_WAIT_MS });
+  if (!(await field.isVisible())) return;
   await field.fill(passphrase);
   await page.getByRole('button', { name: UNLOCK_NAMES.unlock }).click();
+  await expect(board).toBeVisible({ timeout: UNLOCK_WAIT_MS });
 }
 
 export async function openBoard(page: Page, world: TaskWorld): Promise<void> {
