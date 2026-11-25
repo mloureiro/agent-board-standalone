@@ -239,3 +239,23 @@ export const ackRunMessages = async (
       .set({ stopRequestedAt: null, stopMessageId: null })
       .where(eq(task.id, id));
 };
+
+export const attachSession = async (
+  tx: ScopedDatabase,
+  id: string,
+  machine: string,
+): Promise<TaskRow> => {
+  const current = await getTask(tx, id);
+  if (current.status === 'running')
+    throw new ApiError(
+      'conflict',
+      'the task is running: its headless run owns the session, watch its transcript instead',
+    );
+  if (current.sessionId === null) throw new ApiError('conflict', 'the task has no session');
+  if (current.machine !== machine)
+    throw new ApiError(
+      'forbidden',
+      `the session lives on ${current.machine ?? 'no machine'}, not on ${machine}`,
+    );
+  return current;
+};

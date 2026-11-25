@@ -41,16 +41,16 @@ export const TASK_VOCABULARY: Vocabulary = {
 };
 
 export interface VocabularyItem {
-  status?: string;
-  priority?: string;
-  effort?: string | null;
-  next?: string;
-  createdBy?: string;
-  movedBy?: string;
-  promptPrState?: string | null;
+  status?: string | undefined;
+  priority?: string | undefined;
+  effort?: string | null | undefined;
+  next?: string | undefined;
+  createdBy?: string | undefined;
+  movedBy?: string | undefined;
+  promptPrState?: string | null | undefined;
   prs?: readonly { state: string | null }[];
-  author?: string;
-  kind?: string;
+  author?: string | undefined;
+  kind?: string | undefined;
 }
 
 export interface UnknownValue {

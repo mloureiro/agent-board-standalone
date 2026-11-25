@@ -33,6 +33,7 @@ export {
   MAX_WAIT_DAYS,
   ackRunMessages,
   askTask,
+  attachSession,
   failTask,
   heartbeatTask,
   pauseTask,
