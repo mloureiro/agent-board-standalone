@@ -1,3 +1,4 @@
+import { requestPairCode } from './modules/control/index.js';
 import type { Env } from './modules/index.js';
 import { serve } from './start.js';
 
@@ -13,6 +14,25 @@ const notYet = (name: string): number => {
   return 2;
 };
 
+const pair = async (env: Env): Promise<number> => {
+  const socket = env.CONTROL_SOCKET?.trim();
+  if (socket === undefined || socket === '') {
+    process.stderr.write(
+      'agent-board-api: pair needs CONTROL_SOCKET, the socket of the running API\n',
+    );
+    return 2;
+  }
+  try {
+    process.stdout.write(`${await requestPairCode(socket)}\n`);
+    return 0;
+  } catch (error) {
+    process.stderr.write(
+      `agent-board-api: could not get a pairing code: ${error instanceof Error ? error.message : String(error)}\n`,
+    );
+    return 1;
+  }
+};
+
 export const runCli = async (args: readonly string[], env: Env): Promise<number> => {
   const [first] = args;
   if (first === undefined || first.startsWith('-')) return serve(env);
@@ -23,5 +43,6 @@ export const runCli = async (args: readonly string[], env: Env): Promise<number>
     return 2;
   }
   if (first === 'serve') return serve(env);
+  if (first === 'pair') return pair(env);
   return notYet(first);
 };

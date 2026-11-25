@@ -20,12 +20,12 @@ export const MODULES = [
   signInModule,
   listenModule,
   crossOriginModule,
+  controlModule,
   requestSignatureModule,
   eventsModule,
   schedulingModule,
   feedsModule,
   webModule,
-  controlModule,
   accessLogModule,
 ] as const;
 
