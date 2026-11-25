@@ -289,6 +289,9 @@ importers:
       '@tauri-apps/cli':
         specifier: 2.12.6
         version: 2.12.6
+      fake-indexeddb:
+        specifier: ^6.2.8
+        version: 6.2.8
       jsdom:
         specifier: ^31.0.1
         version: 31.0.1

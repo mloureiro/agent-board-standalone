@@ -12,6 +12,7 @@
     "allow-rename-server",
     "allow-retry-store-deletion",
     "allow-take-open-failures",
+    "allow-list-is-complete",
     "core:event:allow-listen",
     "core:event:allow-unlisten"
   ]

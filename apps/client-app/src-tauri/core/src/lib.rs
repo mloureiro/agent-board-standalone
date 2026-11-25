@@ -6,6 +6,7 @@ pub mod handshake;
 pub mod headers;
 pub mod http;
 pub mod ids;
+pub mod legacy;
 pub mod log;
 pub mod opening;
 pub mod orphans;

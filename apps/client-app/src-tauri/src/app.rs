@@ -5,9 +5,10 @@ use crate::fetches::Fetches;
 use crate::keychain::{Background, Keychain};
 use crate::removals::Removals;
 use crate::state::{AppState, CONTRACT};
-use crate::{menu, windows};
+use crate::{handover, legacy, menu, windows};
 use agent_board_client_core::bridge::Bridge;
 use agent_board_client_core::files::DirStore;
+use agent_board_client_core::handover::EarlyLinks;
 use agent_board_client_core::handshake::ClientInfo;
 use agent_board_client_core::http::ReqwestHttp;
 use agent_board_client_core::opening::{LaunchWindow, launch_plan};
@@ -54,6 +55,11 @@ fn launch(app: &AppHandle, state: &Arc<AppState>) -> tauri::Result<()> {
         }
     }
     let state = Arc::clone(state);
+    let cleaning = (app.clone(), Arc::clone(&state));
+    tauri::async_runtime::spawn(async move { legacy::clean(&cleaning.0, &cleaning.1).await });
+    if !state.bridge.servers().complete() {
+        return Ok(());
+    }
     tauri::async_runtime::spawn_blocking(move || {
         let listed: Vec<_> = state
             .bridge
@@ -73,6 +79,7 @@ fn launch(app: &AppHandle, state: &Arc<AppState>) -> tauri::Result<()> {
 
 pub fn run() {
     let app = tauri::Builder::default()
+        .manage(EarlyLinks::holding())
         .invoke_handler(tauri::generate_handler![
             page::server_fetch,
             page::server_fetch_cancel,
@@ -92,6 +99,7 @@ pub fn run() {
             list::open_all_servers,
             list::retry_store_deletion,
             list::take_open_failures,
+            list::list_is_complete,
         ])
         .on_menu_event(|app, event| menu::handle(app, event.id().as_ref()))
         .setup(|app| {
@@ -99,12 +107,16 @@ pub fn run() {
             app.manage(Arc::clone(&state));
             menu::install(app.handle())?;
             launch(app.handle(), &state)?;
+            handover::release_early(app.handle());
             Ok(())
         })
         .build(tauri::generate_context!())
         .expect("the app could not be built");
 
     app.run(|handle, event| match event {
+        RunEvent::Opened { urls } => {
+            handover::deliver(handle, urls.iter().map(ToString::to_string).collect());
+        }
         RunEvent::Reopen { .. } => {
             let _ = windows::show_list(handle);
         }

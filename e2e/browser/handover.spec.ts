@@ -23,7 +23,7 @@ async function openNative(
   loadFrom: Board,
   servers: readonly { readonly name: string; readonly url: string }[],
 ): Promise<Native> {
-  const host = createBridgeHost({ servers });
+  const host = createBridgeHost({ servers, scope: 'window' });
   const context = await browser.newContext();
   await host.attach(context);
   const page = await context.newPage();

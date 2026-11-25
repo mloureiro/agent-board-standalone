@@ -1,9 +1,7 @@
 use crate::commands::page::start_removal;
 use crate::state::{AppState, OpenFailure};
-use crate::windows;
-use agent_board_client_core::handshake::Handshake;
+use crate::{handover, windows};
 use agent_board_client_core::ids::ServerId;
-use agent_board_client_core::opening::{Opening, WindowAction, plan_open, window_error};
 use agent_board_client_core::servers::ServerEntry;
 use serde::Serialize;
 use std::sync::Arc;
@@ -64,23 +62,7 @@ pub async fn open_server(
         .servers()
         .get(id)
         .ok_or_else(|| "unknown server".to_owned())?;
-    let open = windows::open_server_windows(&app);
-    let failed = |detail: String| window_error(WindowAction::Open, &entry.name, &detail);
-    match plan_open(&state.http, &state.client, &entry, &open).await {
-        Opening::Focus(server) => {
-            windows::focus_server_window(&app, server).map_err(|error| failed(error.to_string()))
-        }
-        Opening::CreateWindow {
-            server,
-            request_signature,
-        } => {
-            state
-                .bridge
-                .record_handshake(server, Handshake { request_signature });
-            windows::create_server_window(&app, &entry).map_err(|error| failed(error.to_string()))
-        }
-        Opening::ListError { text, .. } => Err(text),
-    }
+    handover::open_entry(&app, &state, &entry, false).await
 }
 
 #[tauri::command]
@@ -102,4 +84,9 @@ pub async fn retry_store_deletion(
 #[tauri::command]
 pub async fn take_open_failures(state: Shared<'_>) -> Result<Vec<OpenFailure>, String> {
     Ok(state.take_open_failures())
+}
+
+#[tauri::command]
+pub async fn list_is_complete(state: Shared<'_>) -> Result<bool, String> {
+    Ok(state.bridge.servers().complete())
 }

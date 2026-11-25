@@ -12,6 +12,10 @@ impl ServerId {
         Self(Uuid::new_v4())
     }
 
+    pub fn to_bytes(self) -> [u8; 16] {
+        *self.0.as_bytes()
+    }
+
     pub fn parse(text: &str) -> Result<Self, InvalidServerId> {
         let uuid = Uuid::try_parse(text).map_err(|_| InvalidServerId)?;
         let canonical = uuid.hyphenated().to_string() == text;

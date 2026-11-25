@@ -32,6 +32,10 @@ pub struct AppState {
 }
 
 impl AppState {
+    pub fn queue_open_failure(&self, failure: OpenFailure) {
+        self.open_failures.lock().unwrap().push(failure);
+    }
+
     pub fn take_open_failures(&self) -> Vec<OpenFailure> {
         std::mem::take(&mut *self.open_failures.lock().unwrap())
     }
