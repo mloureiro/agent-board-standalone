@@ -1,7 +1,7 @@
 import { emptyCredentialStore } from './auth/index.js';
 import type { ServerServices } from './context.js';
 import { ANY_HOST, effectiveHost } from './modules/listen/index.js';
-import { openStubDatabase, type OpenDatabase } from './modules/database/index.js';
+import { DatabaseRefusal, openDatabase, type OpenDatabase } from './modules/database/index.js';
 import { ConfigError, loadConfig, type Env } from './modules/index.js';
 import { createServer } from './server.js';
 import { createOpenStreams } from './streams.js';
@@ -24,7 +24,7 @@ const printableHost = (host: string): string => {
 
 export const startServer = async (env: Env, options: StartOptions = {}): Promise<Started> => {
   const config = loadConfig(env);
-  const open = options.openDatabase ?? openStubDatabase;
+  const open = options.openDatabase ?? openDatabase;
   const services: ServerServices = {
     database: await open(config.database),
     credentials: emptyCredentialStore,
@@ -66,7 +66,7 @@ export const serve = async (env: Env): Promise<number> => {
     started = await startServer(env);
   } catch (error) {
     process.stderr.write(
-      error instanceof ConfigError
+      error instanceof ConfigError || error instanceof DatabaseRefusal
         ? `agent-board-api: ${error.message}\n`
         : `agent-board-api: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`,
     );
