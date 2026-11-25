@@ -1,0 +1,18 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "default",
+  "description": "The bundled page may call the bridge commands and nothing else",
+  "windows": ["main"],
+  "permissions": [
+    "allow-server-fetch",
+    "allow-handoff-finish",
+    "allow-pair",
+    "allow-sign-out",
+    "allow-list-servers",
+    "allow-add-server",
+    "allow-remove-server",
+    "allow-rename-server",
+    "allow-open-link",
+    "allow-notify"
+  ]
+}
