@@ -12,7 +12,8 @@
     "lint:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml --all --check && cargo clippy --manifest-path src-tauri/Cargo.toml --locked -p agent-board-bridge-core --all-targets -- -D warnings",
     "build:shim": "esbuild src/bridge/install.ts --bundle --format=iife --minify --outfile=src-tauri/shim.js",
     "bundle": "rm -rf dist-web && cp -R ../web/dist dist-web && pnpm run build:shim",
-    "phone": "playwright test"
+    "phone": "playwright test",
+    "release:check": "node scripts/release-check.ts"
   },
   "dependencies": {
     "@agent-board/web": "workspace:^0.0.0"
