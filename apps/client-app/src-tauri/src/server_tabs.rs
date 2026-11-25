@@ -1,16 +1,17 @@
+use crate::links;
 use crate::state::AppState;
 use crate::tab_registry::{Step, TabRegistry};
 use crate::windows::{self, BRIDGE_SCRIPT, TABBAR_PREFIX, server_window_label, tab_label};
 use agent_board_client_core::ids::ServerId;
 use agent_board_client_core::layout::{self, Bounds};
-use agent_board_client_core::navigation::{Navigation, app_path, classify};
+use agent_board_client_core::navigation::{Navigation, classify};
 use agent_board_client_core::orphans::tab_file_name;
 use agent_board_client_core::ports::FileStore;
 use agent_board_client_core::tabs::{Effect, HOME, TabId, Tabs};
 use std::sync::Arc;
 use tauri::EventTarget;
 use tauri::utils::config::BackgroundThrottlingPolicy;
-use tauri::webview::{NewWindowResponse, WebviewBuilder};
+use tauri::webview::WebviewBuilder;
 use tauri::{
     AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, Rect, Url, Webview, WebviewUrl,
     Window,
@@ -45,10 +46,6 @@ pub fn relayout(window: &Window) {
     }
 }
 
-pub fn guard(origin: Url) -> impl Fn(&Url) -> bool + Send + 'static {
-    move |target| matches!(classify(target, &origin), Navigation::Stay)
-}
-
 fn app_url(path: &str) -> WebviewUrl {
     WebviewUrl::App(path.trim_start_matches('/').into())
 }
@@ -70,14 +67,10 @@ pub fn page_builder(
     WebviewBuilder::new(tab_label(server, tab), app_url(path))
         .initialization_script(BRIDGE_SCRIPT)
         .background_throttling(BackgroundThrottlingPolicy::Disabled)
-        .on_navigation(guard(origin.clone()))
-        .on_new_window(move |target, _| {
-            if matches!(classify(&target, &page_origin), Navigation::Stay) {
-                let path = app_path(&target);
-                dispatch(&opener, server, move |tabs| tabs.open(&path));
-            }
-            NewWindowResponse::Deny
-        })
+        .on_navigation(links::guard(origin.clone()))
+        .on_new_window(links::on_new_window(page_origin, move |path| {
+            dispatch(&opener, server, move |tabs| tabs.open(&path))
+        }))
 }
 
 fn create_page(

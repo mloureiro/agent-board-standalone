@@ -7,6 +7,10 @@ pub const LINK_MAX_CHARS: usize = 2048;
 pub const PATH_MAX_CHARS: usize = 2048;
 pub const HEADERS_MAX: usize = 100;
 pub const BODY_MAX_BYTES: usize = 16 * 1024 * 1024;
+pub const FLOW_MAX_CHARS: usize = 128;
+pub const VERIFIER_MAX_CHARS: usize = 128;
+pub const PAIRING_CODE_MAX_CHARS: usize = 32;
+pub const PAIRING_LABEL_MAX_CHARS: usize = 64;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum InputError {
@@ -18,6 +22,8 @@ pub enum InputError {
     TabDirection,
     TooManyHeaders,
     BodyTooLarge,
+    SignIn,
+    Pairing,
 }
 
 impl InputError {
@@ -31,6 +37,8 @@ impl InputError {
             Self::TabDirection => "refused tab direction",
             Self::TooManyHeaders => "too many headers",
             Self::BodyTooLarge => "request body too large",
+            Self::SignIn => "refused sign-in input",
+            Self::Pairing => "refused pairing input",
         }
     }
 }
@@ -138,4 +146,24 @@ pub fn tab_path(path: &str) -> Result<String, InputError> {
 
 pub fn tab_title(title: &str) -> Result<String, InputError> {
     tab_report("/", title).map(|report| report.title)
+}
+
+fn bounded(text: &str, max_chars: usize) -> bool {
+    !text.is_empty() && text.chars().count() <= max_chars && !text.chars().any(char::is_control)
+}
+
+pub fn sign_in(flow: &str, verifier: &str) -> Result<(), InputError> {
+    if bounded(flow, FLOW_MAX_CHARS) && bounded(verifier, VERIFIER_MAX_CHARS) {
+        Ok(())
+    } else {
+        Err(InputError::SignIn)
+    }
+}
+
+pub fn pairing(code: &str, label: &str) -> Result<(), InputError> {
+    if bounded(code, PAIRING_CODE_MAX_CHARS) && bounded(label, PAIRING_LABEL_MAX_CHARS) {
+        Ok(())
+    } else {
+        Err(InputError::Pairing)
+    }
 }

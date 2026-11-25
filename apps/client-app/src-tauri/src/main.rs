@@ -6,6 +6,7 @@ mod fetches;
 mod handover;
 mod keychain;
 mod legacy;
+mod links;
 mod menu;
 mod removals;
 mod server_tabs;
