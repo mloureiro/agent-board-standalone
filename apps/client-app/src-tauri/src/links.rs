@@ -76,7 +76,7 @@ mod tests {
     }
 
     #[test]
-    fn client_app_037_an_external_origin_opens_outside_and_never_navigates_the_tab() {
+    fn client_app_031_an_external_origin_opens_outside_and_never_navigates_the_tab() {
         for trigger in [Trigger::Navigation, Trigger::NewWindow] {
             let (stays, externals, tabs) = run("https://github.com/o/r/pull/1", trigger);
             assert!(!stays);
@@ -86,7 +86,7 @@ mod tests {
     }
 
     #[test]
-    fn client_app_038_an_app_path_stays_on_navigation_and_opens_a_tab_from_a_new_window() {
+    fn client_app_033_an_app_path_stays_on_navigation_and_opens_a_tab_from_a_new_window() {
         assert_eq!(
             run("tauri://localhost/tasks/1", Trigger::Navigation),
             (true, vec![], vec![])
@@ -98,7 +98,7 @@ mod tests {
     }
 
     #[test]
-    fn client_app_039_dropped_schemes_reach_neither_the_browser_nor_a_tab() {
+    fn client_app_032_dropped_schemes_reach_neither_the_browser_nor_a_tab() {
         for target in [
             "mailto:a@example.test",
             "file:///etc/hosts",

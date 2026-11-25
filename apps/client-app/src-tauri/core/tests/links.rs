@@ -80,7 +80,7 @@ fn client_app_032_dropped_schemes_and_blank_new_windows_go_nowhere() {
 }
 
 #[test]
-fn client_app_035_an_app_path_in_a_new_window_opens_a_tab_and_never_a_window() {
+fn client_app_033_an_app_path_in_a_new_window_opens_a_tab_and_never_a_window() {
     for (target, path) in [
         ("tauri://localhost/", "/"),
         ("tauri://localhost/tasks/1?x=1", "/tasks/1?x=1"),
@@ -94,7 +94,7 @@ fn client_app_035_an_app_path_in_a_new_window_opens_a_tab_and_never_a_window() {
 }
 
 #[test]
-fn client_app_036_the_app_origin_is_the_one_the_window_runs_on() {
+fn client_app_033_the_app_origin_is_the_one_the_window_runs_on() {
     let dev = url::Url::parse("http://localhost:1420").unwrap();
     assert_eq!(
         classify("http://localhost:1420/tasks/1", &dev, Trigger::Navigation),
