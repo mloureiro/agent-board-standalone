@@ -199,6 +199,12 @@ describe('the tick lock', () => {
     expect(await rigged.cli.run('internal', 'dispatch')).toBe(0);
   });
 
+  it('[cli-064] a fresh lock whose pid is not written yet is still held', () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'board-lock-'));
+    writeFileSync(path.join(dir, 'dispatch.tick'), '');
+    expect(acquireTickLock(dir)).toBeNull();
+  });
+
   it('[cli-064] a tick that passes its limit answers 124 and frees the lock', async () => {
     const hanging: typeof fetch = (input, init) =>
       String(input).includes('list-tasks')
@@ -210,12 +216,14 @@ describe('the tick lock', () => {
     await expect(
       runDispatch(ctx, {
         limitMs: 100,
-        hardStopMs: 60_000,
+        hardStopMs: 50,
         hardExit: (code) => exits.push(code),
       }),
     ).rejects.toMatchObject({ exitCode: 124 });
     expect(rigged.cli.stdout()).toContain('tick stopped after');
     expect(acquireTickLock(ctx.dirs.run)).not.toBeNull();
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(exits).toEqual([124]);
   });
 
   it('[cli-082] the internal commands refuse inside a run and on another platform', async () => {
@@ -367,7 +375,12 @@ describe('dispatch tick', () => {
     const calls: { file: string; args: readonly string[] }[] = [];
     const unit = await rig({
       platform: 'linux',
-      env: { PATH: bin, SOME_SECRET: 'not-passed', AGENT_BOARD_MARKER: 'passed' },
+      env: {
+        PATH: bin,
+        SOME_SECRET: 'not-passed',
+        AGENT_BOARD_MARKER: 'passed',
+        AGENT_BOARD_OTHER_SECRET: 'abm_secrettoken',
+      },
       exec: (file, args) => {
         calls.push({ file, args });
         return { code: 0, stdout: '' };
@@ -381,8 +394,12 @@ describe('dispatch tick', () => {
       expect.arrayContaining(['--user', '--collect', '--unit=agent-board-default-task-taskAAAA']),
     );
     expect(call?.args.some((arg) => arg.startsWith('--setenv=PATH='))).toBe(true);
-    expect(call?.args).toContain('--setenv=AGENT_BOARD_MARKER=passed');
+    expect(call?.args).toEqual(
+      expect.arrayContaining(['--setenv=AGENT_BOARD_MARKER', '--setenv=AGENT_BOARD_OTHER_SECRET']),
+    );
     expect(call?.args.join(' ')).not.toContain('SOME_SECRET');
+    expect(call?.args.join(' ')).not.toContain('abm_secrettoken');
+    expect(call?.args.join(' ')).not.toContain('=passed');
     expect(call?.args.slice(-3)).toEqual(['internal', 'worker', 'taskAAAA']);
 
     const forced = await rig({ platform: 'linux', env: { PATH: bin, ...PROCESS } });

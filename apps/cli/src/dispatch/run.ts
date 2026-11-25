@@ -46,14 +46,12 @@ async function guarded<T>(
   say: (line: string) => void,
 ): Promise<T> {
   let limit: NodeJS.Timeout | undefined;
-  let hard: NodeJS.Timeout | undefined;
   const expired = new Promise<never>((_resolve, reject) => {
     limit = setTimeout(() => {
       say(`tick stopped after ${limitMs / 1000} s`);
-      hard = setTimeout(() => {
+      setTimeout(() => {
         hardExit(EXIT.timedOut);
-      }, hardStopMs);
-      hard.unref();
+      }, hardStopMs).unref();
       reject(new ReportedFailure(EXIT.timedOut));
     }, limitMs);
     limit.unref();
@@ -62,7 +60,6 @@ async function guarded<T>(
     return await Promise.race([work(), expired]);
   } finally {
     clearTimeout(limit);
-    clearTimeout(hard);
   }
 }
 
@@ -115,7 +112,7 @@ function outcomeOf(error: unknown): { status: TickResult['status']; message: str
 
 export async function runDispatch(ctx: Context, options: DispatchOptions = {}): Promise<void> {
   requireWorkerPlatform(ctx, 'dispatch');
-  const lock = acquireTickLock(ctx.dirs.run, clockNow(ctx.rt.env));
+  const lock = acquireTickLock(ctx.dirs.run);
   if (lock === null) {
     ctx.out('another dispatch tick holds the lock');
     throw new ReportedFailure(EXIT.lockHeld);

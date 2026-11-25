@@ -16,9 +16,11 @@ function isAlive(pid: number): boolean {
 
 function holderIsLive(file: string, nowMs: number): boolean {
   try {
-    const pid = Number.parseInt(readFileSync(file, 'utf8'), 10);
     const age = nowMs - statSync(file).mtimeMs;
-    return Number.isInteger(pid) && pid > 1 && age < LOCK_STALE_MS && isAlive(pid);
+    if (age >= LOCK_STALE_MS) return false;
+    const pid = Number.parseInt(readFileSync(file, 'utf8'), 10);
+    const beingWritten = !Number.isInteger(pid);
+    return beingWritten || (pid > 1 && isAlive(pid));
   } catch {
     return false;
   }

@@ -35,19 +35,22 @@ export function workerCommand(ctx: Pick<Context, 'rt' | 'dirs'>, task: string): 
   return selfCommand(ctx, 'internal', 'worker', task);
 }
 
-function unitEnvironment(env: Env): Record<string, string> {
+const PLAIN_VARIABLES: ReadonlySet<string> = new Set([
+  'PATH',
+  ...WORKER_INHERITED_VARIABLES,
+  ...PASSED_VARIABLES,
+]);
+
+function unitEnvironment(env: Env): string[] {
   const names = new Set<string>([
-    'PATH',
-    ...WORKER_INHERITED_VARIABLES,
-    ...PASSED_VARIABLES,
+    ...PLAIN_VARIABLES,
     ...Object.keys(env).filter((name) => name.startsWith('AGENT_BOARD_')),
   ]);
-  const values: Record<string, string> = {};
-  for (const name of names) {
+  return [...names].flatMap((name) => {
     const value = env[name];
-    if (value !== undefined && value !== '') values[name] = value;
-  }
-  return values;
+    if (value === undefined || value === '') return [];
+    return [PLAIN_VARIABLES.has(name) ? `--setenv=${name}=${value}` : `--setenv=${name}`];
+  });
 }
 
 function processEnvironment(env: Env): Record<string, string | undefined> {
@@ -72,9 +75,7 @@ export async function startWorker(
   const [program = '', ...args] = workerCommand(ctx, task);
   if (wantsUnit(ctx)) {
     const unit = workerUnitName(ctx.dirs.profile, task);
-    const setenv = Object.entries(unitEnvironment(ctx.rt.env)).map(
-      ([name, value]) => `--setenv=${name}=${value}`,
-    );
+    const setenv = unitEnvironment(ctx.rt.env);
     const result = await ctx.rt.exec(
       'systemd-run',
       ['--user', '--collect', '--quiet', `--unit=${unit}`, ...setenv, program, ...args],
