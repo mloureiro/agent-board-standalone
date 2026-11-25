@@ -61,7 +61,7 @@ function installFakeBoard(tmp: Tmp, binDir: string): void {
   const script = path.join(binDir, 'board');
   writeFileSync(
     script,
-    `#!/bin/sh\necho "$@" >> "${tmp.path('board.log')}"\nif [ "$1" = ask ]; then cp "$2" "${tmp.path('questions.json')}"; fi\necho "board ran: $@"\n`,
+    `#!/bin/sh\necho "$@" >> "${tmp.path('board.log')}"\nif [ "$1" = ask ] && [ "$3" = --file ]; then cp "$4" "${tmp.path('questions.json')}"; fi\necho "board ran: $@"\n`,
   );
   chmodSync(script, 0o755);
 }
@@ -89,7 +89,12 @@ function startProcess(
   closeStdin: boolean,
 ): Session {
   const run = launch(path.join(STUBS_DIR, 'claude'), ['-p', '--input-format', 'stream-json'], {
-    env: { PATH: pathVariable, STUB_CLAUDE_LOG: logPath, HOME: tmp.home },
+    env: {
+      PATH: pathVariable,
+      STUB_CLAUDE_LOG: logPath,
+      HOME: tmp.home,
+      AGENT_BOARD_TASK: 'stub-task',
+    },
   });
   runs.push(run);
   run.child.stdin?.write(user(prompt));
@@ -281,6 +286,9 @@ describe('stub claude', () => {
       fakeBoard: true,
     });
     await until(() => existsSync(session.tmp.path('questions.json')), 'questions file');
+    expect(readFileSync(session.tmp.path('board.log'), 'utf8')).toMatch(
+      /^ask stub-task --file \S+/,
+    );
     expect(JSON.parse(readFileSync(session.tmp.path('questions.json'), 'utf8'))).toEqual([
       { question: 'Which?', options: ['a', 'b'] },
     ]);
