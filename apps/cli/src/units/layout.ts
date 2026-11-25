@@ -84,9 +84,11 @@ export const launchdTarget = (uid: number, profile: string, unit: UnitName): str
 export function installProblem(rt: Runtime): string | null {
   const [program = '', script] = rt.self;
   const running = script ?? program;
-  const temporary = rt.env.TMPDIR ?? '/tmp';
+  const temporary = [rt.env.TMPDIR, '/tmp'].flatMap((entry) =>
+    entry === undefined || entry === '' ? [] : [safeRealpath(entry)],
+  );
   const real = safeRealpath(running);
-  if (real.startsWith(`${safeRealpath(temporary)}${path.sep}`)) {
+  if (temporary.some((directory) => real.startsWith(`${directory}${path.sep}`))) {
     return `this board runs from ${real}, in the temp directory; install it and run \`board setup\` from there`;
   }
   const installed = installedBoard(rt);
