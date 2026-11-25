@@ -15,6 +15,7 @@ export interface LoginConfig {
   passkeys: boolean;
   signupToken: string | null;
   allowedGroups: string[];
+  sessionDays: number;
   oidc: boolean;
   saml: boolean;
 }
@@ -22,6 +23,8 @@ export interface LoginConfig {
 export type SignInConfig = NoLoginConfig | LoginConfig;
 
 export const MIN_SIGNUP_TOKEN_LENGTH = 32;
+export const DEFAULT_SESSION_DAYS = 30;
+const MAX_SESSION_DAYS = 365;
 const MAX_USER_LENGTH = 128;
 const LOGIN_ONLY_NAMES = [
   'PUBLIC_URL',
@@ -64,6 +67,16 @@ const parsePublicUrl = (
     return null;
   }
   return url;
+};
+
+const parseSessionDays = (value: string | undefined, fail: (message: string) => void): number => {
+  if (value === undefined) return DEFAULT_SESSION_DAYS;
+  const days = Number(value);
+  if (!/^\d+$/.test(value) || days < 1 || days > MAX_SESSION_DAYS) {
+    fail(`must be a whole number of days from 1 to ${MAX_SESSION_DAYS}`);
+    return DEFAULT_SESSION_DAYS;
+  }
+  return days;
 };
 
 export const signInSchema = envObject.transform((env, ctx): SignInConfig => {
@@ -124,6 +137,9 @@ export const signInSchema = envObject.transform((env, ctx): SignInConfig => {
   const saml = env.SAML_ENTRY_POINT !== undefined;
   const allowedGroups = csv(env.ALLOWED_GROUPS);
   const signupToken = env.SIGNUP_TOKEN ?? null;
+  const sessionDays = parseSessionDays(env.SESSION_DAYS, (message) =>
+    refuse(ctx, 'SESSION_DAYS', message),
+  );
 
   if (allowedGroups.length > 0 && !oidc)
     refuse(ctx, 'ALLOWED_GROUPS', 'needs OIDC_ISSUER: only OIDC sends groups');
@@ -146,6 +162,7 @@ export const signInSchema = envObject.transform((env, ctx): SignInConfig => {
     passkeys,
     signupToken,
     allowedGroups,
+    sessionDays,
     oidc,
     saml,
   };

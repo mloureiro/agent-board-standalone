@@ -2,29 +2,53 @@
   "files": {
     "blackbox/account-move.test.ts": "*",
     "blackbox/events-projects.test.ts": "*",
-    "blackbox/handshake.test.ts": [
-      "handshake over HTTP › [api-098] a client below MIN_CLIENT gets 412 upgrade-required with an upgrade hint and nothing is written @matrix",
-      "handshake over HTTP › [api-098] a machine request below MIN_CLIENT gets the same 412 @matrix",
-      "handshake over HTTP › [api-098] a client route and a machine route without x-board-contract get 412 naming the missing header @matrix",
-      "handshake in the CLI › [cli-004] the first call of a process is the version command, before any other @matrix",
-      "handshake in the CLI › [cli-004] a server with a higher contract is refused, naming both versions @matrix",
-      "handshake in the CLI › [cli-004] a data key whose derived key id differs from the server is refused @matrix",
-      "handshake in the CLI › [cli-011] board version prints the CLI version, its contract range and the server verdict compatible",
-      "handshake in the CLI › [cli-011] through a proxy with a higher contract the verdict says the CLI is too old",
-      "handshake in the CLI › [cli-011] board version --json carries the same fields",
-      "handshake in the CLI › [cli-011] board version --json through a proxy with a higher contract reports client-too-old"
-    ],
     "blackbox/harness.test.ts": [
-      "[harness] fixtures on a no-login board › [harness] the no-login user, key, task and enrolled machine work together",
       "[harness] fixtures on a login board › [harness] a signed-in user holds a cookie session and a client token user holds abc_"
     ],
     "blackbox/legacy-dirs.test.ts": "*",
-    "blackbox/machine-lifecycle.test.ts": "*",
+    "blackbox/machine-lifecycle.test.ts": [
+      "board uninstall › [cli-052] deletes the installed binary copy and the units and keeps config and state",
+      "board uninstall › [cli-052] --include-optional removes config and state",
+      "board uninstall › [cli-052] refuses when a directory to remove resolves to $HOME",
+      "board uninstall › [cli-052] revokes the machine token on the server and reports it",
+      "board uninstall with the server stopped › [cli-052] still completes and reports the revocation failure",
+      "self-update --server › [cli-059] moves the machine to the other server after checking owner, key id and token",
+      "self-update --server › [cli-059] refuses a server whose owner differs and leaves the config unchanged",
+      "self-update --server › [cli-059] refuses a server whose key id differs and leaves the config unchanged",
+      "self-update --server › [cli-059] refuses a server that does not know the token and leaves the config unchanged",
+      "self-update --server › [cli-059] warns when other machines are active",
+      "worker check in board doctor › [server-app-056] reports ok after a dispatch tick",
+      "worker check in board doctor › [server-app-056] reports refused with the 401 reason once the token is re-issued",
+      "worker check in board doctor › [server-app-056] reports refused naming the wrong machine for another machine’s token",
+      "worker check with the API stopped › [server-app-056] reports error when the API is stopped"
+    ],
     "blackbox/matrix-refusal.test.ts": "*",
     "blackbox/migrate.test.ts": "*",
-    "blackbox/profiles.test.ts": "*",
-    "blackbox/schedules.test.ts": "*",
-    "blackbox/sessions.test.ts": "*",
+    "blackbox/profiles.test.ts": [
+      "board init › [cli-046] refuses a token file with mode 644",
+      "machine name › [server-app-049] a token issued for another name enrols under the server’s name"
+    ],
+    "blackbox/schedules.test.ts": [
+      "[cli-036] board schedule › [cli-036] creates a one-off task bound to this machine, an allowed directory and the project",
+      "[cli-036] board schedule › [cli-036] creates a repeating schedule bound to this machine, an allowed directory and the project",
+      "[cli-036] board schedule › [cli-036] a repeating schedule takes several crons with their timezone",
+      "[cli-036] board schedule › [cli-036] a key answers created, exists, rescheduled and requeued and always exits 0",
+      "[api-077] an after schedule › [api-077] fires once when the upstream task moves from running to done",
+      "[api-077] an after schedule › [api-077] fires once more for running to done on a second run"
+    ],
+    "blackbox/sessions.test.ts": [
+      "no-login mode with the database inspected › [api-029] the user row does not exist after reads only and exists after one committed write",
+      "login mode › hand-off › [api-039] a public start returns an XXXX-XXXX code and a flow id that a signed-in user can read back",
+      "login mode › hand-off › [api-039] a finish with a wrong verifier is refused and the flow stays usable",
+      "login mode › hand-off › [api-039] a finish with the right verifier creates the session once",
+      "login mode › hand-off › [api-039] a flow approved at 9 minutes still finishes",
+      "login mode › hand-off › [api-039] an unapproved flow is refused after 10 minutes",
+      "login mode › hand-off › [api-039] [api-114] a finish asking for tokenKind client returns an abc_ token in the body and sets no cookie",
+      "login mode › client token › [api-114] an abc_ token works as Authorization Bearer",
+      "login mode › client token › [api-114] an abs_ session value sent as Authorization Bearer is refused",
+      "login mode › client token › [api-114] a token expires 30 days after last use and a use slides the expiry",
+      "login mode › client token › [api-114] logout with the token deletes only that session"
+    ],
     "blackbox/signature.test.ts": "*",
     "blackbox/task-commands.test.ts": "*",
     "blackbox/user-commands.test.ts": "*",
@@ -40,14 +64,76 @@
     "browser/migrate.spec.ts": "*",
     "browser/new-task.spec.ts": "*",
     "browser/parity.spec.ts": "*",
-    "browser/projects.spec.ts": "*",
+    "browser/projects.spec.ts": [
+      {
+        "title": "project filter on the task, schedule and event queries › [api-104] client.events with a project raises changed only for that project's changes",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-081] the board shows the tasks of all projects together",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-081] the project filter narrows the board to one project",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-081] the chosen project survives a reload on the same device",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-081] the chosen project is absent in a new browser context",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-082] the sidebar lists the projects and navigates by project",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      "projects in the browser client › [web-082] the sidebar is a drawer on a phone @phone",
+      {
+        "title": "projects in the browser client › [web-083] a project is created from the client with its name sealed",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-083] a project is renamed from the client with the new name sealed",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-083] a project gets a new icon from the client with the icon sealed",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-083] an archived project leaves the switcher",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-083] an empty project is deleted from the client",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-083] deleting a project with tasks asks what happens to them and moves them to the default project",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects in the browser client › [web-083] deleting a project with tasks can delete the tasks too",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "projects of several servers in the sidebar › [web-082] the sidebar lists the projects of each open server and navigates by project",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      }
+    ],
     "browser/proposals.spec.ts": "*",
     "browser/questions.spec.ts": "*",
     "browser/responsive.spec.ts": "*",
     "browser/run-to-done.spec.ts": "*",
     "browser/schedules.spec.ts": "*",
     "browser/sealing-at-rest.spec.ts": "*",
-    "browser/server-app-layout.spec.ts": "*",
+    "browser/server-app-layout.spec.ts": [
+      "the server app layout from a cleared environment › [server-app-074] every request is the settings user and no sign-in page shows",
+      "opening the board of the server app › [server-app-001] the board URL shows the board and a card can be created",
+      "restarting the server app on the same root › [server-app-002] cards stay, the worker reconnects without board init and the client opens unlocked"
+    ],
     "browser/servers.spec.ts": "*",
     "browser/settings.spec.ts": "*",
     "browser/sign-in.spec.ts": "*",

@@ -1,11 +1,6 @@
-import type {
-  AnyRoute,
-  RouteName,
-  RouteRequest,
-  RouteResponse,
-  routes,
-} from '@agent-board/contract';
+import type { AnyRoute, RouteName, RouteResponse, routes } from '@agent-board/contract';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { z } from 'zod';
 
 import type { ClientPrincipal, MachinePrincipal } from '../auth/index.js';
 import type { ServerContext } from '../context.js';
@@ -19,7 +14,7 @@ type PrincipalOf<R extends AnyRoute> = R['auth'] extends 'client'
     : null;
 
 export interface RouteCall<N extends RouteName> {
-  input: RouteRequest<RouteOf<N>>;
+  input: z.output<RouteOf<N>['request']>;
   principal: PrincipalOf<RouteOf<N>>;
   request: FastifyRequest;
   reply: FastifyReply;

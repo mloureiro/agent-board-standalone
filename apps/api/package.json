@@ -18,6 +18,8 @@
     "@agent-board/contract": "workspace:^1.0.0",
     "@agent-board/sealing": "workspace:^1.0.0",
     "@electric-sql/pglite": "^0.6.0",
+    "@simplewebauthn/server": "^14.1.0",
+    "croner": "^11.0.1",
     "drizzle-orm": "^0.45.4",
     "fastify": "^5.12.8",
     "pg": "^8.23.1",
