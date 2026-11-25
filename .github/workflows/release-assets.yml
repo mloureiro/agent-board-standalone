@@ -4,14 +4,24 @@ on:
   push:
     tags:
       - 'contract-v*'
+      - 'client-app-v*'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Build both client app bundles as workflow artifacts. Untick on a client-app tag to attach them to its release'
+        type: boolean
+        default: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   openapi:
     name: attach openapi.json
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/contract-v')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -29,3 +39,68 @@ jobs:
             gh release create "$TAG" --verify-tag --title "$TAG" --notes-from-tag
           fi
           gh release upload "$TAG" packages/contract/dist/openapi.json --clobber
+
+  client-app:
+    name: build the macOS client app
+    if: startsWith(github.ref, 'refs/tags/client-app-v') || github.event_name == 'workflow_dispatch'
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/client-app/src-tauri
+      - run: pnpm install --frozen-lockfile --filter "@agent-board/client-app..."
+      - if: startsWith(github.ref, 'refs/tags/client-app-v')
+        run: pnpm --filter @agent-board/client-app run release:check "${GITHUB_REF_NAME#client-app-v}"
+      - run: pnpm --filter "@agent-board/client-app..." --if-present run build
+      - name: Build the release bundle
+        run: pnpm --filter @agent-board/client-app exec tauri build --target universal-apple-darwin -- --package agent-board-client
+      - name: Build the debug bundle
+        run: >-
+          pnpm --filter @agent-board/client-app exec tauri build --target universal-apple-darwin
+          --features devtools --config src-tauri/tauri.debug.conf.json -- --package agent-board-client
+      - name: Zip the bundles
+        run: |
+          bundles="apps/client-app/src-tauri/target/universal-apple-darwin/release/bundle/macos"
+          mkdir -p dist-release
+          for name in "Agent Board" "Agent Board Debug"; do
+            codesign --verify --deep --strict "$bundles/$name.app"
+            ditto -c -k --keepParent "$bundles/$name.app" "dist-release/${name// /-}.zip"
+          done
+          ls -l dist-release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agent-board-client-app
+          path: dist-release/*.zip
+          if-no-files-found: error
+
+  client-app-release:
+    name: attach the client app to the release
+    if: startsWith(github.ref, 'refs/tags/client-app-v') && (github.event_name == 'push' || !inputs.dry-run)
+    needs: client-app
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: agent-board-client-app
+          path: dist-release
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            gh release create "$TAG" --verify-tag --title "$TAG" --notes-from-tag
+          fi
+          gh release upload "$TAG" dist-release/*.zip --clobber

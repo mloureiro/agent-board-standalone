@@ -8,6 +8,7 @@
   "scripts": {
     "build": "tsx scripts/assemble-frontend.ts",
     "bundle": "tauri build -- --package agent-board-client",
+    "release:check": "tsx scripts/release-check.ts",
     "test": "vitest run && pnpm run test:rust",
     "typecheck": "tsc --noEmit && cargo check --manifest-path src-tauri/Cargo.toml --locked",
     "format:check:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml --all --check",
