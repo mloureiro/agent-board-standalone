@@ -436,6 +436,25 @@ describe('hand-off', () => {
     expect(me.json().username).toBe('ada');
   });
 
+  it('[api-039] two concurrent approvals leave the first approver as the owner', async () => {
+    const board = await started(login());
+    const ada = await signedIn(board, 'ada', 'client');
+    const grace = await signedIn(board, 'grace', 'client');
+    const { flow } = await startHandoff(board);
+    const answers = await Promise.all([
+      approve(board, flow, bearer(ada)),
+      approve(board, flow, bearer(grace)),
+    ]);
+    expect(answers.map((answer) => answer.statusCode).sort()).toEqual([200, 403]);
+    const winner = answers[0]?.statusCode === 200 ? 'ada' : 'grace';
+    const answer = await finish(board, flow, PKCE_VERIFIER, { tokenKind: 'client' });
+    const me = await board.app.inject({
+      url: '/api/client/me',
+      headers: bearer(answer.json().token),
+    });
+    expect(me.json().username).toBe(winner);
+  });
+
   it('[api-039] approving without a session is refused', async () => {
     const board = await started(login());
     const { flow } = await startHandoff(board);
