@@ -134,10 +134,6 @@
     "browser/board.spec.ts": "*",
     "browser/client-app-bridge.spec.ts": "*",
     "browser/connection.spec.ts": "*",
-    "browser/handover.spec.ts": [
-      "handover from the server app to the client app › [client-app-013] a handed-over URL already in the list opens that server and adds nothing",
-      "handover from the server app to the client app › [client-app-013] a handed-over URL not in the list adds the server and opens it through the handshake"
-    ],
     "browser/migrate.spec.ts": "*",
     "browser/new-task.spec.ts": "*",
     "browser/parity.spec.ts": [
