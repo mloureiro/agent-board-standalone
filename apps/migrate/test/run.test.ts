@@ -81,7 +81,7 @@ describe('target database', () => {
 });
 
 describe('count check', () => {
-  it('lists every difference by owner and table and treats a missing table as zero', () => {
+  it('[migrate-007] lists every difference by owner and table and treats a missing table as zero', () => {
     const differences = compareCounts(
       { alice: { task: 3, note: 1 } },
       { alice: { task: 2 }, bob: { task: 1 } },
@@ -165,7 +165,7 @@ describe('run with a stand-in API executable', () => {
     expect(output).toMatch(/warning: 1 task\(s\) were running in the source/);
   });
 
-  it('fails the run with a difference table when one count is tampered', async () => {
+  it('[migrate-007] fails the run with a difference table when one count is tampered', async () => {
     const target = join(scratch, 'tampered');
     const failure = await run(base('local-v2', target), envFor({ FAKE_TAMPER: 'task:-1' })).catch(
       (error: unknown) => error,
@@ -175,7 +175,7 @@ describe('run with a stand-in API executable', () => {
     expect((failure as Error).message).toContain('restore the scratch copy');
   });
 
-  it('dry run writes the export and the plan, imports nothing and touches no target', async () => {
+  it('[migrate-006] dry run writes the export and the plan, imports nothing and touches no target', async () => {
     const marker = join(scratch, 'dry-marker');
     const target = join(scratch, 'dry-target');
     const out = join(scratch, 'dry.jsonl');
@@ -343,7 +343,7 @@ describe.skipIf(apiExecutable === undefined)('run through the API executable', (
     }
   });
 
-  it('leaves the target unchanged when the import is refused', async () => {
+  it('[migrate-008] leaves the target unchanged when the import is refused', async () => {
     const source = await materializeFolder('local-v2');
     const target = join(scratch, 'real-twice');
     const args = [
@@ -424,7 +424,7 @@ describe.skipIf(apiExecutable === undefined || postgresBase === undefined)(
       await client.end();
     });
 
-    it('imports once and leaves the rows unchanged when a second run is refused', async () => {
+    it('[migrate-008] imports once and leaves the rows unchanged when a second run is refused', async () => {
       const source = await materializeFolder('local-v2');
       const args = [
         'run',
