@@ -179,6 +179,10 @@ fn client_app_029_accelerators_are_parsed_strictly_and_system_keys_are_refused()
         "Cmd+Shift+W",
         "Cmd+Alt+W",
         "Cmd+Ctrl+Q",
+        "Cmd+=",
+        "Cmd+Shift+=",
+        "Cmd+-",
+        "Cmd+0",
     ] {
         assert_eq!(canonical(system), Err(Refusal::Reserved), "{system}");
     }

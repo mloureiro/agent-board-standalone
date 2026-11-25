@@ -3,5 +3,11 @@
   "identifier": "tab",
   "description": "Routing reports of a tab's browser client. Matched by webview label only, so the All servers window is not granted them.",
   "webviews": ["tab-*"],
-  "permissions": ["allow-tab-navigate", "allow-tab-title", "allow-tab-cycle", "allow-tab-focused"]
+  "permissions": [
+    "allow-tab-navigate",
+    "allow-tab-title",
+    "allow-tab-cycle",
+    "allow-tab-focused",
+    "allow-page-heartbeat"
+  ]
 }

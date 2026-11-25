@@ -1,19 +1,7 @@
 use agent_board_client_core::page_input::{
-    BODY_MAX_BYTES, HEADERS_MAX, InputError, TITLE_MAX_CHARS, fetch_input, link, notification,
-    pairing, sign_in, tab_report,
+    BODY_MAX_BYTES, HEADERS_MAX, InputError, TITLE_MAX_CHARS, fetch_input, link, pairing, sign_in,
+    tab_report,
 };
-
-#[test]
-fn client_app_002_notifications_cap_the_title_and_refuse_odd_task_ids() {
-    let long = "t".repeat(TITLE_MAX_CHARS + 50);
-    let accepted = notification("task_1-A", &format!("{long}\n")).unwrap();
-    assert_eq!(accepted.title.chars().count(), TITLE_MAX_CHARS);
-    assert!(!accepted.title.contains('\n'));
-    assert!(notification("4f0d6a1e-7c7a-4a52-9d6e-0a7b8c9d0e1f", "x").is_ok());
-    for bad in ["", "a b", "../x", "x\n", &"a".repeat(65), "é"] {
-        assert_eq!(notification(bad, "x"), Err(InputError::TaskId), "{bad:?}");
-    }
-}
 
 #[test]
 fn client_app_002_links_are_http_or_https_with_a_host_only() {

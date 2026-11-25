@@ -8,7 +8,7 @@ use serde_json::Value;
 pub const FILE_NAME: &str = "settings.json";
 pub const VERSION: u64 = 1;
 
-const RESERVED: [&str; 15] = [
+const RESERVED: [&str; 19] = [
     "CmdOrCtrl+Q",
     "CmdOrCtrl+Ctrl+Q",
     "CmdOrCtrl+H",
@@ -24,6 +24,10 @@ const RESERVED: [&str; 15] = [
     "CmdOrCtrl+Shift+Tab",
     "CmdOrCtrl+Shift+W",
     "CmdOrCtrl+Alt+W",
+    "CmdOrCtrl+=",
+    "CmdOrCtrl+Shift+=",
+    "CmdOrCtrl+-",
+    "CmdOrCtrl+0",
 ];
 
 const PUNCTUATION: &str = "\\[],./-=;'";

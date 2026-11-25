@@ -24,6 +24,7 @@ const PUBLIC_ANSWER_CAP: usize = 64 * 1024;
 const HANDOFF_FINISH_PATH: &str = "/api/auth/handoff/finish";
 const PAIR_PATH: &str = "/api/pair";
 const LOGOUT_PATH: &str = "/api/auth/logout";
+const ATTENTION_PATH: &str = "/api/client/attention";
 const TOKEN_KIND: &str = "client";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -145,6 +146,16 @@ pub struct RenameReport {
 struct HandoffAnswer {
     status: String,
     token: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct AttentionAnswer {
+    tasks: Vec<AttentionTask>,
+}
+
+#[derive(Deserialize)]
+struct AttentionTask {
+    id: String,
 }
 
 #[derive(Deserialize)]
@@ -295,9 +306,13 @@ where
             .unwrap_or(false)
     }
 
-    async fn key(&self, server: ServerId) -> Result<SigningKey, BridgeError> {
+    async fn key<T: SecretStore + 'static>(
+        &self,
+        secrets: &Arc<T>,
+        server: ServerId,
+    ) -> Result<SigningKey, BridgeError> {
         let failed = || BridgeError::Native("signing key unavailable".to_owned());
-        let stored = read_secret(&self.secrets, key_service(), server)
+        let stored = read_secret(secrets, key_service(), server)
             .await
             .map_err(|_| failed())?;
         if let Some(der) = stored {
@@ -310,13 +325,13 @@ where
                     });
                 }
                 Err(_) => {
-                    let _ = delete_secret(&self.secrets, key_service(), server).await;
+                    let _ = delete_secret(secrets, key_service(), server).await;
                 }
             }
         }
         let signer = RequestSigner::generate();
         let der = signer.to_pkcs8_der().map_err(|_| failed())?;
-        write_secret(&self.secrets, key_service(), server, der.clone())
+        write_secret(secrets, key_service(), server, der.clone())
             .await
             .map_err(|_| failed())?;
         Ok(SigningKey {
@@ -326,9 +341,14 @@ where
         })
     }
 
-    async fn discard_created_key(&self, server: ServerId, key: &SigningKey) {
+    async fn discard_created_key<T: SecretStore + 'static>(
+        &self,
+        secrets: &Arc<T>,
+        server: ServerId,
+        key: &SigningKey,
+    ) {
         if key.created {
-            let _ = delete_secret(&self.secrets, key_service(), server).await;
+            let _ = delete_secret(secrets, key_service(), server).await;
         }
     }
 
@@ -378,26 +398,75 @@ where
         let body = body
             .map(|text| text.as_bytes().to_vec())
             .unwrap_or_default();
+        self.send_authorised(&self.secrets, &entry, method, &path, headers, body)
+            .await
+    }
+
+    pub async fn attention<T: SecretStore + 'static>(
+        &self,
+        server: ServerId,
+        secrets: &Arc<T>,
+    ) -> Result<Vec<String>, BridgeError> {
+        let entry = self.servers.get(server).ok_or(BridgeError::UnknownServer)?;
+        let response = self
+            .send_authorised(
+                secrets,
+                &entry,
+                "GET".to_owned(),
+                ATTENTION_PATH,
+                &[],
+                Vec::new(),
+            )
+            .await?;
+        let status = response.status;
+        let mut stream = response.body;
+        let mut answer: Vec<u8> = Vec::new();
+        while let Some(chunk) = stream.next().await {
+            let chunk = chunk.map_err(|PortError(detail)| BridgeError::Transport(detail))?;
+            if answer.len() + chunk.len() > PUBLIC_ANSWER_CAP {
+                return Err(BridgeError::Native("the answer was too large".to_owned()));
+            }
+            answer.extend_from_slice(&chunk);
+        }
+        if status != 200 {
+            return Err(BridgeError::Native(format!(
+                "the attention route answered {status}"
+            )));
+        }
+        serde_json::from_slice::<AttentionAnswer>(&answer)
+            .map(|answer| answer.tasks.into_iter().map(|task| task.id).collect())
+            .map_err(|_| BridgeError::Native("the attention answer was invalid".to_owned()))
+    }
+
+    async fn send_authorised<T: SecretStore + 'static>(
+        &self,
+        secrets: &Arc<T>,
+        entry: &ServerEntry,
+        method: String,
+        path: &str,
+        headers: &[Header],
+        body: Vec<u8>,
+    ) -> Result<ServerResponse, BridgeError> {
         let mut outgoing = with_client_headers(
             page_headers(headers),
             &self.client.contract.to_string(),
             &format!("web/{}", self.client.version),
         );
-        let sent_token = read_token(&self.secrets, entry.id).await;
+        let sent_token = read_token(secrets, entry.id).await;
         if let Some(token) = &sent_token {
             outgoing.push(("authorization".to_owned(), format!("Bearer {token}")));
         }
         let mut sent_key = None;
         if self.signs(entry.id) {
-            let key = self.key(entry.id).await?;
-            outgoing.extend(self.signature_headers(&key.signer, &method, &path, &body)?);
+            let key = self.key(secrets, entry.id).await?;
+            outgoing.extend(self.signature_headers(&key.signer, &method, path, &body)?);
             sent_key = Some(key.der);
         }
         let response = self
             .http
             .send(HttpRequest {
                 method,
-                url: url_for(&entry, &path),
+                url: url_for(entry, path),
                 headers: outgoing,
                 body,
                 limits: None,
@@ -405,7 +474,7 @@ where
             .await
             .map_err(|PortError(detail)| BridgeError::Transport(detail))?;
         let response = if response.status == 401 {
-            self.handle_unauthorized(entry.id, sent_token, sent_key, response)
+            self.handle_unauthorized(secrets, entry.id, sent_token, sent_key, response)
                 .await
         } else {
             response
@@ -417,8 +486,9 @@ where
         })
     }
 
-    async fn handle_unauthorized(
+    async fn handle_unauthorized<T: SecretStore + 'static>(
         &self,
+        secrets: &Arc<T>,
         server: ServerId,
         sent_token: Option<String>,
         sent_key: Option<Vec<u8>>,
@@ -453,7 +523,7 @@ where
             let unauthorized = serde_json::from_slice::<ErrorDocument>(&collected)
                 .is_ok_and(|document| document.error.code == "unauthorized");
             if unauthorized && let Some(sent) = sent_token {
-                self.expire_if_unchanged(server, &sent, sent_key.as_deref())
+                self.expire_if_unchanged(secrets, server, &sent, sent_key.as_deref())
                     .await;
             }
         }
@@ -470,18 +540,24 @@ where
         }
     }
 
-    async fn expire_if_unchanged(&self, server: ServerId, sent: &str, sent_key: Option<&[u8]>) {
-        let current = read_token(&self.secrets, server).await;
+    async fn expire_if_unchanged<T: SecretStore + 'static>(
+        &self,
+        secrets: &Arc<T>,
+        server: ServerId,
+        sent: &str,
+        sent_key: Option<&[u8]>,
+    ) {
+        let current = read_token(secrets, server).await;
         if current.as_deref() == Some(sent)
-            && delete_secret(&self.secrets, token_service(), server)
+            && delete_secret(secrets, token_service(), server)
                 .await
                 .is_ok()
         {
             self.expired.lock().unwrap().insert(server);
             if let Some(sent_key) = sent_key {
-                let stored = read_secret(&self.secrets, key_service(), server).await;
+                let stored = read_secret(secrets, key_service(), server).await;
                 if matches!(stored, Ok(Some(ref der)) if der == sent_key) {
-                    let _ = delete_secret(&self.secrets, key_service(), server).await;
+                    let _ = delete_secret(secrets, key_service(), server).await;
                 }
             }
         }
@@ -535,7 +611,7 @@ where
     ) -> Result<HandoffStatus, BridgeError> {
         let entry = self.entry(scope, server_id)?;
         let key = if self.signs(entry.id) {
-            Some(self.key(entry.id).await?)
+            Some(self.key(&self.secrets, entry.id).await?)
         } else {
             None
         };
@@ -553,7 +629,7 @@ where
         }
         let outcome = self.finish_handoff(&entry, &payload).await;
         if let (Err(_), Some(key)) = (&outcome, &key) {
-            self.discard_created_key(entry.id, key).await;
+            self.discard_created_key(&self.secrets, entry.id, key).await;
         }
         outcome
     }
@@ -600,10 +676,11 @@ where
         label: &str,
     ) -> Result<(), BridgeError> {
         let entry = self.entry(scope, server_id)?;
-        let key = self.key(entry.id).await?;
+        let key = self.key(&self.secrets, entry.id).await?;
         let paired = self.post_pair(&entry, &key.signer, code, label).await;
         if paired.is_err() {
-            self.discard_created_key(entry.id, &key).await;
+            self.discard_created_key(&self.secrets, entry.id, &key)
+                .await;
         }
         paired
     }
