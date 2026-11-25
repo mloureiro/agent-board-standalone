@@ -9,6 +9,7 @@ import { freePort } from '../src/harness/ports.js';
 import type { Board } from '../src/harness/board.js';
 import { useBoard } from '../src/harness/vitest.js';
 import { startVersionProxy } from '../src/fixtures/version-proxy.js';
+import { SUBAGENT_USAGE_TOKENS } from '../src/stubs/events.js';
 import {
   EVENTS_PATH,
   STOP_KILL_DELAY_MS,
@@ -157,7 +158,7 @@ describe('worker runs', () => {
       const [first = 0, second = 0] = growth;
       expect(Math.abs(first - 15_000)).toBeLessThanOrEqual(5_000);
       expect(Math.abs(second - first - 15_000)).toBeLessThanOrEqual(5_000);
-      expect(final).toBeGreaterThan(previous === final ? 0 : previous);
+      expect(final).toBeGreaterThanOrEqual(previous);
       expect(final).toBeGreaterThanOrEqual(12);
       expect(growth.at(-1) ?? 0).toBeGreaterThanOrEqual(34_000);
     });
@@ -212,7 +213,7 @@ describe('worker runs', () => {
         what: 'the stored context usage',
       });
       expect(context).toMatch(/\b50000\b/);
-      expect(context).not.toMatch(/\b4321\b/);
+      expect(context).not.toMatch(new RegExp(`\\b${SUBAGENT_USAGE_TOKENS}\\b`));
     });
   });
 });
@@ -366,13 +367,7 @@ describe('sweep', () => {
         'dispatch',
       );
 
-      const status = await waitForStatus(
-        user,
-        task.id,
-        ['needs-me', 'todo', 'backlog', 'done'],
-        30_000,
-      );
-      expect(status).not.toBe('running');
+      await waitForStatus(user, task.id, ['needs-me', 'todo', 'backlog'], 30_000);
       const notes = await openThread(user, key, task.id);
       expect(notes.some((note) => note.body.includes('sweepmarker'))).toBe(true);
     } finally {
