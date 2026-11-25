@@ -15,6 +15,7 @@ pub const PAIRING_LABEL_MAX_CHARS: usize = 64;
 #[derive(Debug, PartialEq, Eq)]
 pub enum InputError {
     TaskId,
+    NotificationTitle,
     Link,
     TabPath,
     TabTitle,
@@ -30,6 +31,7 @@ impl InputError {
     pub fn message(&self) -> &'static str {
         match self {
             Self::TaskId => "refused task id",
+            Self::NotificationTitle => "refused notification title",
             Self::Link => "refused link",
             Self::TabPath => "refused tab path",
             Self::TabTitle => "refused tab title",
@@ -57,18 +59,26 @@ fn plain_id(text: &str) -> bool {
             .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'))
 }
 
-pub fn notification(task_id: &str, title: &str) -> Result<Notification, InputError> {
-    if !plain_id(task_id) && ServerId::parse(task_id).is_err() {
-        return Err(InputError::TaskId);
+pub fn task_id(text: &str) -> Result<String, InputError> {
+    if plain_id(text) || ServerId::parse(text).is_ok() {
+        Ok(text.to_owned())
+    } else {
+        Err(InputError::TaskId)
     }
-    let title: String = title
+}
+
+pub fn clean_title(title: &str) -> String {
+    title
         .chars()
         .filter(|character| !character.is_control())
         .take(TITLE_MAX_CHARS)
-        .collect();
+        .collect()
+}
+
+pub fn notification(task_id_text: &str, title: &str) -> Result<Notification, InputError> {
     Ok(Notification {
-        task_id: task_id.to_owned(),
-        title,
+        task_id: task_id(task_id_text)?,
+        title: clean_title(title),
     })
 }
 
