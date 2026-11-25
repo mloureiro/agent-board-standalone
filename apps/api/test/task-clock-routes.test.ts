@@ -4,6 +4,7 @@ import { fixedClock } from '../src/clock.js';
 import { HANDLER_SETS } from '../src/handlers/index.js';
 import { loadConfig } from '../src/modules/index.js';
 import { createMemoryEvents } from '../src/modules/events/index.js';
+import { taskUserActions } from '../src/modules/machine/task-user-actions.js';
 import { createServer } from '../src/server.js';
 import { createOpenStreams } from '../src/streams.js';
 import {
@@ -95,5 +96,26 @@ describe('task routes read the server clock', () => {
     clock.set(new Date(Date.now() + 21 * 60_000));
     const taken = await post('client', 'tasks/take-back', { id: 'clocked-take-back' });
     expect(taken.statusCode).toBe(200);
+  });
+
+  it('[api-119] a machine take-back with the grant judges the quiet time on the server clock', async () => {
+    clock.set(new Date());
+    await post('machine', 'add-task', {
+      id: 'clocked-machine-take-back',
+      title: envelope(41),
+      input: envelope(42),
+    });
+    await post('machine', 'claim-task', { id: 'clocked-machine-take-back', machine: 'machine-1' });
+    const act = (now: Date) =>
+      opened.database.withOwner('owner', (tx) =>
+        taskUserActions['take-back'](
+          tx,
+          { owner: 'owner', viaMachineId: 'machine-1', now },
+          { id: 'clocked-machine-take-back' },
+        ),
+      );
+    await expect(act(new Date())).rejects.toMatchObject({ code: 'conflict' });
+    const taken = await act(new Date(Date.now() + 21 * 60_000));
+    expect(taken.status).toBe('needs-me');
   });
 });
