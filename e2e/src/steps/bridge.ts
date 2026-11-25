@@ -1,4 +1,4 @@
-import { TOKEN_PATTERN } from '@agent-board/contract';
+import { TOKEN_PATTERN, type Feature } from '@agent-board/contract';
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 
 import { createBridgeHost, type BridgeHost } from '../fakes/bridge/host.js';
@@ -10,7 +10,6 @@ import { signedInUser, type BoardUser } from '../fixtures/users.js';
 import { resolveDatabaseKind } from '../harness/board.js';
 import { missingParts, type PartName } from '../harness/paths.js';
 import { featureSkipReason, partSkipReason, recordSkip } from '../harness/skip.js';
-import type { Feature } from '@agent-board/contract';
 
 const START_TIMEOUT_MS = 120_000;
 const POSTGRES_PROJECT = 'chromium-desktop';
