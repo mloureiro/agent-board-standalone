@@ -1,4 +1,5 @@
 import { requestPairCode } from './modules/control/index.js';
+import { runImport } from './import-command.js';
 import type { Env } from './modules/index.js';
 import { serve } from './start.js';
 
@@ -44,5 +45,6 @@ export const runCli = async (args: readonly string[], env: Env): Promise<number>
   }
   if (first === 'serve') return serve(env);
   if (first === 'pair') return pair(env);
+  if (first === 'import') return runImport(args.slice(1), env);
   return notYet(first);
 };
