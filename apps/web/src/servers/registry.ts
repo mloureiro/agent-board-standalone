@@ -89,8 +89,9 @@ export const createNativeRegistry = (bridge: AgentBoardBridge): ServerRegistry =
   },
   rename: (serverId, name) => bridge.renameServer(serverId, name.trim()),
   remove: async (serverId) => {
-    const removed = await bridge.removeServer(serverId);
-    if (removed) await serverNamespace(serverId).destroy();
-    return removed;
+    const listed = await bridge.listServers();
+    if (!listed.some((entry) => entry.id === serverId)) return false;
+    await serverNamespace(serverId).destroy();
+    return bridge.removeServer(serverId);
   },
 });

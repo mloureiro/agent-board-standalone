@@ -102,7 +102,7 @@ export function ServerRow(props: {
       setArmed(false);
       onNotice({
         text: `Couldn't delete the stored data of ${server.name}.`,
-        retry: () => void removeServer(server.id).catch(() => undefined),
+        retry: () => void remove(),
       });
     } finally {
       setRemoving(false);
