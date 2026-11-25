@@ -1,4 +1,4 @@
-import { createCredentialStore } from './auth/index.js';
+import { createCredentialStore, createIdentityRecheck } from './auth/index.js';
 import { clockFromEnv } from './clock.js';
 import { DEFAULT_SESSION_DAYS } from './modules/sign-in/index.js';
 import type { ServerServices } from './context.js';
@@ -32,12 +32,17 @@ export const startServer = async (env: Env, options: StartOptions = {}): Promise
   const database = await open(config.database);
   const services: ServerServices = {
     database,
-    credentials: createCredentialStore({
-      database,
-      clock,
-      sessionDays:
-        config.signIn.mode === 'login' ? config.signIn.sessionDays : DEFAULT_SESSION_DAYS,
-    }),
+    credentials: createCredentialStore(
+      {
+        database,
+        clock,
+        sessionDays:
+          config.signIn.mode === 'login' ? config.signIn.sessionDays : DEFAULT_SESSION_DAYS,
+      },
+      config.signIn.mode === 'login'
+        ? createIdentityRecheck(database, clock, config.signIn)
+        : undefined,
+    ),
     streams: createOpenStreams(),
     events: await openEvents(config),
   };

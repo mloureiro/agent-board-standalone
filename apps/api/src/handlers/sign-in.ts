@@ -4,6 +4,7 @@ import type { FastifyReply } from 'fastify';
 import {
   clearedSessionCookie,
   DAY_MS,
+  dropUpkeep,
   endSession,
   issueSession,
   newPairingCode,
@@ -85,8 +86,10 @@ export const signInHandlers: HandlerSet = (context) => ({
     const { signIn } = context.config;
     if (signIn.mode === 'no-login') return {};
     const credential = await readCredential(request, signIn.scheme);
-    if (credential !== null && credential.kind !== 'machine' && request.principal !== null)
+    if (credential !== null && credential.kind !== 'machine' && request.principal !== null) {
       await endSession(sessionDepsOf(context), request.principal.owner, credential.hash);
+      await dropUpkeep(context.services.database, credential.hash);
+    }
     if (request.principal !== null)
       await announceChange(context.services.events, request.principal.owner);
     reply.header('set-cookie', clearedSessionCookie(signIn.scheme));
