@@ -42,7 +42,6 @@
       "user commands with a worker › [cli-030] board take-back is refused on a run quiet for less than 20 minutes",
       "user commands with a worker › [cli-030] board take-back works on a run quiet for 20 minutes",
       "user commands with a worker › [cli-034] board transcript lists the runs of a task",
-      "user commands with a worker › [cli-034] board transcript with a run id prints its events without tool output",
       "user commands without a worker › [cli-029] board reply --resume sends the task back to the top of Todo"
     ],
     "browser/accessibility.spec.ts": "*",
