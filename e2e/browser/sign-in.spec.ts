@@ -274,7 +274,9 @@ test.describe('sign-in page', () => {
     await page.waitForTimeout(500);
     const beforeTick = polls.count();
     await page.clock.runFor(2000);
-    await expect.poll(() => polls.count()).toBeGreaterThan(beforeTick);
+    await expect.poll(() => polls.count()).toBe(beforeTick + 1);
+    await page.waitForTimeout(500);
+    expect(polls.count()).toBe(beforeTick + 1);
   });
 
   test('[web-016] approving from another browser signs the client in without a navigation', async ({
@@ -416,7 +418,7 @@ test.describe('another server', () => {
     };
   });
 
-  test('[web-103] each method button opens the approval page of the other server in a new page', async ({
+  test('[web-103] the other server offers only the hand-off, which opens its approval page in a new page', async ({
     page,
     context,
   }) => {
@@ -426,23 +428,25 @@ test.describe('another server', () => {
     await addServerInClient(page, b.url, 'Server B');
     await selectServerInClient(page, 'Server B');
 
+    await expect(page.getByRole('button', { name: HANDOFF_BUTTON })).toBeVisible();
     const methods = await signInMethods(b);
-    let opened = 0;
-    for (const method of methods) {
-      const button = page.getByRole('button', { name: methodButtonName(method, labels) });
-      if ((await button.count()) === 0) continue;
-      const popup = context.waitForEvent('page');
-      await button.click();
-      const approval = await popup;
-      await approval.waitForLoadState();
-      const url = new URL(approval.url());
-      expect(url.origin).toBe(b.origin);
-      expect(url.pathname).toBe(APPROVAL_PATH);
-      expect(url.searchParams.get('code')).toMatch(HANDOFF_CODE_PATTERN);
-      await approval.close();
-      opened += 1;
+    expect(methods).toContain('oidc');
+    for (const method of methods.filter((name) => name !== 'handoff')) {
+      await expect(
+        page.getByRole('button', { name: methodButtonName(method, labels) }),
+        `the ${method} button`,
+      ).toHaveCount(0);
     }
-    expect(opened).toBeGreaterThan(0);
+
+    const popup = context.waitForEvent('page');
+    await page.getByRole('button', { name: HANDOFF_BUTTON }).click();
+    const approval = await popup;
+    await approval.waitForLoadState();
+    const url = new URL(approval.url());
+    expect(url.origin).toBe(b.origin);
+    expect(url.pathname).toBe(APPROVAL_PATH);
+    expect(url.searchParams.get('code')).toMatch(HANDOFF_CODE_PATTERN);
+    await approval.close();
     await expect(page.getByRole('button', { name: HANDOFF_BUTTON })).toBeVisible();
   });
 
