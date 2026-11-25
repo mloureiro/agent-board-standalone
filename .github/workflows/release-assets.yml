@@ -59,9 +59,9 @@ jobs:
         with:
           workspaces: apps/client-app/src-tauri
       - run: pnpm install --frozen-lockfile --filter "@agent-board/client-app..."
+      - run: pnpm --filter "@agent-board/client-app..." --if-present run build
       - if: startsWith(github.ref, 'refs/tags/client-app-v')
         run: pnpm --filter @agent-board/client-app run release:check "${GITHUB_REF_NAME#client-app-v}"
-      - run: pnpm --filter "@agent-board/client-app..." --if-present run build
       - name: Build the release bundle
         run: pnpm --filter @agent-board/client-app exec tauri build --target universal-apple-darwin -- --package agent-board-client
       - name: Build the debug bundle

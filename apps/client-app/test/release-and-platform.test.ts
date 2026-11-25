@@ -40,6 +40,10 @@ describe('client-app release workflow', () => {
     expect(debugBuild).toContain('--features devtools');
     expect(debugBuild).toContain('--config src-tauri/tauri.debug.conf.json');
 
+    const frontendBuild = build.indexOf('--if-present run build');
+    expect(frontendBuild).toBeGreaterThan(-1);
+    expect(build.indexOf('run release:check')).toBeGreaterThan(frontendBuild);
+
     expect(build).toContain('codesign --verify');
     expect(build).toContain('ditto -c -k --keepParent');
     expect(release).toContain('gh release upload "$TAG" dist-release/*.zip --clobber');
