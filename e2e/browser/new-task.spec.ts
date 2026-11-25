@@ -342,10 +342,15 @@ test.describe('drafts', () => {
     }
 
     const otherText = `other server draft ${uniqueTitle('text')}`;
-    const foreignKey = `ab:e2e-server-b:draft:new:${account.key.keyId}`;
     await page.evaluate(
-      ([key, value]) => localStorage.setItem(key as string, value as string),
-      [foreignKey, otherText],
+      ({ own, value }) => {
+        for (const entry of own) {
+          const area = window[entry.store];
+          area.removeItem(entry.key);
+          area.setItem(entry.key.replace(/^ab:[^:]+:/, 'ab:e2e-server-b:'), value);
+        }
+      },
+      { own: entries, value: otherText },
     );
     await reopenBoard(page, account);
     await expect(await openNewTask(page)).toHaveValue('');

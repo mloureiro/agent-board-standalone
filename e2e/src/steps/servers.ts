@@ -39,6 +39,7 @@ export interface PairHandle {
 
 const START_TIMEOUT_MS = 180_000;
 const UNLOCK_TIMEOUT_MS = 15_000;
+const LATE_PROMPT_MS = 1_000;
 
 export function usePair(declaration: PairDeclaration): PairHandle {
   let pair: BoardPair | null = null;
@@ -130,8 +131,11 @@ export async function unlockAll(page: Page, passphrase: string): Promise<void> {
   for (let round = 0; round < 6; round += 1) {
     await expect(field.or(board).first()).toBeVisible({ timeout: UNLOCK_TIMEOUT_MS });
     if (!(await field.isVisible())) {
-      await page.waitForLoadState('networkidle');
-      if (!(await field.isVisible())) return;
+      const asked = await field.waitFor({ state: 'visible', timeout: LATE_PROMPT_MS }).then(
+        () => true,
+        () => false,
+      );
+      if (!asked) return;
     }
     await unlockInPage(page, passphrase);
     await expect(field).toBeHidden();

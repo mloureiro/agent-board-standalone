@@ -317,7 +317,8 @@ test.describe('accessibility of the sign-in page', () => {
     await expectKeyboardOperable(page);
   });
 });
-test.describe('accessibility of the primary pages', () => {
+
+test.describe('accessibility of the connection banner on a board of its own', () => {
   test.describe.configure({ timeout: 180_000 });
   const harness = useBoard({ parts: ['api', 'web', 'cli'], features: [], auth: 'no-login' });
   const world = useWorld(harness, { listener: false });

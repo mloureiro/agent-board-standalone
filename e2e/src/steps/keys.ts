@@ -6,6 +6,7 @@ import { DEFAULT_PASSPHRASE, unlockedKey, type UnlockedKey } from '../fixtures/k
 import { noLoginUser, type BoardUser } from '../fixtures/users.js';
 import type { Board } from '../harness/board.js';
 import { SERVER_LIST_KEY } from './servers.js';
+import { NAMES as TASK_PAGE, panelButton, replyBox } from './task-page.js';
 
 export const SETUP_NAMES = {
   passphrase: /^passphrase$/i,
@@ -179,8 +180,6 @@ export const JOURNEY_NAMES = {
   create: /^(create|add)( task)?$/i,
   label: /labels?/i,
   notifications: /notifications/i,
-  reply: /(reply|message)/i,
-  send: /^send$/i,
 } as const;
 
 export function journeyMarker(marker: string): JourneyMarker {
@@ -219,9 +218,9 @@ export async function runJourney(page: Page, journey: JourneyMarker): Promise<vo
 
   await page.getByRole('link', { name: SETUP_NAMES.boardLink }).click();
   await cardOf(page, journey.title).getByRole('link', { name: journey.title }).click();
-  const reply = page.getByRole('textbox', { name: JOURNEY_NAMES.reply });
+  const reply = replyBox(page);
   await reply.fill(journey.draft);
-  await page.getByRole('button', { name: JOURNEY_NAMES.send }).click();
+  await panelButton(page, TASK_PAGE.send).click();
   await expect(reply).toHaveValue('');
   await reply.fill(`${journey.draft} still typing`);
   await page.getByRole('link', { name: SETUP_NAMES.boardLink }).click();

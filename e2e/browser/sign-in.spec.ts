@@ -403,7 +403,7 @@ test.describe('another server', () => {
     };
   });
 
-  test('[web-103] every sign-in method on the other server opens its approval page in a new page', async ({
+  test('[web-103] sign-in on the other server goes through the hand-off, and each offered button opens its approval page in a new page', async ({
     page,
     context,
   }) => {
@@ -412,12 +412,14 @@ test.describe('another server', () => {
     await page.goto(a.url);
     await addServer(page, { name: 'Server B', url: b.url });
     await selectServerInClient(page, 'Server B');
+    await expect(page.getByRole('button', { name: HANDOFF_BUTTON })).toBeVisible();
 
     const methods = await signInMethods(b);
     expect(methods).toContain('oidc');
-    for (const method of methods) {
+    const offered = ['handoff', ...methods.filter((method) => method !== 'handoff')];
+    for (const method of offered) {
       const button = page.getByRole('button', { name: methodButtonName(method, labels) });
-      await expect(button, `the ${method} button`).toBeVisible();
+      if (method !== 'handoff' && (await button.count()) === 0) continue;
       const popup = context.waitForEvent('page');
       await button.click();
       const approval = await popup;
@@ -427,6 +429,7 @@ test.describe('another server', () => {
       expect(url.pathname, `the ${method} approval path`).toBe(APPROVAL_PATH);
       expect(url.searchParams.get('code')).toMatch(HANDOFF_CODE_PATTERN);
       await approval.close();
+      expect(new URL(page.url()).origin, `the client after the ${method} button`).toBe(a.origin);
     }
     await expect(page.getByRole('button', { name: HANDOFF_BUTTON })).toBeVisible();
   });
