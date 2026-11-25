@@ -43,6 +43,7 @@ export interface Runtime {
   ): Promise<number>;
   readonly fetch: typeof fetch;
   readonly platform: NodeJS.Platform;
+  readonly arch: NodeJS.Architecture;
   readonly homedir: string;
   readonly hostname: string;
   readonly uid: number;
@@ -124,9 +125,13 @@ function interruptSignal(): AbortSignal {
   return controller.signal;
 }
 
+const BUN_EMBEDDED_ROOT = '/$bunfs/';
+
 function selfCommand(): readonly string[] {
   const script = process.argv[1];
-  if (script === undefined || !existsSync(script)) return [process.execPath];
+  if (script === undefined || script.startsWith(BUN_EMBEDDED_ROOT) || !existsSync(script)) {
+    return [process.execPath];
+  }
   return [process.execPath, realpathSync(script)];
 }
 
@@ -150,6 +155,7 @@ export function systemRuntime(): Runtime {
     },
     fetch: globalThis.fetch,
     platform: process.platform,
+    arch: process.arch,
     homedir: os.homedir(),
     hostname: os.hostname(),
     uid: process.getuid?.() ?? 0,
