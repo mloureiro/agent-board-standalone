@@ -26,6 +26,9 @@ import {
 
 const MISSING_HEADER_MESSAGE = /did not send its contract version/i;
 
+const contractNumber = (version: number): RegExp =>
+  new RegExp(`contract\\D{0,12}${version}\\b`, 'i');
+
 describe('handshake over HTTP', () => {
   const harness = useBoard({ parts: ['api'], features: [], auth: 'no-login' });
 
@@ -163,8 +166,8 @@ describe('handshake in the CLI', () => {
     const result = await machine.cli(['tasks', '--json']);
     expect(result.code).not.toBe(0);
     const output = `${result.stdout}${result.stderr}`;
-    expect(output).toMatch(versionNamed(CONTRACT));
-    expect(output).toMatch(versionNamed(CONTRACT + 1));
+    expect(output).toMatch(contractNumber(CONTRACT));
+    expect(output).toMatch(contractNumber(CONTRACT + 1));
     expect(output).toMatch(/too old|upgrade/i);
   });
 
@@ -203,8 +206,11 @@ describe('handshake in the CLI', () => {
     expect(result.stdout).toMatch(SEMVER);
     expect(result.stdout).toMatch(/contract/i);
     expect(result.stdout).toContain(harness.board.url);
-    expect(result.stdout).toMatch(/compatible/i);
-    for (const feature of served.body?.features ?? []) expect(result.stdout).toContain(feature);
+    expect(result.stdout).toMatch(/\bcompatible\b/);
+    expect(result.stdout).not.toMatch(/incompatible/);
+    const features = served.body?.features ?? [];
+    expect(features.length).toBeGreaterThan(0);
+    for (const feature of features) expect(result.stdout).toContain(feature);
   });
 
   it('[cli-011] through a proxy with a higher contract the verdict says the CLI is too old', async () => {
@@ -214,6 +220,7 @@ describe('handshake in the CLI', () => {
       minClient: { cli: CONTRACT + 1, web: CONTRACT + 1 },
     });
     const result = await machine.cli(['version']);
+    expect(result.code, `${result.stdout}${result.stderr}`).toBe(0);
     const output = `${result.stdout}${result.stderr}`;
     expect(output).toMatch(/too old/i);
     expect(output).toMatch(versionNamed(CONTRACT + 1));
@@ -228,9 +235,12 @@ describe('handshake in the CLI', () => {
     const text = JSON.stringify(JSON.parse(result.stdout));
     expect(text).toMatch(SEMVER);
     expect(text).toMatch(jsonNumber(CONTRACT));
-    expect(text).toContain('compatible');
+    expect(text).toMatch(/"compatible"/);
+    expect(text).not.toContain('incompatible');
     expect(text).toContain(harness.board.url);
-    for (const feature of served.body?.features ?? []) expect(text).toContain(feature);
+    const features = served.body?.features ?? [];
+    expect(features.length).toBeGreaterThan(0);
+    for (const feature of features) expect(text).toContain(feature);
   });
 
   it('[cli-011] board version --json through a proxy with a higher contract reports client-too-old', async () => {
@@ -240,6 +250,7 @@ describe('handshake in the CLI', () => {
       minClient: { cli: CONTRACT + 1, web: CONTRACT + 1 },
     });
     const result = await machine.cli(['version', '--json']);
+    expect(result.code, `${result.stdout}${result.stderr}`).toBe(0);
     const text = JSON.stringify(JSON.parse(result.stdout));
     expect(text).toContain('client-too-old');
     expect(text).toMatch(jsonNumber(CONTRACT + 1));
