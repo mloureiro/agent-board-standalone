@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { DATA_HEADERS } from '@agent-board/contract';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { UNKNOWN_VERSION } from '../src/modules/build/index.js';
 import { ConfigError, loadConfig, type Env } from '../src/modules/index.js';
@@ -515,11 +515,13 @@ describe('access log', () => {
     await app.inject({ url: '/healthz?probe=1' });
     await app.inject({ method: 'POST', url: '/api/client/me', payload: '{}' });
     await app.inject({ url: '/missing' });
-    expect(readFileSync(file, 'utf8').trim().split('\n')).toEqual([
-      'GET /healthz 200',
-      'POST /api/client/me 415',
-      'GET /missing 404',
-    ]);
+    await vi.waitFor(() =>
+      expect(readFileSync(file, 'utf8').trim().split('\n')).toEqual([
+        'GET /healthz 200',
+        'POST /api/client/me 415',
+        'GET /missing 404',
+      ]),
+    );
   });
 
   it('[api-112] appends to an existing file and logs nothing without the setting', async () => {
