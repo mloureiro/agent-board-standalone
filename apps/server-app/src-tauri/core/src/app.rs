@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use crate::account;
 use crate::credentials;
+use crate::durations::Durations;
 use crate::launchctl::SystemLaunchctl;
 use crate::lock::{Acquired, InstanceLock};
 use crate::log_file::{AppLog, LogFile};
@@ -11,6 +12,8 @@ use crate::login_item::{self, Build};
 use crate::overrides::Overrides;
 use crate::paths::{AppPaths, ROOT_ENV, Root};
 use crate::settings::{Settings, SettingsError};
+use crate::spec;
+use crate::supervisor::Plan;
 use crate::uninstall;
 
 pub struct Host {
@@ -42,6 +45,14 @@ impl Host {
         Root::resolve(self.root_env.as_deref(), &self.home).map_err(|error| error.to_string())
     }
 
+    pub fn resources_dir(&self) -> PathBuf {
+        self.overrides.resources_dir.clone().unwrap_or_else(|| {
+            self.executable
+                .parent()
+                .map_or_else(|| PathBuf::from("resources"), |dir| dir.join("resources"))
+        })
+    }
+
     pub fn launch_agents_dir(&self) -> PathBuf {
         self.overrides
             .launch_agents_dir
@@ -56,6 +67,7 @@ pub struct Running {
     pub settings: Result<Settings, SettingsError>,
     pub app_log: AppLog,
     pub access_log: LogFile,
+    pub plan: Plan,
     _lock: InstanceLock,
 }
 
@@ -94,12 +106,27 @@ pub fn start(host: &Host) -> io::Result<Start> {
         Err(error) => app_log.error(&format!("settings refused: {error}")),
     }
 
+    let plan = Plan {
+        api: match &settings {
+            Ok(settings) => spec::api_spec(settings, &paths, &host.resources_dir()),
+            Err(error) => Err(error.to_string()),
+        },
+        worker: None,
+        durations: host
+            .overrides
+            .durations
+            .clone()
+            .unwrap_or_else(Durations::production),
+        run_dir: spec::run_dir(&paths),
+    };
+
     Ok(Start::Running(Box::new(Running {
         root,
         paths,
         settings,
         app_log,
         access_log,
+        plan,
         _lock: lock,
     })))
 }
@@ -125,7 +152,11 @@ pub fn run_uninstall(host: &Host, delete_data: bool, out: &mut dyn Write) -> i32
     uninstall::run(&environment, delete_data, out)
 }
 
-pub fn run_headless(host: &Host, input: impl BufRead, out: &mut impl Write) -> i32 {
+pub fn run_headless(
+    host: &Host,
+    input: impl BufRead + Send + 'static,
+    out: &mut impl Write,
+) -> i32 {
     match start(host) {
         Ok(Start::Running(running)) => {
             crate::headless::serve(&running, input, out);

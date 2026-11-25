@@ -7,7 +7,7 @@
   "main": "./src/index.ts",
   "scripts": {
     "bundle": "tauri build -- --package agent-board-server",
-    "build:binary": "cargo build --manifest-path src-tauri/Cargo.toml --locked -p agent-board-server",
+    "build:binary": "cargo build --manifest-path src-tauri/Cargo.toml --locked -p agent-board-server && cargo build --manifest-path src-tauri/Cargo.toml --locked -p agent-board-server-core --bin stub_child",
     "test": "vitest run && pnpm run test:rust",
     "typecheck": "tsc --noEmit && cargo check --manifest-path src-tauri/Cargo.toml --locked",
     "format:check:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml --all --check",

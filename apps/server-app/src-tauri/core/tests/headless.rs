@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use agent_board_server_core::app::{self, Host, Running, Start};
+use agent_board_server_core::durations::Durations;
 use agent_board_server_core::headless::serve_with;
 use agent_board_server_core::login_item::Build;
 use agent_board_server_core::opener::Opener;
@@ -43,7 +44,13 @@ fn start(host: &Host) -> Box<Running> {
 
 fn drive(running: &Running, input: &str, opener: &dyn Opener) -> Vec<Value> {
     let mut out = Vec::new();
-    serve_with(running, Cursor::new(input.to_string()), &mut out, opener);
+    serve_with(
+        running,
+        Cursor::new(input.to_string()),
+        &mut out,
+        opener,
+        &|| None,
+    );
     String::from_utf8(out)
         .unwrap()
         .lines()
@@ -195,4 +202,192 @@ fn server_app_070_an_access_log_that_is_already_full_is_rotated_at_start() {
             .len(),
         10 * 1024 * 1024
     );
+}
+
+#[test]
+fn server_app_022_the_actions_of_later_iterations_are_parsed_and_refused_for_now() {
+    let bed = Bed::new();
+    let running = start(&host(&bed));
+    let events = drive(
+        &running,
+        "open-board\nbackup-now\nrestart-worker\ndisconnect-worker\ncheck-worker\nconnect-worker tok key\npair-device\n",
+        &Recorder::default(),
+    );
+
+    let errors: Vec<&Value> = events.iter().filter(|e| e["type"] == "error").collect();
+    assert_eq!(errors.len(), 7);
+    assert_eq!(
+        errors[5]["message"],
+        "connect-worker is not implemented in this build"
+    );
+    assert!(!serde_json::to_string(&events).unwrap().contains("tok"));
+}
+
+#[test]
+fn server_app_022_the_state_line_carries_the_supervision_rows() {
+    let bed = Bed::new();
+    let running = start(&host(&bed));
+    let events = drive(&running, "state\n", &Recorder::default());
+
+    let supervision = &events[0]["supervision"];
+    assert!(
+        supervision["api"]["text"]
+            .as_str()
+            .unwrap()
+            .starts_with("API executable missing")
+    );
+    assert_eq!(supervision["api"]["state"], "failed");
+    assert_eq!(supervision["worker"]["text"], "Not set up");
+    assert_eq!(supervision["gaveUp"]["api"], false);
+    assert!(supervision["blocked"].is_null());
+}
+
+fn stub_host(bed: &Bed) -> Host {
+    let resources = bed.dir.path().join("resources");
+    fs::create_dir_all(resources.join("api")).unwrap();
+    fs::copy(
+        env!("CARGO_BIN_EXE_stub_child"),
+        resources.join("api/agent-board-api"),
+    )
+    .unwrap();
+    let mut host = host(bed);
+    let port = std::net::TcpListener::bind("127.0.0.1:0")
+        .unwrap()
+        .local_addr()
+        .unwrap()
+        .port();
+    let root = host.root().unwrap();
+    fs::create_dir_all(root.path()).unwrap();
+    fs::write(
+        root.paths().settings_file(),
+        format!(r#"{{"port": {port}}}"#),
+    )
+    .unwrap();
+    host.overrides.resources_dir = Some(resources);
+    host.overrides.durations = Durations::parse("grace=300,tick=5,startupProbe=10");
+    host
+}
+
+fn api_pid(running: &Running) -> Option<u32> {
+    fs::read_to_string(running.paths.root().join("run/api.pid"))
+        .ok()?
+        .lines()
+        .next()?
+        .parse()
+        .ok()
+}
+
+fn alive(pid: u32) -> bool {
+    unsafe { libc::kill(pid as i32, 0) == 0 }
+}
+
+#[test]
+fn server_app_032_a_signal_stops_the_children_and_quits_even_when_input_stays_open() {
+    let bed = Bed::new();
+    let host = stub_host(&bed);
+    let running = start(&host);
+    let (_keep_open, reader) = std::os::unix::net::UnixStream::pair().unwrap();
+    let flag = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let pid = std::sync::Arc::new(std::sync::atomic::AtomicU32::new(0));
+    let signal = {
+        let flag = flag.clone();
+        let pid = pid.clone();
+        let run_dir = running.paths.root().join("run");
+        std::thread::spawn(move || {
+            let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+            while std::time::Instant::now() < deadline {
+                let text = fs::read_to_string(run_dir.join("api.pid")).unwrap_or_default();
+                if let Some(Ok(value)) = text.lines().next().map(str::parse::<u32>) {
+                    pid.store(value, std::sync::atomic::Ordering::SeqCst);
+                    break;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(10));
+            }
+            flag.store(true, std::sync::atomic::Ordering::SeqCst);
+        })
+    };
+
+    let mut out = Vec::new();
+    serve_with(
+        &running,
+        io::BufReader::new(reader),
+        &mut out,
+        &Recorder::default(),
+        &|| {
+            flag.load(std::sync::atomic::Ordering::SeqCst)
+                .then_some(libc::SIGTERM)
+        },
+    );
+    signal.join().unwrap();
+
+    let child = pid.load(std::sync::atomic::Ordering::SeqCst);
+    assert_ne!(child, 0);
+    assert!(!alive(child));
+    assert!(api_pid(&running).is_none());
+    let text = String::from_utf8(out).unwrap();
+    assert!(text.trim_end().ends_with(r#"{"type":"quit"}"#), "{text}");
+    let log = fs::read_to_string(running.paths.app_log()).unwrap();
+    assert!(log.contains("SIGTERM received"), "{log}");
+}
+
+#[test]
+fn server_app_028_restart_server_restarts_the_api_and_the_state_lines_follow() {
+    let bed = Bed::new();
+    let host = stub_host(&bed);
+    let running = start(&host);
+    let (mut keep_open, reader) = std::os::unix::net::UnixStream::pair().unwrap();
+    let writer = {
+        let run_dir = running.paths.root().join("run");
+        std::thread::spawn(move || {
+            use std::io::Write;
+            let first = wait_pid(&run_dir, None);
+            keep_open.write_all(b"restart-server\n").unwrap();
+            wait_pid(&run_dir, Some(first));
+            std::thread::sleep(std::time::Duration::from_millis(400));
+            keep_open.write_all(b"quit\n").unwrap();
+            first
+        })
+    };
+
+    let mut out = Vec::new();
+    serve_with(
+        &running,
+        io::BufReader::new(reader),
+        &mut out,
+        &Recorder::default(),
+        &|| None,
+    );
+    let first = writer.join().unwrap();
+
+    assert!(!alive(first));
+    let events: Vec<Value> = String::from_utf8(out)
+        .unwrap()
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect();
+    assert!(
+        events
+            .iter()
+            .any(|e| e["action"] == "restart-server" && e["ok"] == true)
+    );
+    assert!(
+        events
+            .iter()
+            .any(|e| e["type"] == "state" && e["supervision"]["api"]["state"] == "running")
+    );
+    assert_eq!(events.last().unwrap()["type"], "quit");
+}
+
+fn wait_pid(run_dir: &Path, different_from: Option<u32>) -> u32 {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+    while std::time::Instant::now() < deadline {
+        let text = fs::read_to_string(run_dir.join("api.pid")).unwrap_or_default();
+        if let Some(Ok(pid)) = text.lines().next().map(str::parse::<u32>)
+            && Some(pid) != different_from
+        {
+            return pid;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+    panic!("the api pid never appeared");
 }

@@ -1,57 +1,9 @@
-import { type ChildProcessWithoutNullStreams, spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-
-const targetDirectory = join(dirname(fileURLToPath(import.meta.url)), '../src-tauri/target');
-const binary = [
-  process.env['AGENT_BOARD_SERVER_BIN'],
-  ...['debug', 'release'].map((profile) => join(targetDirectory, profile, 'agent-board-server')),
-].find((candidate): candidate is string => candidate !== undefined && existsSync(candidate));
-
-type Event = Record<string, unknown>;
-
-interface Session {
-  child: ChildProcessWithoutNullStreams;
-  events: Event[];
-  closed: Promise<number | null>;
-  send: (line: string) => void;
-}
-
-function environment(root: string): NodeJS.ProcessEnv {
-  return {
-    PATH: process.env['PATH'],
-    HOME: process.env['HOME'],
-    AGENT_BOARD_SERVER_ROOT: root,
-    AGENT_BOARD_E2E: '1',
-    AGENT_BOARD_CREDENTIAL_STORE: `file:${join(root, '..', 'credentials.json')}`,
-    AGENT_BOARD_LAUNCH_AGENTS_DIR: join(root, '..', 'LaunchAgents'),
-  };
-}
-
-function launch(root: string): Session {
-  const child = spawn(binary as string, ['--headless'], { env: environment(root) });
-  const events: Event[] = [];
-  let buffered = '';
-  child.stdout.on('data', (chunk: Buffer) => {
-    buffered += chunk.toString();
-    const lines = buffered.split('\n');
-    buffered = lines.pop() ?? '';
-    for (const line of lines) if (line !== '') events.push(JSON.parse(line) as Event);
-  });
-  const closed = new Promise<number | null>((resolve) => child.on('close', resolve));
-  return { child, events, closed, send: (line) => child.stdin.write(`${line}\n`) };
-}
-
-async function until(condition: () => boolean, what: string): Promise<void> {
-  const deadline = Date.now() + 15_000;
-  while (!condition()) {
-    if (Date.now() > deadline) throw new Error(`timed out waiting for ${what}`);
-    await new Promise((resolve) => setTimeout(resolve, 20));
-  }
-}
+import { binary, environment, launch, SKIP_REASON, type Session, until } from './support.js';
 
 describe('headless runner', () => {
   let scratch: string;
@@ -59,10 +11,7 @@ describe('headless runner', () => {
   const sessions: Session[] = [];
 
   beforeEach((context) => {
-    if (binary === undefined)
-      context.skip(
-        'the headless binary is not built: run `pnpm --filter @agent-board/server-app shell:check` or set AGENT_BOARD_SERVER_BIN',
-      );
+    if (binary === undefined) context.skip(SKIP_REASON);
     scratch = mkdtempSync(join(tmpdir(), 'server-app-'));
     root = join(scratch, 'root');
   });

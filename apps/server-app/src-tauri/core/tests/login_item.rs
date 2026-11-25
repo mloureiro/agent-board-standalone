@@ -148,6 +148,7 @@ fn host(bed: &Bed, build: Build) -> Host {
         overrides: Overrides {
             credential_store_file: None,
             launch_agents_dir: Some(bed.agents.clone()),
+            ..Overrides::default()
         },
         build,
         executable: Path::new(EXECUTABLE).to_path_buf(),

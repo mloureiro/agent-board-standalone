@@ -40,3 +40,32 @@ reopen. The root is `~/Library/Application Support/Agent Board Server` unless `A
 moved root has its own Keychain service and never touches the login item. Test seams (non-release builds, or any
 build with `AGENT_BOARD_E2E=1`): `AGENT_BOARD_CREDENTIAL_STORE=file:<path>` replaces the Keychain and
 `AGENT_BOARD_LAUNCH_AGENTS_DIR=<dir>` replaces `~/Library/LaunchAgents`.
+
+## Supervision
+
+`core::supervisor` runs the API (and, from the worker iteration, the worker) on one thread. Each child is its own
+process group with its output appended to `<root>/logs/<name>.log`, a pid file `<root>/run/<name>.pid` (pid and
+program path) and an environment cleared down to the variables the spec lists: the real API executable starts and
+answers `/healthz` with no `PATH` or `HOME`, so none is passed. Order: API, then the worker once the API is first
+healthy; stop is the reverse, SIGTERM to the group and SIGKILL after the grace. Crashes restart after 1 s, 5 s and
+25 s and the fourth gives up until Restart server. The restart count resets after 10 minutes stable, counted from the
+first healthy `/healthz`. `/healthz` is probed every 60 s (2 s timeout, three misses are a crash) and never while
+`Supervisor::set_hold(true)` (the backup hold) or during a restart. The orphan sweep runs first: the process a pid file
+names is terminated, SIGKILL included, only when its command starts with the recorded program, it leads its own
+process group and it started before the pid file was written; anything else is a reused pid and is left alone. A port already in use is found
+before spawning and shown on the API row; the app stays up.
+
+SIGTERM, SIGINT and SIGHUP are recorded by `core::signals` and run the same stop as Quit, in the tray (through
+`app.exit`) and in `--headless`; dropping the supervisor on any other exit path stops the children too. A release
+build with `panic = "abort"` skips drops, so the next start's orphan sweep is the net.
+
+Test seams (non-release builds, or `AGENT_BOARD_E2E=1`): `AGENT_BOARD_SERVER_RESOURCES=<dir>` replaces the
+`resources/` folder next to the binary (`api/agent-board-api`, `web/`), and `AGENT_BOARD_SUPERVISION_TIMINGS`
+(`restart1=100,grace=500,probe=100,...` in ms, keys in `core::durations`) shortens every timing. The `stub_child`
+binary of `core` is the stand-in API in tests: it listens on `HOST:PORT`, answers `/healthz`, and reads its
+behaviour (crash, hang, ignore SIGTERM, start late, spawn a grandchild) from `STUB_CONFIG` or `<exe>.conf`.
+`build:binary` builds it next to the app binary.
+
+The headless runner prints a `state` line whenever the rows change (`supervision.api`, `supervision.worker`,
+`gaveUp`, `blocked`) and implements `state`, `restart-server`, `open-logs`, `open-settings` and `quit`. The other
+actions answer `error` with "<action> is not implemented in this build" until their iteration.
