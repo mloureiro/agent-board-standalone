@@ -133,3 +133,46 @@ export function answersOf(opened: string): Answer[] | undefined {
     return undefined;
   }
 }
+
+export function composeAnswers(
+  questions: readonly Question[],
+  picks: readonly string[],
+  others: readonly string[],
+): Answer[] {
+  const selected: string[][] = questions.map(() => []);
+  for (const pick of picks) {
+    const index = questions.findIndex((question) =>
+      question.options.some((option) => option.label === pick),
+    );
+    const chosen = selected[index];
+    if (chosen === undefined) {
+      const labels = questions.flatMap((question) => question.options.map((o) => o.label));
+      throw new UsageError(`"${pick}" is not an option of the open question: ${labels.join(', ')}`);
+    }
+    chosen.push(pick);
+  }
+  questions.forEach((question, index) => {
+    if (!question.multiSelect && (selected[index]?.length ?? 0) > 1) {
+      throw new UsageError(`"${question.header}" takes one option: give one --pick for it`);
+    }
+  });
+  const remaining = [...others];
+  const answers = questions.map((question, index): Answer => {
+    const chosen = selected[index] ?? [];
+    const other = chosen.length === 0 ? remaining.shift() : undefined;
+    return other === undefined ? { selected: chosen } : { selected: chosen, other };
+  });
+  const leftover = remaining.shift();
+  if (leftover !== undefined) {
+    throw new UsageError('there is no question left without an answer for the extra --other');
+  }
+  questions.forEach((question, index) => {
+    const answer = answers[index];
+    if (answer === undefined || (answer.selected.length === 0 && answer.other === undefined)) {
+      throw new UsageError(
+        `"${question.header}" has no answer: give a --pick or an --other for it`,
+      );
+    }
+  });
+  return answers;
+}

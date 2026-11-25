@@ -96,7 +96,21 @@ describe('the census of cli-review section 1', () => {
 
   it('[cli-012] no command of the tree is missing from the census except the ones this CLI adds', () => {
     const known = new Set(census.commands.map((command) => command.name.split(/\s+/)[0]));
-    const added = new Set(['version']);
+    const added = new Set([
+      'version',
+      'answer',
+      'dismiss',
+      'reply',
+      'send',
+      'stop',
+      'take-back',
+      'rerun',
+      'close',
+      'reopen',
+      'fork',
+      'transcript',
+      'machines',
+    ]);
     for (const command of program.commands) {
       expect(known.has(command.name()) || added.has(command.name()), command.name()).toBe(true);
     }

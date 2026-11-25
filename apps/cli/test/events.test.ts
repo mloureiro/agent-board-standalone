@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { EVENT_TYPES, matchesFilter, type BoardEvent } from '../src/events/diff.js';
 import { runEvents } from '../src/events/run.js';
-import { readSse } from '../src/transport/stream.js';
+import { MAX_SSE_LINE, readSse } from '../src/transport/stream.js';
 import type { ApiStub } from './support/api-stub.js';
 import { useRig } from './support/harness.js';
 import type { Cli } from './support/profile.js';
@@ -305,6 +305,18 @@ describe('the event loop', () => {
       seen.push(`${message.event}:${message.data}`);
     }
     expect(seen).toEqual(['tasks:{}', 'other:x\ny']);
+  });
+
+  it('[cli-023] stops reading an event stream that sends a line without end', async () => {
+    const huge = 'x'.repeat(MAX_SSE_LINE + 1);
+    const read = async (): Promise<void> => {
+      for await (const message of readSse(
+        streamOf([`data: ${huge}`]).body as ReadableStream<Uint8Array>,
+      )) {
+        void message;
+      }
+    };
+    await expect(read()).rejects.toThrow('longer than 1 MiB');
   });
 
   it('[cli-023] matches a filter on every field', () => {

@@ -34,7 +34,7 @@ export async function runAsk(ctx: Context, input: string, file: string): Promise
       questions: await seal(s.keys, noteBinding('note.questions'), document),
     });
   } catch (error) {
-    if (error instanceof ApiError && error.status === 409) {
+    if (error instanceof ApiError && (error.status === 409 || error.status === 403)) {
       throw new UsageError(
         `${id} cannot take a question: ${error.message}. The board takes questions only from the run that holds the task, so nothing was asked. If you are that run, it was taken back or has ended: do not ask again, end your turn.`,
       );
