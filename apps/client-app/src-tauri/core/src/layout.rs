@@ -30,3 +30,18 @@ pub fn page(width: f64, height: f64) -> Bounds {
         height: (height - bar).max(0.0),
     }
 }
+
+pub fn pane_page(width: f64, height: f64, split: &[f64], pane: usize) -> Bounds {
+    let full = page(width, height);
+    let start = if pane == 0 {
+        0.0
+    } else {
+        split.get(pane - 1).copied().unwrap_or(1.0)
+    };
+    let end = split.get(pane).copied().unwrap_or(1.0);
+    Bounds {
+        x: start * width,
+        width: (end - start).max(0.0) * width,
+        ..full
+    }
+}
