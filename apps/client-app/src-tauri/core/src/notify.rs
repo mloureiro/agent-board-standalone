@@ -4,6 +4,7 @@ use crate::page_input::{InputError, clean_title, task_id};
 use std::collections::HashMap;
 
 pub const DEDUPE_SECS: u64 = 60;
+pub const MAX_TRACKED: usize = 256;
 pub const EXPIRED_BANNER: &str =
     "Your session expired. Sign in again to keep receiving notifications.";
 
@@ -108,6 +109,15 @@ impl NotifyPolicy {
             let log = (!self.denial_logged).then_some(LogEvent::NotificationDenied);
             self.denial_logged = true;
             return Decision::Suppress(Reason::PermissionDenied { log });
+        }
+        if self.raised.len() >= MAX_TRACKED
+            && let Some(oldest) = self
+                .raised
+                .iter()
+                .min_by_key(|(_, at)| **at)
+                .map(|(key, _)| key.clone())
+        {
+            self.raised.remove(&oldest);
         }
         self.raised.insert(key, now_secs);
         Decision::Raise {

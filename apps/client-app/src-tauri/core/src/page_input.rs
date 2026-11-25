@@ -45,12 +45,6 @@ impl InputError {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct Notification {
-    pub task_id: String,
-    pub title: String,
-}
-
 fn plain_id(text: &str) -> bool {
     !text.is_empty()
         && text.len() <= TASK_ID_MAX_CHARS
@@ -73,13 +67,6 @@ pub fn clean_title(title: &str) -> String {
         .filter(|character| !character.is_control())
         .take(TITLE_MAX_CHARS)
         .collect()
-}
-
-pub fn notification(task_id_text: &str, title: &str) -> Result<Notification, InputError> {
-    Ok(Notification {
-        task_id: task_id(task_id_text)?,
-        title: clean_title(title),
-    })
 }
 
 pub fn link(text: &str) -> Result<Url, InputError> {

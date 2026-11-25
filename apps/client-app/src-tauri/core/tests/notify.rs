@@ -4,12 +4,13 @@ use agent_board_client_core::attention::{AttentionPoller, MAX_IDS_PER_POLL, POLL
 use agent_board_client_core::ids::ServerId;
 use agent_board_client_core::log::LogEvent;
 use agent_board_client_core::notify::{
-    Banner, Click, DEDUPE_SECS, Decision, EXPIRED_BANNER, FocusState, NotifyPolicy, NotifyRequest,
-    Permission, Reason, Target, expiry_banner, route_click,
+    Banner, Click, DEDUPE_SECS, Decision, EXPIRED_BANNER, FocusState, MAX_TRACKED, NotifyPolicy,
+    NotifyRequest, Permission, Reason, Target, expiry_banner, route_click,
 };
 use agent_board_client_core::page_input::{InputError, TITLE_MAX_CHARS};
 use agent_board_client_core::throttle::{BEAT_SECS, Change, SILENCE_SECS, State, Throttle};
 use agent_board_client_core::tokens::token_service;
+use agent_board_client_core::watch::{Tick, Watch};
 use agent_board_client_core::zoom::{Effect, LADDER, Zoom};
 use common::{Canned, FIRST_ID, SECOND_ID, harness, id, scope_of, servers_file, token};
 
@@ -507,4 +508,120 @@ fn client_app_045_zoom_steps_through_the_ladder_per_server_and_resets_at_launch(
 
     zoom.forget(first);
     assert_eq!(zoom.percent(first), 100);
+}
+
+#[test]
+fn client_app_040_the_dedupe_window_is_bounded_by_dropping_the_oldest_entry() {
+    let mut policy = NotifyPolicy::new();
+    for index in 0..MAX_TRACKED {
+        let task = format!("t{index}");
+        let decision = policy.decide(
+            &request(FIRST_ID, Some(&task), "Title"),
+            nothing_focused(),
+            Permission::Granted,
+            T0 + u64::from(index > 0),
+        );
+        assert!(is_raise(&decision));
+    }
+    let newest = request(FIRST_ID, Some("extra"), "Title");
+    assert!(is_raise(&policy.decide(
+        &newest,
+        nothing_focused(),
+        Permission::Granted,
+        T0 + 2
+    )));
+    assert_eq!(
+        policy.decide(&newest, nothing_focused(), Permission::Granted, T0 + 3),
+        Decision::Suppress(Reason::Duplicate)
+    );
+    let evicted = request(FIRST_ID, Some("t0"), "Title");
+    assert!(is_raise(&policy.decide(
+        &evicted,
+        nothing_focused(),
+        Permission::Granted,
+        T0 + 4
+    )));
+}
+
+#[test]
+fn client_app_050_a_heartbeat_or_showing_the_window_stops_the_attention_poll() {
+    let server = id(FIRST_ID);
+    let mut watch = Watch::new();
+    watch.set_hidden(server, true, T0);
+    assert_eq!(watch.tick(T0 + SILENCE_SECS - 1), Tick::default());
+
+    let tick = watch.tick(T0 + SILENCE_SECS);
+    assert_eq!(tick.logs, vec![(server, LogEvent::Throttled)]);
+    assert_eq!(tick.polls, vec![server]);
+    assert!(watch.is_polling(server));
+    assert!(watch.tick(T0 + SILENCE_SECS + 1).polls.is_empty());
+
+    watch.heartbeat(server, T0 + SILENCE_SECS + 2);
+    assert!(!watch.is_polling(server));
+    assert_eq!(watch.tick(T0 + SILENCE_SECS + 3), Tick::default());
+
+    watch.set_hidden(server, true, T0 + 100);
+    watch.tick(T0 + 100 + SILENCE_SECS);
+    assert!(watch.is_polling(server));
+    watch.set_hidden(server, false, T0 + 200);
+    assert!(!watch.is_polling(server));
+
+    watch.set_hidden(server, true, T0 + 300);
+    watch.tick(T0 + 300 + SILENCE_SECS);
+    watch.forget(server);
+    assert!(!watch.is_polling(server));
+}
+
+#[tokio::test]
+async fn client_app_050_the_attention_route_goes_through_the_pipeline_with_the_token() {
+    let server = id(FIRST_ID);
+    let harness = harness(
+        [Ok(Canned::json(
+            200,
+            r#"{"tasks":[{"id":"t1","projectId":"p","since":"2026-01-01T00:00:00Z"},{"id":"t2","projectId":"p","since":"2026-01-01T00:00:00Z"}]}"#,
+        ))],
+        servers_file(&[(FIRST_ID, "Alpha", "https://board.example.test/")]),
+        true,
+    );
+    harness
+        .secrets
+        .put(&token_service(), FIRST_ID, token().as_bytes());
+    let ids = harness
+        .bridge
+        .attention(server, &harness.secrets)
+        .await
+        .unwrap();
+    assert_eq!(ids, vec!["t1".to_owned(), "t2".to_owned()]);
+    let sent = harness.http.sent();
+    assert_eq!(sent.len(), 1);
+    assert_eq!(sent[0].method, "GET");
+    assert!(sent[0].url.ends_with("/api/client/attention"));
+    assert_eq!(
+        sent[0].header("authorization"),
+        Some(format!("Bearer {}", token()).as_str())
+    );
+}
+
+#[tokio::test]
+async fn client_app_050_an_unauthorised_attention_poll_marks_the_server_expired() {
+    let server = id(FIRST_ID);
+    let harness = harness(
+        [Ok(Canned::json(
+            401,
+            r#"{"error":{"code":"unauthorized","message":"x"}}"#,
+        ))],
+        servers_file(&[(FIRST_ID, "Alpha", "https://board.example.test/")]),
+        true,
+    );
+    harness
+        .secrets
+        .put(&token_service(), FIRST_ID, token().as_bytes());
+    assert!(
+        harness
+            .bridge
+            .attention(server, &harness.secrets)
+            .await
+            .is_err()
+    );
+    assert!(harness.bridge.is_expired(server));
 }
