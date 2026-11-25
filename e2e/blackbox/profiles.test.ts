@@ -215,16 +215,21 @@ describe('profiles', () => {
   });
 
   it('[cli-050] an invalid profile name is refused', async () => {
+    const identity = await identityOf(boards.a);
     const tmp = machineTmp(boards.a.tmp, uniqueName('profiles-invalid'));
     const run = cliIn(tmp, 'profile');
+    const enrolment = await prepareEnrolment(tmp, identity);
+    const init = initArgs(boards.a.url, enrolment);
     const invalid = ['Upper', '-lead', 'has space', 'under_score', 'a/b', '..', 'a'.repeat(33)];
     for (const name of invalid) {
-      const byFlag = await run(['--profile', name, 'tasks']);
+      const byFlag = await run(['--profile', name, ...init]);
       expect(byFlag.code, `--profile ${name}`).not.toBe(0);
-      const byEnv = await run(['tasks'], { AGENT_BOARD_PROFILE: name });
+      const byEnv = await run(init, { AGENT_BOARD_PROFILE: name });
       expect(byEnv.code, `AGENT_BOARD_PROFILE=${name}`).not.toBe(0);
     }
     expect(existsSync(tmp.path('xdg'))).toBe(false);
+    const valid = await run(['--profile', 'a'.repeat(32), ...init]);
+    expect(valid.code, combined(valid)).toBe(0);
   });
 });
 

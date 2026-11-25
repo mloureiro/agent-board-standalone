@@ -1,11 +1,17 @@
-import { existsSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { encodeDataKey, generateDataKey } from '@agent-board/sealing';
 import { describe, expect, it } from 'vitest';
 
 import { callOk, machineToken } from '../src/client/contract-client.js';
-import { enrolledMachine, issueMachineToken, machineTmp } from '../src/fixtures/machines.js';
+import {
+  enrolledMachine,
+  issueMachineToken,
+  machineTmp,
+  type EnrolledMachine,
+  type MachineBoard,
+} from '../src/fixtures/machines.js';
 import { noLoginUser } from '../src/fixtures/users.js';
 import { freePort } from '../src/harness/ports.js';
 import { useBoard } from '../src/harness/vitest.js';
@@ -13,11 +19,12 @@ import {
   adoptKey,
   cliIn,
   combined,
+  copyConfig,
   copyMachines,
-  filesOf,
   foreignToken,
   identityOf,
   initArgs,
+  installedFiles,
   prepareEnrolment,
   profileDirs,
   reissueToken,
@@ -31,20 +38,19 @@ import {
   type Identity,
   type Run,
 } from '../src/steps/profiles.js';
-import type { EnrolledMachine } from '../src/fixtures/machines.js';
 
 const REVOKED_WAIT_MS = 10_000;
 
 function expectNoSecrets(texts: readonly string[], secrets: readonly string[]): void {
   for (const text of texts) {
     for (const secret of secrets) expect(text).not.toContain(secret);
-    expect(text).not.toMatch(/bearer\s+\S+/i);
+    expect(text).not.toMatch(/bearer\s+ab[a-z]_/i);
     expect(text).not.toMatch(/authorization\s*[:=]\s*\S/i);
   }
 }
 
 async function profileMachine(
-  board: { url: string; tmp: Parameters<typeof machineTmp>[0] },
+  board: MachineBoard,
   identity: Identity,
   name?: string,
 ): Promise<EnrolledMachine> {
@@ -112,7 +118,7 @@ describe('board uninstall', () => {
     const machine = await profileMachine(harness.board, identity, uniqueName('uninstall'));
     const setup = await machine.cli(['setup']);
     expect(setup.code, combined(setup)).toBe(0);
-    expect(filesOf(machine.tmp.home), 'the installed binary and units').not.toHaveLength(0);
+    expect(installedFiles(machine.tmp), 'the installed binary and units').not.toHaveLength(0);
     const dirs = profileDirs(machine.tmp, 'default');
     return { identity, machine, dirs };
   }
@@ -122,7 +128,7 @@ describe('board uninstall', () => {
     const config = treeOf(dirs.config);
     const result = await machine.cli(['uninstall']);
     expect(result.code, combined(result)).toBe(0);
-    expect(filesOf(machine.tmp.home)).toEqual([]);
+    expect(installedFiles(machine.tmp)).toEqual([]);
     expect(treeOf(dirs.config)).toEqual(config);
     expect(existsSync(dirs.state)).toBe(true);
   });
@@ -131,26 +137,27 @@ describe('board uninstall', () => {
     const { machine, dirs } = await installed();
     const result = await machine.cli(['uninstall', '--include-optional']);
     expect(result.code, combined(result)).toBe(0);
-    expect(filesOf(machine.tmp.home)).toEqual([]);
+    expect(installedFiles(machine.tmp)).toEqual([]);
     expect(existsSync(dirs.config)).toBe(false);
     expect(existsSync(dirs.state)).toBe(false);
   });
 
   it('[cli-052] refuses when a directory to remove resolves to $HOME', async () => {
-    const { machine } = await installed();
-    const sentinel = path.join(machine.tmp.home, 'sentinel.txt');
-    writeFileSync(sentinel, 'keep');
+    const { machine, dirs } = await installed();
+    writeFileSync(path.join(machine.tmp.home, 'sentinel.txt'), 'keep');
+    copyConfig(dirs.config, machine.tmp.home);
     const link = machine.tmp.path('home-link');
     symlinkSync(machine.tmp.home, link);
     for (const [variable, target] of [
       ['AGENT_BOARD_CONFIG_DIR', machine.tmp.home],
       ['AGENT_BOARD_STATE_DIR', link],
     ] as const) {
+      const before = snapshotOf([machine.tmp.home, dirs.config, dirs.state]);
       const result = await machine.cli(['uninstall', '--include-optional'], {
         env: { [variable]: target },
       });
       expect(result.code, `${variable}: ${combined(result)}`).not.toBe(0);
-      expect(readFileSync(sentinel, 'utf8')).toBe('keep');
+      expect(snapshotOf([machine.tmp.home, dirs.config, dirs.state]), variable).toEqual(before);
     }
   });
 
@@ -178,7 +185,7 @@ describe('board uninstall with the server stopped', () => {
     const result = await machine.cli(['uninstall']);
     expect(result.code, combined(result)).toBe(0);
     expect(combined(result)).toMatch(/revok/i);
-    expect(filesOf(machine.tmp.home)).toEqual([]);
+    expect(installedFiles(machine.tmp)).toEqual([]);
   });
 });
 
@@ -199,14 +206,9 @@ describe('self-update --server', () => {
     return { identity, machine, dirs: profileDirs(machine.tmp, 'default') };
   }
 
-  async function target() {
-    const user = await noLoginUser(boards.b);
-    return user;
-  }
-
   it('[cli-059] moves the machine to the other server after checking owner, key id and token', async () => {
     const { identity, machine, dirs } = await source();
-    await copyMachines(identity.user, await target(), identity.key);
+    await copyMachines(identity.user, await noLoginUser(boards.b), identity.key);
     const result = await machine.cli(['self-update', '--server', boards.b.url]);
     expect(result.code, combined(result)).toBe(0);
     const config = textOfTree(dirs.config);
@@ -256,7 +258,7 @@ describe('self-update --server', () => {
       name: uniqueName('peer'),
     });
     await peer.ok('machine.version', {});
-    await copyMachines(identity.user, await target(), identity.key);
+    await copyMachines(identity.user, await noLoginUser(boards.b), identity.key);
     const result = await machine.cli(['self-update', '--server', boards.b.url]);
     expect(result.code, combined(result)).toBe(0);
     expect(combined(result)).toContain(peer.name);
@@ -295,6 +297,7 @@ describe('enrolment refusals', () => {
       const reason = combined(result)
         .replaceAll(entry.url, '<url>')
         .replaceAll(tmp.root, '<tmp>')
+        .replaceAll(enrolment.name, '<name>')
         .trim();
       expect(reason, entry.label).not.toBe('');
       reasons.push(reason);

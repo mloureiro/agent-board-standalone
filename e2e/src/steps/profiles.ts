@@ -1,5 +1,14 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { lstatSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  copyFileSync,
+  lstatSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import path from 'node:path';
 
 import { doctorReport, type DoctorResult, type Feature } from '@agent-board/contract';
@@ -273,6 +282,16 @@ export function filesOf(root: string): string[] {
     .map((entry) => entry.split(' ')[0] as string);
 }
 
+export function installedFiles(tmp: Tmp): string[] {
+  const xdgConfig = tmp.path('xdg', 'config');
+  return [
+    ...filesOf(tmp.home).map((file) => path.join('home', file)),
+    ...filesOf(xdgConfig)
+      .filter((file) => !file.startsWith(`agent-board${path.sep}`))
+      .map((file) => path.join('xdg', 'config', file)),
+  ];
+}
+
 export function backupsOf(directory: string, base: string): string[] {
   return readdirSync(directory)
     .filter((name) => name !== base && name.includes(base))
@@ -284,6 +303,16 @@ export function seedLooseCredentials(directory: string, content: string): string
   const file = path.join(directory, 'env');
   writeFileSync(file, content, { mode: 0o644 });
   return file;
+}
+
+export function copyConfig(from: string, to: string): void {
+  for (const name of readdirSync(from)) {
+    const source = path.join(from, name);
+    if (!statSync(source).isFile()) continue;
+    const target = path.join(to, name);
+    copyFileSync(source, target);
+    chmodSync(target, modeOf(source));
+  }
 }
 
 export function textOfTree(root: string): string {
