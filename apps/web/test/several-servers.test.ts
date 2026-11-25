@@ -246,9 +246,9 @@ describe('version handshake', () => {
     expect(screen.queryByText(/too old/i)).not.toBeInTheDocument();
   });
 
-  it('[web-078] signed out and needs pairing replace the page with their own state', async () => {
+  it('[web-078] a signed-out server replaces the page with its sign-in page', async () => {
     renderApp({ check: checkReturning({ state: 'signed-out', server: serverVersion() }) });
-    expect(await screen.findByRole('heading', { name: 'Signed out' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument();
   });
 });
 

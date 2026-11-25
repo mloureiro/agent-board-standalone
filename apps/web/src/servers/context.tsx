@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from 'react';
 
+import { serverNamespace } from '../storage/index.js';
+import { createServerClient, type ServerClient } from '../transport/client.js';
 import type { Transport } from '../transport/types.js';
 import { checkConnection, type ConnectionState } from './connection.js';
 import type { AddResult, ServerEntry, ServerRegistry } from './registry.js';
@@ -24,6 +26,10 @@ export interface ServersValue {
   readonly ready: boolean;
   readonly servers: readonly ServerEntry[];
   readonly active: ServerEntry | null;
+  readonly transportContext: TransportContext;
+  hasAnswered(serverId: string): boolean;
+  recheck(serverId: string): void;
+  clientOf(serverId: string): ServerClient | null;
   connectionOf(serverId: string): ConnectionView;
   transportOf(serverId: string): Transport | null;
   reportKeyUnknown(serverId: string): void;
@@ -58,9 +64,11 @@ function Monitor(props: {
   readonly check: ConnectionCheck;
   readonly upIntervalMs: number;
   readonly downIntervalMs: number;
+  readonly nonce: number;
   readonly onResult: (serverId: string, result: ConnectionState) => void;
+  readonly onWake: (serverId: string) => void;
 }): null {
-  const { server, transport, check, upIntervalMs, downIntervalMs, onResult } = props;
+  const { server, transport, check, upIntervalMs, downIntervalMs, nonce, onResult, onWake } = props;
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -75,9 +83,23 @@ function Monitor(props: {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [server, transport, check, upIntervalMs, downIntervalMs, onResult]);
+  }, [server, transport, check, upIntervalMs, downIntervalMs, nonce, onResult]);
+  useEffect(() => {
+    const wake = (): void => {
+      if (document.visibilityState !== 'hidden') onWake(server.id);
+    };
+    window.addEventListener('focus', wake);
+    document.addEventListener('visibilitychange', wake);
+    return () => {
+      window.removeEventListener('focus', wake);
+      document.removeEventListener('visibilitychange', wake);
+    };
+  }, [server.id, onWake]);
   return null;
 }
+
+const featuresOf = (view: ConnectionState | undefined): readonly string[] =>
+  view !== undefined && 'server' in view ? view.server.server.features : [];
 
 export function ServersProvider(props: ServersProviderProps): ReactNode {
   const { registry, context, children } = props;
@@ -86,6 +108,8 @@ export function ServersProvider(props: ServersProviderProps): ReactNode {
   const [servers, setServers] = useState<ServerEntry[] | null>(null);
   const [results, setResults] = useState<Record<string, ConnectionState>>({});
   const [unknownKeys, setUnknownKeys] = useState<Record<string, true>>({});
+  const [answered, setAnswered] = useState<Record<string, true>>({});
+  const [nonces, setNonces] = useState<Record<string, number>>({});
 
   const check = useMemo<ConnectionCheck>(
     () =>
@@ -107,9 +131,15 @@ export function ServersProvider(props: ServersProviderProps): ReactNode {
     return built;
   }, [servers, context]);
 
-  const onResult = useCallback(
-    (serverId: string, result: ConnectionState) =>
-      setResults((previous) => ({ ...previous, [serverId]: result })),
+  const onResult = useCallback((serverId: string, result: ConnectionState) => {
+    setResults((previous) => ({ ...previous, [serverId]: result }));
+    if (result.state === 'up') setAnswered((previous) => ({ ...previous, [serverId]: true }));
+    if (result.state === 'signed-out') serverNamespace(serverId).local.clear();
+  }, []);
+
+  const onWake = useCallback(
+    (serverId: string) =>
+      setNonces((previous) => ({ ...previous, [serverId]: (previous[serverId] ?? 0) + 1 })),
     [],
   );
 
@@ -120,6 +150,15 @@ export function ServersProvider(props: ServersProviderProps): ReactNode {
       ready: servers !== null,
       servers: list,
       active: context.bridge === null ? (own ?? list[0] ?? null) : (list[0] ?? null),
+      transportContext: context,
+      hasAnswered: (serverId) => answered[serverId] === true,
+      recheck: onWake,
+      clientOf: (serverId) => {
+        const transport = transports[serverId];
+        return transport === undefined
+          ? null
+          : createServerClient(transport, { features: featuresOf(results[serverId]) });
+      },
       connectionOf: (serverId) => {
         const result = results[serverId];
         if (result === undefined) return { state: 'checking' };
@@ -151,7 +190,7 @@ export function ServersProvider(props: ServersProviderProps): ReactNode {
         return removed;
       },
     };
-  }, [servers, results, unknownKeys, transports, registry, refresh, context]);
+  }, [servers, results, unknownKeys, answered, transports, registry, refresh, context, onWake]);
 
   return (
     <ServersContext.Provider value={value}>
@@ -165,7 +204,9 @@ export function ServersProvider(props: ServersProviderProps): ReactNode {
             check={check}
             upIntervalMs={upIntervalMs}
             downIntervalMs={downIntervalMs}
+            nonce={nonces[server.id] ?? 0}
             onResult={onResult}
+            onWake={onWake}
           />
         );
       })}

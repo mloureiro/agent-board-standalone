@@ -15,8 +15,6 @@ export const panelFor = (view: ConnectionView): PanelContent | null => {
       return { title: 'Client too old', text: view.message };
     case 'too-new':
       return { title: 'Server too old', text: view.message };
-    case 'signed-out':
-      return { title: 'Signed out', text: 'Sign in to continue.' };
     case 'needs-pairing':
       return {
         title: 'Pairing needed',

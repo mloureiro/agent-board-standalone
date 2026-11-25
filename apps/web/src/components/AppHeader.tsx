@@ -5,6 +5,7 @@ import { NavLink } from 'react-router';
 
 import { ColorSchemeMenu } from './ColorSchemeMenu.js';
 import { NewTaskButton } from './new-task.js';
+import { SignOutButton } from './SignOutButton.js';
 
 export const PHONE_QUERY = '(max-width: 48em)';
 
@@ -72,6 +73,7 @@ export function AppHeader(): ReactNode {
       )}
       <Group gap="xs" wrap="nowrap">
         <NewTaskButton />
+        <SignOutButton />
         <ColorSchemeMenu />
       </Group>
     </Group>

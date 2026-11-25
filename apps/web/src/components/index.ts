@@ -4,3 +4,7 @@ export { ConnectionBanners } from './ConnectionBanners.js';
 export { NewTaskButton, NewTaskProvider, useNewTask } from './new-task.js';
 export { APP_TITLE, pageTitle, usePageTitle } from './page-title.js';
 export { ServerStatePanel, panelFor } from './ServerStatePanel.js';
+export { ErrorBoundaryPanel } from './ErrorBoundaryPanel.js';
+export { SignOutButton } from './SignOutButton.js';
+export { ToastProvider, Toasts, createToastHub, useToastHub, useToasts } from './toasts.js';
+export type { Toast, ToastHub } from './toasts.js';
