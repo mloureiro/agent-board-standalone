@@ -41,6 +41,7 @@ export const openPgliteDatabase = async (
     schema,
   });
   const mutex = new Mutex();
+  let closing: Promise<void> | null = null;
   return {
     kind: 'pglite',
     ...scopedOperations(db, {
@@ -53,6 +54,6 @@ export const openPgliteDatabase = async (
       },
       serialise: (work) => mutex.run(work),
     }),
-    close: () => mutex.run(() => client.close()),
+    close: () => (closing ??= mutex.run(() => client.close())),
   };
 };

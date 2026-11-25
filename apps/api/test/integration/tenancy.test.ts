@@ -158,14 +158,12 @@ describe.each(TARGETS)('tenancy on $name', (target) => {
       await opened.database.withOwner('alice', async (tx) => {
         await tx.insert(schema.project).values({ id: other, position: 1 });
         await tx.insert(schema.machine).values({ id: 'laptop', tokenHash: 'a'.repeat(64) });
-        await tx
-          .insert(schema.directory)
-          .values({
-            id: directory,
-            machineId: 'laptop',
-            projectId: alice.projectId,
-            path: envelope(),
-          });
+        await tx.insert(schema.directory).values({
+          id: directory,
+          machineId: 'laptop',
+          projectId: alice.projectId,
+          path: envelope(),
+        });
         await tx
           .insert(schema.task)
           .values({ ...taskValues(alice.projectId, 't-dir'), directoryId: directory });

@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 
 import { getTableName, type SQL } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
@@ -8,6 +8,7 @@ import type { Database, ScopedDatabase } from '../../src/modules/database/index.
 
 export const envelope = (size = 40): string => `abe1.${'A'.repeat(size)}`;
 export const blind = (fill = 'B'): string => `abh1.${fill.repeat(43)}`;
+export const uniqueBlind = (): string => `abh1.${randomBytes(32).toString('base64url')}`;
 
 export interface ErrorFacts {
   code: string | undefined;
@@ -25,6 +26,18 @@ export const databaseError = async (work: Promise<unknown>): Promise<ErrorFacts>
     return { code: facts.code, constraint: facts.constraint, message: facts.message };
   }
   throw new Error('the statement was accepted');
+};
+
+export const accepted = async (work: Promise<unknown>): Promise<boolean> => {
+  try {
+    await work;
+    return true;
+  } catch (error) {
+    let current: unknown = error;
+    while (current instanceof Error && current.cause instanceof Error) current = current.cause;
+    if ((current as { code?: string }).code === '23514') return false;
+    throw error;
+  }
 };
 
 export const seedUser = async (db: Database, owner: string): Promise<{ projectId: string }> =>
@@ -58,3 +71,28 @@ export const rowsOf = async (tx: ScopedDatabase, query: SQL): Promise<Record<str
 
 export const catalog = (db: Database, query: SQL) =>
   db.withOwner('catalog-reader', (tx) => rowsOf(tx, query));
+
+export const causeChain = (error: unknown): unknown[] => {
+  const chain: unknown[] = [];
+  for (
+    let current = error;
+    current !== undefined;
+    current = (current as Error | undefined)?.cause
+  ) {
+    chain.push(current);
+    if (!(current instanceof Error)) break;
+  }
+  return chain;
+};
+
+export const wasCausedBy = async (
+  work: Promise<unknown>,
+  kind: abstract new (...args: never[]) => Error,
+): Promise<boolean> => {
+  try {
+    await work;
+  } catch (error) {
+    return causeChain(error).some((link) => link instanceof kind);
+  }
+  return false;
+};

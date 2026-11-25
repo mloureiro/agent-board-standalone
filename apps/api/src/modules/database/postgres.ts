@@ -50,9 +50,10 @@ export const openPostgresDatabase = async (
     throw error;
   }
   const db = drizzle(pool, { schema });
+  let closing: Promise<void> | null = null;
   return {
     kind: 'postgres',
     ...scopedOperations(db, { switchRole: false, serialise: (work) => work() }),
-    close: () => pool.end(),
+    close: () => (closing ??= pool.end()),
   };
 };

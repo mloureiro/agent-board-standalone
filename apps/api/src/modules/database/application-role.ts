@@ -28,7 +28,10 @@ interface RoleFacts {
   migrated: boolean;
 }
 
-export const checkApplicationRole = async (pool: Pool): Promise<void> => {
+export const checkApplicationRole = async (
+  pool: Pool,
+  expectedRole: string = APP_ROLE,
+): Promise<void> => {
   const { rows } = await pool.query<RoleFacts>(
     `select current_user,
             r.rolsuper,
@@ -42,8 +45,8 @@ export const checkApplicationRole = async (pool: Pool): Promise<void> => {
   if (facts === undefined) {
     problems.push('the application role cannot be read');
   } else {
-    if (facts.current_user !== APP_ROLE)
-      problems.push(`the connection runs as "${facts.current_user}", not "${APP_ROLE}"`);
+    if (facts.current_user !== expectedRole)
+      problems.push(`the connection runs as "${facts.current_user}", not "${expectedRole}"`);
     if (facts.rolsuper) problems.push('the application role is a superuser');
     if (facts.rolbypassrls) problems.push('the application role bypasses row-level security');
     if (facts.owns_table) problems.push('the application role owns a table in the public schema');
