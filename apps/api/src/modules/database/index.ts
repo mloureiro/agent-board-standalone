@@ -10,6 +10,12 @@ export {
   type OwnerScopes,
   type ScopedDatabase,
 } from './database.js';
+export {
+  embeddedPglite,
+  useEmbeddedAssets,
+  type EmbeddedAssets,
+  type PgliteFiles,
+} from './embedded.js';
 export { DatabaseRefusal, StatementRefused } from './errors.js';
 export { openDatabase } from './open.js';
 export { openPgliteDatabase, defaultPgliteFactory, type PgliteFactory } from './pglite.js';
