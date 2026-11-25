@@ -8,7 +8,9 @@ mod keychain;
 mod legacy;
 mod menu;
 mod removals;
+mod server_tabs;
 mod state;
+mod tab_registry;
 mod windows;
 
 fn main() {

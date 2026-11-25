@@ -1,10 +1,11 @@
 use crate::clock::SystemClock;
-use crate::commands::{list, page};
+use crate::commands::{list, page, tabs};
 use crate::confirm::NativeConfirm;
 use crate::fetches::Fetches;
 use crate::keychain::{Background, Keychain};
 use crate::removals::Removals;
 use crate::state::{AppState, CONTRACT};
+use crate::tab_registry::TabRegistry;
 use crate::{handover, legacy, menu, windows};
 use agent_board_client_core::bridge::Bridge;
 use agent_board_client_core::files::DirStore;
@@ -80,6 +81,7 @@ fn launch(app: &AppHandle, state: &Arc<AppState>) -> tauri::Result<()> {
 pub fn run() {
     let app = tauri::Builder::default()
         .manage(EarlyLinks::holding())
+        .manage(TabRegistry::default())
         .invoke_handler(tauri::generate_handler![
             page::server_fetch,
             page::server_fetch_cancel,
@@ -100,6 +102,12 @@ pub fn run() {
             list::retry_store_deletion,
             list::take_open_failures,
             list::list_is_complete,
+            tabs::tabs_snapshot,
+            tabs::tab_select,
+            tabs::tab_close,
+            tabs::tab_cycle,
+            tabs::tab_navigate,
+            tabs::tab_title,
         ])
         .on_menu_event(|app, event| menu::handle(app, event.id().as_ref()))
         .setup(|app| {

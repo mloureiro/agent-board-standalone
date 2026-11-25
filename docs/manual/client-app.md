@@ -14,7 +14,7 @@ entry (for example `http://localhost:1`) is useful for the failure checks of lat
 2. Look at the window's title bar. The close button is disabled (grey, no hover symbol).
 3. Press Cmd-W with the server window in front. Nothing happens and the window stays.
 4. Open the Window menu. It holds Minimize and no Close Window item. Check the File menu too: its only item is
-   "Close List Window".
+   "Close Tab".
 5. Click the yellow minimise button. The window moves to the Dock, and clicking its Dock tile brings it back.
 6. Press Cmd-Q. The app quits and its Dock icon disappears: no process stays behind (`pgrep -x agent-board-client`
    prints nothing).
@@ -24,11 +24,49 @@ Expected: the server window can only be minimised, Cmd-Q quits everything and th
 ## 011: the Dock icon shows the server list
 
 1. Launch the app. Only the list window opens and no server loads.
-2. Press Cmd-W with the list window in front. The list window closes. If a server window is open it stays.
+2. Press Cmd-W with the list window in front. The list window closes (File › Close Tab acts on the list window
+   when it is the front one). If a server window is open it stays.
 3. Click the app's Dock icon. The list window opens again, in front.
 4. Click the Dock icon while the list is already open. It stays a single window, brought to the front.
 
 Expected: the Dock icon always brings the server list back, and Cmd-W closes only the list window.
+
+## 027: menus and tab shortcuts
+
+Open two or three pages in the server window first (click a task card, then open Backlog and Schedules from the
+home board); each opens in its own tab.
+
+1. Open the File menu. Its only item is "Close Tab" (Cmd-W). Open the Edit menu: Undo, Redo, Cut, Copy, Paste and
+   Select All are there; type in a page field and check that Cut, Copy, Paste and Select All act on it.
+2. Open the Window menu. It holds Minimize and no Close Window item.
+3. Open the Tabs menu. It holds Next Tab (Ctrl-Tab), Previous Tab (Ctrl-Shift-Tab) and Select Tab 1 to 9
+   (Cmd-1 to Cmd-9).
+4. Press Cmd-2. The first page tab is selected and the tab bar marks it. Press Cmd-9 with fewer tabs open. Nothing
+   changes.
+5. Press Ctrl-Tab once with the page focused, once after clicking the tab bar, and once with a text field focused.
+   Each press moves exactly one tab to the right and wraps from the last tab to home. Ctrl-Shift-Tab moves left.
+6. Press Cmd-W on a page tab. It closes and a neighbour is selected. Press Cmd-W on home. Nothing happens.
+7. Middle-click a page tab in the tab bar. It closes. Middle-clicking home does nothing.
+8. Cmd-click a task card on the board. A new tab opens for the task and the click does not navigate the current
+   tab. Click a link to another website, if the board shows one. Nothing loads in the tab.
+9. Quit and open the server again. The same tabs come back in the same order with the same one selected, and only
+   that tab loads at first (the others load when first selected).
+
+Expected: every menu item and shortcut acts on the front server window's tabs, home never closes, and a page
+can never take the tab to another website.
+
+## 022: two tabs share the sign-in
+
+Use a server that needs a sign-in (a login server), or a signature-on server that needs pairing.
+
+1. Open the server window and sign in (or pair) on the home tab.
+2. Open a second tab (click a task card). The board shows signed in with no sign-in step and no pairing prompt.
+3. Reload nothing: in the second tab open Settings. The page shows its content without asking to sign in again.
+4. Sign out in the second tab. Switch to home. It shows the signed-out state within a few seconds.
+5. Sign in once more in home and select the second tab. It shows signed in without any extra step.
+
+Expected: all tabs of a server share one sign-in and one set of keys, so a new tab opens already signed in and
+unlocked, and signing out in one tab signs every tab out.
 
 ## 003, 006, 007: the server list manages entries
 

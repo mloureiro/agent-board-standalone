@@ -14,6 +14,8 @@ pub enum InputError {
     Link,
     TabPath,
     TabTitle,
+    TabIntent,
+    TabDirection,
     TooManyHeaders,
     BodyTooLarge,
 }
@@ -25,6 +27,8 @@ impl InputError {
             Self::Link => "refused link",
             Self::TabPath => "refused tab path",
             Self::TabTitle => "refused tab title",
+            Self::TabIntent => "refused tab intent",
+            Self::TabDirection => "refused tab direction",
             Self::TooManyHeaders => "too many headers",
             Self::BodyTooLarge => "request body too large",
         }
@@ -102,4 +106,36 @@ pub fn fetch_input(header_count: usize, body: Option<&str>) -> Result<(), InputE
         return Err(InputError::BodyTooLarge);
     }
     Ok(())
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TabIntent {
+    Open,
+    Route,
+    New,
+}
+
+pub fn tab_intent(text: &str) -> Result<TabIntent, InputError> {
+    match text {
+        "open" => Ok(TabIntent::Open),
+        "route" => Ok(TabIntent::Route),
+        "new" => Ok(TabIntent::New),
+        _ => Err(InputError::TabIntent),
+    }
+}
+
+pub fn tab_direction(text: &str) -> Result<bool, InputError> {
+    match text {
+        "next" => Ok(true),
+        "previous" => Ok(false),
+        _ => Err(InputError::TabDirection),
+    }
+}
+
+pub fn tab_path(path: &str) -> Result<String, InputError> {
+    tab_report(path, "").map(|report| report.path)
+}
+
+pub fn tab_title(title: &str) -> Result<String, InputError> {
+    tab_report("/", title).map(|report| report.title)
 }
