@@ -456,12 +456,10 @@ export async function runWorker(
     log(chunk.toString('utf8').trimEnd());
   });
 
-  let beats = 0;
-  let lastSeen: number | null = null;
+  let lastSeen: number | null | undefined;
   const heartbeat = (): void => {
     const seen = records.lastActive(task)?.getTime() ?? null;
-    if (beats > 0 && seen === lastSeen) return;
-    beats += 1;
+    if (seen === lastSeen) return;
     lastSeen = seen;
     void s
       .command(heartbeatRoute, { id: task, ...fence, lane, borrowed: record?.borrowed ?? false })
