@@ -4,6 +4,7 @@ import { provisioningDatabase } from './auth/index.js';
 import { systemClock, type Clock } from './clock.js';
 import type { ServerContext, ServerServices } from './context.js';
 import { HANDLER_SETS } from './handlers/index.js';
+import { clientErrorHandler } from './http/client-error.js';
 import { registerErrors } from './http/errors.js';
 import { registerGuards } from './http/guards.js';
 import { registerSignInGuards, type RateLimitOptions } from './http/sign-in-guards.js';
@@ -35,6 +36,9 @@ export const createServer = async (
     logger: false,
     trustProxy: config.listen.trustProxy,
     bodyLimit: PUBLIC_BODY_LIMIT,
+    clientErrorHandler: clientErrorHandler(
+      config.signIn.mode === 'login' && config.signIn.scheme === 'https',
+    ),
   });
   const services: ServerServices =
     config.signIn.mode === 'no-login'

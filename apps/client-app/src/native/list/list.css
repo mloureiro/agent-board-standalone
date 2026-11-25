@@ -1,0 +1,97 @@
+:root {
+  color-scheme: light dark;
+  font:
+    14px/1.4 -apple-system,
+    BlinkMacSystemFont,
+    'Helvetica Neue',
+    sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+ul {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.entry {
+  flex: 1;
+  min-width: 0;
+}
+
+.entry strong,
+.entry small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entry small {
+  opacity: 0.65;
+}
+
+form {
+  display: grid;
+  gap: 8px;
+}
+
+input,
+button {
+  font: inherit;
+  padding: 6px 10px;
+}
+
+[role='alert'] {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: color-mix(in srgb, #d33 18%, transparent);
+}
+
+[role='alert']:empty {
+  display: none;
+}
+
+.problem {
+  margin: 8px 0 0;
+}
+
+.problem:empty {
+  display: none;
+}
+
+form.inline {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+}
+
+form.inline input {
+  flex: 1;
+  min-width: 0;
+}

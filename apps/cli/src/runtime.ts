@@ -1,7 +1,8 @@
 import { execFile, spawn } from 'node:child_process';
 import { constants as osConstants } from 'node:os';
 import os from 'node:os';
-import { existsSync, realpathSync } from 'node:fs';
+import { closeSync, existsSync, mkdirSync, openSync, realpathSync } from 'node:fs';
+import path from 'node:path';
 import { createInterface } from 'node:readline/promises';
 
 import { terminalPrompter, type Prompter } from './input/prompter.js';
@@ -29,6 +30,12 @@ export interface InteractiveOptions {
   readonly cwd: string;
 }
 
+export interface DetachedOptions {
+  readonly cwd?: string;
+  readonly env: Readonly<Record<string, string | undefined>>;
+  readonly logFile: string;
+}
+
 export interface Runtime {
   readonly env: Readonly<Record<string, string | undefined>>;
   readonly io: Io;
@@ -41,8 +48,10 @@ export interface Runtime {
     args: readonly string[],
     options: InteractiveOptions,
   ): Promise<number>;
+  spawnDetached(file: string, args: readonly string[], options: DetachedOptions): number | null;
   readonly fetch: typeof fetch;
   readonly platform: NodeJS.Platform;
+  readonly arch: NodeJS.Architecture;
   readonly homedir: string;
   readonly hostname: string;
   readonly uid: number;
@@ -97,6 +106,28 @@ function spawnInteractive(
   });
 }
 
+function spawnDetached(
+  file: string,
+  args: readonly string[],
+  options: DetachedOptions,
+): number | null {
+  mkdirSync(path.dirname(options.logFile), { recursive: true, mode: 0o700 });
+  const log = openSync(options.logFile, 'a', 0o600);
+  try {
+    const child = spawn(file, [...args], {
+      ...(options.cwd === undefined ? {} : { cwd: options.cwd }),
+      env: { ...options.env },
+      detached: true,
+      stdio: ['ignore', log, log],
+    });
+    child.on('error', () => undefined);
+    child.unref();
+    return child.pid ?? null;
+  } finally {
+    closeSync(log);
+  }
+}
+
 async function readProcessStdin(): Promise<string> {
   const chunks: Buffer[] = [];
   for await (const chunk of process.stdin) chunks.push(chunk as Buffer);
@@ -124,9 +155,13 @@ function interruptSignal(): AbortSignal {
   return controller.signal;
 }
 
+const BUN_EMBEDDED_ROOT = '/$bunfs/';
+
 function selfCommand(): readonly string[] {
   const script = process.argv[1];
-  if (script === undefined || !existsSync(script)) return [process.execPath];
+  if (script === undefined || script.startsWith(BUN_EMBEDDED_ROOT) || !existsSync(script)) {
+    return [process.execPath];
+  }
   return [process.execPath, realpathSync(script)];
 }
 
@@ -138,6 +173,7 @@ export function systemRuntime(): Runtime {
     readStdin: readProcessStdin,
     ask: askOnTerminal,
     spawnInteractive,
+    spawnDetached,
     io: {
       stdout: (text) => {
         process.stdout.write(text);
@@ -150,6 +186,7 @@ export function systemRuntime(): Runtime {
     },
     fetch: globalThis.fetch,
     platform: process.platform,
+    arch: process.arch,
     homedir: os.homedir(),
     hostname: os.hostname(),
     uid: process.getuid?.() ?? 0,

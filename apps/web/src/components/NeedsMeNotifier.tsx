@@ -30,6 +30,12 @@ export function NeedsMeNotifier(): ReactNode {
     (native !== null ||
       (typeof Notification !== 'undefined' && Notification.permission === 'granted'));
 
+  const settingsLoaded = settings?.settings !== undefined;
+  useEffect(() => {
+    if (native?.setNotifications === undefined || serverId === null || !settingsLoaded) return;
+    void native.setNotifications(serverId, enabled).catch(() => undefined);
+  }, [native, serverId, settingsLoaded, enabled]);
+
   const waiting = useQuery({
     queryKey: [...(page?.base ?? []), 'needs-me'],
     enabled: page !== null && enabled,

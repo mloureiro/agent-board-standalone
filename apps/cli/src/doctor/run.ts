@@ -11,8 +11,10 @@ import {
   profileChecks,
   serverFileCheck,
 } from './local.js';
+import { autoUpdateCheck, migrationCheck } from './operations.js';
 import { replacedAgentsCheck, serverChecks } from './server.js';
 import { unitChecks } from './units.js';
+import { workerCheck } from './worker.js';
 
 export async function runChecks(ctx: Context): Promise<DoctorResult[]> {
   const loaded = await loadedCredentialChecks(ctx);
@@ -26,7 +28,10 @@ export async function runChecks(ctx: Context): Promise<DoctorResult[]> {
     ...(await configChecks(ctx)),
     ...folderChecks(ctx),
     backupCheck(ctx),
+    migrationCheck(ctx),
+    autoUpdateCheck(ctx),
     await gitCheck(ctx),
+    workerCheck(ctx),
     ...(await unitChecks(ctx)),
   ];
 }

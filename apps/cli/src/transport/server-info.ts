@@ -15,6 +15,9 @@ export interface ServerInfo {
   readonly legacyDirs: boolean;
   readonly agentsVersion: number | null;
   readonly feedsIndex: string | null;
+  readonly usageIndex: string | null;
+  readonly advertisedCli: string | null;
+  readonly feedRequests: readonly string[];
 }
 
 function record(value: unknown, what: string): Record<string, unknown> {
@@ -62,6 +65,9 @@ export function parsePublicVersion(json: unknown): ServerInfo {
     legacyDirs: false,
     agentsVersion: null,
     feedsIndex: null,
+    usageIndex: null,
+    advertisedCli: null,
+    feedRequests: [],
   };
 }
 
@@ -77,5 +83,10 @@ export function parseMachineVersion(json: unknown): ServerInfo {
     legacyDirs: body.legacyDirs === true,
     agentsVersion: typeof body.agentsVersion === 'number' ? body.agentsVersion : null,
     feedsIndex: typeof body.feedsIndex === 'string' ? body.feedsIndex : null,
+    usageIndex: typeof body.usageIndex === 'string' ? body.usageIndex : null,
+    advertisedCli: typeof body.cli === 'string' ? body.cli : null,
+    feedRequests: Array.isArray(body.feedRequests)
+      ? body.feedRequests.filter((entry): entry is string => typeof entry === 'string')
+      : [],
   };
 }

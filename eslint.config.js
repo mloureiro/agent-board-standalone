@@ -5,7 +5,19 @@ import boundaries from './tools/repo/eslint/index.js';
 const WEB_STORAGE_NAMES = ['localStorage', 'sessionStorage', 'indexedDB'];
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', 'wiki/**', '.claude/worktrees/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/dist-bridge/**',
+      '**/node_modules/**',
+      '**/src-tauri/target/**',
+      '**/src-tauri/gen/**',
+      'wiki/**',
+      '.claude/worktrees/**',
+      'apps/mobile/src-tauri/**/*.js',
+      'apps/mobile/dist-web/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

@@ -1,6 +1,7 @@
 import { CONTRACT, MIN_CLIENT, formatClientHeader, routes } from '@agent-board/contract';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { PART_VERSION } from '../src/version.js';
 import {
   CONTRACT_HEADERS,
   JSON_HEADERS,
@@ -62,7 +63,7 @@ describe('contract headers', () => {
     expect(web.json().error.code).toBe('upgrade-required');
     expect(web.json().error.message).toMatch(/upgrade/i);
     expect(web.json().error.message).toContain('3.1.4');
-    expect(web.json().error.message).toContain('0.0.0');
+    expect(web.json().error.message).toContain(PART_VERSION);
 
     const cli = await app.inject({
       method: 'POST',
