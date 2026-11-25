@@ -1,7 +1,11 @@
 import type { ReactNode } from 'react';
 
-import { PlaceholderPage } from '../PlaceholderPage.js';
+import { usePageTitle } from '../../components/index.js';
+import { BoardView } from '../board/index.js';
+
+const BACKLOG_ONLY = ['backlog'] as const;
 
 export function BacklogPage(): ReactNode {
-  return <PlaceholderPage title="Backlog" />;
+  usePageTitle('Backlog');
+  return <BoardView heading="Backlog" only={BACKLOG_ONLY} />;
 }

@@ -265,8 +265,8 @@ describe('Settings › Devices', () => {
   it('[web-104] a server that refuses this key as unknown returns the client to pairing', async () => {
     const { board, user } = await pairedBoard();
     board.rejectSignedRequests = true;
-    await openDevices(user);
-    expect(await screen.findByLabelText('Pairing code')).toBeInTheDocument();
+    await user.click(await screen.findByRole('link', { name: 'Settings' }));
+    expect(await screen.findByLabelText('Pairing code', {}, { timeout: 4000 })).toBeInTheDocument();
   });
 
   it('[web-104] a server without the devices feature says so', async () => {

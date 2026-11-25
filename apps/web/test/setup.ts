@@ -14,13 +14,15 @@ class ResizeObserverStub {
 interface MediaState {
   phone: boolean;
   dark: boolean;
+  coarse: boolean;
 }
 
-export const media: MediaState = { phone: false, dark: false };
+export const media: MediaState = { phone: false, dark: false, coarse: false };
 
 const matches = (query: string): boolean => {
   if (query.includes('max-width')) return media.phone;
   if (query.includes('prefers-color-scheme: dark')) return media.dark;
+  if (query.includes('pointer: coarse')) return media.coarse;
   return false;
 };
 
@@ -51,6 +53,7 @@ window.HTMLElement.prototype.scrollIntoView = () => undefined;
 beforeEach(() => {
   media.phone = false;
   media.dark = false;
+  media.coarse = false;
   localStorage.clear();
   globalThis.indexedDB = new IDBFactory();
   delete window.agentBoardBridge;
