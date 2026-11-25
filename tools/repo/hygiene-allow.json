@@ -1,0 +1,17 @@
+[
+  {
+    "path": "packages/sealing/test/vectors/signatures.json",
+    "rule": "jwk-private-d",
+    "reason": "Fixed test vectors: throwaway P-256 private keys that sign the published signature vectors."
+  },
+  {
+    "path": "packages/sealing/test/vectors/token-hashes.json",
+    "rule": "board-token",
+    "reason": "Fixed test vectors: tokens whose published hashes the sealing suite checks."
+  },
+  {
+    "path": "packages/contract/test/units.test.ts",
+    "rule": "home-path-linux",
+    "reason": "A made-up Linux home directory fed to the PATH-tail unit test."
+  }
+]
