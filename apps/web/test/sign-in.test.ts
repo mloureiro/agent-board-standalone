@@ -115,6 +115,7 @@ describe('Signed out and drafts', () => {
     expect(await screen.findByRole('heading', { name: 'Signed out' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', HANDOFF));
+    await screen.findByText('ABCD-2345');
     fake.approve();
     await tickPolls(spy);
     expect(await screen.findByRole('heading', { name: 'Board' })).toBeInTheDocument();
