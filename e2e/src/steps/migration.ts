@@ -61,7 +61,7 @@ export interface Fixture {
 }
 
 export function fixtureSkipReason(): string {
-  return `fixture missing: ${FIXTURE_RELATIVE_DIR}/manifest.json (migration tool fixture)`;
+  return partSkipReason([{ part: 'migrate', path: `${FIXTURE_RELATIVE_DIR}/manifest.json` }]);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

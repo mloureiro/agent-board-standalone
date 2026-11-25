@@ -35,7 +35,17 @@ describe('ratchet outcome table', () => {
     ['listed failed', true, 'failed', null, ci, 'ok'],
     ['listed skipped for a missing part', true, 'skipped', PART, ci, 'ok'],
     ['listed skipped for a missing feature', true, 'skipped', FEATURE, ci, 'ok'],
-    ['listed skipped with no recorded reason', true, 'skipped', null, ci, 'ok'],
+    ['listed skipped with no recorded reason', true, 'skipped', null, ci, 'fail'],
+    ['listed skipped with no recorded reason in a matrix cell', true, 'skipped', null, cell, 'ok'],
+    ['listed skipped for a missing fixture', true, 'skipped', 'fixture missing: x', ci, 'fail'],
+    [
+      'listed skipped for another reason in a matrix cell',
+      true,
+      'skipped',
+      'because',
+      cell,
+      'fail',
+    ],
     ['listed passed', true, 'passed', null, ci, 'fail'],
     ['unlisted passed', false, 'passed', null, ci, 'ok'],
     ['unlisted failed', false, 'failed', null, plain, 'fail'],
@@ -73,6 +83,28 @@ describe('ratchet outcome table', () => {
 
   it.each(rows)('[repo-009] %s', (_name, listed, outcome, reason, options, level) => {
     expect(judgeResult(result(outcome, reason), listed, options).level).toBe(level);
+  });
+
+  it('[repo-009] names the reason when a listed test skips without a part or feature', () => {
+    expect(judgeResult(result('skipped', 'fixture missing: x'), true, ci).message).toContain(
+      'listed test skipped without a part/feature reason: fixture missing: x',
+    );
+  });
+
+  it('[repo-009] a file-level failure always fails, listed or not', () => {
+    const failed = result('failed', null, { titlePath: ['(file failed) boom'] });
+    expect(judgeResult(failed, true, ci).level).toBe('fail');
+    const expected = parseExpectedRed({ files: { 'browser/board.spec.ts': '*' } });
+    const verdicts = judgeRun(
+      [failed],
+      expected,
+      {
+        prefix: 'browser/',
+        fileExists: () => true,
+      },
+      ci,
+    );
+    expect(exitCode(verdicts)).toBe(1);
   });
 
   it('[repo-009] names the cause in the failing message', () => {
@@ -141,6 +173,44 @@ describe('ratchet run', () => {
       strict: true,
     });
     expect(exitCode(strict)).toBe(1);
+  });
+
+  it('[repo-009] a listed file that produced no results warns, and fails with --strict', () => {
+    const expected = parseExpectedRed({ files: { 'browser/board.spec.ts': '*' } });
+    const run = (filtered: boolean, options: VerdictOptions) =>
+      judgeRun([], expected, { ...scope(['browser/board.spec.ts']), filtered }, options);
+    expect(run(false, plain)).toEqual([
+      { level: 'warn', message: 'browser/board.spec.ts: listed file produced no results' },
+    ]);
+    expect(exitCode(run(false, { ...plain, strict: true }))).toBe(1);
+    expect(run(true, plain)).toEqual([]);
+  });
+
+  it('[repo-009] a listed file outside this run is not reported', () => {
+    const expected = parseExpectedRed({ files: { 'browser/board.spec.ts': '*' } });
+    const verdicts = judgeRun(
+      [],
+      expected,
+      {
+        ...scope(['browser/board.spec.ts']),
+        outOfRun: ['browser/board.spec.ts'],
+      },
+      { ...plain, strict: true },
+    );
+    expect(verdicts).toEqual([]);
+  });
+
+  it('[repo-009] a listed file outside this run is still reported when it is missing', () => {
+    const expected = parseExpectedRed({ files: { 'browser/board.spec.ts': '*' } });
+    const verdicts = judgeRun(
+      [],
+      expected,
+      { prefix: 'browser/', fileExists: () => false, outOfRun: ['browser/board.spec.ts'] },
+      { ...plain, strict: true },
+    );
+    expect(verdicts).toEqual([
+      { level: 'fail', message: 'browser/board.spec.ts: listed file not found' },
+    ]);
   });
 
   it('[repo-009] a scoped title for projects that did not run is not reported missing', () => {

@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { loadExpectedRed } from './expected.ts';
 import {
   joinSkipReasons,
+  parsePlaywrightErrors,
   parsePlaywrightReport,
   parseSkipLog,
   parseVitestReport,
@@ -24,6 +25,8 @@ interface RunnerSpec {
   readonly command: (report: string, args: readonly string[]) => readonly string[];
   readonly env: (report: string) => Record<string, string>;
   readonly parse: (report: unknown, root: string) => TestResult[];
+  readonly errors: (report: unknown) => string[];
+  readonly outOfRun: (env: NodeJS.ProcessEnv) => readonly string[];
 }
 
 const RUNNERS: Record<Runner, RunnerSpec> = {
@@ -32,6 +35,8 @@ const RUNNERS: Record<Runner, RunnerSpec> = {
     command: (_report, args) => ['exec', 'playwright', 'test', ...args],
     env: (report) => ({ E2E_REPORT: report }),
     parse: parsePlaywrightReport,
+    errors: parsePlaywrightErrors,
+    outOfRun: () => [],
   },
   vitest: {
     prefix: 'blackbox/',
@@ -48,9 +53,12 @@ const RUNNERS: Record<Runner, RunnerSpec> = {
     ],
     env: () => ({}),
     parse: (report, root) => parseVitestReport(report, root),
+    errors: () => [],
+    outOfRun: (env) => (env.E2E_MATRIX_EXPECT === 'refusal' ? [] : [REFUSAL_FILE]),
   },
 };
 
+const REFUSAL_FILE = 'blackbox/matrix-refusal.test.ts';
 const MAX_WARNINGS = 5;
 
 export interface RatchetOutcome {
@@ -99,15 +107,26 @@ export function runRunner(
       ...spec.env(report),
       E2E_SKIP_LOG: skipLog,
     });
+    const parsed = readReport(report);
     const results = joinSkipReasons(
-      spec.parse(readReport(report), deps.root),
+      spec.parse(parsed, deps.root),
       parseSkipLog(readFileSync(skipLog, 'utf8')),
     );
-    const verdicts = judgeRun(
-      results,
-      loadExpectedRed(deps.expectedFile),
-      { prefix: spec.prefix, fileExists: (file) => existsSync(path.join(deps.root, file)) },
-      options,
+    const verdicts: Verdict[] = spec
+      .errors(parsed)
+      .map((message) => ({ level: 'fail', message: `${runner} reported an error: ${message}` }));
+    verdicts.push(
+      ...judgeRun(
+        results,
+        loadExpectedRed(deps.expectedFile),
+        {
+          prefix: spec.prefix,
+          fileExists: (file) => existsSync(path.join(deps.root, file)),
+          filtered: args.length > 0,
+          outOfRun: spec.outOfRun(env),
+        },
+        options,
+      ),
     );
     return { verdicts, code: exitCode(verdicts) };
   } catch (error) {

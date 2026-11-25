@@ -2,7 +2,7 @@ import { rmSync } from 'node:fs';
 
 import { CONTRACT, MIN_CLIENT, isFeature } from '@agent-board/contract';
 import { encodeDataKey, generateDataKey } from '@agent-board/sealing';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 
 import { call, callRaw, machineToken } from '../src/client/contract-client.js';
 import { unlockedKey, type UnlockedKey } from '../src/fixtures/keys.js';
@@ -15,6 +15,7 @@ import {
 import { noLoginUser, type BoardUser } from '../src/fixtures/users.js';
 import { startVersionProxy, type VersionProxy } from '../src/fixtures/version-proxy.js';
 import { useBoard } from '../src/harness/vitest.js';
+import { once } from '../src/steps/user-commands.js';
 import {
   SEMVER,
   jsonNumber,
@@ -115,22 +116,24 @@ describe('handshake in the CLI', () => {
   });
   let user: BoardUser;
   let key: UnlockedKey;
-  let proxy: VersionProxy | null = null;
+  const proxies: VersionProxy[] = [];
 
-  beforeAll(async () => {
+  const prepare = once(async () => {
     user = await noLoginUser(harness.board);
     key = await unlockedKey(harness.board, user);
   });
 
   afterAll(async () => {
-    await proxy?.stop();
+    await Promise.all(proxies.splice(0).map((started) => started.stop()));
     rmSync(accessLog, { force: true });
   });
 
   async function throughProxy(
     name: string,
   ): Promise<{ machine: EnrolledMachine; proxy: VersionProxy }> {
-    proxy = await startVersionProxy({ target: harness.board.url });
+    await prepare();
+    const proxy = await startVersionProxy({ target: harness.board.url });
+    proxies.push(proxy);
     const machine = await enrolledMachine({ url: proxy.url, tmp: harness.board.tmp }, user, {
       key,
       name,
@@ -139,6 +142,7 @@ describe('handshake in the CLI', () => {
   }
 
   it('[cli-004] the first call of a process is the version command, before any other @matrix', async () => {
+    await prepare();
     const machine = await enrolledMachine(harness.board, user, { key, name: 'first-call' });
     const before = readLines(accessLog).length;
     const result = await machine.cli(['tasks', '--json']);
@@ -165,6 +169,7 @@ describe('handshake in the CLI', () => {
   });
 
   it('[cli-004] a data key whose derived key id differs from the server is refused @matrix', async () => {
+    await prepare();
     const machine = await enrolledMachine(harness.board, user, {
       key,
       name: 'wrong-data-key',
@@ -190,6 +195,7 @@ describe('handshake in the CLI', () => {
   });
 
   it('[cli-011] board version prints the CLI version, its contract range and the server verdict compatible', async () => {
+    await prepare();
     const machine = await enrolledMachine(harness.board, user, { key, name: 'version-text' });
     const served = await call(harness.board, 'public.version', {});
     const result = await machine.cli(['version']);
@@ -214,6 +220,7 @@ describe('handshake in the CLI', () => {
   });
 
   it('[cli-011] board version --json carries the same fields', async () => {
+    await prepare();
     const machine = await enrolledMachine(harness.board, user, { key, name: 'version-json' });
     const served = await call(harness.board, 'public.version', {});
     const result = await machine.cli(['version', '--json']);

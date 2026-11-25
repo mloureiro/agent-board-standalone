@@ -73,7 +73,13 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   });
 }
 
-log({ kind: 'start', argv, env: Object.keys(process.env).sort(), pid: process.pid });
+log({
+  kind: 'start',
+  argv,
+  env: Object.keys(process.env).sort(),
+  pid: process.pid,
+  ppid: process.ppid,
+});
 
 const input = readline.createInterface({ input: process.stdin });
 input.on('line', (line) => {

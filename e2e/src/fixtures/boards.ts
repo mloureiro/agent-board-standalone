@@ -16,6 +16,7 @@ export interface LaunchOptions {
   readonly auth: AuthMode;
   readonly label?: string;
   readonly database?: DatabaseKind;
+  readonly postgresAllowed?: boolean;
   readonly features?: readonly Feature[];
   readonly web?: boolean;
   readonly port?: number;
@@ -41,6 +42,13 @@ async function readServerFeatures(url: string): Promise<string[]> {
     : [];
 }
 
+export function launchDatabaseKind(
+  options: Pick<LaunchOptions, 'database' | 'postgresAllowed'>,
+  env: NodeJS.ProcessEnv = process.env,
+): DatabaseKind {
+  return options.database ?? resolveDatabaseKind({}, options.postgresAllowed ?? true, env);
+}
+
 export async function launchBoard(options: LaunchOptions): Promise<Board> {
   const tmp = createTmp(options.label ?? 'board');
   let database: Database | null = null;
@@ -52,7 +60,7 @@ export async function launchBoard(options: LaunchOptions): Promise<Board> {
     tmp.remove();
   };
   try {
-    database = await createDatabase(options.database ?? resolveDatabaseKind({}, true), tmp);
+    database = await createDatabase(launchDatabaseKind(options), tmp);
     api = await startApi({
       tmp,
       database,

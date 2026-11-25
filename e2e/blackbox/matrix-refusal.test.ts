@@ -18,12 +18,16 @@ const headVersion = process.env.E2E_MATRIX_HEAD_VERSION ?? '';
 const client: ClientKind = cell?.client ?? 'cli';
 const parts: PartName[] = ['api', client];
 
+const clientTooOld = cell !== undefined && reason === 'client-too-old';
+const cliTooNew = cell?.older === 'api' && cell.client === 'cli' && reason === 'client-too-new';
+const webTooNew = cell?.older === 'api' && cell.client === 'web' && reason === 'client-too-new';
+
 const probePath = client === 'cli' ? '/api/machine/events' : '/api/client/events';
 
 describe('[repo-003] matrix refusal', () => {
   const harness = useBoard({ parts, features: [], auth: 'no-login' });
 
-  it.runIf(cell !== undefined && reason === 'client-too-old')(
+  it.runIf(clientTooOld)(
     '[repo-003] the older client is refused with 412 upgrade-required',
     async () => {
       const response = await callRaw(harness.board, { method: 'GET', path: probePath }, anonymous, {
@@ -36,7 +40,7 @@ describe('[repo-003] matrix refusal', () => {
     },
   );
 
-  it.runIf(cell?.older === 'api' && cell.client === 'cli' && reason === 'client-too-new')(
+  it.runIf(cliTooNew)(
     '[repo-003] the newer CLI refuses the older API and names both versions',
     async () => {
       const user = await noLoginUser(harness.board);
@@ -55,7 +59,7 @@ describe('[repo-003] matrix refusal', () => {
     },
   );
 
-  it.runIf(cell?.older === 'api' && cell.client === 'web' && reason === 'client-too-new')(
+  it.runIf(webTooNew)(
     '[repo-003] the older API answers a contract below the newer web client minimum',
     async () => {
       const answer = await call(harness.board, 'public.version', {});
@@ -83,4 +87,11 @@ describe('[repo-003] matrix refusal', () => {
       expect(verdict.message).toContain(body.server.version);
     },
   );
+
+  it('[repo-003] the cell names a refusal case', () => {
+    expect(
+      clientTooOld || cliTooNew || webTooNew,
+      `no refusal case matches cell ${process.env.E2E_MATRIX_CELL ?? '(unset)'} with reason ${reason ?? '(unset)'}`,
+    ).toBe(true);
+  });
 });
