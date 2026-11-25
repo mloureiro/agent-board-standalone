@@ -10,6 +10,21 @@
     "reason": "Fixed test vectors: tokens whose published hashes the sealing suite checks."
   },
   {
+    "path": "apps/migrate/fixtures/data/hosted-main.credentials.json",
+    "rule": "board-token",
+    "reason": "Made-up machine tokens of a synthetic migration fixture, drawn from a seeded random stream."
+  },
+  {
+    "path": "apps/migrate/fixtures/data/local-v2.credentials.json",
+    "rule": "board-token",
+    "reason": "Made-up machine tokens of a synthetic migration fixture, drawn from a seeded random stream."
+  },
+  {
+    "path": "apps/migrate/fixtures/data/local-prelogin.credentials.json",
+    "rule": "board-token",
+    "reason": "Made-up machine tokens of a synthetic migration fixture, drawn from a seeded random stream."
+  },
+  {
     "path": "packages/contract/test/units.test.ts",
     "rule": "home-path-linux",
     "reason": "A made-up Linux home directory fed to the PATH-tail unit test."
