@@ -71,7 +71,7 @@ describe('no-login mode with the database inspected', () => {
     const inspector = await inspectDatabase(board.database);
     try {
       const tables = await inspector.tables();
-      const userTable = tables.find((name) => /^users?$/.test(name));
+      const userTable = tables.find((name) => /^(app_)?users?$/.test(name));
       expect(userTable, `no user table among ${tables.join(', ')}`).toBeDefined();
       const holdsOwner = async (): Promise<boolean> =>
         (await inspector.rows(userTable as string)).some((row) =>

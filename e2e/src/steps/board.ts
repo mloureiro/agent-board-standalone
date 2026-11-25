@@ -80,6 +80,9 @@ export async function unlockIfAsked(page: Page, passphrase: string): Promise<voi
   await expect(column(page, 'backlog').or(passphraseField(page)).first()).toBeVisible({
     timeout: UI_TIMEOUT_MS,
   });
+  await expect(passphraseField(page).or(column(page, 'backlog')).first()).toBeVisible({
+    timeout: UI_TIMEOUT_MS,
+  });
   if (await passphraseField(page).isVisible()) await unlockInPage(page, passphrase);
   await expect(boardLink(page)).toBeVisible({ timeout: UI_TIMEOUT_MS });
   await expect(passphraseField(page)).toHaveCount(0);
@@ -217,6 +220,12 @@ export async function startWorker(
   const added = await machine.cli(['dirs', 'add', directory]);
   if (added.code !== 0) {
     throw new Error(`board dirs add exited ${added.code}\n${added.stdout}${added.stderr}`);
+  }
+  const configured = await machine.cli(['config', 'set', 'defaultCwd', directory]);
+  if (configured.code !== 0) {
+    throw new Error(
+      `board config set exited ${configured.code}\n${configured.stdout}${configured.stderr}`,
+    );
   }
   const listener = options.listen === false ? null : machine.start(['internal', 'listen']);
   return {
