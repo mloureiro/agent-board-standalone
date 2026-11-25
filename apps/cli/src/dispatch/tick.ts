@@ -35,6 +35,7 @@ import {
   reachedWindows,
   sendUsage,
 } from './usage.js';
+import { releaseFinishedWorktrees } from './worktrees.js';
 import { applyWatchStops, dropFinishedWatches, wakeDue } from './waits.js';
 import { workerAlive } from './sweep.js';
 
@@ -279,6 +280,11 @@ export async function runTick(env: TickEnv): Promise<TickResult> {
     await pruneTaskLogs(env, listed, activeWorkers);
   } catch (error) {
     log(`WARN dropping old task logs failed: ${message(error)}`);
+  }
+  try {
+    await releaseFinishedWorktrees(env, listed, activeWorkers);
+  } catch (error) {
+    log(`WARN unlocking worktrees failed: ${message(error)}`);
   }
 
   if (!watchHeartbeatFresh(ctx.dirs.state, env.now().getTime())) {

@@ -27,6 +27,8 @@ export interface RunRecords {
   pauseRequestedAt(task: string): Date | null;
   touchActive(task: string, at: Date): void;
   lastActive(task: string): Date | null;
+  writeCwd(task: string, cwd: string): void;
+  lastCwd(task: string): string | null;
   clear(task: string): void;
   tasks(): string[];
   markTick(at: Date): void;
@@ -35,7 +37,7 @@ export interface RunRecords {
   nextDue(): Date | null;
 }
 
-const SUFFIXES = ['lane', 'pause', 'active', 'pid', 'pgid', 'shutdown'] as const;
+const SUFFIXES = ['lane', 'pause', 'active', 'cwd', 'pid', 'pgid', 'shutdown'] as const;
 
 function readTime(file: string): Date | null {
   try {
@@ -86,6 +88,18 @@ export function createRunRecords(dir: string): RunRecords {
     lastActive(task) {
       try {
         return new Date(statSync(file(task, 'active')).mtimeMs);
+      } catch {
+        return null;
+      }
+    },
+    writeCwd(task, cwd) {
+      ensure();
+      writeFileSync(file(task, 'cwd'), cwd, { mode: 0o600 });
+    },
+    lastCwd(task) {
+      try {
+        const cwd = readFileSync(file(task, 'cwd'), 'utf8');
+        return path.isAbsolute(cwd) ? cwd : null;
       } catch {
         return null;
       }

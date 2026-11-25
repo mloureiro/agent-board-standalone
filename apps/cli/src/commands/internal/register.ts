@@ -12,6 +12,7 @@ import { runDispatch } from '../../dispatch/run.js';
 import { runListener } from '../../dispatch/listen.js';
 import { now } from '../../transport/clock.js';
 import { runWatchCommand } from '../../watch/unit.js';
+import { runHook } from '../../worker/hook.js';
 import { runWorker } from '../../worker/run.js';
 import { describePlan, planMigration, readPendingMigration } from '../../update/migrations.js';
 import { isUnitPlatform, resolveWorkerUnits } from '../../units/index.js';
@@ -23,6 +24,7 @@ const SUBCOMMANDS = [
   'listen',
   'watch',
   'worker',
+  'hook',
   'units',
   'shutdown',
   'migration-plan',
@@ -130,6 +132,16 @@ export function registerInternal(
     .action(async (task: string, _options: unknown, command: Command) => {
       const code = await runWorker(withContext(command), task);
       if (code !== 0) throw new ReportedFailure(code);
+    });
+
+  internal
+    .command('hook')
+    .argument('[args...]', 'the run directory and the task')
+    .allowUnknownOption()
+    .passThroughOptions()
+    .description('The PreToolUse hook of a run: liveness, working directory and worktree lock')
+    .action(async (args: string[], _options: unknown, command: Command) => {
+      await runHook(withContext(command), args);
     });
 
   internal
