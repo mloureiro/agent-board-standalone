@@ -22,7 +22,7 @@ import { launchBoard, startBoardPair } from '../fixtures/boards.js';
 import type { Board } from '../harness/board.js';
 import { runCli, type ProfileMode } from '../harness/cli.js';
 import { missingParts, type PartName } from '../harness/paths.js';
-import type { RunResult } from '../harness/run.js';
+import { killStubTree, type RunResult } from '../harness/run.js';
 import { featureSkipReason, partSkipReason, recordSkip } from '../harness/skip.js';
 import type { Tmp } from '../harness/tmp.js';
 
@@ -62,6 +62,7 @@ export function usePair(declaration: PairDeclaration): PairHandle {
     }
     pair = await startBoardPair({
       auth: 'no-login',
+      postgresAllowed: true,
       features: declaration.features,
       env: { NO_LOGIN_USER: SHARED_OWNER, ...declaration.env },
     });
@@ -70,6 +71,7 @@ export function usePair(declaration: PairDeclaration): PairHandle {
         name,
         await launchBoard({
           auth: 'no-login',
+          postgresAllowed: true,
           label: name,
           features: declaration.features,
           env: { NO_LOGIN_USER: SHARED_OWNER, ...env },
@@ -333,14 +335,19 @@ export interface WorkerCheck {
 export async function tickAndDoctor(
   run: Run,
   env?: Readonly<Record<string, string>>,
+  stubLog?: string,
 ): Promise<WorkerCheck> {
-  const tick = await run(['internal', 'dispatch'], env);
-  const doctor = await run(['doctor', '--json'], env);
-  const report = doctorReport.parse(JSON.parse(doctor.stdout));
-  return {
-    check: report.find((entry) => entry.name === 'worker'),
-    texts: [combined(tick), combined(doctor)],
-  };
+  try {
+    const tick = await run(['internal', 'dispatch'], env);
+    const doctor = await run(['doctor', '--json'], env);
+    const report = doctorReport.parse(JSON.parse(doctor.stdout));
+    return {
+      check: report.find((entry) => entry.name === 'worker'),
+      texts: [combined(tick), combined(doctor)],
+    };
+  } finally {
+    if (stubLog !== undefined) killStubTree(stubLog);
+  }
 }
 
 export async function reissueToken(user: BoardUser, name: string): Promise<string> {

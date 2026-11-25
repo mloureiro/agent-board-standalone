@@ -237,10 +237,10 @@ describe('board projects', () => {
     const title = uniqueLabel('scheduled-');
     const run = await fx.runner.cli([
       'schedule',
-      'a scheduled prompt',
       '--title',
       title,
       '--backlog',
+      'a scheduled prompt',
     ]);
     expect(run.code, combined(run)).toBe(0);
     const task = await waitUntil('the scheduled task', () => findTaskByTitle(fx, title));

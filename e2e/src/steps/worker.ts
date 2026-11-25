@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, realpathSync } from 'node:fs';
+import net from 'node:net';
 
 import { bindings } from '@agent-board/sealing';
 import type { TaskStatus } from '@agent-board/contract';
@@ -9,7 +10,8 @@ import type { Board } from '../harness/board.js';
 import { noLoginUser } from '../fixtures/users.js';
 import { unlockedKey } from '../fixtures/keys.js';
 import type { RunningCli } from '../harness/cli.js';
-import type { RunResult } from '../harness/run.js';
+import { killStubTree, type RunResult } from '../harness/run.js';
+import { LOOPBACK } from '../harness/ports.js';
 import type { Tmp } from '../harness/tmp.js';
 import { newTaskId } from '../fixtures/tasks.js';
 import type { UnlockedKey } from '../fixtures/keys.js';
@@ -226,9 +228,12 @@ export async function enrolWorker(
     },
     addDirectory: (label) => makeDirectory(label, false),
     dispose: async () => {
-      killStubs(entries());
-      await Promise.all(tracked.splice(0).map((cli) => cli.stop().catch(() => undefined)));
-      killStubs(entries());
+      try {
+        killStubTree(stubLog);
+        await Promise.all(tracked.splice(0).map((cli) => cli.stop().catch(() => undefined)));
+      } finally {
+        killStubTree(stubLog);
+      }
     },
   };
 }
@@ -493,20 +498,32 @@ export function valuesOf(value: unknown, key: string): unknown[] {
   );
 }
 
-export async function startProxyOn(
-  start: (port: number) => Promise<VersionProxy>,
-  port: number,
-): Promise<VersionProxy> {
-  let last: unknown;
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    try {
-      return await start(port);
-    } catch (error) {
-      last = error;
-      await sleep(100);
-    }
-  }
-  throw last;
+export interface RefusingServer {
+  readonly url: string;
+  stop(): Promise<void>;
+}
+
+export async function startRefusingServer(): Promise<RefusingServer> {
+  const sockets = new Set<net.Socket>();
+  const server = net.createServer((socket) => {
+    sockets.add(socket);
+    socket.on('close', () => sockets.delete(socket));
+    socket.on('error', () => undefined);
+    socket.resetAndDestroy();
+  });
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, LOOPBACK, resolve);
+  });
+  const { port } = server.address() as net.AddressInfo;
+  return {
+    url: `http://${LOOPBACK}:${port}`,
+    stop: () =>
+      new Promise<void>((resolve) => {
+        for (const socket of sockets) socket.destroy();
+        server.close(() => resolve());
+      }),
+  };
 }
 
 export async function createProject(

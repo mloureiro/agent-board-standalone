@@ -18,6 +18,7 @@ describe('parseDirectives', () => {
       '#stub: subagent',
       '#stub: usage 1200',
       '#stub: events 20001',
+      '#stub: events 40 1048576',
       '#stub: ignore-interrupt',
     ].join('\n');
     expect(parseDirectives(prompt)).toEqual([
@@ -30,6 +31,7 @@ describe('parseDirectives', () => {
       { kind: 'subagent' },
       { kind: 'usage', tokens: 1200 },
       { kind: 'events', count: 20001 },
+      { kind: 'events', count: 40, bytes: 1048576 },
       { kind: 'ignore-interrupt' },
     ]);
   });
@@ -52,6 +54,7 @@ describe('parseDirectives', () => {
     expect(() => parseDirectives('#stub: explode')).toThrow('unknown directive: explode');
     expect(() => parseDirectives('#stub: sleep soon')).toThrow(DirectiveError);
     expect(() => parseDirectives('#stub: events 1.5')).toThrow(DirectiveError);
+    expect(() => parseDirectives('#stub: events 3 big')).toThrow(DirectiveError);
     expect(() => parseDirectives('#stub: usage -3')).toThrow(DirectiveError);
     expect(() => parseDirectives('#stub: tool')).toThrow(DirectiveError);
   });
