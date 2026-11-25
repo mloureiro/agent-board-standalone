@@ -298,6 +298,9 @@ importers:
         specifier: workspace:^0.0.0
         version: link:../web
     devDependencies:
+      '@playwright/test':
+        specifier: ^1.65.1
+        version: 1.65.1
       '@tauri-apps/api':
         specifier: ^2.12.5
         version: 2.12.5
