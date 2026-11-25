@@ -8,6 +8,7 @@ import { HANDLER_SETS } from '../src/handlers/index.js';
 import { loadConfig } from '../src/modules/index.js';
 import { TASK_VOCABULARY, type Vocabulary } from '../src/modules/tasks/index.js';
 import { createServer } from '../src/server.js';
+import { createMemoryEvents } from '../src/modules/events/index.js';
 import { createOpenStreams } from '../src/streams.js';
 import {
   CONTRACT_HEADERS,
@@ -58,7 +59,12 @@ describe('task action routes on pglite', () => {
     ({ projectId } = await seedUser(opened.database, 'owner'));
     app = await createServer(
       loadConfig(noLoginEnv()),
-      { database: opened.database, credentials: knownMachine, streams: createOpenStreams() },
+      {
+        database: opened.database,
+        credentials: knownMachine,
+        streams: createOpenStreams(),
+        events: createMemoryEvents(),
+      },
       { handlerSets: HANDLER_SETS },
     );
     await app.ready();
@@ -363,7 +369,12 @@ describe('an enum value the client did not declare', () => {
     await seedUser(opened.database, 'owner');
     app = await createServer(
       loadConfig(noLoginEnv()),
-      { database: opened.database, credentials: knownMachine, streams: createOpenStreams() },
+      {
+        database: opened.database,
+        credentials: knownMachine,
+        streams: createOpenStreams(),
+        events: createMemoryEvents(),
+      },
       { handlerSets: [createTaskHandlers(FUTURE), createTaskActionHandlers(FUTURE)] },
     );
     await app.ready();

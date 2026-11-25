@@ -5,6 +5,7 @@ import { machine, task } from '../src/db/schema/index.js';
 import { HANDLER_SETS } from '../src/handlers/index.js';
 import { loadConfig, type Env } from '../src/modules/index.js';
 import { createServer } from '../src/server.js';
+import { createMemoryEvents } from '../src/modules/events/index.js';
 import { createOpenStreams } from '../src/streams.js';
 import {
   CONTRACT_HEADERS,
@@ -44,6 +45,7 @@ describe('schedule and feed routes on pglite', () => {
           findMachine: async () => ({ owner, machineId: 'machine-1' }),
         },
         streams: createOpenStreams(),
+        events: createMemoryEvents(),
       },
       { handlerSets: HANDLER_SETS },
     );

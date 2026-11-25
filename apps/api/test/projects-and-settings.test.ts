@@ -9,6 +9,7 @@ import * as schema from '../src/db/schema/index.js';
 import { HANDLER_SETS } from '../src/handlers/index.js';
 import { loadConfig } from '../src/modules/index.js';
 import { createServer } from '../src/server.js';
+import { createMemoryEvents } from '../src/modules/events/index.js';
 import { createOpenStreams } from '../src/streams.js';
 import { CONTRACT_HEADERS, JSON_HEADERS, noLoginEnv } from './helpers.js';
 import { TARGETS, type OpenedTarget } from './integration/targets.js';
@@ -44,6 +45,7 @@ describe.each(TARGETS)('projects, directories, keys and settings on $name', (tar
           database: opened.database,
           credentials: emptyCredentialStore,
           streams: createOpenStreams(),
+          events: createMemoryEvents(),
         },
         { handlerSets: HANDLER_SETS },
       );

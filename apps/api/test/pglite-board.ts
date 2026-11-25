@@ -10,6 +10,7 @@ import { HANDLER_SETS } from '../src/handlers/index.js';
 import { openPgliteDatabase, type Database } from '../src/modules/database/index.js';
 import { loadConfig, type Env } from '../src/modules/index.js';
 import { createServer } from '../src/server.js';
+import { createMemoryEvents } from '../src/modules/events/index.js';
 import { createOpenStreams } from '../src/streams.js';
 
 export interface PgliteBoard {
@@ -32,7 +33,12 @@ export const openPgliteBoard = async (env: Env): Promise<PgliteBoard> => {
   };
   const app = await createServer(
     config,
-    { database, credentials: createCredentialStore(deps), streams: createOpenStreams() },
+    {
+      database,
+      credentials: createCredentialStore(deps),
+      streams: createOpenStreams(),
+      events: createMemoryEvents(),
+    },
     { clock, handlerSets: HANDLER_SETS },
   );
   await app.ready();

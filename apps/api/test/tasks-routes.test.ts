@@ -10,6 +10,7 @@ import {
 import { HANDLER_SETS } from '../src/handlers/index.js';
 import { loadConfig } from '../src/modules/index.js';
 import { createServer } from '../src/server.js';
+import { createMemoryEvents } from '../src/modules/events/index.js';
 import { createOpenStreams } from '../src/streams.js';
 import { envelope, seedUser, uniqueBlind } from './integration/support.js';
 import { TARGETS, type OpenedTarget } from './integration/targets.js';
@@ -40,7 +41,12 @@ describe('task routes on pglite', () => {
     await seedUser(opened.database, 'owner');
     app = await createServer(
       loadConfig(noLoginEnv()),
-      { database: opened.database, credentials: knownMachine, streams: createOpenStreams() },
+      {
+        database: opened.database,
+        credentials: knownMachine,
+        streams: createOpenStreams(),
+        events: createMemoryEvents(),
+      },
       { handlerSets: HANDLER_SETS },
     );
     await app.ready();

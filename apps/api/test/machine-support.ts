@@ -16,6 +16,7 @@ import { createMachineApiHandlers, type UserActions } from '../src/modules/machi
 import { loadConfig, type Env } from '../src/modules/index.js';
 import { openPgliteDatabase, type Database } from '../src/modules/database/index.js';
 import { createServer } from '../src/server.js';
+import { createMemoryEvents } from '../src/modules/events/index.js';
 import { createOpenStreams } from '../src/streams.js';
 import { SESSION_TOKEN, loginEnv, noLoginEnv } from './helpers.js';
 
@@ -57,7 +58,12 @@ export const startBoard = async (
       : [...HANDLER_SETS, createMachineApiHandlers(options.actions)];
   const app = await createServer(
     loadConfig(options.login ? loginEnv(options.env ?? {}) : noLoginEnv(options.env ?? {})),
-    { database, credentials: credentialsOf(database), streams: createOpenStreams() },
+    {
+      database,
+      credentials: credentialsOf(database),
+      streams: createOpenStreams(),
+      events: createMemoryEvents(),
+    },
     { handlerSets },
   );
   await app.ready();
