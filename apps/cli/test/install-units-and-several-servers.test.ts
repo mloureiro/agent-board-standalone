@@ -95,7 +95,7 @@ describe('unit files rendered per profile', () => {
     const [first, second] = FIXTURE_CASES.filter((entry) => entry.platform === 'linux');
     const locks = [first, second].map((entry) =>
       renderCase(entry!)
-        .map((file) => /flock -n -E 75 (\S+|"[^"]+")/.exec(file.text)?.[1])
+        .map((file) => /flock -n -E 75 (\S+|\x22[^\x22]+\x22)/.exec(file.text)?.[1])
         .find((lock) => lock !== undefined),
     );
     expect(locks[0]).not.toBe(locks[1]);
