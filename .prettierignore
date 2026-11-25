@@ -2,3 +2,5 @@ pnpm-lock.yaml
 .beads
 wiki
 README.md
+**/src-tauri/target/**
+**/src-tauri/gen/**
