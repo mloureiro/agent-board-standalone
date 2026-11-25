@@ -4,6 +4,8 @@ import type { CredentialStore } from '../../src/auth/index.js';
 import type { Database } from '../../src/modules/database/index.js';
 import { loadConfig } from '../../src/modules/index.js';
 import { createServer } from '../../src/server.js';
+import type { EventBus } from '../../src/modules/events/index.js';
+import { createMemoryEvents } from '../../src/modules/events/index.js';
 import { createOpenStreams } from '../../src/streams.js';
 import { DATABASE, MACHINE_TOKEN } from '../helpers.js';
 
@@ -21,11 +23,13 @@ export const bootOn = async (
   database: Database,
   user: string,
   credentials: CredentialStore = NO_CREDENTIALS,
+  events: EventBus = createMemoryEvents(),
 ): Promise<FastifyInstance> => {
   const app = await createServer(loadConfig({ NO_LOGIN_USER: user, DATABASE_URL: DATABASE }), {
     database: { ...database, close: async () => undefined },
     credentials,
     streams: createOpenStreams(),
+    events,
   });
   await app.ready();
   return app;

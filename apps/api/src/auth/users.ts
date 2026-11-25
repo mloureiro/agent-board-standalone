@@ -56,15 +56,25 @@ const writes = new AsyncLocalStorage<true>();
 export const asWrite = <T>(isWrite: boolean, work: () => T): T =>
   isWrite ? writes.run(true, work) : work();
 
-export const provisioningDatabase = (database: Database, username: string): Database => ({
-  kind: database.kind,
-  withSystem: (work) => database.withSystem(work),
-  close: () => database.close(),
-  withOwner: (owner, work) =>
+export const provisioningDatabase = (database: Database, username: string): Database => {
+  const provisioned = <T>(
+    owner: string,
+    work: (tx: ScopedDatabase) => Promise<T>,
+  ): ((tx: ScopedDatabase) => Promise<T>) =>
     owner === username && writes.getStore() === true
-      ? database.withOwner(owner, async (tx) => {
+      ? async (tx) => {
           await ensureUser(tx, owner, null);
           return work(tx);
-        })
-      : database.withOwner(owner, work),
-});
+        }
+      : work;
+  return {
+    kind: database.kind,
+    withSystem: (work) => database.withSystem(work),
+    close: () => database.close(),
+    withOwner: (owner, work) => database.withOwner(owner, provisioned(owner, work)),
+    withOwners: (work) =>
+      database.withOwners((scopes) =>
+        work({ as: (owner, inner) => scopes.as(owner, provisioned(owner, inner)) }),
+      ),
+  };
+};

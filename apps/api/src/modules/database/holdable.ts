@@ -29,6 +29,7 @@ export const holdableDatabase = (
     isOpen: () => current !== null,
     withOwner: (owner, work) => live().withOwner(owner, work),
     withSystem: (work) => live().withSystem(work),
+    withOwners: (work) => live().withOwners(work),
     close: closeCurrent,
     hold: closeCurrent,
     resume: async () => {
