@@ -1,0 +1,158 @@
+import { mkdir, readdir, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { FIXTURES } from '../fixtures/fixtures.js';
+import { materializePostgres, type PostgresMaterialization } from '../fixtures/materialize.js';
+import {
+  detectSourceVersion,
+  formatInspectReport,
+  inspectSource,
+  openSource,
+  SourceError,
+} from '../src/index.js';
+import { readmeCounts, readReadme } from './support/fixture-files.js';
+import { hashFolder, materializeFolder, type MaterializedFolder } from './support/folders.js';
+
+const readme = readmeCounts(readReadme());
+
+describe.each(FIXTURES)('PGlite reader on $name', (fixture) => {
+  let source: MaterializedFolder;
+
+  beforeAll(async () => {
+    source = await materializeFolder(fixture.name);
+  });
+
+  afterAll(async () => {
+    await source.dispose();
+  });
+
+  it('detects the source version', async () => {
+    const report = await inspectSource(source.folder);
+    expect(report.version).toBe(fixture.name);
+    expect(report.journal).toBe(fixture.migrations);
+  });
+
+  it('counts the rows the fixture README lists', async () => {
+    const report = await inspectSource(source.folder);
+    for (const [table, byFixture] of readme) {
+      const expected = byFixture.get(fixture.name);
+      expect(report.counts.get(table as never) ?? null).toBe(expected);
+    }
+  });
+
+  it('leaves the original folder byte for byte unchanged and removes its working copy', async () => {
+    const before = await hashFolder(source.folder);
+    const scratchBefore = (await readdir(tmpdir())).filter((name) =>
+      name.startsWith('agent-board-migrate-'),
+    );
+    await inspectSource(source.folder);
+    expect(await hashFolder(source.folder)).toBe(before);
+    const scratchAfter = (await readdir(tmpdir())).filter((name) =>
+      name.startsWith('agent-board-migrate-'),
+    );
+    expect(scratchAfter.length).toBeLessThanOrEqual(scratchBefore.length);
+  });
+
+  it('refuses writes', async () => {
+    const reader = await openSource(source.folder);
+    try {
+      await expect(reader.query("update task set title = title where id = 'x'")).rejects.toThrow(
+        /read-only/i,
+      );
+    } finally {
+      await reader.close();
+    }
+  });
+
+  it('prints the version and the counts', async () => {
+    const text = formatInspectReport(await inspectSource(source.folder));
+    expect(text).toContain(`source version: ${fixture.name}`);
+    expect(text).toContain('task: 12');
+  });
+});
+
+describe('PGlite folder refusals', () => {
+  it('names an unknown PG_VERSION', async () => {
+    const scratch = await materializeFolder('local-v2');
+    try {
+      await writeFile(join(scratch.folder, 'PG_VERSION'), '16\n');
+      await expect(inspectSource(scratch.folder)).rejects.toThrow('PG_VERSION 16 is not supported');
+    } finally {
+      await scratch.dispose();
+    }
+  });
+
+  it('refuses a folder without PG_VERSION', async () => {
+    const scratch = await materializeFolder('local-v2');
+    const empty = join(scratch.scratch, 'empty');
+    await mkdir(empty);
+    try {
+      await expect(inspectSource(empty)).rejects.toThrow(/no PG_VERSION/);
+    } finally {
+      await scratch.dispose();
+    }
+  });
+
+  it('refuses an unknown schema version by its journal count', async () => {
+    const scratch = await materializeFolder('local-v2');
+    try {
+      const reader = await openSource(scratch.folder);
+      await reader.close();
+      const { PGlite } = await import('pglite-0-5-17');
+      const database = new PGlite(scratch.folder);
+      await database.exec(
+        "insert into drizzle.__drizzle_migrations (hash, created_at) values ('extra', 1)",
+      );
+      await database.close();
+      const error = await inspectSource(scratch.folder).catch((caught: unknown) => caught);
+      expect(error).toBeInstanceOf(SourceError);
+      expect((error as Error).message).toContain('53 migrations in the journal');
+    } finally {
+      await scratch.dispose();
+    }
+  });
+});
+
+const postgresUrl = process.env.API_TEST_POSTGRES_URL ?? process.env.E2E_POSTGRES_URL;
+
+describe.skipIf(postgresUrl === undefined)('Postgres reader', () => {
+  let database: PostgresMaterialization;
+
+  beforeAll(async () => {
+    database = await materializePostgres(postgresUrl as string, 'hosted-main');
+  });
+
+  afterAll(async () => {
+    await database.drop();
+  });
+
+  it('detects hosted-main', async () => {
+    const reader = await openSource(database.url);
+    try {
+      expect((await detectSourceVersion(reader)).version).toBe('hosted-main');
+    } finally {
+      await reader.close();
+    }
+  });
+
+  it('fails a write attempt', async () => {
+    const reader = await openSource(database.url);
+    try {
+      await expect(reader.query("update task set title = title where id = 'x'")).rejects.toThrow(
+        /read-only/i,
+      );
+    } finally {
+      await reader.close();
+    }
+  });
+});
+
+const ownerCopy = process.env.MIGRATE_OWNER_COPY;
+
+describe.skipIf(ownerCopy === undefined)('copy of a real data folder', () => {
+  it('opens and reports a supported version', async () => {
+    const report = await inspectSource(ownerCopy as string);
+    expect(report.counts.size).toBeGreaterThan(0);
+  });
+});
