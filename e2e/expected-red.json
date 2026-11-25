@@ -48,7 +48,6 @@
     "blackbox/signature.test.ts": "*",
     "blackbox/task-commands.test.ts": "*",
     "blackbox/user-commands.test.ts": [
-      "user commands with a worker › [api-119] a new machine has the grant off",
       "user commands with a worker › [api-119] a machine token cannot set the grant and a user session can",
       "user commands with a worker › [api-119] a note written by a granted machine is authored by the user with the machine recorded",
       "user commands with a worker › [api-119] answer answers 403 grant-required from a machine without the grant",
@@ -65,7 +64,6 @@
       "user commands with a worker › [api-119] list-runs succeeds from a machine with the grant",
       "user commands with a worker › [api-119] reply answers 403 grant-required from a machine without the grant",
       "user commands with a worker › [api-119] reply answers 409 run-holds-task from the machine holding the active run",
-      "user commands with a worker › [api-119] reply succeeds from a machine with the grant",
       "user commands with a worker › [api-119] rerun answers 403 grant-required from a machine without the grant",
       "user commands with a worker › [api-119] rerun answers 409 run-holds-task from the machine holding the active run",
       "user commands with a worker › [api-119] rerun succeeds from a machine with the grant",
