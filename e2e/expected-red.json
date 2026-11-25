@@ -174,9 +174,6 @@
       "phone viewport sign-in on a login board › [web-098] the sign in journey completes at the phone viewport @phone"
     ],
     "browser/run-to-done.spec.ts": "*",
-    "browser/schedules.spec.ts": [
-      "[web-067] Schedules page › [web-067] a paused schedule does not fire when the test clock passes its next time"
-    ],
     "browser/sealing-at-rest.spec.ts": "*",
     "browser/server-app-layout.spec.ts": [
       "the server app layout with a remote host › [server-app-074] a remoteHosts name is an allowed host",
