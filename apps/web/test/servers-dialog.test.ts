@@ -11,12 +11,7 @@ import {
 import { serverNamespace } from '../src/storage/index.js';
 import { BoardWorld, frozenClock } from './board-world.js';
 import { PROJECT_ALPHA, PROJECT_BRAVO, PROJECT_HOME_ID, ProjectsWorld } from './projects-world.js';
-import {
-  PAGE_ORIGIN,
-  alreadyUnlocked,
-  renderApp,
-  versionDocument,
-} from './render.js';
+import { PAGE_ORIGIN, alreadyUnlocked, renderApp, versionDocument } from './render.js';
 
 const B_ORIGIN = 'https://b.example';
 const ADDRESS_RULE = 'Use https. Plain http is accepted only for localhost, 127.0.0.1 and [::1].';

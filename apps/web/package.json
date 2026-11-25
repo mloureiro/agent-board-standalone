@@ -10,7 +10,8 @@
     "build": "vite build && tsx scripts/write-version.ts",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "release:check": "tsx scripts/release-check.ts"
   },
   "dependencies": {
     "@agent-board/contract": "workspace:^1.0.0",
