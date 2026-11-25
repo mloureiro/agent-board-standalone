@@ -21,7 +21,6 @@
     "blackbox/matrix-refusal.test.ts": "*",
     "blackbox/migrate.test.ts": "*",
     "blackbox/schedules.test.ts": [
-      "[cli-036] board schedule › [cli-036] a key answers created, exists, rescheduled and requeued and always exits 0",
       "[api-077] an after schedule › [api-077] fires once when the upstream task moves from running to done",
       "[api-077] an after schedule › [api-077] fires once more for running to done on a second run"
     ],
