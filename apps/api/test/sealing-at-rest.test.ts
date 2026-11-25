@@ -23,7 +23,7 @@ describe('[api-053] sealing at rest', () => {
     'plaintext-title-4f1c9a',
     'plaintext-prompt-77be02',
     'plaintext-project-1d90ce',
-    '/home/someone/plaintext-directory-5a3e18',
+    '/srv/someone/plaintext-directory-5a3e18',
   ];
   const sent: string[] = [];
 
