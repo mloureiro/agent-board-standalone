@@ -39,6 +39,7 @@ dependencies = [
  "tauri-plugin-board-native",
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
+ "tokio",
  "uuid",
  "webpki-roots",
 ]

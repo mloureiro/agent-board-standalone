@@ -6,6 +6,8 @@ pub struct ServerEntry {
     pub id: String,
     pub name: String,
     pub url: String,
+    #[serde(default)]
+    pub notifications: bool,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -39,7 +41,12 @@ impl ServerList {
         } else {
             name.chars().take(80).collect()
         };
-        let entry = ServerEntry { id, name, url };
+        let entry = ServerEntry {
+            id,
+            name,
+            url,
+            notifications: false,
+        };
         self.servers.push(entry.clone());
         Ok(entry)
     }
@@ -58,5 +65,15 @@ impl ServerList {
     pub fn remove(&mut self, id: &str) -> Option<ServerEntry> {
         let index = self.servers.iter().position(|entry| entry.id == id)?;
         Some(self.servers.remove(index))
+    }
+
+    pub fn set_notifications(&mut self, id: &str, enabled: bool) -> bool {
+        match self.servers.iter_mut().find(|entry| entry.id == id) {
+            Some(entry) => {
+                entry.notifications = enabled;
+                true
+            }
+            None => false,
+        }
     }
 }

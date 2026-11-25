@@ -76,6 +76,10 @@ export const createMobileBridge = (core: TauriCore): AgentBoardBridge => {
 
     async reportTab() {},
 
+    async setNotifications(serverId, enabled) {
+      await call('set_notifications', { serverId, enabled });
+    },
+
     listServers: () => call<BridgeServerEntry[]>('list_servers'),
 
     addServer: (input) => call<BridgeServerEntry | null>('add_server', { ...input }),

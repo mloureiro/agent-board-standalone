@@ -57,11 +57,15 @@ export class FakeBoard {
       return null;
     });
     await context.addInitScript(() => {
-      const w = window as unknown as Record<string, (...args: unknown[]) => Promise<never>>;
+      const w = window as unknown as {
+        __fakeFetch(serverId: string, method: string, path: string): Promise<FakeAnswer>;
+        __fakeCall(name: string, args: unknown[]): Promise<unknown>;
+        agentBoardBridge: unknown;
+      };
       const call = async (name: string, ...args: unknown[]): Promise<unknown> => {
         const result = await w.__fakeCall(name, args);
         if (result !== null && typeof result === 'object' && 'failed' in result) {
-          throw new Error(String(result.failed));
+          throw new Error(String((result as { failed: unknown }).failed));
         }
         return result;
       };

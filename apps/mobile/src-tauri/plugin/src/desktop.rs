@@ -38,4 +38,16 @@ impl<R: Runtime> BoardNative<R> {
     pub fn delete_key(&self, _server_id: &str) -> crate::Result<()> {
         Self::unavailable()
     }
+
+    pub fn service_start(&self) -> crate::Result<()> {
+        Self::unavailable()
+    }
+
+    pub fn service_stop(&self) -> crate::Result<()> {
+        Self::unavailable()
+    }
+
+    pub fn notify(&self, _server_id: &str, _task_id: &str, _text: &str) -> crate::Result<()> {
+        Self::unavailable()
+    }
 }

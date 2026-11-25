@@ -1,5 +1,5 @@
 use crate::adapters::{DialogConfirm, FileStore, PluginKeys, ReqwestHttp, SystemEnv};
-use crate::commands;
+use crate::{commands, watcher};
 use agent_board_bridge_core::bridge::{Bridge, BridgeConfig, CONTRACT_LEVEL};
 use agent_board_bridge_core::links::{Navigation, navigation};
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
@@ -30,6 +30,7 @@ pub fn run() {
                 },
             );
             app.manage(bridge);
+            watcher::start(app.handle().clone());
             let opener = app.handle().clone();
             WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
                 .initialization_script(SHIM)
@@ -55,6 +56,7 @@ pub fn run() {
             commands::rename_server,
             commands::open_link,
             commands::notify,
+            commands::set_notifications,
         ])
         .run(tauri::generate_context!())
         .expect("error while running the app");

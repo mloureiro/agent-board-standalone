@@ -11,6 +11,7 @@ fn main() {
             "rename_server",
             "open_link",
             "notify",
+            "set_notifications",
         ]),
     ))
     .expect("failed to run the Tauri build step");

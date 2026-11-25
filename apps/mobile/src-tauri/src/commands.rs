@@ -6,6 +6,7 @@ use serde::Serialize;
 use std::collections::HashMap;
 use tauri::ipc::{Channel, InvokeResponseBody};
 use tauri::{AppHandle, State, Wry};
+use tauri_plugin_board_native::BoardNativeExt;
 use tauri_plugin_opener::OpenerExt;
 
 pub type AppBridge = Bridge<ReqwestHttp, PluginKeys<Wry>, DialogConfirm<Wry>, SystemEnv, FileStore>;
@@ -133,9 +134,48 @@ pub async fn open_link(
 }
 
 #[derive(serde::Deserialize)]
-pub struct Notification {}
+#[serde(rename_all = "camelCase")]
+pub struct Notification {
+    server_id: String,
+    task_id: String,
+    title: String,
+}
 
 #[tauri::command]
-pub async fn notify(_notification: Notification) -> Result<(), String> {
-    Ok(())
+pub async fn notify(
+    app: AppHandle,
+    bridge: State<'_, AppBridge>,
+    notification: Notification,
+) -> Result<(), String> {
+    bridge
+        .list_servers()
+        .iter()
+        .find(|entry| entry.id == notification.server_id)
+        .ok_or_else(|| "unknown-server".to_string())?;
+    app.board_native()
+        .notify(
+            &notification.server_id,
+            &notification.task_id,
+            &notification.title,
+        )
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub async fn set_notifications(
+    app: AppHandle,
+    bridge: State<'_, AppBridge>,
+    server_id: String,
+    enabled: bool,
+) -> Result<(), String> {
+    bridge
+        .set_notifications(&server_id, enabled)
+        .map_err(text)?;
+    let native = app.board_native();
+    if bridge.notifying_servers().is_empty() {
+        native.service_stop()
+    } else {
+        native.service_start()
+    }
+    .map_err(|error| error.to_string())
 }

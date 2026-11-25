@@ -13,6 +13,7 @@
     "allow-remove-server",
     "allow-rename-server",
     "allow-open-link",
-    "allow-notify"
+    "allow-notify",
+    "allow-set-notifications"
   ]
 }

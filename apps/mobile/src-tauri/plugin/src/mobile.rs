@@ -36,6 +36,14 @@ struct SignArgs<'a> {
     message: &'a str,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct NotifyArgs<'a> {
+    server_id: &'a str,
+    task_id: &'a str,
+    text: &'a str,
+}
+
 #[derive(Deserialize)]
 struct Value {
     value: Option<String>,
@@ -87,5 +95,27 @@ impl<R: Runtime> BoardNative<R> {
     pub fn delete_key(&self, server_id: &str) -> crate::Result<()> {
         self.call::<_, serde_json::Value>("deleteKey", ServerArgs { server_id })
             .map(drop)
+    }
+
+    pub fn service_start(&self) -> crate::Result<()> {
+        self.call::<_, serde_json::Value>("serviceStart", ())
+            .map(drop)
+    }
+
+    pub fn service_stop(&self) -> crate::Result<()> {
+        self.call::<_, serde_json::Value>("serviceStop", ())
+            .map(drop)
+    }
+
+    pub fn notify(&self, server_id: &str, task_id: &str, text: &str) -> crate::Result<()> {
+        self.call::<_, serde_json::Value>(
+            "notify",
+            NotifyArgs {
+                server_id,
+                task_id,
+                text,
+            },
+        )
+        .map(drop)
     }
 }

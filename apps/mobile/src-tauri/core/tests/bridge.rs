@@ -490,3 +490,37 @@ async fn removing_a_server_needs_confirmation_and_deletes_its_credentials() {
     assert_eq!(keys.token("s1").as_deref(), Some("abc_t"));
     assert_eq!(bridge.list_servers().len(), 1);
 }
+
+#[tokio::test]
+async fn attention_is_read_with_the_native_credential_and_signed() {
+    let (bridge, http, keys, _) = setup(true);
+    let id = add(&bridge);
+    keys.set_token(&id, "abc_t").unwrap();
+    http.answer(
+        "/api/client/attention",
+        200,
+        r#"{"tasks":[{"id":"t1","projectId":"p","since":"2026-01-01T00:00:00Z"}]}"#,
+    );
+    assert_eq!(bridge.attention(&id).await, Ok(vec!["t1".to_string()]));
+    let seen = http.seen.lock().unwrap();
+    assert_eq!(header(&seen[0].2, "authorization"), Some("Bearer abc_t"));
+    assert!(header(&seen[0].2, "x-board-sig").is_some());
+    assert!(seen[0].1.ends_with("/api/client/attention"));
+}
+
+#[tokio::test]
+async fn a_rejected_attention_poll_is_an_error_and_notification_settings_persist() {
+    let (bridge, http, ..) = setup(true);
+    let id = add(&bridge);
+    http.answer("/api/client/attention", 401, "{}");
+    assert_eq!(bridge.attention(&id).await, Err(BridgeError::Rejected(401)));
+    assert!(bridge.notifying_servers().is_empty());
+    bridge.set_notifications(&id, true).unwrap();
+    assert_eq!(bridge.notifying_servers().len(), 1);
+    assert_eq!(
+        bridge.set_notifications("nope", true),
+        Err(BridgeError::UnknownServer)
+    );
+    bridge.set_notifications(&id, false).unwrap();
+    assert!(bridge.notifying_servers().is_empty());
+}

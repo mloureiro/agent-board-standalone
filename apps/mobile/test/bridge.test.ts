@@ -114,3 +114,16 @@ describe('mobile bridge shim', () => {
     expect(calls[0]).toEqual({ command: 'open_link', args: { url: 'https://example.com' } });
   });
 });
+
+describe('mobile bridge notifications', () => {
+  it('[mobile-005] tells the native side when the notification setting changes and passes page notifications through', async () => {
+    const { core, calls } = fakeCore(() => undefined);
+    const bridge = createMobileBridge(core);
+    await bridge.setNotifications?.('s', true);
+    await bridge.notify({ serverId: 's', taskId: 't1', title: 'Fix the build' });
+    expect(calls).toEqual([
+      { command: 'set_notifications', args: { serverId: 's', enabled: true } },
+      { command: 'notify', args: { serverId: 's', taskId: 't1', title: 'Fix the build' } },
+    ]);
+  });
+});
