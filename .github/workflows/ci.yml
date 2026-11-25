@@ -28,6 +28,7 @@ jobs:
       binary_smoke: ${{ steps.plan.outputs.binary_smoke }}
       mobile: ${{ steps.plan.outputs.mobile }}
       client_app: ${{ steps.plan.outputs.client_app }}
+      server_app: ${{ steps.plan.outputs.server_app }}
       install_alone: ${{ steps.plan.outputs.install_alone }}
     steps:
       - uses: actions/checkout@v4
@@ -162,6 +163,8 @@ jobs:
 
   server-app-macos:
     name: server-app (macOS)
+    needs: changes
+    if: needs.changes.outputs.server_app == 'true'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
