@@ -45,6 +45,9 @@ describe('target database', () => {
     expect(signInRuleOf({ PUBLIC_URL: 'https://board.example.test' })).toEqual({ mode: 'login' });
     expect(() => signInRuleOf({ AUTH_MODE: 'no-login' })).toThrow('NO_LOGIN_USER is required');
     expect(() => signInRuleOf({})).toThrow('neither NO_LOGIN_USER');
+    expect(() => signInRuleOf({ AUTH_MODE: 'nologin', NO_LOGIN_USER: 'alice' })).toThrow(
+      'AUTH_MODE must be "login" or "no-login"',
+    );
   });
 
   it('gives the API the URLs it reads for each kind of target', () => {

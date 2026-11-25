@@ -69,8 +69,9 @@ no API code: `--api` is the built `agent-board-api` (a `.js` file is run with th
 as a program) and the tool starts it as `agent-board-api import --file <export>`.
 
 The API reads its target from the environment, so give `run` the same variables the server will use: `NO_LOGIN_USER`
-(or `PUBLIC_URL` for a login target) and anything else the API needs. `--target-db` becomes `DATABASE_URL` for the
-import, and `DATABASE_ADMIN_URL` is dropped for a `pglite://` target.
+(or `PUBLIC_URL` for a login target) and anything else the API needs. A `pglite://` `--target-db` becomes
+`DATABASE_URL` for the import and `DATABASE_ADMIN_URL` is dropped. A Postgres `--target-db` is the admin URL and becomes
+`DATABASE_ADMIN_URL`; `DATABASE_URL` must then be set in the environment to the application-role URL the server uses.
 
 Order of work:
 

@@ -40,6 +40,8 @@ const trimmed = (env: Env, name: string): string | undefined => {
 export function signInRuleOf(env: Env): SignInRule {
   const user = trimmed(env, 'NO_LOGIN_USER');
   const explicit = trimmed(env, 'AUTH_MODE')?.toLowerCase();
+  if (explicit !== undefined && explicit !== 'login' && explicit !== 'no-login')
+    throw new RunRefusal('AUTH_MODE must be "login" or "no-login"');
   const mode =
     explicit ??
     (user !== undefined ? 'no-login' : trimmed(env, 'PUBLIC_URL') !== undefined ? 'login' : null);
