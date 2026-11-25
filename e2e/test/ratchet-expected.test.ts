@@ -58,9 +58,9 @@ describe('expected-red.json', () => {
     expect(() => parseExpectedRed(raw)).toThrow(/expected-red\.json/);
   });
 
-  it('[repo-009] the committed file is valid and lists the browser harness smoke file', () => {
+  it('[repo-009] the committed file is valid and lists the browser board file', () => {
     const expected = loadExpectedRed(new URL('../expected-red.json', import.meta.url).pathname);
-    expect(expected.files['browser/harness.spec.ts']).toBe('*');
-    expect(Object.keys(expected.files)).toHaveLength(37);
+    expect(expected.files['browser/board.spec.ts']).toBe('*');
+    expect(Object.keys(expected.files)).toHaveLength(34);
   });
 });
