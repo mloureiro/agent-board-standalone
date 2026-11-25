@@ -2,6 +2,7 @@ import { chmodSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { DOCTOR_CHECK_IDS, doctorReport, type DoctorResult } from '@agent-board/contract';
+import { decodeDataKey, encodeDataKey } from '@agent-board/sealing';
 import { describe, expect, it } from 'vitest';
 
 import { nodeCheck } from '../src/doctor/local.js';
@@ -69,7 +70,9 @@ describe('board doctor', () => {
 
   it('[cli-047] fails when the data key is not the one of the board', async () => {
     const { cli, stub } = await rig();
-    const other = stub.dataKey.slice(0, -1) + (stub.dataKey.endsWith('A') ? 'B' : 'A');
+    const bytes = decodeDataKey(stub.dataKey);
+    bytes[0] = (bytes[0] ?? 0) ^ 0xff;
+    const other = encodeDataKey(bytes);
     writeFileSync(
       cli.test.path('config', 'env'),
       `AGENT_BOARD_TOKEN=abm_testtoken\nAGENT_BOARD_DATA_KEY=${other}\n`,
