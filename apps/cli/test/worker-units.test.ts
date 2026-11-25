@@ -464,6 +464,7 @@ describe('the title rules', () => {
     version: 1,
     rules: [
       { pattern: 'nomatch', icon: '1' },
+      { pattern: '', icon: 'empty' },
       {
         pattern: 'REVIEW (\\S+)',
         flags: 'i',

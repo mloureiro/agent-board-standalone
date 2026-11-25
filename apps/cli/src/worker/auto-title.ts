@@ -40,7 +40,7 @@ export function parseTitleRules(text: string): TitleRule[] {
   const rules = isRecord(parsed) ? parsed.rules : undefined;
   if (!Array.isArray(rules)) return [];
   return rules.flatMap((entry): TitleRule[] => {
-    if (!isRecord(entry) || typeof entry.pattern !== 'string') return [];
+    if (!isRecord(entry) || typeof entry.pattern !== 'string' || entry.pattern === '') return [];
     const labels = Array.isArray(entry.labels)
       ? entry.labels.filter((label): label is string => typeof label === 'string')
       : [];

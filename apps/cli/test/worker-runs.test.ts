@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { MAX_ACK_MESSAGES } from '@agent-board/contract';
 import { bindings, open as openEnvelope } from '@agent-board/sealing';
 import { describe, expect, it } from 'vitest';
 
@@ -148,6 +149,26 @@ describe('the inbox of a run', () => {
     stub.requestStop(TASK);
     await done;
     expect(entries().filter((entry) => entry.kind === 'later')).toHaveLength(1);
+  });
+
+  it('[cli-075] acknowledges a full inbox in batches the contract accepts', async () => {
+    const { stub, context, entries, fast } = await setup('#hold wait');
+    const done = runWorker(context, TASK, fast);
+    await until(() => entries().some((entry) => entry.kind === 'prompt'), 'the prompt');
+    for (let index = 0; index < MAX_ACK_MESSAGES + 20; index += 1) {
+      await stub.sendToRun(TASK, `message ${index}`);
+    }
+    const acknowledged = (): string[] =>
+      stub.bodies('ack-messages').flatMap((body) => body.ids as string[]);
+    await until(
+      () => new Set(acknowledged()).size === MAX_ACK_MESSAGES + 20,
+      'every acknowledgement',
+    );
+    for (const body of stub.bodies('ack-messages')) {
+      expect((body.ids as string[]).length).toBeLessThanOrEqual(MAX_ACK_MESSAGES);
+    }
+    stub.requestStop(TASK);
+    await done;
   });
 
   it('[cli-074] a stop interrupts the agent, closes its stdin and kills it only after the grace', async () => {

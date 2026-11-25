@@ -9,6 +9,7 @@ import {
   failRoute,
   getTaskRoute,
   heartbeatRoute,
+  MAX_ACK_MESSAGES,
   pauseRoute,
   readNotesRoute,
   runInboxRoute,
@@ -392,12 +393,11 @@ export async function runWorker(
       sent += 1;
       log(`handed the agent a message of the user's (${message.id})`);
     }
-    if (acknowledged.length > 0) {
-      await s
-        .command(ackMessagesRoute, { id: task, ...fence, ids: acknowledged })
-        .catch((error: unknown) => {
-          log(`WARN acknowledging messages failed: ${describe(error)}`);
-        });
+    for (let start = 0; start < acknowledged.length; start += MAX_ACK_MESSAGES) {
+      const ids = acknowledged.slice(start, start + MAX_ACK_MESSAGES);
+      await s.command(ackMessagesRoute, { id: task, ...fence, ids }).catch((error: unknown) => {
+        log(`WARN acknowledging messages failed: ${describe(error)}`);
+      });
     }
     return sent;
   };
