@@ -438,7 +438,7 @@ describe('default project', () => {
 describe('directories per project', () => {
   beforeEach(() => {
     world.directories = [
-      { id: DIRECTORY_REPO, path: '/home/repo' },
+      { id: DIRECTORY_REPO, path: '/srv/repo' },
       { id: DIRECTORY_DOCS, path: '/alpha/docs', projectId: PROJECT_ALPHA },
     ];
   });
@@ -455,12 +455,12 @@ describe('directories per project', () => {
     const dialog = await openForm(user);
     const form = within(dialog);
     expect(form.getByLabelText('Project')).toHaveValue(PROJECT_HOME_ID);
-    expect(form.getByRole('option', { name: '/home/repo' })).toBeInTheDocument();
+    expect(form.getByRole('option', { name: '/srv/repo' })).toBeInTheDocument();
     expect(form.queryByRole('option', { name: '/alpha/docs' })).not.toBeInTheDocument();
 
     await user.selectOptions(form.getByLabelText('Project'), 'Alpha');
     expect(await form.findByRole('option', { name: '/alpha/docs' })).toBeInTheDocument();
-    expect(form.queryByRole('option', { name: '/home/repo' })).not.toBeInTheDocument();
+    expect(form.queryByRole('option', { name: '/srv/repo' })).not.toBeInTheDocument();
   });
 
   it('[web-084] the form starts on the project chosen in the header', async () => {
@@ -476,7 +476,7 @@ describe('directories per project', () => {
     const { user } = render();
     const dialog = await openForm(user);
     const form = within(dialog);
-    await user.selectOptions(form.getByLabelText('Directory'), '/home/repo');
+    await user.selectOptions(form.getByLabelText('Directory'), '/srv/repo');
     expect(form.getByLabelText('Directory')).toHaveValue(DIRECTORY_REPO);
     await user.selectOptions(form.getByLabelText('Project'), 'Alpha');
     expect(await form.findByLabelText('Directory')).toHaveValue('');
