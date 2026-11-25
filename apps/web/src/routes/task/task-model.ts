@@ -75,16 +75,19 @@ const parseJson = (source: string): unknown => {
   }
 };
 
+const httpUrl = (value: string | null): string | null =>
+  value !== null && /^https?:\/\//i.test(value.trim()) ? value.trim() : null;
+
 export function parsePr(source: string): { label: string; url: string | null } {
   const parsed = parseJson(source);
   if (typeof parsed === 'object' && parsed !== null) {
     const body = record(parsed);
-    const url = text(body.url) ?? text(body.link);
-    const label = text(body.title) ?? text(body.label) ?? url ?? source;
-    return { label, url };
+    const given = text(body.url) ?? text(body.link);
+    const label = text(body.title) ?? text(body.label) ?? given ?? source;
+    return { label, url: httpUrl(given) };
   }
   const trimmed = source.trim();
-  return { label: trimmed, url: /^https?:\/\//.test(trimmed) ? trimmed : null };
+  return { label: trimmed, url: httpUrl(trimmed) };
 }
 
 export function parseWatches(

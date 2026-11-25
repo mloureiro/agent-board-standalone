@@ -283,6 +283,28 @@ describe('pull requests', () => {
       ).not.toBeInTheDocument(),
     );
   });
+
+  it('[web-040] shows a PR whose link is not http as plain text', async () => {
+    await world.seed({
+      id: ID,
+      title: 'Odd PR',
+      status: 'needs-me',
+      overrides: {
+        prs: [
+          {
+            id: 'pr1',
+            pr: await prOf(ID, JSON.stringify({ url: 'javascript:alert(1)', title: 'Sneaky' })),
+            state: 'open',
+          },
+        ],
+      },
+    });
+    openTask();
+
+    const section = await screen.findByRole('region', { name: 'Pull requests' });
+    expect(await within(section).findByText('Sneaky')).toBeInTheDocument();
+    expect(within(section).queryByRole('link')).not.toBeInTheDocument();
+  });
 });
 
 describe('field alerts', () => {
