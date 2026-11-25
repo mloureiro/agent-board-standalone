@@ -380,7 +380,7 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
       attached = context;
       await context.exposeBinding(BRIDGE_BINDING, async (source, op, args) =>
         handle(op as BridgeOp, (args ?? {}) as Record<string, unknown>, (id, delivery) => {
-          void source.page.evaluate(inbox, [BRIDGE_INBOX, id, delivery] as const);
+          source.page.evaluate(inbox, [BRIDGE_INBOX, id, delivery] as const).catch(() => undefined);
         }),
       );
       await context.addInitScript(bridgeInitScript());

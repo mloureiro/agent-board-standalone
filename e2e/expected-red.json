@@ -65,7 +65,6 @@
       "accessibility of the sign-in page › [web-080] the sign-in page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme"
     ],
     "browser/board.spec.ts": "*",
-    "browser/client-app-bridge.spec.ts": "*",
     "browser/connection.spec.ts": "*",
     "browser/migrate.spec.ts": [
       "the migrated board in the browser › [migrate-003] the owner passphrase unlocks the migrated board and every task opens"

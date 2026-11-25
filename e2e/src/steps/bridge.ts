@@ -2,7 +2,7 @@ import { TOKEN_PATTERN, type Feature } from '@agent-board/contract';
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 
 import { createBridgeHost, type BridgeHost } from '../fakes/bridge/host.js';
-import { approveHandoff } from '../fixtures/browser.js';
+import { UNLOCK_NAMES } from '../fixtures/browser.js';
 import { postgresAllowedIn } from '../fixtures/boards.js';
 import { startLoginBoard, type LoginBoard } from '../fixtures/login-board.js';
 import { unlockedKey } from '../fixtures/keys.js';
@@ -134,14 +134,29 @@ export async function approverContext(browser: Browser, user: BoardUser): Promis
 export function handoffCodeOf(host: BridgeHost, since = 0): string | null {
   let found: string | null = null;
   for (const entry of host.passedToPage.slice(since)) {
-    try {
-      const parsed = JSON.parse(entry) as { flow?: unknown; code?: unknown };
-      if (typeof parsed.flow === 'string' && typeof parsed.code === 'string') found = parsed.code;
-    } catch {
-      continue;
-    }
+    const code = codeIn(entry) ?? codeIn(bodyOf(entry));
+    if (code !== null) found = code;
   }
   return found;
+}
+
+function codeIn(text: string | null): string | null {
+  if (text === null) return null;
+  try {
+    const parsed = JSON.parse(text) as { flow?: unknown; code?: unknown };
+    return typeof parsed.flow === 'string' && typeof parsed.code === 'string' ? parsed.code : null;
+  } catch {
+    return null;
+  }
+}
+
+function bodyOf(entry: string): string | null {
+  try {
+    const parsed = JSON.parse(entry) as { body?: unknown };
+    return typeof parsed.body === 'string' ? parsed.body : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function startHandoff(page: Page, host: BridgeHost): Promise<string> {
@@ -151,13 +166,21 @@ export async function startHandoff(page: Page, host: BridgeHost): Promise<string
   return handoffCodeOf(host, since) ?? '';
 }
 
+export async function approveOpenedLink(approver: BrowserContext, host: BridgeHost): Promise<Page> {
+  await expect.poll(() => host.externalOpens.length, { timeout: 15_000 }).toBeGreaterThan(0);
+  const page = await approver.newPage();
+  await page.goto(host.externalOpens[host.externalOpens.length - 1] ?? '');
+  await page.getByRole('button', { name: UNLOCK_NAMES.approve }).click();
+  return page;
+}
+
 export async function signInThroughBridge(
   client: BridgedClient,
   board: LoginBoard,
   approver: BrowserContext,
 ): Promise<void> {
-  const code = await startHandoff(client.page, client.host);
-  const approval = await approveHandoff(approver, board.url, code);
+  await startHandoff(client.page, client.host);
+  const approval = await approveOpenedLink(approver, client.host);
   await approval.close();
   await expect
     .poll(() => client.host.tokenFor(client.serverId), { timeout: 15_000 })
@@ -207,6 +230,29 @@ export async function indexedDbNames(page: Page): Promise<string[]> {
   return page.evaluate(async () =>
     (await indexedDB.databases()).map((entry) => entry.name ?? '').sort(),
   );
+}
+
+export async function indexedDbRows(page: Page, name: string): Promise<unknown[]> {
+  return page.evaluate(async (wanted) => {
+    const names = (await indexedDB.databases()).map((entry) => entry.name);
+    if (!names.includes(wanted)) return [];
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open(wanted);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const rows: unknown[] = [];
+    for (const storeName of Array.from(database.objectStoreNames)) {
+      const stored = await new Promise<unknown[]>((resolve, reject) => {
+        const request = database.transaction(storeName).objectStore(storeName).getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      rows.push(...stored);
+    }
+    database.close();
+    return rows;
+  }, name);
 }
 
 export async function localKeysWithPrefix(page: Page, prefix: string): Promise<string[]> {
