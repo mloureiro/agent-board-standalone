@@ -1,5 +1,5 @@
 import { bindings } from '@agent-board/sealing';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { call, type RawResult } from '../src/client/contract-client.js';
 import type { EnrolledMachine } from '../src/fixtures/machines.js';
@@ -272,6 +272,22 @@ describe('user commands with a worker', () => {
     return clocked;
   });
 
+  const held = new Set<string>();
+  let createdBefore = 0;
+
+  beforeEach(() => {
+    createdBefore = started?.taskIds.length ?? 0;
+  });
+
+  afterEach(async () => {
+    if (started === null) return;
+    const fx = started;
+    const created = fx.taskIds.slice(createdBefore).filter((id) => !held.has(id));
+    for (const id of created) {
+      await fx.user.call('client.tasks.stop', { id }).catch(() => undefined);
+    }
+  });
+
   afterAll(async () => {
     await finishFixture(started);
     if (clocked !== null) {
@@ -286,10 +302,15 @@ describe('user commands with a worker', () => {
   const heldRunning = once(async () => {
     const fx = await fixture();
     const task = await runningTask(fx, '#stub: tool Grep\n#stub: sleep 300');
+    held.add(task.id);
     return { task, run: await uploadedRun(fx, task) };
   });
 
-  const heldAsking = once(async () => askingSubject(await fixture()));
+  const heldAsking = once(async () => {
+    const subject = await askingSubject(await fixture());
+    held.add(subject.taskId);
+    return subject;
+  });
 
   async function heldSubject(command: Command): Promise<Subject> {
     const { task, run } = await heldRunning();
