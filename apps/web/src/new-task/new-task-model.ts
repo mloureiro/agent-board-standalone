@@ -327,6 +327,7 @@ export interface PlaceInput {
   readonly remembered: Remembered | null;
   readonly directories: readonly string[];
   readonly machines: readonly string[];
+  readonly directoriesKnown?: boolean;
 }
 
 export interface ResolvedPlace {
@@ -346,6 +347,8 @@ export function resolvePlace(input: PlaceInput): ResolvedPlace {
     : usable
       ? remembered.machine
       : (machines[0] ?? null);
-  const directoryId = form.directoryId ?? (usable ? remembered.directoryId : '');
+  const wanted = form.directoryId ?? (usable ? remembered.directoryId : '');
+  const directoryId =
+    input.directoriesKnown === true && wanted !== '' && !directories.includes(wanted) ? '' : wanted;
   return { directoryId, machine, staleRemembered: remembered !== null && !usable };
 }

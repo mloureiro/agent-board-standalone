@@ -1,7 +1,5 @@
 export { usePage } from './use-page.js';
 export type { Page } from './use-page.js';
-export { useProjectChoices } from './use-projects.js';
-export type { ProjectChoice } from './use-projects.js';
 export { DOCUMENT_KINDS, isVersionConflict, loadDocument, saveDocument } from './documents.js';
 export type { DocumentName, LoadedDocument } from './documents.js';
 export {

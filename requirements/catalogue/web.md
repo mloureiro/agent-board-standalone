@@ -115,12 +115,12 @@ unchanged by the client app and the Android wrapper. Columns are explained in [.
 
 ## Projects (R3.1)
 
-| ID      | Requirement                                                                                                              | Sources                | Today     | Test | Test ids                                |
-| ------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------- | --------- | ---- | --------------------------------------- |
-| web-081 | The board shows all projects together, or one project chosen by a filter; the choice is per device and volatile.         | R3.1, WEB-078, APP-100 | not built | e2e  | e2e/browser/projects.spec.ts            |
-| web-082 | A sidebar (a drawer on a phone) lists the projects of each open server and navigates by project, as Claude Desktop does. | R3.1, WEB-078          | not built | e2e  | e2e/browser/projects.spec.ts            |
-| web-083 | The user can create, rename, re-icon, archive and delete a project from the client.                                      | R3.1                   | not built | e2e  | e2e/browser/projects.spec.ts            |
-| web-084 | Directories are shown and chosen per project.                                                                            | R3.1                   | not built | part | planned: apps/web/test/projects.test.ts |
+| ID      | Requirement                                                                                                              | Sources                | Today     | Test | Test ids                                                     |
+| ------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------- | --------- | ---- | ------------------------------------------------------------ |
+| web-081 | The board shows all projects together, or one project chosen by a filter; the choice is per device and volatile.         | R3.1, WEB-078, APP-100 | not built | e2e  | apps/web/test/projects.test.ts, e2e/browser/projects.spec.ts |
+| web-082 | A sidebar (a drawer on a phone) lists the projects of each open server and navigates by project, as Claude Desktop does. | R3.1, WEB-078          | not built | e2e  | apps/web/test/projects.test.ts, e2e/browser/projects.spec.ts |
+| web-083 | The user can create, rename, re-icon, archive and delete a project from the client.                                      | R3.1                   | not built | e2e  | apps/web/test/projects.test.ts, e2e/browser/projects.spec.ts |
+| web-084 | Directories are shown and chosen per project.                                                                            | R3.1                   | not built | part | apps/web/test/projects.test.ts                               |
 
 ## Several servers (R3.5) and the server list
 
@@ -157,4 +157,4 @@ unchanged by the client app and the Android wrapper. Columns are explained in [.
 | web-103 | In a wrapper, or for a server on another origin, every sign-in method goes through the hand-off: the method button opens the server's approval page in the system browser, and the client finishes the flow without a reload. | client-app-033, mobile-003, ADR-0004 | new   | e2e  | apps/web/test/sign-in.test.ts, e2e/browser/sign-in.spec.ts                    |
 | web-104 | For a server with the request signature on, the client holds one non-extractable signing key per server, pairs with a code on a no-login server, and Settings › Devices lists and revokes bound keys.                         | api-120, ADR-0012                    | new   | e2e  | apps/web/test/signing-and-devices.test.ts, e2e/browser/signature.spec.ts      |
 | web-105 | Settings › Machines shows and toggles each machine's "may act as me" grant, off by default.                                                                                                                                   | api-119, ADR-0009                    | new   | part | apps/web/test/settings-machines-feeds-agents.test.ts                          |
-| web-106 | A project with no name shows "Default" until the user renames it.                                                                                                                                                             | api-117, ADR-0010                    | new   | part | planned: apps/web/test/projects.test.ts                                       |
+| web-106 | A project with no name shows "Default" until the user renames it.                                                                                                                                                             | api-117, ADR-0010                    | new   | part | apps/web/test/projects.test.ts                                                |

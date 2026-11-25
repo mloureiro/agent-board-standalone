@@ -155,7 +155,9 @@ describe('configuration', () => {
     const { user } = openTask();
     await screen.findByRole('heading', { name: 'Move me' });
 
-    const select = await screen.findByRole('combobox', { name: 'Project' });
+    const select = await within(screen.getByRole('main')).findByRole('combobox', {
+      name: 'Project',
+    });
     await user.selectOptions(select, 'Work');
 
     await waitFor(() =>

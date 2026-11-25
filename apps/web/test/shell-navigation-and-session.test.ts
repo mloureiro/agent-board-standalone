@@ -22,13 +22,12 @@ import { alreadyUnlocked, renderApp, testEnvironment, upCheck } from './render.j
 import { media } from './setup.js';
 
 describe('header and navigation', () => {
-  it('[web-001] the header links Board, Schedules, Closed and Settings and offers the project switcher', async () => {
+  it('[web-001] the header links Board, Schedules, Closed and Settings', async () => {
     renderApp();
     const nav = await screen.findByRole('navigation', { name: 'Main' });
     for (const name of ['Board', 'Schedules', 'Closed', 'Settings']) {
       expect(within(nav).getByRole('link', { name })).toBeInTheDocument();
     }
-    expect(within(nav).getByRole('button', { name: 'Projects' })).toBeInTheDocument();
     expect(within(nav).queryByRole('link', { name: 'Backlog' })).not.toBeInTheDocument();
   });
 
