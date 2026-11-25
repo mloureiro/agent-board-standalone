@@ -10,11 +10,10 @@ import { unlockedKey } from '../fixtures/keys.js';
 import { createTask, type CreatedTask, type TaskInput } from '../fixtures/tasks.js';
 import { noLoginUser, type BoardUser } from '../fixtures/users.js';
 import type { Board } from '../harness/board.js';
-import type { RunResult } from '../harness/run.js';
+import { killStubTree, type RunResult } from '../harness/run.js';
 import type { RunningCli } from '../harness/cli.js';
 import {
   createProject as createSealedProject,
-  killStubs,
   readStubLog,
   sleep,
   stdinTexts,
@@ -104,11 +103,14 @@ export async function expectOk(run: Promise<RunResult>, what: string): Promise<R
 
 export async function finishFixture(fixture: Fixture | null): Promise<void> {
   if (fixture === null) return;
-  for (const id of fixture.taskIds) {
-    await fixture.user.call('client.tasks.stop', { id }).catch(() => undefined);
+  try {
+    for (const id of fixture.taskIds) {
+      await fixture.user.call('client.tasks.stop', { id }).catch(() => undefined);
+    }
+    await fixture.listener?.stop().catch(() => undefined);
+  } finally {
+    killStubTree(fixture.stubLog);
   }
-  await fixture.listener?.stop().catch(() => undefined);
-  killStubs(stubEntries(fixture));
 }
 
 export async function newTask(
@@ -302,10 +304,21 @@ export function stubStdin(fixture: Pick<Fixture, 'stubLog'>): string[] {
   return stdinTexts(stubEntries(fixture));
 }
 
-export function stubInterrupts(fixture: Pick<Fixture, 'stubLog'>): number {
+export function stubInterrupts(fixture: Pick<Fixture, 'stubLog'>, pid?: number): number {
   return stubEntries(fixture).filter(
-    (entry) => entry.kind === 'signal' || entry.kind === 'stdin-closed',
+    (entry) =>
+      (entry.kind === 'signal' || entry.kind === 'stdin-closed') &&
+      (pid === undefined || entry.pid === pid),
   ).length;
+}
+
+export function stubPidOf(fixture: Pick<Fixture, 'stubLog'>, marker: string): Promise<number> {
+  return waitUntil(`the stub that received ${marker}`, () => {
+    const entry = stubEntries(fixture).find(
+      (line) => line.kind === 'stdin' && String(line.text).includes(marker),
+    );
+    return entry === undefined ? null : Number(entry.pid);
+  });
 }
 
 export async function refusedInsideRun(fixture: Fixture, args: readonly string[]): Promise<number> {
@@ -352,6 +365,19 @@ export function parseEventLines(stdout: string): EventLine[] {
     .map((line) => JSON.parse(line) as EventLine);
 }
 
+async function quiet(read: () => number, quietMs: number): Promise<void> {
+  let last = read();
+  let since = Date.now();
+  while (Date.now() - since < quietMs) {
+    await sleep(POLL_MS / 5);
+    const current = read();
+    if (current !== last) {
+      last = current;
+      since = Date.now();
+    }
+  }
+}
+
 export async function collectEvents(
   machine: EnrolledMachine,
   filters: readonly string[],
@@ -360,14 +386,18 @@ export async function collectEvents(
 ): Promise<EventLine[]> {
   const stream = machine.start(['events', '--json', ...filters]);
   try {
-    await sleep(2_000);
+    await waitUntil(
+      'the event stream to answer',
+      () => stream.output.stdout !== '' || stream.output.stderr !== '',
+      3_000,
+    ).catch(() => undefined);
     await act();
     await waitUntil(
       'the expected events',
       () => done(parseEventLines(stream.output.stdout)),
       20_000,
     );
-    await sleep(1_500);
+    await quiet(() => stream.output.stdout.length, 750);
     return parseEventLines(stream.output.stdout);
   } finally {
     await stream.stop();

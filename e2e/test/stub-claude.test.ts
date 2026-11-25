@@ -271,6 +271,22 @@ describe('stub claude', () => {
     expect(texts).toHaveLength(20001);
   });
 
+  it('events with a byte size pads each event to that size and logs the pid on every entry', async () => {
+    const session = start('#stub: events 3 4096', { closeStdin: true });
+    await session.run.exited;
+    const texts = session
+      .events()
+      .filter(
+        (event) =>
+          event.type === 'assistant' && String(event.message.content[0]?.text).startsWith('event '),
+      )
+      .map((event) => String(event.message.content[0]?.text));
+    expect(texts).toHaveLength(3);
+    for (const text of texts) expect(text).toHaveLength(4096);
+    const pids = new Set(session.log().map((entry) => entry.pid));
+    expect(pids.size).toBe(1);
+  });
+
   it('board runs the board found first on PATH with the run environment', async () => {
     const session = start('#stub: board add --title "Follow up" --expect x', {
       fakeBoard: true,

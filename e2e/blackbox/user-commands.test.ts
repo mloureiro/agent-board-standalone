@@ -5,6 +5,7 @@ import { call, type RawResult } from '../src/client/contract-client.js';
 import type { EnrolledMachine } from '../src/fixtures/machines.js';
 import { enrolledMachine } from '../src/fixtures/machines.js';
 import { newTaskId } from '../src/fixtures/tasks.js';
+import { createBoard, resolveDatabaseKind } from '../src/harness/board.js';
 import { setClockOffset } from '../src/harness/clock.js';
 import { useBoard } from '../src/harness/vitest.js';
 import {
@@ -23,6 +24,7 @@ import {
   sealedMessage,
   startFixture,
   stubInterrupts,
+  stubPidOf,
   stubStdin,
   threadOf,
   uniqueLabel,
@@ -257,9 +259,26 @@ describe('user commands with a worker', () => {
     return started;
   });
 
+  let clocked: Fixture | null = null;
+  const clockFixture = once(async () => {
+    const board = await createBoard({
+      parts: ['api', 'cli'],
+      features: [],
+      auth: 'no-login',
+      database: resolveDatabaseKind({}, true),
+      label: 'clock',
+    });
+    clocked = await startFixture(board, { worker: true, label: 'clock' });
+    return clocked;
+  });
+
   afterAll(async () => {
-    if (started !== null) setClockOffset(started.board, 0);
     await finishFixture(started);
+    if (clocked !== null) {
+      setClockOffset(clocked.board, 0);
+      await finishFixture(clocked);
+      await clocked.board.stop();
+    }
   });
 
   const inert = once(async () => finishedSubject(await fixture()));
@@ -297,9 +316,9 @@ describe('user commands with a worker', () => {
     });
 
     it(`[api-119] ${command} succeeds from a machine with the grant`, async () => {
-      const fx = await fixture();
-      const subject = await entry.subject(fx);
       const quiet = command === 'take-back';
+      const fx = quiet ? await clockFixture() : await fixture();
+      const subject = await entry.subject(fx);
       if (quiet) setClockOffset(fx.board, TAKE_BACK_QUIET_SECONDS + 60);
       let result: RawResult;
       try {
@@ -475,22 +494,25 @@ describe('user commands with a worker', () => {
 
   it('[cli-030] board stop interrupts a running task', async () => {
     const fx = await fixture();
-    const task = await runningTask(fx);
-    const before = stubInterrupts(fx);
+    const marker = uniqueLabel('stop-run-');
+    const task = await runningTask(fx, `#stub: sleep 120\n${marker}`);
+    const pid = await stubPidOf(fx, marker);
+    expect(stubInterrupts(fx, pid)).toBe(0);
     const run = await fx.operator.cli(['stop', task.id]);
     expect(run.code, combined(run)).toBe(0);
-    await waitUntil('the stub to be interrupted', () => stubInterrupts(fx) > before);
+    await waitUntil('the stub to be interrupted', () => stubInterrupts(fx, pid) > 0);
     await waitForTask(fx, task.id, 'stopped', (detail) => detail.task.status !== 'running');
   });
 
   it('[cli-030] board stop with a message records the message as the user', async () => {
     const fx = await fixture();
-    const task = await runningTask(fx);
-    const before = stubInterrupts(fx);
+    const marker = uniqueLabel('stop-msg-run-');
+    const task = await runningTask(fx, `#stub: sleep 120\n${marker}`);
+    const pid = await stubPidOf(fx, marker);
     const text = uniqueLabel('stop-');
     const run = await fx.operator.cli(['stop', task.id, text]);
     expect(run.code, combined(run)).toBe(0);
-    await waitUntil('the stub to be interrupted', () => stubInterrupts(fx) > before);
+    await waitUntil('the stub to be interrupted', () => stubInterrupts(fx, pid) > 0);
     await waitForTask(fx, task.id, 'stopped', (detail) => detail.task.status !== 'running');
     const note = (await threadOf(fx, task.id)).find((entry) => entry.text.includes(text));
     expect(note?.author).toBe('user');
@@ -505,7 +527,7 @@ describe('user commands with a worker', () => {
   });
 
   it('[cli-030] board take-back works on a run quiet for 20 minutes', async () => {
-    const fx = await fixture();
+    const fx = await clockFixture();
     const task = await runningTask(fx);
     setClockOffset(fx.board, TAKE_BACK_QUIET_SECONDS + 60);
     try {

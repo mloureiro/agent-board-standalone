@@ -13,8 +13,8 @@ import {
   type MachineBoard,
 } from '../src/fixtures/machines.js';
 import { noLoginUser } from '../src/fixtures/users.js';
-import { freePort } from '../src/harness/ports.js';
 import { useBoard } from '../src/harness/vitest.js';
+import { startRefusingServer } from '../src/steps/worker.js';
 import {
   adoptKey,
   cliIn,
@@ -184,7 +184,7 @@ describe('board uninstall with the server stopped', () => {
     await harness.board.api.stop();
     const result = await machine.cli(['uninstall']);
     expect(result.code, combined(result)).toBe(0);
-    expect(combined(result)).toMatch(/revok/i);
+    expect(combined(result)).toMatch(/revok\w*.*(fail|could not|unreachable)/i);
     expect(installedFiles(machine.tmp)).toEqual([]);
   });
 });
@@ -271,38 +271,49 @@ describe('enrolment refusals', () => {
   it('[server-app-048] a wrong token, a foreign data key and an unreachable board are refused with distinct reasons and store nothing', async () => {
     const { board } = harness;
     const identity = await identityOf(board);
-    const unreachable = `http://127.0.0.1:${await freePort()}`;
+    const unreachable = await startRefusingServer();
     const cases = [
       {
         label: 'wrong token',
         url: board.url,
         options: { token: foreignToken() } as const,
+        reason: /(token|credential|unauthori[sz]ed|401)/i,
+        notReason: /(key id|key-id|keyid|unreachable|could not (reach|connect)|connection)/i,
       },
       {
         label: 'foreign data key',
         url: board.url,
         options: { dataKey: encodeDataKey(generateDataKey()) } as const,
+        reason: /(key id|key-id|keyid)/i,
+        notReason: /(unauthori[sz]ed|401|unreachable|could not (reach|connect)|connection)/i,
       },
-      { label: 'unreachable board', url: unreachable, options: {} as const },
+      {
+        label: 'unreachable board',
+        url: unreachable.url,
+        options: {} as const,
+        reason: /(unreachable|could not (reach|connect)|connection|ECONN)/i,
+        notReason: /(key id|key-id|keyid|unauthori[sz]ed|401)/i,
+      },
     ];
-    const reasons: string[] = [];
-    for (const entry of cases) {
-      const tmp = machineTmp(board.tmp, uniqueName('refused'));
-      const enrolment = await prepareEnrolment(tmp, identity, entry.options);
-      const before = snapshotOf(scopesOf(tmp));
-      const result = await cliIn(tmp)(initArgs(entry.url, enrolment));
-      expect(result.code, entry.label).not.toBe(0);
-      expect(snapshotOf(scopesOf(tmp)), `${entry.label} stores nothing`).toEqual(before);
-      expectNoSecrets([combined(result)], [enrolment.token, identity.key.dataKey]);
-      const reason = combined(result)
-        .replaceAll(entry.url, '<url>')
-        .replaceAll(tmp.root, '<tmp>')
-        .replaceAll(enrolment.name, '<name>')
-        .trim();
-      expect(reason, entry.label).not.toBe('');
-      reasons.push(reason);
+    try {
+      for (const entry of cases) {
+        const tmp = machineTmp(board.tmp, uniqueName('refused'));
+        const enrolment = await prepareEnrolment(tmp, identity, entry.options);
+        const before = snapshotOf(scopesOf(tmp));
+        const result = await cliIn(tmp)(initArgs(entry.url, enrolment));
+        expect(result.code, entry.label).not.toBe(0);
+        expect(snapshotOf(scopesOf(tmp)), `${entry.label} stores nothing`).toEqual(before);
+        expectNoSecrets([combined(result)], [enrolment.token, identity.key.dataKey]);
+        const reason = combined(result)
+          .replaceAll(entry.url, '<url>')
+          .replaceAll(tmp.root, '<tmp>')
+          .replaceAll(enrolment.name, '<name>');
+        expect(reason, entry.label).toMatch(entry.reason);
+        expect(reason, entry.label).not.toMatch(entry.notReason);
+      }
+    } finally {
+      await unreachable.stop();
     }
-    expect(new Set(reasons).size).toBe(reasons.length);
   });
 });
 
@@ -315,22 +326,24 @@ describe('worker check in board doctor', () => {
       key: identity.key,
       name: uniqueName('worker-check'),
     });
-    const run: Run = (args, env) => machine.cli(args, env === undefined ? {} : { env });
-    return { identity, machine, run, secrets: [machine.token, identity.key.dataKey] };
+    const stubLog = machine.tmp.path('stub.log');
+    const run: Run = (args, env) =>
+      machine.cli(args, { env: { STUB_CLAUDE_LOG: stubLog, ...env } });
+    return { identity, machine, run, stubLog, secrets: [machine.token, identity.key.dataKey] };
   }
 
   it('[server-app-056] reports ok after a dispatch tick', async () => {
-    const { run, secrets } = await enrolled();
-    const { check, texts } = await tickAndDoctor(run);
+    const { run, stubLog, secrets } = await enrolled();
+    const { check, texts } = await tickAndDoctor(run, undefined, stubLog);
     expect(check?.level).toBe('ok');
     expectNoSecrets([...texts, check?.message ?? ''], secrets);
   });
 
   it('[server-app-056] reports refused with the 401 reason once the token is re-issued', async () => {
-    const { identity, machine, run, secrets } = await enrolled();
-    expect((await tickAndDoctor(run)).check?.level).toBe('ok');
+    const { identity, machine, run, stubLog, secrets } = await enrolled();
+    expect((await tickAndDoctor(run, undefined, stubLog)).check?.level).toBe('ok');
     const reissued = await reissueToken(identity.user, machine.name);
-    const { check, texts } = await tickAndDoctor(run);
+    const { check, texts } = await tickAndDoctor(run, undefined, stubLog);
     expect(check?.level).not.toBe('ok');
     expect(check?.message).toMatch(/refused/i);
     expect(check?.message).toContain('401');
@@ -338,10 +351,10 @@ describe('worker check in board doctor', () => {
   });
 
   it('[server-app-056] reports refused naming the wrong machine for another machine’s token', async () => {
-    const { identity, run, secrets } = await enrolled();
+    const { identity, run, stubLog, secrets } = await enrolled();
     const otherName = uniqueName('someone-else');
     const otherToken = await issueMachineToken(identity.user, otherName);
-    const { check, texts } = await tickAndDoctor(run, { AGENT_BOARD_TOKEN: otherToken });
+    const { check, texts } = await tickAndDoctor(run, { AGENT_BOARD_TOKEN: otherToken }, stubLog);
     expect(check?.level).not.toBe('ok');
     expect(check?.message).toMatch(/refused/i);
     expect(check?.message).toContain(otherName);
@@ -359,8 +372,10 @@ describe('worker check with the API stopped', () => {
       name: uniqueName('worker-down'),
     });
     await harness.board.api.stop();
-    const run: Run = (args, env) => machine.cli(args, env === undefined ? {} : { env });
-    const { check, texts } = await tickAndDoctor(run);
+    const stubLog = machine.tmp.path('stub.log');
+    const run: Run = (args, env) =>
+      machine.cli(args, { env: { STUB_CLAUDE_LOG: stubLog, ...env } });
+    const { check, texts } = await tickAndDoctor(run, undefined, stubLog);
     expect(check?.level).not.toBe('ok');
     expect(check?.message).toMatch(/error/i);
     expectNoSecrets([...texts, check?.message ?? ''], [machine.token, identity.key.dataKey]);
