@@ -16,7 +16,11 @@ import { createMachineApiHandlers, type UserActions } from '../src/modules/machi
 import { loadConfig, type Env } from '../src/modules/index.js';
 import { openPgliteDatabase, type Database } from '../src/modules/database/index.js';
 import { createServer } from '../src/server.js';
-import { createMemoryEvents } from '../src/modules/events/index.js';
+import {
+  createMemoryEvents,
+  type EventBus,
+  type EventMessage,
+} from '../src/modules/events/index.js';
 import { createOpenStreams } from '../src/streams.js';
 import { SESSION_TOKEN, loginEnv, noLoginEnv } from './helpers.js';
 
@@ -28,6 +32,7 @@ export interface MachineBoard {
   app: FastifyInstance;
   database: Database;
   projectId: string;
+  events: EventBus;
   close(): Promise<void>;
 }
 
@@ -56,13 +61,14 @@ export const startBoard = async (
     options.actions === undefined
       ? [...HANDLER_SETS]
       : [...HANDLER_SETS, createMachineApiHandlers(options.actions)];
+  const events = createMemoryEvents();
   const app = await createServer(
     loadConfig(options.login ? loginEnv(options.env ?? {}) : noLoginEnv(options.env ?? {})),
     {
       database,
       credentials: credentialsOf(database),
       streams: createOpenStreams(),
-      events: createMemoryEvents(),
+      events,
     },
     { handlerSets },
   );
@@ -71,6 +77,7 @@ export const startBoard = async (
     app,
     database,
     projectId,
+    events,
     close: async () => {
       await app.close();
       rmSync(dataDir, { recursive: true, force: true });
@@ -141,3 +148,9 @@ export const seedTask = async (
 
 export const errorCode = (reply: { body: unknown }): string | undefined =>
   (reply.body as { error?: { code: string } }).error?.code;
+
+export const listen = async (board: MachineBoard, owner = OWNER): Promise<EventMessage[]> => {
+  const heard: EventMessage[] = [];
+  await board.events.subscribe(owner, (message) => heard.push(message));
+  return heard;
+};

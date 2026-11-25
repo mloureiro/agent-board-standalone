@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   USER_WRITE_COMMANDS,
+  unavailableUserActions,
   type UserActions,
   type UserActor,
 } from '../src/modules/machine/index.js';
@@ -186,7 +187,7 @@ describe('user-authored machine commands', () => {
   });
 
   it('[api-119] a granted machine on a build without the task layer gets unavailable, not a crash', async () => {
-    const bare = await startBoard();
+    const bare = await startBoard({ actions: unavailableUserActions });
     try {
       const name = uniqueName('bare');
       const token = await issue(bare, name);
