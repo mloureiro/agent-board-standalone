@@ -10,7 +10,7 @@ import {
 import path from 'node:path';
 
 import { bindings } from '@agent-board/sealing';
-import { parse } from 'yaml';
+import { parse, stringify } from 'yaml';
 import { describe, expect, it } from 'vitest';
 
 import { execFileText } from '../src/runtime.js';
@@ -579,12 +579,15 @@ describe('board feeds', () => {
 
   it('[cli-044] at most 30 feeds per machine', async () => {
     const { cli, work } = await started(items());
-    const entry = tmpFile(
-      JSON.stringify({ integration: 'acme:prs', action: 'list', every: '10m', dir: work }),
+    const definition = { integration: 'acme:prs', action: 'list', every: '10m', dir: work };
+    const entry = tmpFile(JSON.stringify(definition));
+    const config = configOf(cli);
+    const seeded = Object.fromEntries(
+      Array.from({ length: 28 }, (_, index) => [`feed-${index + 1}`, definition]),
     );
-    for (let index = 1; index < 30; index += 1) {
-      expect(await cli.run('feeds', 'add', `feed-${index}`, entry), `feed ${index}`).toBe(0);
-    }
+    config.feeds = { ...(config.feeds as object), ...seeded };
+    writeFileSync(cli.test.path('config', 'config.yaml'), stringify(config));
+    expect(await cli.run('feeds', 'add', 'feed-29', entry)).toBe(0);
     cli.reset();
     expect(await cli.run('feeds', 'add', 'one-too-many', entry)).toBe(2);
     expect(cli.stderr()).toContain('at most 30 feeds');
