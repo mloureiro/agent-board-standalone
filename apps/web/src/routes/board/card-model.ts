@@ -23,7 +23,7 @@ export interface OpenedPrompt {
   readonly shape: InputShape;
 }
 
-const attempt = async (
+export const attempt = async (
   keys: Keys,
   binding: Binding,
   envelope: string | null | undefined,

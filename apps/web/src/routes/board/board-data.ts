@@ -54,9 +54,23 @@ async function openText(keys: Keys, binding: ReturnType<typeof bindings.title>, 
   }
 }
 
-const featuresOf = (
+export const featuresOf = (
   view: ReturnType<ReturnType<typeof useServers>['connectionOf']>,
 ): readonly string[] => ('server' in view ? view.server.server.features : []);
+
+export async function fetchProjectNames(
+  client: ServerClient,
+  keys: Keys,
+): Promise<Map<string, string>> {
+  const names = new Map<string, string>();
+  const answer = await callRoute(client, listClientProjectsRoute, {});
+  for (const project of answer.projects) {
+    if (project.name === null) continue;
+    const name = await openText(keys, bindings.projectName(project.id), project.name);
+    if (name !== null) names.set(project.id, name);
+  }
+  return names;
+}
 
 export interface BoardData {
   readonly serverId: string;
@@ -175,15 +189,8 @@ export function useBoardData(): BoardData | null {
     enabled: enabled && withProjects,
     queryFn: async (): Promise<Map<string, string>> => {
       const client = clientRef.current;
-      const names = new Map<string, string>();
-      if (client === null || keys === null) return names;
-      const answer = await callRoute(client, listClientProjectsRoute, {});
-      for (const project of answer.projects) {
-        if (project.name === null) continue;
-        const name = await openText(keys, bindings.projectName(project.id), project.name);
-        if (name !== null) names.set(project.id, name);
-      }
-      return names;
+      if (client === null || keys === null) return new Map();
+      return fetchProjectNames(client, keys);
     },
   });
 
