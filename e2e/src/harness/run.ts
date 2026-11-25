@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
 
 import { commandFor } from './paths.js';
 
@@ -77,5 +78,31 @@ export async function runProcess(
     return result;
   } finally {
     clearTimeout(timer);
+  }
+}
+
+export function killStubTree(logPath: string): void {
+  if (!existsSync(logPath)) return;
+  const targets = new Set<number>();
+  for (const line of readFileSync(logPath, 'utf8').split('\n')) {
+    let entry: unknown;
+    try {
+      entry = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    if (typeof entry !== 'object' || entry === null) continue;
+    for (const key of ['pid', 'ppid'] as const) {
+      const value = (entry as Record<string, unknown>)[key];
+      if (typeof value === 'number' && Number.isInteger(value) && value > 1) targets.add(value);
+    }
+  }
+  targets.delete(process.pid);
+  for (const target of targets) {
+    try {
+      process.kill(target, 'SIGKILL');
+    } catch {
+      continue;
+    }
   }
 }

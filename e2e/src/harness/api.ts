@@ -43,6 +43,7 @@ export function apiEnv(options: ApiOptions, port: number): Record<string, string
     HOST: host,
     PORT: String(port),
   };
+  if (options.auth === 'no-login') env.NO_LOGIN_USER = 'e2e-owner';
   if (options.auth === 'login') {
     env.ALLOWED_HOSTS = 'localhost';
     env.PUBLIC_URL = `http://localhost:${port}`;

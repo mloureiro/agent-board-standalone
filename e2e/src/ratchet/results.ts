@@ -81,6 +81,23 @@ export function parsePlaywrightReport(report: unknown, root: string): TestResult
   return out;
 }
 
+export function parsePlaywrightErrors(report: unknown): string[] {
+  if (!isRecord(report)) throw new Error('playwright report is not an object');
+  return asArray(report.errors)
+    .filter(isRecord)
+    .map((error) => firstLine(error.message ?? error.value));
+}
+
+function firstLine(value: unknown): string {
+  const text = typeof value === 'string' ? value : 'no message';
+  return (
+    text
+      .split('\n')
+      .find((line) => line.trim() !== '')
+      ?.trim() ?? 'no message'
+  );
+}
+
 export function parseVitestReport(
   report: unknown,
   root: string,
@@ -90,7 +107,20 @@ export function parseVitestReport(
   const out: TestResult[] = [];
   for (const file of asArray(report.testResults).filter(isRecord)) {
     const name = relativeToRoot(asString(file.name, 'testResults.name'), root);
-    for (const assertion of asArray(file.assertionResults).filter(isRecord)) {
+    const assertions = asArray(file.assertionResults).filter(isRecord);
+    if (
+      file.status === 'failed' &&
+      !assertions.some((assertion) => assertion.status === 'failed')
+    ) {
+      out.push({
+        file: name,
+        titlePath: [`(file failed) ${firstLine(file.message)}`],
+        project,
+        outcome: 'failed',
+        skipReason: null,
+      });
+    }
+    for (const assertion of assertions) {
       const ancestors = asArray(assertion.ancestorTitles).map((title) =>
         asString(title, 'ancestorTitles'),
       );

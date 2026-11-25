@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -10,8 +10,12 @@ export interface Tmp {
   remove(): void;
 }
 
+function tmpBase(): string {
+  return existsSync('/tmp') ? realpathSync('/tmp') : os.tmpdir();
+}
+
 export function createTmp(label = 'board', env: NodeJS.ProcessEnv = process.env): Tmp {
-  const root = mkdtempSync(path.join(os.tmpdir(), `agent-board-e2e-${label}-`));
+  const root = mkdtempSync(path.join(tmpBase(), `agent-board-e2e-${label}-`));
   const home = path.join(root, 'home');
   mkdirSync(home, { recursive: true });
   return {

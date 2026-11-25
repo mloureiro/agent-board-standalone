@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { anonymous, call, clientToken, type ServerRef } from '../src/client/contract-client.js';
 import { DEFAULT_PASSPHRASE, dataKeyBytes, unlockedKey } from '../src/fixtures/keys.js';
-import { startBoardPair } from '../src/fixtures/boards.js';
+import { launchDatabaseKind, startBoardPair } from '../src/fixtures/boards.js';
 import { startLoginBoard } from '../src/fixtures/login-board.js';
 import { enrolledMachine } from '../src/fixtures/machines.js';
 import { createTask } from '../src/fixtures/tasks.js';
@@ -274,5 +274,23 @@ describe('login board and board pair', () => {
     } finally {
       await pair.stop();
     }
+  });
+});
+
+describe('launchDatabaseKind', () => {
+  const withPostgres = { E2E_POSTGRES_URL: 'postgres://x' };
+
+  it('uses Postgres only when the run allows it and the URL is set', () => {
+    expect(launchDatabaseKind({ postgresAllowed: true }, withPostgres)).toBe('postgres');
+    expect(launchDatabaseKind({}, withPostgres)).toBe('postgres');
+    expect(launchDatabaseKind({ postgresAllowed: false }, withPostgres)).toBe('pglite');
+    expect(launchDatabaseKind({ postgresAllowed: true }, {})).toBe('pglite');
+  });
+
+  it('lets an explicit database win', () => {
+    expect(launchDatabaseKind({ database: 'pglite' }, withPostgres)).toBe('pglite');
+    expect(launchDatabaseKind({ database: 'postgres', postgresAllowed: false }, {})).toBe(
+      'postgres',
+    );
   });
 });
