@@ -1,6 +1,7 @@
 import { Alert, Button, Group, Modal, Stack, Text } from '@mantine/core';
 import { useState, type ReactNode } from 'react';
 
+import { useDraft, useDraftStore } from '../../drafts/index.js';
 import { useNow } from '../board/clock.js';
 import { agoText, parseTime } from '../board/format.js';
 import {
@@ -11,6 +12,7 @@ import {
   panelKind,
 } from './action-model.js';
 import type { Skill } from './catalog-model.js';
+import { answerDraftName } from './compose.js';
 import { PinnedPanel } from './PinnedPanel.js';
 import { QuestionForm } from './QuestionForm.js';
 import { ReplyBox } from './ReplyBox.js';
@@ -67,7 +69,8 @@ export function ActionPanel(props: {
   const { view, actions, skills } = props;
   const { task } = view;
   const now = useNow(10_000);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useDraft(`reply:${task.id}`);
+  const drafts = useDraftStore();
   const [busy, setBusy] = useState(false);
   const [replyFocused, setReplyFocused] = useState(false);
   const [handover, setHandover] = useState<{ text: string; focus: boolean } | null>(null);
@@ -120,8 +123,13 @@ export function ActionPanel(props: {
             handover={handover?.text ?? ''}
             focusNote={handover?.focus ?? false}
             busy={busy}
+            draftName={answerDraftName(task.id, question.noteId)}
             onSubmit={(questions, answers, note) =>
-              void run(() => actions.answer(question.noteId, questions, answers, note))
+              void run(async () => {
+                const sent = await actions.answer(question.noteId, questions, answers, note);
+                if (sent) drafts?.clear(answerDraftName(task.id, question.noteId));
+                return sent;
+              })
             }
             onDismiss={() => void run(() => actions.dismiss(question.noteId))}
           />

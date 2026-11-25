@@ -128,3 +128,36 @@ export function typeOther(question: Question, current: Choice, other: string): C
   const startsTyping = !question.multiSelect && current.other === '' && other !== '';
   return startsTyping ? { picks: [], other } : { ...current, other };
 }
+
+export interface AnswerDraft {
+  readonly choices: readonly Choice[];
+  readonly note: string | null;
+}
+
+export function serializeAnswerDraft(choices: readonly Choice[], note: string): string {
+  const others = choices.map((choice) => choice.other);
+  if (note === '' && others.every((other) => other === '')) return '';
+  return JSON.stringify({ others, note });
+}
+
+export function restoreAnswerDraft(
+  questions: readonly Question[],
+  raw: string | null,
+): AnswerDraft {
+  const fresh = initialPicks(questions);
+  if (raw === null) return { choices: fresh, note: null };
+  try {
+    const parsed = JSON.parse(raw) as { others?: unknown; note?: unknown };
+    const others = Array.isArray(parsed.others) ? parsed.others : [];
+    const choices = fresh.map((choice, index) => {
+      const other = others[index];
+      const question = questions[index];
+      return typeof other === 'string' && other !== '' && question !== undefined
+        ? typeOther(question, choice, other)
+        : choice;
+    });
+    return { choices, note: typeof parsed.note === 'string' ? parsed.note : null };
+  } catch {
+    return { choices: fresh, note: null };
+  }
+}

@@ -29,3 +29,6 @@ export const sealAnswers = (keys: Keys, taskId: string, document: string): Promi
   );
 
 export const newTaskId = (): string => crypto.randomUUID();
+
+export const answerDraftName = (taskId: string, noteId: string): string =>
+  `answer:${taskId}:${noteId}`;
