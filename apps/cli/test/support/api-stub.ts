@@ -86,6 +86,7 @@ export interface ApiStub {
   setBoardAgents(version: number, document: string): void;
   commands(): string[];
   setGrant(granted: boolean): void;
+  setMachines(machines: readonly { name: string; lastSeenAt: string | null }[]): void;
   forbid(command: string): void;
   holdTask(id: string): void;
   addRun(taskId: string, run: StubRun): void;
@@ -131,6 +132,7 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
   let tokenRefused = false;
   let revocations = 0;
   let granted = true;
+  let peers: readonly { name: string; lastSeenAt: string | null }[] = [];
   const held = new Set<string>();
   const forbidden = new Set<string>();
   const runs = new Map<string, StubRun[]>();
@@ -758,7 +760,10 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
       };
     },
     'list-machines': () => ({
-      machines: [{ name: MACHINE, lastSeenAt: null, current: true }],
+      machines: [
+        { name: MACHINE, lastSeenAt: null, current: true },
+        ...peers.map((peer) => ({ ...peer, current: false })),
+      ],
     }),
   };
   const findRun = (runId: string): { taskId: string; run: StubRun } => {
@@ -860,6 +865,9 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
     commands: () => commands,
     setGrant: (value) => {
       granted = value;
+    },
+    setMachines: (machines) => {
+      peers = machines;
     },
     forbid: (command) => {
       forbidden.add(command);

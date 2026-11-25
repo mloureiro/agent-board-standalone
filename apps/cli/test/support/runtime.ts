@@ -36,6 +36,7 @@ export interface TestRuntime {
 export interface TestRuntimeOptions {
   readonly env?: Readonly<Record<string, string | undefined>>;
   readonly platform?: NodeJS.Platform;
+  readonly arch?: NodeJS.Architecture;
   readonly fetch?: typeof fetch;
   readonly exec?: (
     file: string,
@@ -126,6 +127,7 @@ export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
     },
     fetch: options.fetch ?? globalThis.fetch,
     platform: options.platform ?? 'linux',
+    arch: options.arch ?? 'x64',
     homedir: path.join(root, 'home'),
     hostname: 'test-host',
     uid: 501,

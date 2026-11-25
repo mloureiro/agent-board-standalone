@@ -247,6 +247,31 @@ jobs:
       - run: pnpm --filter "@agent-board/${{ matrix.package }}" run typecheck
       - run: pnpm --filter "@agent-board/${{ matrix.package }}" test
 
+  binary-smoke:
+    name: binary smoke (${{ matrix.target }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x64
+            runner: ubuntu-latest
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+          - target: darwin-arm64
+            runner: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: oven-sh/setup-bun@v2
+      - run: pnpm install --frozen-lockfile --filter "@agent-board/cli..."
+      - run: node apps/cli/scripts/compile.ts --target ${{ matrix.target }}
+      - run: node apps/cli/scripts/smoke.ts apps/cli/dist/release/board-${{ matrix.target }}
+
   public-hygiene:
     name: public hygiene
     runs-on: ubuntu-latest

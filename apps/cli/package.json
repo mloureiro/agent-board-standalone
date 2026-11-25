@@ -8,6 +8,9 @@
   "scripts": {
     "build": "node scripts/build.ts",
     "build:bun": "bun build --compile src/main.ts --outfile dist/board-bun",
+    "build:binary": "node scripts/compile.ts",
+    "smoke": "node scripts/smoke.ts",
+    "release": "node scripts/release.ts",
     "spike:bun": "bun spike/bun-sealing.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

@@ -3,15 +3,19 @@ import { Command, CommanderError } from 'commander';
 import { CliError, EXIT } from '../errors.js';
 import type { Runtime } from '../runtime.js';
 import { buildContext, type Context, type GlobalOptions } from './context.js';
+import { showUpdateHint } from '../update/hint.js';
 import { registerAgents } from './agents/index.js';
 import { registerConfig } from './config/index.js';
 import { registerDirs } from './dirs/index.js';
 import { registerFeeds } from './feeds/index.js';
+import { registerInternal } from './internal/index.js';
 import { registerPlugins } from './plugins/index.js';
 import { registerProjects } from './projects/index.js';
 import { registerSchedule } from './schedule/index.js';
+import { registerCompletion } from './setup/completion.js';
 import { registerDoctor } from './setup/doctor.js';
 import { registerInit } from './setup/init.js';
+import { registerSelfUpdate } from './setup/self-update.js';
 import { registerUnitCommands } from './setup/units.js';
 import { registerTaskCommands } from './tasks/index.js';
 import { registerUserCommands } from './user/index.js';
@@ -22,6 +26,8 @@ const CLEAN_EXIT_CODES = new Set([
   'commander.helpDisplayed',
   'commander.version',
 ]);
+
+const QUIET_COMMANDS = new Set(['internal', '__complete', 'completion', 'self-update']);
 
 export function buildProgram(rt: Runtime): Command {
   const program = new Command('board');
@@ -62,6 +68,22 @@ export function buildProgram(rt: Runtime): Command {
   registerAgents(program, withContext);
   registerFeeds(program, withContext);
   registerPlugins(program, withContext);
+  registerSelfUpdate(program, withContext);
+  registerCompletion(program, withContext);
+
+  program.hook('postAction', (_root, action) => {
+    let top = action;
+    while (top.parent !== null && top.parent !== program) top = top.parent;
+    if (QUIET_COMMANDS.has(top.name())) return;
+    const ctx = withContext(action);
+    showUpdateHint(
+      { rt: ctx.rt, dirs: ctx.dirs, dryRun: ctx.dryRun, out: ctx.out },
+      rt.io.stderrIsTty,
+      ctx.inRun,
+    );
+  });
+
+  registerInternal(program, withContext);
   return program;
 }
 
