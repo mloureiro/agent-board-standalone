@@ -10,7 +10,13 @@ export type {
   ConnectionState,
   ConnectionStateName,
 } from './connection.js';
-export { DOWN_INTERVAL_MS, UP_INTERVAL_MS, ServersProvider, useServers } from './context.js';
+export {
+  DOWN_INTERVAL_MS,
+  UP_INTERVAL_MS,
+  ServerScope,
+  ServersProvider,
+  useServers,
+} from './context.js';
 export type {
   ConnectionCheck,
   ConnectionView,
@@ -20,6 +26,7 @@ export type {
 export { describeConnection, reachesHttpFromHttps } from './messages.js';
 export {
   ADDRESS_PROBLEM_MESSAGES,
+  BLANK_NAME_MESSAGE,
   createBrowserRegistry,
   createNativeRegistry,
 } from './registry.js';

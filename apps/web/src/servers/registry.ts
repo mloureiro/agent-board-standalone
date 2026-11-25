@@ -21,9 +21,11 @@ export interface ServerRegistry {
   remove(serverId: string): Promise<boolean>;
 }
 
+export const BLANK_NAME_MESSAGE = 'Give the server a name.';
+
 export const ADDRESS_PROBLEM_MESSAGES: Record<AddressProblem | 'declined', string> = {
   invalid: 'That is not a web address.',
-  insecure: 'Use https, or http only for this computer.',
+  insecure: 'Use https. Plain http is accepted only for localhost, 127.0.0.1 and [::1].',
   credentials: 'Leave the user name and password out of the address.',
   'pinning-disabled': 'Pinned certificates are not supported yet.',
   declined: 'The server was not added.',
