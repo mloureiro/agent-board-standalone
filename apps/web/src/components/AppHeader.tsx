@@ -5,6 +5,7 @@ import { NavLink } from 'react-router';
 
 import { LockButton } from '../keys/index.js';
 import { ProjectFilterSelect, ProjectsNav, useProjects } from '../projects/index.js';
+import { ServerFilterSelect, ServersButton } from '../servers-dialog/index.js';
 import { ColorSchemeMenu } from './ColorSchemeMenu.js';
 import { NewTaskButton } from './new-task.js';
 import { SignOutButton } from './SignOutButton.js';
@@ -73,10 +74,12 @@ export function AppHeader(): ReactNode {
             <NavLinks phone={false} />
           </Group>
         )}
+        <ServerFilterSelect />
         <ProjectFilterSelect />
       </Group>
       <Group gap="xs" wrap="wrap">
         <NewTaskButton />
+        <ServersButton />
         <LockButton />
         <SignOutButton />
         <ColorSchemeMenu />
