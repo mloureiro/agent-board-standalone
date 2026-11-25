@@ -15,7 +15,7 @@ import {
   sessionCookie,
   startFlow,
   takeFlow,
-  updateFlow,
+  approveFlow,
   verifierMatches,
   type SessionDeps,
   type SessionMethod,
@@ -148,12 +148,14 @@ export const signInHandlers: HandlerSet = (context) => ({
             system.lookupSession(credential.hash),
           );
     if (stored === null) throw new ApiError('forbidden', 'sign in to approve this code');
-    const changed = await updateFlow(context, input.flow, principal.owner, {
+    const changed = await approveFlow(context, input.flow, principal.owner, {
       ...flow.data,
       method: stored.method,
     });
-    if (!changed) throw new ApiError('not-found', 'this sign-in code is unknown or has expired');
-    return { ok: true };
+    if (changed) return { ok: true };
+    if (await readFlow(context, input.flow, 'handoff'))
+      throw new ApiError('forbidden', 'this sign-in code is already approved');
+    throw new ApiError('not-found', 'this sign-in code is unknown or has expired');
   },
 
   'auth.handoff.finish': async ({ input, reply }) => {

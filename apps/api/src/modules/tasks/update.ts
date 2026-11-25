@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 
+import type { Clock } from '../../clock.js';
 import { directory } from '../../db/schema/index.js';
 import { ApiError } from '../../errors.js';
 import type { ScopedDatabase } from '../database/index.js';
@@ -13,6 +14,7 @@ export interface TaskCaller {
   machine: string;
   run?: string | undefined;
   scheduling?: boolean | undefined;
+  clock?: Clock | undefined;
 }
 
 const NOT_AUTO_DONE =

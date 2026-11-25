@@ -240,6 +240,12 @@ export const signInSchema = envObject.transform((env, ctx): SignInConfig => {
 
   if (allowedGroups.length > 0 && !oidc)
     refuse(ctx, 'ALLOWED_GROUPS', 'needs OIDC_ISSUER: only OIDC sends groups');
+  if (allowedGroups.length > 0 && saml)
+    refuse(
+      ctx,
+      'ALLOWED_GROUPS',
+      'cannot be set with SAML_IDP_METADATA_URL: SAML sign-ins carry no groups, so the restriction would not apply to them',
+    );
   if (signupToken !== null && signupToken.length < MIN_SIGNUP_TOKEN_LENGTH)
     refuse(ctx, 'SIGNUP_TOKEN', `must be at least ${MIN_SIGNUP_TOKEN_LENGTH} characters`);
   if (signupToken !== null && !passkeys)

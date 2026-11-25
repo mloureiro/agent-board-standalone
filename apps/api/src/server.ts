@@ -34,7 +34,7 @@ export const createServer = async (
 ): Promise<FastifyInstance> => {
   const app = Fastify({
     logger: false,
-    trustProxy: false,
+    trustProxy: config.listen.trustProxy,
     bodyLimit: PUBLIC_BODY_LIMIT,
     clientErrorHandler: clientErrorHandler(
       config.signIn.mode === 'login' && config.signIn.scheme === 'https',

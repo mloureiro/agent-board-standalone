@@ -43,6 +43,11 @@ export const createCredentialStore = (
           })
           .where(eq(schema.session.tokenHash, hash)),
       );
+      return {
+        owner: stored.owner,
+        expired: false,
+        slidMaxAgeSeconds: (sessionDays * DAY_MS) / 1000,
+      };
     }
     return { owner: stored.owner, expired: false };
   },

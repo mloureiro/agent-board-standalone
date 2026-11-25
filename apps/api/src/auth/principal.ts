@@ -14,6 +14,7 @@ export type Principal = ClientPrincipal | MachinePrincipal;
 export interface StoredSession {
   owner: string;
   expired: boolean;
+  slidMaxAgeSeconds?: number;
 }
 
 export interface StoredMachine {

@@ -37,10 +37,12 @@ export const appendTranscript = async (
     })
     .onConflictDoNothing();
   const [run] = await tx
-    .select({ taskId: transcriptRun.taskId })
+    .select({ taskId: transcriptRun.taskId, machine: transcriptRun.machine })
     .from(transcriptRun)
     .where(eq(transcriptRun.id, batch.runId));
   if (run === undefined) throw new ApiError('conflict', 'the run id is already taken');
+  if (run.machine !== machine)
+    throw new ApiError('forbidden', 'the run belongs to another machine');
   if (run.taskId !== batch.taskId)
     throw new ApiError('bad-request', 'the run belongs to another task');
   if (batch.events.length === 0) return;

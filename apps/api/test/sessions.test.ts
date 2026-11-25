@@ -232,21 +232,25 @@ describe('sessions', () => {
         .find((row) => row.tokenHash === hash)
         ?.expiresAt.getTime() ?? 0;
     const start = board.clock.now().getTime();
-    const use = async () =>
-      (await board.app.inject({ url: '/api/client/me', headers: cookieOf(token) })).statusCode;
+    const useResponse = () => board.app.inject({ url: '/api/client/me', headers: cookieOf(token) });
 
     expect(await expiryOf()).toBe(start + 7 * DAY_MS);
 
     board.clock.set(new Date(start + 30 * MINUTE));
-    expect(await use()).toBe(200);
+    const notSlid = await useResponse();
+    expect(notSlid.statusCode).toBe(200);
+    expect(notSlid.headers['set-cookie']).toBeUndefined();
     expect(await expiryOf()).toBe(start + 7 * DAY_MS);
 
     board.clock.set(new Date(start + SESSION_SLIDE_MS));
-    expect(await use()).toBe(200);
+    const slid = await useResponse();
+    expect(slid.statusCode).toBe(200);
+    expect(slid.headers['set-cookie']).toContain(`=${token}; `);
+    expect(slid.headers['set-cookie']).toContain(`Max-Age=${7 * 24 * 60 * 60}`);
     expect(await expiryOf()).toBe(start + SESSION_SLIDE_MS + 7 * DAY_MS);
 
     board.clock.set(new Date(start + SESSION_SLIDE_MS + 7 * DAY_MS + 1));
-    const expired = await board.app.inject({ url: '/api/client/me', headers: cookieOf(token) });
+    const expired = await useResponse();
     expect(expired.statusCode).toBe(401);
     expect(expired.json().error.message).toMatch(/expired/);
     expect(expired.headers['set-cookie']).toBeUndefined();
@@ -430,6 +434,25 @@ describe('hand-off', () => {
     expect(me.json().username).toBe('ada');
   });
 
+  it('[api-039] two concurrent approvals leave the first approver as the owner', async () => {
+    const board = await started(login());
+    const ada = await signedIn(board, 'ada', 'client');
+    const grace = await signedIn(board, 'grace', 'client');
+    const { flow } = await startHandoff(board);
+    const answers = await Promise.all([
+      approve(board, flow, bearer(ada)),
+      approve(board, flow, bearer(grace)),
+    ]);
+    expect(answers.map((answer) => answer.statusCode).sort()).toEqual([200, 403]);
+    const winner = answers[0]?.statusCode === 200 ? 'ada' : 'grace';
+    const answer = await finish(board, flow, PKCE_VERIFIER, { tokenKind: 'client' });
+    const me = await board.app.inject({
+      url: '/api/client/me',
+      headers: bearer(answer.json().token),
+    });
+    expect(me.json().username).toBe(winner);
+  });
+
   it('[api-039] approving without a session is refused', async () => {
     const board = await started(login());
     const { flow } = await startHandoff(board);
@@ -609,6 +632,27 @@ describe('rate limiting', () => {
       expect((await board.app.inject({ url: '/api/auth/config' })).statusCode).toBe(200);
       expect((await board.app.inject({ url: '/api/version' })).statusCode).toBe(200);
     }
+  });
+
+  it('[api-041] the client address comes from X-Forwarded-For only when TRUST_PROXY is on', async () => {
+    const start = (board: Board, forwarded: string) =>
+      post(
+        board.app,
+        '/api/auth/handoff/start',
+        { challenge: PKCE_CHALLENGE },
+        { 'x-forwarded-for': forwarded },
+      ).then((answer) => answer.statusCode);
+
+    const direct = await started(login(), { rateLimit: { max: 1, windowMs: MINUTE } });
+    expect(await start(direct, '203.0.113.1')).toBe(200);
+    expect(await start(direct, '203.0.113.2')).toBe(429);
+
+    const proxied = await started(login({ TRUST_PROXY: 'on' }), {
+      rateLimit: { max: 1, windowMs: MINUTE },
+    });
+    expect(await start(proxied, '203.0.113.1')).toBe(200);
+    expect(await start(proxied, '203.0.113.2')).toBe(200);
+    expect(await start(proxied, '203.0.113.1')).toBe(429);
   });
 
   it('[api-041] the window resets after its length', async () => {

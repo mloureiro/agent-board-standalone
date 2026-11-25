@@ -1,5 +1,6 @@
 import { and, count, eq, inArray, ne } from 'drizzle-orm';
 
+import { systemClock } from '../../clock.js';
 import { schedule, task } from '../../db/schema/index.js';
 import { ApiError } from '../../errors.js';
 import type { ScopedDatabase } from '../database/index.js';
@@ -35,12 +36,13 @@ const refusal = async (
   tx: ScopedDatabase,
   current: TaskRow,
   machine: string,
+  now: Date,
 ): Promise<string | undefined> => {
   if (current.status !== 'todo') return `the task is ${current.status}, not todo`;
   if (current.closed) return 'the task is closed';
   if (current.proposed || current.createdBy === 'agent')
     return 'an agent proposed this task; the user has to start it first';
-  if (current.notBefore !== null && current.notBefore.getTime() > Date.now())
+  if (current.notBefore !== null && current.notBefore.getTime() > now.getTime())
     return 'the task is not due yet';
   const pinnedElsewhere =
     current.machine !== null &&
@@ -61,7 +63,7 @@ export const claimTask = async (
   options: TaskOptions = {},
 ): Promise<TaskRow> => {
   const current = await lockTask(tx, id);
-  const refused = await refusal(tx, current, machine);
+  const refused = await refusal(tx, current, machine, (options.clock ?? systemClock).now());
   if (refused !== undefined) throw new ApiError('conflict', refused);
   return transitionTask(tx, current, { to: 'running', by: 'machine', set: { machine } }, options);
 };
