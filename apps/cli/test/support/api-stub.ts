@@ -52,6 +52,7 @@ export interface TaskSeed {
   readonly sessionId?: string | null;
   readonly closed?: boolean;
   readonly agent?: string;
+  readonly forkOf?: string;
   readonly lastActiveAt?: string | null;
   readonly notBefore?: string | null;
 }
@@ -65,6 +66,13 @@ export interface StubRun {
     readonly data: Record<string, unknown>;
     readonly output?: string;
   }[];
+}
+
+export interface TranscriptUpload {
+  readonly runId: string;
+  readonly sessionId: string | null;
+  readonly resumed: boolean;
+  readonly events: readonly { seq: number; kind: string; data: string; output?: string }[];
 }
 
 export interface ApiStub {
@@ -93,6 +101,11 @@ export interface ApiStub {
   forbid(command: string): void;
   holdTask(id: string): void;
   addRun(taskId: string, run: StubRun): void;
+  sendToRun(taskId: string, text: string): Promise<void>;
+  requestStop(taskId: string): void;
+  uploads(taskId: string): TranscriptUpload[];
+  setTitleRules(version: number, document: string): Promise<void>;
+  readonly titleChanges: Record<string, unknown>[];
   addQuestion(taskId: string, questions: readonly unknown[]): Promise<string>;
   seal(binding: Binding, plaintext: string): Promise<string>;
   open(binding: Binding, envelope: string): Promise<string>;
@@ -144,6 +157,10 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
   let runCounter = 0;
   const forbidden = new Set<string>();
   const runs = new Map<string, StubRun[]>();
+  const stopRequests = new Set<string>();
+  const transcriptUploads = new Map<string, TranscriptUpload[]>();
+  const titleChanges: Record<string, unknown>[] = [];
+  let titleRules: { version: number; document: string } | null = null;
   const holder: { keys?: Keys } = {};
 
   const requireKeys = (): Keys => {
@@ -191,6 +208,7 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
         bindings.input({
           origin: { task: seed.id },
           creator: createdBy,
+          forkOf: seed.forkOf ?? null,
           agent: seed.agent ?? null,
           directoryId,
         }),
@@ -222,6 +240,7 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
       paused: false,
       notBefore: seed.notBefore ?? null,
       scheduleId: null,
+      ...(seed.forkOf === undefined ? {} : { forkOf: seed.forkOf }),
       wakeAt: null,
       waitCheck: false,
       woken: false,
@@ -661,6 +680,72 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
       tasks.set(task.id, updated);
       return { applied: true, task: updated };
     },
+    'run-inbox': (body) => {
+      const task = taskOf(body.id as string);
+      if (task.status !== 'running') throw new Refusal(409, 'conflict', 'the task is not running');
+      return {
+        stop: stopRequests.has(task.id),
+        messages: (notes.get(task.id) ?? []).filter((note) => note.pending === true),
+      };
+    },
+    'ack-messages': (body) => {
+      const id = body.id as string;
+      const acknowledged = new Set(body.ids as string[]);
+      notes.set(
+        id,
+        (notes.get(id) ?? []).map((note) =>
+          acknowledged.has(note.id) ? ({ ...note, pending: false } as WireNote) : note,
+        ),
+      );
+      if (body.stop === true) stopRequests.delete(id);
+      return {};
+    },
+    stopped: async (body) => {
+      const task = taskOf(body.id as string);
+      noteSequence += 1;
+      const wire = {
+        id: `n${noteSequence}`,
+        preview: null,
+        createdAt: new Date().toISOString(),
+        kind: 'event',
+        author: 'system',
+        body: body.body as string,
+      } as WireNote;
+      notes.set(task.id, [...(notes.get(task.id) ?? []), wire]);
+      const updated = { ...task, status: 'needs-me' as const };
+      tasks.set(task.id, updated);
+      return updated;
+    },
+    transcript: (body) => {
+      const id = body.id as string;
+      taskOf(id);
+      const batch = body.events as {
+        seq: number;
+        kind: string;
+        data: string;
+        output?: string;
+      }[];
+      const list = transcriptUploads.get(id) ?? [];
+      const found = list.find((upload) => upload.runId === body.runId);
+      const events = [...(found?.events ?? []), ...batch];
+      const next = {
+        runId: body.runId as string,
+        sessionId: body.sessionId as string | null,
+        resumed: body.resumed as boolean,
+        events,
+      };
+      transcriptUploads.set(id, [...list.filter((upload) => upload !== found), next]);
+      return {};
+    },
+    'get-title-rules': () => ({ titleRules }),
+    'apply-title-rule': (body) => {
+      titleChanges.push(body);
+      return {
+        icon: body.icon !== undefined,
+        labels: body.labels !== undefined,
+        title: body.title !== undefined,
+      };
+    },
     'set-usage': (body) => {
       usageIndex = body.index as string;
       return {};
@@ -995,6 +1080,17 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
     holdTask: (id) => {
       held.add(id);
     },
+    sendToRun: async (taskId, text) => {
+      await noteWire(taskId, 'user', 'comment', text, { pending: true });
+    },
+    requestStop: (taskId) => {
+      stopRequests.add(taskId);
+    },
+    uploads: (taskId) => transcriptUploads.get(taskId) ?? [],
+    setTitleRules: async (version, document) => {
+      titleRules = { version, document: await sealed(bindings.titles(version), document) };
+    },
+    titleChanges,
     addRun: (taskId, run) => {
       runs.set(taskId, [...(runs.get(taskId) ?? []), run]);
     },
