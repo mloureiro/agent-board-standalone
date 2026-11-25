@@ -21,6 +21,7 @@ pub enum Refusal {
     NotAbsolute,
     Backslash,
     EncodedSeparator,
+    EncodedUnreserved,
     EmptySegment,
     DotSegment,
     CredentialRoute,
@@ -35,12 +36,29 @@ impl Refusal {
             Self::NotAbsolute => "path must start with a single /",
             Self::Backslash => "backslash",
             Self::EncodedSeparator => "encoded separator",
+            Self::EncodedUnreserved => "encoded unreserved character or malformed escape",
             Self::EmptySegment => "empty segment",
             Self::DotSegment => "dot segment",
             Self::CredentialRoute => "credential route",
             Self::OutsideApi => "outside /api/",
         }
     }
+}
+
+fn has_encoded_unreserved_or_malformed_escape(pathname: &str) -> bool {
+    let bytes = pathname.as_bytes();
+    bytes.iter().enumerate().any(|(index, &byte)| {
+        if byte != b'%' {
+            return false;
+        }
+        let escape = bytes
+            .get(index + 1..index + 3)
+            .and_then(|hex| std::str::from_utf8(hex).ok())
+            .and_then(|hex| u8::from_str_radix(hex, 16).ok());
+        escape.is_none_or(|decoded| {
+            decoded.is_ascii_alphanumeric() || matches!(decoded, b'-' | b'.' | b'_' | b'~')
+        })
+    })
 }
 
 fn is_credential_route(lowercase_route: &str) -> bool {
@@ -69,6 +87,9 @@ pub fn normalise(path: &str) -> Result<String, Refusal> {
         .any(|code| lowercase.contains(code))
     {
         return Err(Refusal::EncodedSeparator);
+    }
+    if has_encoded_unreserved_or_malformed_escape(pathname) {
+        return Err(Refusal::EncodedUnreserved);
     }
     if pathname.contains("//") {
         return Err(Refusal::EmptySegment);

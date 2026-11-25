@@ -125,6 +125,29 @@ fn client_app_049_refuses_every_credential_route_in_the_contract() {
 }
 
 #[test]
+fn client_app_049_refuses_credential_routes_spelled_with_encoded_unreserved_characters() {
+    for path in [
+        "/api/p%61ir",
+        "/api/%70air",
+        "/api/P%41IR",
+        "/api/machin%65/register-key",
+        "/api/auth/handoff/finis%68",
+        "/api/tasks/%7Ex",
+        "/api/tasks/a%5Fb",
+        "/api/tasks/a%2Db",
+        "/api/tasks/%31",
+        "/api/tasks/%zz",
+        "/api/tasks/%2",
+        "/api/tasks/%",
+    ] {
+        assert_eq!(normalise(path), Err(Refusal::EncodedUnreserved), "{path}");
+    }
+    for path in ["/api/tasks/a%20b", "/api/tasks/%C3%A9", "/api/tasks/a%3Fb"] {
+        assert_eq!(normalise(path), Ok(path.to_owned()), "{path}");
+    }
+}
+
+#[test]
 fn client_app_049_strips_page_credentials_and_signature_headers() {
     let page = [
         ("Authorization", "Bearer abm_page"),
