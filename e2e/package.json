@@ -10,6 +10,7 @@
     "e2e:browser": "node src/ratchet/cli.ts playwright",
     "e2e": "node src/ratchet/cli.ts all",
     "e2e:blackbox": "node src/ratchet/cli.ts vitest",
+    "e2e:matrix": "tsx src/matrix/runner.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -22,6 +23,7 @@
     "@types/pg": "^8.23.1",
     "@xmldom/xmldom": "^0.9.12",
     "pg": "^8.23.1",
+    "tsx": "^4.23.15",
     "xml-crypto": "^6.4.0"
   }
 }

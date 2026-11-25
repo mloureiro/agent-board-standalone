@@ -55,6 +55,8 @@ describe('ratchet outcome table', () => {
       cell,
       'ok',
     ],
+    ['unlisted skipped with no reason in a matrix cell', false, 'skipped', null, cell, 'ok'],
+    ['unlisted skipped with no reason outside a matrix cell', false, 'skipped', null, ci, 'fail'],
     ['unlisted skipped for a missing part with CI', false, 'skipped', PART, ci, 'fail'],
     ['unlisted skipped for a missing part locally', false, 'skipped', PART, plain, 'warn'],
     ['unlisted skipped for a missing part in a matrix cell', false, 'skipped', PART, cell, 'fail'],
