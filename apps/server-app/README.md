@@ -67,8 +67,9 @@ behaviour (crash, hang, ignore SIGTERM, start late, spawn a grandchild) from `ST
 `build:binary` builds it next to the app binary.
 
 The headless runner prints a `state` line whenever the rows change (`supervision.api`, `supervision.worker`,
-`gaveUp`, `blocked`) and implements `state`, `restart-server`, `open-logs`, `open-settings` and `quit`. The other
-actions answer `error` with "<action> is not implemented in this build" until their iteration.
+`gaveUp`, `blocked`, `backup`) and implements `state`, `restart-server`, `backup-now`, `open-logs`, `open-settings`,
+`quit` and the worker actions below. The other actions answer `error` with "<action> is not implemented in this build"
+until their iteration.
 
 ## Worker and enrolment
 
@@ -95,3 +96,38 @@ stop, pause once, promote, start; a refusal changes nothing), `disconnect-worker
 (`board doctor --json` minus the checks in `core/src/dropped_checks.json`, plus a `claude` and `gh` lookup on the worker
 `PATH`, written to `logs/check-worker.log`). `core::enrol::EnrolForm` is the window's masked-input model. The row after
 each dispatch tick reads `ok`, `refused — …` or `error — …` from the CLI's `dispatch-result.json`.
+
+## Backup and restore
+
+`backup-now` (the "Back up now" tray item from the tray iteration) runs five steps on its own thread, so Quit never
+waits for it: hold the API over its control channel (`<root>/run/api.sock`, `core::control`, 10 s per command and
+120 s for the hold), copy the data folder to `<backupDir>/manual-<UTC stamp>.partial`, rename it to
+`manual-<stamp>`, resume the API and show the time as "Last backup" (`state.backup.lastBackup`, read from the newest
+complete `manual-*` folder name). While held, `/healthz` is not probed. The API is always resumed, also when the
+copy fails; if the resume itself fails the API is restarted. A `.partial` folder is never shown as Last backup and
+the next manual backup removes it. Only the 5 newest `manual-*` folders are kept; `pre-upgrade-*` folders are never
+pruned and a prune that fails is logged. `backupDir` defaults to `<root>/backups`; it must be absolute, free of `..`
+and outside the data folder, compared by real path and device/inode so symlinks are caught, and it is checked again
+right before each copy. Quit or a signal during a backup sets a cancel flag the copy reads between chunks and stops
+the processes at once.
+
+Pre-upgrade backup. The bundle carries the API's schema version in `resources/api/schema-version` (one line,
+`[A-Za-z0-9._-]{1,64}`; the API executable has no way to print it without starting). The bundle step must write
+that file next to the API executable; without it the API stays blocked with "the bundled API schema version cannot be
+read".
+The app records the version it last prepared the data folder for in `<root>/data-schema-version`. Before the API is
+started (every start, including restarts), a database that is present while the record is missing or different is
+copied to `<backupDir>/pre-upgrade-<bundled version>-<stamp>` and the record is written only after the copy is
+whole. With no database the version is just recorded. A failed copy, an unreadable or invalid bundled version or an
+unusable `backupDir` leaves the API row failed ("Blocked: <reason>", `supervision.blocked`) and the API is not
+started; Restart server runs the check again.
+
+Restore (a card added after the backup is gone):
+
+1. Quit the app.
+2. Move the data folder aside: `mv "<dataDir>" "<dataDir>.aside"` (`<root>/data` unless `dataDir` is set).
+3. Copy the backup in: `cp -R "<backupDir>/manual-<stamp>" "<dataDir>"`.
+4. Open the app.
+
+`<root>/data-schema-version` is not part of a backup. After restoring a backup made under another bundle version,
+delete that file so the next start makes a pre-upgrade copy before the API migrates the restored folder.

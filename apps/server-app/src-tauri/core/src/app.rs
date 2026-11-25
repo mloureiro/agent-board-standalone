@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::account;
+use crate::backup::Backups;
 use crate::credentials;
 use crate::durations::Durations;
 use crate::launchctl::SystemLaunchctl;
@@ -14,8 +15,9 @@ use crate::overrides::Overrides;
 use crate::paths::{AppPaths, ROOT_ENV, Root};
 use crate::settings::{Settings, SettingsError};
 use crate::spec;
-use crate::supervisor::Plan;
+use crate::supervisor::{Plan, StartGate};
 use crate::uninstall;
+use crate::upgrade::Upgrade;
 use crate::worker_paths::WorkerPaths;
 use crate::worker_setup::{CLI_RELATIVE, WorkerSetup};
 
@@ -72,6 +74,7 @@ pub struct Running {
     pub access_log: LogFile,
     pub plan: Plan,
     pub worker: WorkerSetup,
+    pub api_gate: Option<StartGate>,
     _lock: InstanceLock,
 }
 
@@ -148,6 +151,20 @@ pub fn start(host: &Host) -> io::Result<Start> {
         inherited: Arc::new(|name| std::env::var(name).ok()),
     };
 
+    let api_gate = settings
+        .as_ref()
+        .ok()
+        .filter(|_| plan.api.is_ok())
+        .map(|settings| {
+            Upgrade {
+                resources: host.resources_dir(),
+                record_file: paths.root().join(crate::upgrade::RECORD_FILE),
+                backups: Backups::new(settings.backup_dir.clone(), settings.data_dir.clone()),
+                log: app_log.clone(),
+            }
+            .into_gate()
+        });
+
     Ok(Start::Running(Box::new(Running {
         root,
         paths,
@@ -156,6 +173,7 @@ pub fn start(host: &Host) -> io::Result<Start> {
         access_log,
         plan,
         worker,
+        api_gate,
         _lock: lock,
     })))
 }

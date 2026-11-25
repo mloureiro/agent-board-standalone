@@ -1,6 +1,5 @@
 use std::fs;
 use std::process::Child;
-use std::sync::atomic::AtomicBool;
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle, sleep};
@@ -295,7 +294,7 @@ impl Engine {
             return;
         }
         if let Mode::Active(active) = &mut self.mode {
-            let held = AtomicBool::new(false);
+            let flags = supervisor::Flags::default();
             for node in [&mut active.listen, &mut active.watch] {
                 supervisor::advance_node(
                     node,
@@ -303,7 +302,7 @@ impl Engine {
                     &self.setup.durations,
                     &self.setup.run_dir,
                     &self.setup.log,
-                    &held,
+                    &flags,
                 );
             }
             let started = !active.listen.exited() && !active.watch.exited();

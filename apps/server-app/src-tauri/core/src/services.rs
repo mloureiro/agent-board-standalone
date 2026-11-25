@@ -17,8 +17,9 @@ impl Services {
         let api_up = Arc::new(AtomicBool::new(false));
         let sink_up = Arc::clone(&api_up);
         let sink_notify = Arc::clone(&notify);
-        let supervisor = Supervisor::start(
+        let supervisor = Supervisor::start_gated(
             running.plan.clone(),
+            running.api_gate.clone(),
             running.app_log.clone(),
             Arc::new(move |status: &Status| {
                 sink_up.store(status.api.state == RowState::Running, Ordering::SeqCst);
