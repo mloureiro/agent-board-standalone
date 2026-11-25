@@ -81,3 +81,12 @@ export {
   keepUpkeep,
   type SessionRecheck,
 } from './identity-recheck.js';
+export {
+  bindClientKey,
+  bindSessionKey,
+  clearMachineKey,
+  parseSigningKey,
+  type BindKeyInput,
+  type ClientKeyKind,
+  type KeyBinding,
+} from './client-keys.js';

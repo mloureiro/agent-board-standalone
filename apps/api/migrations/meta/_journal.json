@@ -22,6 +22,13 @@
       "when": 1795591922263,
       "tag": "0002_tenancy",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795593952142,
+      "tag": "0003_signing_key_id",
+      "breakpoints": true
     }
   ]
 }
