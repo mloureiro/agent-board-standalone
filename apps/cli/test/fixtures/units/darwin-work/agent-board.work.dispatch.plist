@@ -27,7 +27,7 @@
 	<key>EnvironmentVariables</key>
 	<dict>
 		<key>PATH</key>
-		<string>/Users/tester/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+		<string>/var/tester/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
 		<key>AGENT_BOARD_CONFIG_DIR</key>
 		<string>/Volumes/data/board/config</string>
 		<key>AGENT_BOARD_STATE_DIR</key>

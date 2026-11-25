@@ -4,8 +4,8 @@ StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-Environment="PATH=/home/tester/.local/bin:/usr/local/bin:/usr/bin:/bin"
-ExecStart=/home/tester/.local/bin/board --profile default internal listen
+Environment="PATH=/srv/tester/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/srv/tester/.local/bin/board --profile default internal listen
 Restart=always
 RestartSec=10
 KillMode=mixed

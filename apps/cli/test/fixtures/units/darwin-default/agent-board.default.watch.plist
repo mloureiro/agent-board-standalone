@@ -6,7 +6,7 @@
 	<string>agent-board.default.watch</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/Users/tester/.local/bin/board</string>
+		<string>/var/tester/.local/bin/board</string>
 		<string>--profile</string>
 		<string>default</string>
 		<string>internal</string>
@@ -23,11 +23,11 @@
 	<key>EnvironmentVariables</key>
 	<dict>
 		<key>PATH</key>
-		<string>/Users/tester/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+		<string>/var/tester/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
 	</dict>
 	<key>StandardOutPath</key>
-	<string>/Users/tester/.local/state/agent-board/profiles/default/logs/launchd.watch.log</string>
+	<string>/var/tester/.local/state/agent-board/profiles/default/logs/launchd.watch.log</string>
 	<key>StandardErrorPath</key>
-	<string>/Users/tester/.local/state/agent-board/profiles/default/logs/launchd.watch.log</string>
+	<string>/var/tester/.local/state/agent-board/profiles/default/logs/launchd.watch.log</string>
 </dict>
 </plist>
