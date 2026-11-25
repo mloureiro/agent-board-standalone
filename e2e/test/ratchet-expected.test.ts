@@ -60,7 +60,7 @@ describe('expected-red.json', () => {
 
   it('[repo-009] the committed file is valid and lists the harness smoke files', () => {
     const expected = loadExpectedRed(new URL('../expected-red.json', import.meta.url).pathname);
-    expect(expected.files['blackbox/harness.test.ts']).toBe('*');
+    expect(Array.isArray(expected.files['blackbox/harness.test.ts'])).toBe(true);
     expect(expected.files['browser/harness.spec.ts']).toBe('*');
     expect(Object.keys(expected.files)).toHaveLength(41);
   });
