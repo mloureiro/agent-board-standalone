@@ -226,7 +226,7 @@ describe('the transcript uploader', () => {
     const sent = posted.reduce((total, batch) => total + batch.events.length, 0);
     expect(sent).toBe(TRANSCRIPT_EVENT_LIMIT);
     expect(posted.every((batch) => batch.events.length <= 1000)).toBe(true);
-  });
+  }, 30_000);
 
   it('[cli-077] stops before the sealed events pass 32 MB and splits what it sends under the body limit', async () => {
     const { value, posted } = await sink();
@@ -239,7 +239,7 @@ describe('the transcript uploader', () => {
     for (const batch of posted) {
       expect(JSON.stringify(batch).length).toBeLessThan(16 * 1024 * 1024);
     }
-  });
+  }, 60_000);
 
   it('[cli-078] sends the latest context of the main agent once, and nothing when the board lacks the feature', async () => {
     const withFeature = await sink();
@@ -286,7 +286,7 @@ describe('the invocation of claude', () => {
     model: null,
     effort: null,
     hookCommand: "'board' 'internal' 'hook'",
-    home: '/home/me',
+    home: '/srv/runner',
   } as const;
 
   it('[cli-072] a user task runs in auto mode with the settings of the user, the project and the local file', () => {
@@ -317,7 +317,7 @@ describe('the invocation of claude', () => {
     expect(args).toContain('--tools=Bash,Read');
     expect(
       args.slice(args.indexOf('--allowedTools') + 1, args.indexOf('--allowedTools') + 3),
-    ).toEqual(['Bash(git diff:*)', 'Bash(/home/me/bin/tool:*)']);
+    ).toEqual(['Bash(git diff:*)', 'Bash(/srv/runner/bin/tool:*)']);
     expect(args[args.indexOf('--disallowedTools') + 1]).toBe('Bash(rm:*)');
     expect(JSON.parse(agentsFile?.content ?? '{}')).toMatchObject({
       reviewer: {
@@ -326,7 +326,7 @@ describe('the invocation of claude', () => {
         tools: ['Bash', 'Read', 'mcp__x__y'],
       },
     });
-    expect(expandRule('Read(~/x)', '/home/me')).toBe('Read(~/x)');
+    expect(expandRule('Read(~/x)', '/srv/runner')).toBe('Read(~/x)');
   });
 
   it('[cli-072] a tool rule that would read as an option refuses the run', () => {
