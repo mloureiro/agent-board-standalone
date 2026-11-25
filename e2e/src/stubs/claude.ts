@@ -27,7 +27,7 @@ const EVENT_BATCH = 500;
 
 function log(entry: Record<string, unknown>): void {
   if (logPath === undefined || logPath === '') return;
-  appendFileSync(logPath, `${JSON.stringify({ ...entry, at: Date.now() })}\n`);
+  appendFileSync(logPath, `${JSON.stringify({ pid: process.pid, ...entry, at: Date.now() })}\n`);
 }
 
 function argValue(flag: string): string | undefined {

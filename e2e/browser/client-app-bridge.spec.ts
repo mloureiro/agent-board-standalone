@@ -191,7 +191,12 @@ test.describe('client app sessions through the native bridge', () => {
       expect(await indexedDbNames(client.page)).not.toContain(`agent-board:${serverId}`);
       await client.page.reload();
       await expect(signInButton(client.page)).toBeVisible({ timeout: UI_TIMEOUT_MS });
+      await signInThroughBridge(client, board, approver);
+      await client.context.route('**/api/**', (route) => route.abort());
+      await client.page.reload();
+      await expect(signInButton(client.page)).toHaveCount(0);
       await expect(client.page.getByText(task.title)).toHaveCount(0);
+      await client.context.unroute('**/api/**');
 
       expect(await localKeysWithPrefix(client.page, `ab:${other.id}:`)).toEqual([
         `ab:${other.id}:draft`,

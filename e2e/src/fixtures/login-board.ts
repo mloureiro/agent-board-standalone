@@ -1,7 +1,7 @@
 import { startOidcFake, startSamlFake, type FakeHandle } from '../fakes/process.js';
 import type { Board } from '../harness/board.js';
 import { freePort } from '../harness/ports.js';
-import { launchBoard, originOf, type LaunchOptions } from './boards.js';
+import { launchBoard, originOf, retryOnPortRace, type LaunchOptions } from './boards.js';
 
 export const OIDC_CLIENT_ID = 'e2e-board';
 export const OIDC_CLIENT_SECRET = 'e2e-board-secret';
@@ -52,7 +52,38 @@ export function loginEnv(
   return { ...env, ...options.env };
 }
 
-export async function startLoginBoard(options: LoginBoardOptions = {}): Promise<LoginBoard> {
+export function startLoginBoard(options: LoginBoardOptions = {}): Promise<LoginBoard> {
+  return options.port === undefined
+    ? retryOnPortRace(() => startLoginBoardOnce(options))
+    : startLoginBoardOnce(options);
+}
+
+export interface LoginBoardPair {
+  readonly a: LoginBoard;
+  readonly b: LoginBoard;
+  stop(): Promise<void>;
+}
+
+export function startLoginBoardPair(options: LoginBoardOptions = {}): Promise<LoginBoardPair> {
+  return retryOnPortRace(async () => {
+    const [portA, portB] = [await freePort(), await freePort()];
+    const a = await startLoginBoardOnce({ ...options, port: portA });
+    let b: LoginBoard;
+    try {
+      b = await startLoginBoardOnce({
+        ...options,
+        port: portB,
+        allowedOrigins: [originOf('login', portA)],
+      });
+    } catch (error) {
+      await a.stop();
+      throw error;
+    }
+    return { a, b, stop: async () => void (await Promise.all([a.stop(), b.stop()])) };
+  });
+}
+
+async function startLoginBoardOnce(options: LoginBoardOptions): Promise<LoginBoard> {
   const port = options.port ?? (await freePort());
   const origin = originOf('login', port);
   const redirectUri = `${origin}${OIDC_REDIRECT_PATH}`;

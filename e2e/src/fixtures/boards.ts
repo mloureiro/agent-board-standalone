@@ -25,6 +25,23 @@ export interface LaunchOptions {
   readonly onStop?: () => Promise<void>;
 }
 
+export const POSTGRES_PROJECT = 'chromium-desktop';
+
+export function postgresAllowedIn(project: string): boolean {
+  return project === POSTGRES_PROJECT;
+}
+
+const PORT_RACE = /EADDRINUSE|address already in use|not ready after|exited before it was ready/i;
+
+export async function retryOnPortRace<T>(attempt: () => Promise<T>): Promise<T> {
+  try {
+    return await attempt();
+  } catch (error) {
+    if (!PORT_RACE.test(error instanceof Error ? error.message : String(error))) throw error;
+    return attempt();
+  }
+}
+
 export function hostOf(auth: AuthMode): string {
   return auth === 'login' ? 'localhost' : '127.0.0.1';
 }
@@ -100,7 +117,11 @@ export interface BoardPair {
   stop(): Promise<void>;
 }
 
-export async function startBoardPair(options: BoardPairOptions): Promise<BoardPair> {
+export function startBoardPair(options: BoardPairOptions): Promise<BoardPair> {
+  return retryOnPortRace(() => startBoardPairOnce(options));
+}
+
+async function startBoardPairOnce(options: BoardPairOptions): Promise<BoardPair> {
   const [portA, portB] = [await freePort(), await freePort()];
   const origins = options.allowOrigins ?? true;
   const launch = (port: number, otherPort: number, label: string): Promise<Board> =>

@@ -137,6 +137,7 @@ describe('stub claude', () => {
     expect(started?.argv).toEqual(['-p', '--input-format', 'stream-json']);
     expect(typeof started?.pid).toBe('number');
     expect(typeof started?.ppid).toBe('number');
+    for (const entry of session.log()) expect(entry.pid).toBe(started?.pid);
     expect(JSON.stringify(started?.argv)).not.toContain('secret prompt text');
     expect(session.log().find((entry) => entry.kind === 'stdin')?.text).toContain(
       'secret prompt text',

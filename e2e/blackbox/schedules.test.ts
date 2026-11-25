@@ -10,7 +10,7 @@ import { enrolledMachine, type EnrolledMachine } from '../src/fixtures/machines.
 import { noLoginUser, type BoardUser } from '../src/fixtures/users.js';
 import { setClockOffset } from '../src/harness/clock.js';
 import { useBoard } from '../src/harness/vitest.js';
-import { eventually, runIn } from '../src/steps/scenario.js';
+import { eventually, runIn } from '../src/steps/polling.js';
 
 type WireTask = RouteOutput<'machine.list-tasks'>['tasks'][number];
 type WireSchedule = RouteOutput<'machine.list-schedules'>['schedules'][number];
