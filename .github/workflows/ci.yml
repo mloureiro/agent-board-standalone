@@ -3,6 +3,9 @@ name: CI
 on:
   push:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -161,7 +164,7 @@ jobs:
       - if: steps.browsers.outputs.cache-hit == 'true'
         run: pnpm --filter @agent-board/e2e exec playwright install-deps chromium webkit
       - run: pnpm -r --if-present run build
-      - run: pnpm --filter @agent-board/contract exec tsx ../../e2e/src/matrix/runner.ts
+      - run: pnpm --filter @agent-board/e2e e2e:matrix
 
   install-alone:
     name: install alone (${{ matrix.package }})
