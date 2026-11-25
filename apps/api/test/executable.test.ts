@@ -120,7 +120,7 @@ describe('the built executable', () => {
     const unknown = await run(['frobnicate'], BASE);
     expect(unknown.code).toBe(2);
     expect(unknown.stderr).toContain('frobnicate');
-    const unbuilt = await run(['pair'], BASE);
+    const unbuilt = await run(['import'], BASE);
     expect(unbuilt.code).toBe(2);
     expect(unbuilt.stderr).toContain('not available');
   });
