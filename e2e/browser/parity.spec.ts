@@ -186,21 +186,25 @@ test.describe('open client sessions', () => {
   }) => {
     const board = login.value;
     const { page, close } = await openSignedIn(browser, board);
+    let stopped = false;
     try {
       await expectSessionValid(page);
       await board.api.stop();
+      stopped = true;
       await triggerRefetch(page);
       await expect(page.getByText(NOT_ANSWERING).first()).toBeVisible({
         timeout: RESTART_TIMEOUT_MS,
       });
       await expect(page.getByRole('button', { name: NAMES.handoff })).toHaveCount(0);
       await board.api.restart();
+      stopped = false;
       await triggerRefetch(page);
       await expect(page.getByText(NOT_ANSWERING)).toHaveCount(0, { timeout: RESTART_TIMEOUT_MS });
       await expect(page.getByRole('button', { name: NAMES.handoff })).toHaveCount(0);
       await expect(page.getByRole('main')).toBeVisible();
       expect(await sessionOf(page)).toBe('valid');
     } finally {
+      if (stopped) await board.api.restart();
       await close();
     }
   });
