@@ -122,7 +122,7 @@ describe('request failures', () => {
     await server.stop();
     await expect(
       sendRequest(depsFor(server), { method: 'GET', path: '/api/version' }),
-    ).rejects.toThrow(/cannot reach the server at/);
+    ).rejects.toThrow(/could not reach the server at/);
   });
 });
 
