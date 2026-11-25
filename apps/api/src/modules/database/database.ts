@@ -13,9 +13,14 @@ export type ScopedDatabase = PgTransaction<
   ExtractTablesWithRelations<Schema>
 >;
 
+export interface OwnerScopes {
+  as<T>(owner: string, work: (tx: ScopedDatabase) => Promise<T>): Promise<T>;
+}
+
 export interface Database {
   readonly kind: DatabaseKind;
   withOwner<T>(owner: string, work: (tx: ScopedDatabase) => Promise<T>): Promise<T>;
+  withOwners<T>(work: (scopes: OwnerScopes) => Promise<T>): Promise<T>;
   withSystem<T>(work: (system: SystemFunctions) => Promise<T>): Promise<T>;
   close(): Promise<void>;
 }
@@ -29,6 +34,7 @@ const unavailable = (): never => {
 export const stubDatabase = (kind: DatabaseKind, close: () => Promise<void>): Database => ({
   kind,
   withOwner: unavailable,
+  withOwners: unavailable,
   withSystem: unavailable,
   close,
 });

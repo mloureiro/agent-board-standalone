@@ -105,7 +105,13 @@ describe('row isolation under PGlite', () => {
   });
 
   it('[api-016] the database handle exposes scoped work only, never a raw client', () => {
-    expect(Object.keys(database).sort()).toEqual(['close', 'kind', 'withOwner', 'withSystem']);
+    expect(Object.keys(database).sort()).toEqual([
+      'close',
+      'kind',
+      'withOwner',
+      'withOwners',
+      'withSystem',
+    ]);
   });
 
   it('[api-016] no request path takes SQL text: only the database layer touches a driver or raw SQL', () => {

@@ -7,6 +7,7 @@ export {
   stubDatabase,
   type Database,
   type OpenDatabase,
+  type OwnerScopes,
   type ScopedDatabase,
 } from './database.js';
 export { DatabaseRefusal, StatementRefused } from './errors.js';
