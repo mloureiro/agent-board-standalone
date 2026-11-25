@@ -29,8 +29,12 @@ export const authenticateClient = async (
   reply?: FastifyReply,
 ): Promise<ClientPrincipal> => {
   const { signIn } = context.config;
-  if (signIn.mode === 'no-login') return { kind: 'client', owner: signIn.user };
   const credential = await readCredential(request, schemeOf(context));
+  if (signIn.mode === 'no-login') {
+    if (credential?.kind === 'machine')
+      throw new ApiError('unauthorized', 'a machine token cannot use the client routes');
+    return { kind: 'client', owner: signIn.user };
+  }
   if (credential !== null && credential.kind !== 'machine') {
     const stored = await context.services.credentials.findSession(credential.hash, credential.kind);
     if (stored?.expired === false) {
