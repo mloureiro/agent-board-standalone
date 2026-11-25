@@ -291,6 +291,25 @@ importers:
       '@agent-board/sealing':
         specifier: workspace:^1.0.0
         version: link:../../packages/sealing
+      pg:
+        specifier: ^8.23.1
+        version: 8.23.1
+      pglite-0-5-16:
+        specifier: npm:@electric-sql/pglite@0.5.16
+        version: '@electric-sql/pglite@0.5.16'
+      pglite-0-5-17:
+        specifier: npm:@electric-sql/pglite@0.5.17
+        version: '@electric-sql/pglite@0.5.17'
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.6
+        version: 26.6.6
+      '@types/pg':
+        specifier: ^8.23.1
+        version: 8.23.1
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
 
   apps/mobile:
     dependencies:
@@ -507,6 +526,12 @@ packages:
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
+
+  '@electric-sql/pglite@0.5.16':
+    resolution: {integrity: sha512-Nj8KcIsJL748W408U2N8q4+9IlONdpRIU8MJypIAAINMJ5nqKyqpX7Mgg/5XKkXiAib3AoZGR6hnJFlrlLBrcg==}
+
+  '@electric-sql/pglite@0.5.17':
+    resolution: {integrity: sha512-8SvKjiUjaU+0O0dbxjOfN+jXz14TEqDWbwDkYOW1aQ11y/ph2JvFVI27ABBo5nfw+ZfSqy4hKCNlbnbB1TDE+g==}
 
   '@electric-sql/pglite@0.6.0':
     resolution: {integrity: sha512-g3tAPFjRLEdN1g5FvawTl4ETo9LtmVwBRUJYnH6Erl6mhlKFRGB2mYhPABffIuXMYxki64mX0Al8U4UFUhuYDQ==}
@@ -3172,6 +3197,10 @@ snapshots:
       tslib: 2.9.1
 
   '@drizzle-team/brocli@0.10.2': {}
+
+  '@electric-sql/pglite@0.5.16': {}
+
+  '@electric-sql/pglite@0.5.17': {}
 
   '@electric-sql/pglite@0.6.0': {}
 

@@ -7,10 +7,19 @@
   "main": "./src/index.ts",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "fixtures:build": "tsx fixtures/build.ts"
   },
   "dependencies": {
     "@agent-board/contract": "workspace:^1.0.0",
-    "@agent-board/sealing": "workspace:^1.0.0"
+    "@agent-board/sealing": "workspace:^1.0.0",
+    "pg": "^8.23.1",
+    "pglite-0-5-16": "npm:@electric-sql/pglite@0.5.16",
+    "pglite-0-5-17": "npm:@electric-sql/pglite@0.5.17"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.23.15"
   }
 }
