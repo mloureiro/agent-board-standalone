@@ -81,28 +81,32 @@ pub fn trimmed_name(name: &str) -> Result<String, ServerError> {
 pub struct Servers<F> {
     files: F,
     entries: Mutex<Vec<ServerEntry>>,
+    complete: bool,
 }
 
 impl<F: FileStore> Servers<F> {
     pub fn open(files: F) -> Self {
-        let parsed = files
-            .read(SERVERS_FILE)
-            .ok()
-            .flatten()
-            .map(|contents| (parse_list(&contents), contents));
-        let entries = match parsed {
-            Some((parsed, contents)) => {
+        let (entries, read_intact) = match files.read(SERVERS_FILE) {
+            Ok(Some(contents)) => {
+                let parsed = parse_list(&contents);
                 if !parsed.intact {
                     let _ = files.write(ASIDE_FILE, &contents);
                 }
-                parsed.entries
+                (parsed.entries, parsed.intact)
             }
-            None => Vec::new(),
+            Ok(None) => (Vec::new(), true),
+            Err(_) => (Vec::new(), false),
         };
+        let complete = read_intact && matches!(files.read(ASIDE_FILE), Ok(None));
         Self {
             files,
             entries: Mutex::new(entries),
+            complete,
         }
+    }
+
+    pub fn complete(&self) -> bool {
+        self.complete
     }
 
     pub fn list(&self) -> Vec<ServerEntry> {

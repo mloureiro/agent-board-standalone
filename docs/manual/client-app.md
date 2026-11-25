@@ -75,3 +75,7 @@ Do this only on a Mac where the previous Agent Board client was used, and only w
 3. The `tabs` directory is gone, the Keychain query finds nothing, and `servers.json` next to it is unchanged.
 
 Expected: the old per-server stores, tab files and session items are deleted at launch and the server list is kept.
+
+When `servers.json` cannot be read in full, the app keeps a copy as `servers.json.unreadable` next to it. While that
+copy exists, launch and the list page delete no store of servers missing from the list; delete the copy once the list
+is put right.

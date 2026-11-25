@@ -18,6 +18,7 @@ fn main() {
         "open_all_servers",
         "retry_store_deletion",
         "take_open_failures",
+        "list_is_complete",
     ]);
 
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(app_manifest))

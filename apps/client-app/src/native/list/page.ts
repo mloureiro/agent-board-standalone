@@ -227,6 +227,7 @@ export async function mountList(root: HTMLElement, options: ListOptions = {}): P
   });
   await guarded(async () => {
     const listed = await refresh();
+    if (!(await command<boolean>('list_is_complete').catch(() => false))) return;
     await sweepUnlisted(new Set(listed.map((entry) => entry.id))).catch(() => undefined);
   });
   await showQueuedFailures();

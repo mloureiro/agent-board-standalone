@@ -85,3 +85,8 @@ pub async fn retry_store_deletion(
 pub async fn take_open_failures(state: Shared<'_>) -> Result<Vec<OpenFailure>, String> {
     Ok(state.take_open_failures())
 }
+
+#[tauri::command]
+pub async fn list_is_complete(state: Shared<'_>) -> Result<bool, String> {
+    Ok(state.bridge.servers().complete())
+}

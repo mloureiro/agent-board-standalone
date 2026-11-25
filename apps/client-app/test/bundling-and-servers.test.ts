@@ -383,6 +383,7 @@ async function mountPage(setup: ListSetup): Promise<{
     if (custom) return custom(args);
     if (command === 'list_servers') return setup.servers;
     if (command === 'take_open_failures') return setup.failures ?? [];
+    if (command === 'list_is_complete') return true;
     return undefined;
   });
   document.body.innerHTML = '<div id="root"></div>';
@@ -481,6 +482,16 @@ describe('server list page', () => {
       },
     });
     expect(alertsText(root)).toContain('the list could not be read');
+    expect(await namespaceExists(BETA.id)).toBe(true);
+  });
+
+  it('[client-app-008] nothing is deleted while the native list is incomplete', async () => {
+    await seedNamespace(BETA.id);
+    const { internals } = await mountPage({
+      servers: [ALPHA],
+      handlers: { list_is_complete: () => false },
+    });
+    expect(argsOf(internals, 'list_is_complete')).toHaveLength(1);
     expect(await namespaceExists(BETA.id)).toBe(true);
   });
 

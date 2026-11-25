@@ -573,6 +573,7 @@ fn client_app_002_an_unreadable_servers_file_is_kept_aside_before_the_next_write
     std::fs::write(directory.path().join(SERVERS_FILE), b"{nope").unwrap();
     let store = Servers::open(DirStore::new(directory.path()));
     assert!(store.list().is_empty());
+    assert!(!store.complete());
     assert_eq!(
         std::fs::read(directory.path().join(ASIDE_FILE)).unwrap(),
         b"{nope"
@@ -584,8 +585,28 @@ fn client_app_002_an_unreadable_servers_file_is_kept_aside_before_the_next_write
         std::fs::read(directory.path().join(ASIDE_FILE)).unwrap(),
         b"{nope"
     );
+    let reopened = Servers::open(DirStore::new(directory.path()));
+    assert_eq!(reopened.list().len(), 1);
+    assert!(!reopened.complete());
+
+    std::fs::remove_file(directory.path().join(ASIDE_FILE)).unwrap();
+    assert!(Servers::open(DirStore::new(directory.path())).complete());
+    let empty = tempfile::tempdir().unwrap();
+    assert!(Servers::open(DirStore::new(empty.path())).complete());
+}
+
+#[test]
+fn client_app_008_a_partly_readable_servers_file_keeps_every_store() {
+    let directory = tempfile::tempdir().unwrap();
+    let document = format!(
+        r#"{{"servers":[{{"id":"{FIRST_ID}","name":"Alpha","url":"https://a.example.test/"}},{{"id":"not-an-id","name":"Lost","url":"https://b.example.test/"}}]}}"#
+    );
+    std::fs::write(directory.path().join(SERVERS_FILE), &document).unwrap();
+    let store = Servers::open(DirStore::new(directory.path()));
+    assert_eq!(store.list().len(), 1);
+    assert!(!store.complete());
     assert_eq!(
-        Servers::open(DirStore::new(directory.path())).list().len(),
-        1
+        std::fs::read(directory.path().join(ASIDE_FILE)).unwrap(),
+        document.as_bytes()
     );
 }
