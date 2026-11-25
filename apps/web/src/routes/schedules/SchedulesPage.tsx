@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 
 import { usePageTitle } from '../../components/index.js';
 import { useProjectChoices } from '../../pages/index.js';
+import { notOffered } from '../../servers/index.js';
 import { useNow } from '../board/clock.js';
 import { inText, parseTime } from '../board/format.js';
 import { DeleteScheduleDialog } from './DeleteScheduleDialog.js';
@@ -12,7 +13,7 @@ import { repeatText, type ScheduleView } from './schedule-model.js';
 
 export const ALL_PROJECTS = 'all';
 export const NO_SCHEDULES = 'There are no schedules.';
-export const SCHEDULES_UNAVAILABLE = 'This server does not offer schedules.';
+export const SCHEDULES_UNAVAILABLE = notOffered('schedules');
 
 function ScheduleRow(props: {
   readonly view: ScheduleView;

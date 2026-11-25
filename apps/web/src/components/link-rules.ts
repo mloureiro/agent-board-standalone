@@ -102,3 +102,24 @@ function apply(parent: Node, rules: readonly LinkRule[]): void {
 export const linkRulesPlugin = (rules: readonly LinkRule[]) => () => (tree: Node) => {
   if (rules.length > 0) apply(tree, rules);
 };
+
+export interface LinkTarget {
+  readonly text: string;
+  readonly url: string;
+}
+
+export function linkTargets(value: string, rules: readonly LinkRule[]): readonly LinkTarget[] {
+  const targets: LinkTarget[] = [];
+  for (const rule of rules) {
+    const pattern = new RegExp(rule.pattern, `${rule.flags ?? ''}g`);
+    for (let match = pattern.exec(value); match !== null; match = pattern.exec(value)) {
+      if (match[0] === '') {
+        pattern.lastIndex += 1;
+        continue;
+      }
+      const url = expandUrl(rule.url, match);
+      if (isHttp(url)) targets.push({ text: match[0], url });
+    }
+  }
+  return targets;
+}
