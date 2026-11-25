@@ -8,6 +8,7 @@ import { bindings } from '@agent-board/sealing';
 
 import { UNLOCK_NAMES, unlockInPage } from '../fixtures/browser.js';
 import { DEFAULT_PASSPHRASE, unlockedKey, type UnlockedKey } from '../fixtures/keys.js';
+import { postgresAllowedIn } from '../fixtures/boards.js';
 import { startLoginBoard, type LoginBoard } from '../fixtures/login-board.js';
 import { enrolledMachine, type EnrolledMachine } from '../fixtures/machines.js';
 import { createTask, type TaskInput } from '../fixtures/tasks.js';
@@ -28,13 +29,13 @@ export const BOARD_NAMES = {
   newTask: /^new task$/i,
   lock: /^lock$/i,
   signOut: /^(sign|log) ?out$/i,
-  send: /^send$/i,
+  send: 'Send & continue',
   create: /^(create|add)( task)?$/i,
   prompt: /^prompt$/i,
   title: /^title$/i,
-  reply: /(reply|message)/i,
-  other: /other/i,
-  submitAnswer: /^(submit|send answer|answer)/i,
+  reply: 'Reply',
+  other: 'Other',
+  submitAnswer: 'Submit answer',
   start: /^(start|confirm|move to todo)/i,
   context: /context/i,
 } as const;
@@ -271,6 +272,19 @@ export async function draftEntries(page: Page, text: string): Promise<DraftEntry
   }, text);
 }
 
+export async function hideAndShowTab(page: Page): Promise<void> {
+  for (const hidden of [true, false]) {
+    await page.evaluate((state) => {
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => state });
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => (state ? 'hidden' : 'visible'),
+      });
+      document.dispatchEvent(new Event('visibilitychange'));
+    }, hidden);
+  }
+}
+
 export const CLIENT_PATHS = {
   events: routeByName('client.events').path,
   list: routeByName('client.tasks.list').path,
@@ -394,7 +408,11 @@ export function useLoginBoard(
       reason = partSkipReason(missing);
       return;
     }
-    started = await startLoginBoard({ features, web: true });
+    started = await startLoginBoard({
+      features,
+      web: true,
+      postgresAllowed: postgresAllowedIn(testInfo.project.name),
+    });
     if (started.missingFeatures.length > 0) reason = featureSkipReason(started.missingFeatures);
   });
 

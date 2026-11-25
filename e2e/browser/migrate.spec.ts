@@ -51,11 +51,9 @@ function useMigrated(options: MigratedOptions) {
 async function openTask(page: Page, base: string, id: string, passphrase: string): Promise<void> {
   await page.goto(`${base}/t/${id}`);
   const prompt = page.getByLabel(UNLOCK_NAMES.passphrase);
-  const asked = await prompt
-    .waitFor({ state: 'visible', timeout: 3_000 })
-    .then(() => true)
-    .catch(() => false);
-  if (asked) await unlockInPage(page, passphrase);
+  const board = page.getByRole('link', { name: 'Board', exact: true });
+  await expect(prompt.or(board).first()).toBeVisible({ timeout: 15_000 });
+  if (await prompt.isVisible()) await unlockInPage(page, passphrase);
 }
 
 test.describe('the migrated board in the browser', () => {

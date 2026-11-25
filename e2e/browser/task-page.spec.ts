@@ -4,6 +4,7 @@ import { expect, test } from '@playwright/test';
 
 import { setClockOffset } from '../src/harness/clock.js';
 import { useBoard } from '../src/harness/playwright.js';
+import { settleFrames } from '../src/steps/polling.js';
 import {
   NAMES,
   STATUS_LABELS,
@@ -22,11 +23,13 @@ import {
   replyBox,
   statusBadge,
   stubInterrupts,
+  stubRunPid,
   stubResumedSessions,
   stubStdin,
   taskOf,
   thread,
   typeInto,
+  userNotesOf,
   useWorld,
   waitForRunStart,
   waitForStatus,
@@ -37,6 +40,7 @@ import {
 
 const FEATURES = ['forks', 'run-inbox'] as const;
 const QUIET_MINUTES = 21;
+const ACTION_TEXT = 'text for the action';
 
 test.describe('task page on a running worker', () => {
   test.describe.configure({ timeout: 180_000 });
@@ -89,6 +93,7 @@ test.describe('task page on a running worker', () => {
     await waitForStatus(w, task.id, 'needs-me');
     await addAgentNotes(w, task, 40);
     await openTask(page, w, task);
+    await replyBox(page).fill(Array.from({ length: 60 }, (_, line) => `line ${line}`).join('\n'));
     const viewport = page.viewportSize();
     if (viewport === null) throw new Error('the project has no viewport');
     const first = thread(page).getByText('Thread note 0 ', { exact: false });
@@ -153,23 +158,33 @@ test.describe('task page on a running worker', () => {
   }) => {
     const w = await world.get();
     const task = await runningTask(w, 'stop-send-marker-2');
-    const before = stubInterrupts(w.stubLog);
-    await openTask(page, w, task);
-    await expectBadge(page, 'running');
-    await replyBox(page).fill('message after the interrupt');
-    await panelButton(page, NAMES.stopAndSend).click();
-    await expect.poll(() => stubInterrupts(w.stubLog)).toBeGreaterThan(before);
-    await expectStdinContaining(w, 'message after the interrupt');
+    const pid = stubRunPid(w.stubLog, 'stop-send-marker-2');
+    const before = stubInterrupts(w.stubLog, pid);
+    try {
+      await openTask(page, w, task);
+      await expectBadge(page, 'running');
+      await replyBox(page).fill('message after the interrupt');
+      await panelButton(page, NAMES.stopAndSend).click();
+      await expect.poll(() => stubInterrupts(w.stubLog, pid)).toBeGreaterThan(before);
+      await expectStdinContaining(w, 'message after the interrupt');
+    } finally {
+      await releaseTask(w, task.id);
+    }
   });
 
   test('[web-050] on a running task Stop interrupts the run', async ({ page }) => {
     const w = await world.get();
     const task = await runningTask(w, 'stop-marker-3');
-    const before = stubInterrupts(w.stubLog);
-    await openTask(page, w, task);
-    await expectBadge(page, 'running');
-    await panelButton(page, NAMES.stop).click();
-    await expect.poll(() => stubInterrupts(w.stubLog)).toBeGreaterThan(before);
+    const pid = stubRunPid(w.stubLog, 'stop-marker-3');
+    const before = stubInterrupts(w.stubLog, pid);
+    try {
+      await openTask(page, w, task);
+      await expectBadge(page, 'running');
+      await panelButton(page, NAMES.stop).click();
+      await expect.poll(() => stubInterrupts(w.stubLog, pid)).toBeGreaterThan(before);
+    } finally {
+      await releaseTask(w, task.id);
+    }
   });
 
   test('[web-050] on a running task Comment adds a note without reaching the run', async ({
@@ -215,19 +230,23 @@ test.describe('task page on a running worker', () => {
   }) => {
     const w = await world.get();
     const task = await runningTask(w, 'keep-focus-marker-6', '#stub: sleep 20');
-    await openTask(page, w, task);
-    await expectBadge(page, 'running');
-    const box = replyBox(page);
-    const draft = 'a draft typed while the run is going';
-    await typeInto(box, draft);
-    await box.press('Home');
-    for (let step = 0; step < 5; step += 1) await box.press('ArrowRight');
-    expect(await caretOffset(box)).toBe(5);
+    try {
+      await openTask(page, w, task);
+      await expectBadge(page, 'running');
+      const box = replyBox(page);
+      const draft = 'a draft typed while the run is going';
+      await typeInto(box, draft);
+      await box.press('Home');
+      for (let step = 0; step < 5; step += 1) await box.press('ArrowRight');
+      expect(await caretOffset(box)).toBe(5);
 
-    await expect(statusBadge(page)).not.toHaveText(STATUS_LABELS.running, { timeout: 60_000 });
-    await expect(box).toBeFocused();
-    expect(await fieldText(box)).toBe(draft);
-    expect(await caretOffset(box)).toBe(5);
+      await expect(statusBadge(page)).not.toHaveText(STATUS_LABELS.running, { timeout: 60_000 });
+      await expect(box).toBeFocused();
+      expect(await fieldText(box)).toBe(draft);
+      expect(await caretOffset(box)).toBe(5);
+    } finally {
+      await releaseTask(w, task.id);
+    }
   });
 
   test('[web-058] typed reply text moves into the note of a question that arrives', async ({
@@ -239,14 +258,17 @@ test.describe('task page on a running worker', () => {
       title: 'Draft moves to the note',
     });
     await waitForStatus(w, task.id, 'running');
-    await openTask(page, w, task);
-    const draft = 'draft that belongs with the answer';
-    await typeInto(replyBox(page), draft);
+    try {
+      await openTask(page, w, task);
+      const draft = 'draft that belongs with the answer';
+      await typeInto(replyBox(page), draft);
 
-    const form = page.getByRole('form', { name: NAMES.questionForm });
-    await expect(form).toBeVisible({ timeout: 60_000 });
-    await expect(form.getByRole('textbox', { name: NAMES.questionNote })).toHaveValue(draft);
-    await releaseTask(w, task.id);
+      const form = page.getByRole('form', { name: NAMES.questionForm });
+      await expect(form).toBeVisible({ timeout: 60_000 });
+      await expect(form.getByRole('textbox', { name: NAMES.questionNote })).toHaveValue(draft);
+    } finally {
+      await releaseTask(w, task.id);
+    }
   });
 
   test('[web-058] Backspace outside a text field does not navigate back', async ({ page }) => {
@@ -261,7 +283,7 @@ test.describe('task page on a running worker', () => {
 
     await page.getByRole('heading', { name: task.title }).click();
     await page.keyboard.press('Backspace');
-    await page.waitForTimeout(500);
+    await settleFrames(page);
     expect(page.url()).toBe(url);
     await expect(page.getByRole('heading', { name: task.title })).toBeVisible();
 
@@ -355,8 +377,15 @@ test.describe('task page panel in Needs me and Done', () => {
         const w = await world.get();
         const task = await taskIn(w, state, action.name);
         await openTask(page, w, task);
-        if (action.text) await replyBox(page).fill('text for the action');
+        if (action.name === NAMES.markDone && state === 'done') {
+          await expect(panelButton(page, action.name)).toBeDisabled();
+          return;
+        }
+        if (action.text) await replyBox(page).fill(ACTION_TEXT);
         await panelButton(page, action.name).click();
+        if (action.name === NAMES.comment) {
+          await expect.poll(() => userNotesOf(w, task.id)).toContain(ACTION_TEXT);
+        }
         await expect
           .poll(async () => {
             const current = await taskOf(w, task.id);

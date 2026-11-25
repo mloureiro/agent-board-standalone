@@ -83,7 +83,10 @@ test.describe('[api-053] Sealing at rest in Postgres', () => {
 test.describe('[server-app-008] [server-app-072] Sealing in the server-app layout', () => {
   test.describe.configure({ mode: 'serial', timeout: SCENARIO_TIMEOUT_MS });
 
-  const harness = useServerAppLayout({ parts: ['api', 'web', 'cli'] });
+  const harness = useServerAppLayout({
+    parts: ['api', 'web', 'cli'],
+    features: ['schedules', 'directories', 'forks', 'settings-document'],
+  });
   let scenario: ScenarioResult | null = null;
 
   test.beforeAll(() => {

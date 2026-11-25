@@ -5,7 +5,6 @@ import { startApi, type ApiHandle } from '../harness/api.js';
 import { cliEnv, runCli, startCli, type RunningCli } from '../harness/cli.js';
 import { createPgliteDatabase, type Database } from '../harness/database.js';
 import { partPath } from '../harness/paths.js';
-import { freePort } from '../harness/ports.js';
 import type { RunResult } from '../harness/run.js';
 import { createTmp, type Tmp } from '../harness/tmp.js';
 import { controlClient, type ControlClient } from './control.js';
@@ -78,7 +77,6 @@ export async function startServerAppLayout(
   const tmp: Tmp = createTmp(options.label ?? 'server-app');
   const database: Database = createPgliteDatabase(tmp);
   const settingsUser = options.settingsUser ?? SETTINGS_USER;
-  const port = options.port ?? (await freePort());
   const env = serverAppEnv({
     root: tmp.root,
     settingsUser,
@@ -99,7 +97,7 @@ export async function startServerAppLayout(
       tmp,
       database,
       auth: 'no-login',
-      port,
+      ...(options.port === undefined ? {} : { port: options.port }),
       env,
       ...(options.readyTimeoutMs === undefined ? {} : { readyTimeoutMs: options.readyTimeoutMs }),
     });
@@ -116,7 +114,7 @@ export async function startServerAppLayout(
     database,
     root: tmp.root,
     api: started,
-    port,
+    port: started.port,
     settingsUser,
     controlSocket,
     control: controlClient(controlSocket),

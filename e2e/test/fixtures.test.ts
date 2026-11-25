@@ -6,7 +6,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { anonymous, call, clientToken, type ServerRef } from '../src/client/contract-client.js';
 import { DEFAULT_PASSPHRASE, dataKeyBytes, unlockedKey } from '../src/fixtures/keys.js';
-import { launchDatabaseKind, startBoardPair } from '../src/fixtures/boards.js';
+import {
+  launchDatabaseKind,
+  postgresAllowedIn,
+  retryOnPortRace,
+  startBoardPair,
+} from '../src/fixtures/boards.js';
 import { startLoginBoard } from '../src/fixtures/login-board.js';
 import { enrolledMachine } from '../src/fixtures/machines.js';
 import { createTask } from '../src/fixtures/tasks.js';
@@ -292,5 +297,49 @@ describe('launchDatabaseKind', () => {
     expect(launchDatabaseKind({ database: 'postgres', postgresAllowed: false }, {})).toBe(
       'postgres',
     );
+  });
+});
+
+describe('postgresAllowedIn', () => {
+  it('allows Postgres only in the desktop Chromium project', () => {
+    expect(postgresAllowedIn('chromium-desktop')).toBe(true);
+    for (const project of ['webkit-desktop', 'chromium-phone', 'webkit-phone']) {
+      expect(postgresAllowedIn(project)).toBe(false);
+    }
+  });
+});
+
+describe('retryOnPortRace', () => {
+  it('retries once when the first start lost a port race', async () => {
+    let calls = 0;
+    const result = await retryOnPortRace(async () => {
+      calls += 1;
+      if (calls === 1) throw new Error('listen EADDRINUSE: address already in use');
+      return 'started';
+    });
+    expect(result).toBe('started');
+    expect(calls).toBe(2);
+  });
+
+  it('does not retry any other failure', async () => {
+    let calls = 0;
+    await expect(
+      retryOnPortRace(async () => {
+        calls += 1;
+        throw new Error('the database is gone');
+      }),
+    ).rejects.toThrow('the database is gone');
+    expect(calls).toBe(1);
+  });
+
+  it('gives up when the second start fails too', async () => {
+    let calls = 0;
+    await expect(
+      retryOnPortRace(async () => {
+        calls += 1;
+        throw new Error('API not ready after 20000 ms');
+      }),
+    ).rejects.toThrow('not ready');
+    expect(calls).toBe(2);
   });
 });

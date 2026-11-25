@@ -13,6 +13,7 @@ import {
 } from '@playwright/test';
 
 import { call } from '../client/contract-client.js';
+import { postgresAllowedIn } from '../fixtures/boards.js';
 import { approveHandoff, UNLOCK_NAMES, unlockInPage } from '../fixtures/browser.js';
 import { DEFAULT_PASSPHRASE, unlockedKey, type UnlockedKey } from '../fixtures/keys.js';
 import {
@@ -62,6 +63,26 @@ export const RUN_TIMEOUT_MS = 60_000;
 export const START_TIMEOUT_MS = 180_000;
 export const CODE_PATTERN = /\b[A-Z0-9]{4}-[A-Z0-9]{4}\b/;
 export const KEYBOARD_HEIGHT_RATIO = 0.55;
+
+export async function openKeyboard(page: Page, ratio: number): Promise<void> {
+  await page.evaluate((keep) => {
+    const viewport = window.visualViewport;
+    if (viewport === null) throw new Error('the page has no visual viewport');
+    const height = Math.round(viewport.height * keep);
+    Object.defineProperty(viewport, 'height', { configurable: true, get: () => height });
+    viewport.dispatchEvent(new Event('resize'));
+    window.dispatchEvent(new Event('resize'));
+  }, ratio);
+}
+
+export async function insideVisualViewport(target: Locator): Promise<boolean> {
+  return target.evaluate((element) => {
+    const viewport = window.visualViewport;
+    if (viewport === null) return false;
+    const box = element.getBoundingClientRect();
+    return box.top >= 0 && box.bottom <= viewport.height + 0.5;
+  });
+}
 
 export function uniqueMarker(prefix: string): string {
   return `${prefix}-${randomBytes(5).toString('hex')}`;
@@ -128,11 +149,12 @@ export interface LoginBoardDeclaration {
 }
 
 export function useLoginBoard(declaration: LoginBoardDeclaration): { readonly value: LoginBoard } {
-  return useStarted(declaration.parts, async () => {
+  return useStarted(declaration.parts, async (project) => {
     const board = await startLoginBoard({
       ...declaration.options,
       features: declaration.features,
       web: declaration.parts.includes('web'),
+      postgresAllowed: postgresAllowedIn(project),
     });
     return { value: board, missing: board.missingFeatures, stop: () => board.stop() };
   });

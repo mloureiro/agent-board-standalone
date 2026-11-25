@@ -5,7 +5,7 @@ import { CONTRACT, routeByName, sessionCookieName } from '@agent-board/contract'
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
 import { call } from '../src/client/contract-client.js';
-import { launchBoard } from '../src/fixtures/boards.js';
+import { launchBoard, postgresAllowedIn } from '../src/fixtures/boards.js';
 import { persistentContext } from '../src/fixtures/browser.js';
 import { startLoginBoard, type LoginBoard } from '../src/fixtures/login-board.js';
 import { noLoginUser, pkcePair, signedInUser, type BoardUser } from '../src/fixtures/users.js';
@@ -14,6 +14,7 @@ import { startVersionProxy, type VersionOverride } from '../src/fixtures/version
 import type { Board } from '../src/harness/board.js';
 import { partPath } from '../src/harness/paths.js';
 import { useBoard } from '../src/harness/playwright.js';
+import { settleFrames } from '../src/steps/polling.js';
 import {
   NAMES,
   NOT_ANSWERING,
@@ -42,6 +43,10 @@ const HANDOFF_FINISH_PATH = routeByName('auth.handoff.finish').path;
 const CONNECTION_LIMIT_MS = 10_000 + 1_000 + 3_000;
 const TIMING_SLACK_MS = 2_000;
 const RESTART_TIMEOUT_MS = 60_000;
+
+function contractNumber(value: number): RegExp {
+  return new RegExp(`contract\\D{0,12}${value}\\b`, 'i');
+}
 
 function webVersion(): string {
   const file = path.join(partPath('web'), 'version.json');
@@ -145,8 +150,8 @@ test.describe('handshake states against the version proxy', () => {
     );
     expect(body).toContain(webVersion());
     expect(body).toContain(serverVersion);
-    expect(body).toContain(String(CONTRACT));
-    expect(body).toContain(String(CONTRACT + 1));
+    expect(body).toMatch(contractNumber(CONTRACT));
+    expect(body).toMatch(contractNumber(CONTRACT + 1));
   });
 
   test('[P-06] a server older than the client needs shows "server too old" naming both versions @matrix', async ({
@@ -159,8 +164,8 @@ test.describe('handshake states against the version proxy', () => {
     );
     expect(body).toContain(webVersion());
     expect(body).toContain(serverVersion);
-    expect(body).toContain(String(CONTRACT));
-    expect(body).toContain(String(CONTRACT - 1));
+    expect(body).toMatch(contractNumber(CONTRACT));
+    expect(body).toMatch(contractNumber(CONTRACT - 1));
   });
 });
 
@@ -241,12 +246,14 @@ test.describe('open client sessions', () => {
 
 test.describe('hand-off finish from another origin', () => {
   test.describe.configure({ timeout: 120_000 });
-  const boards = useStarted<{ client: Board; server: LoginBoard }>(['api'], async () => {
-    const client = await launchBoard({ auth: 'no-login', label: 'client-origin' });
+  const boards = useStarted<{ client: Board; server: LoginBoard }>(['api'], async (project) => {
+    const postgresAllowed = postgresAllowedIn(project);
+    const client = await launchBoard({ auth: 'no-login', label: 'client-origin', postgresAllowed });
     try {
       const server = await startLoginBoard({
         features: ['client-tokens'],
         allowedOrigins: [client.url],
+        postgresAllowed,
       });
       return {
         value: { client, server },
@@ -398,7 +405,7 @@ test.describe('reply drafting in WebKit', () => {
   }) => {
     const w = await world.get();
     const marker = uniqueMarker('p18');
-    const task = await newTask(w, { prompt: `#stub: sleep 6\n${marker}`, title: marker });
+    const task = await newTask(w, { prompt: `#stub: sleep 300\n${marker}`, title: marker });
     await waitForStatus(w, task.id, 'running');
     await openTask(page, w, marker);
     await expect(statusBadge(page)).toHaveText(STATUS_LABELS.running);
@@ -408,6 +415,11 @@ test.describe('reply drafting in WebKit', () => {
     await reply.click();
     await Promise.all([
       reply.pressSequentially(text, { delay: TYPING_DELAY_MS }),
+      (async () => {
+        await expect.poll(() => reply.inputValue()).not.toBe('');
+        const stopped = await w.machine.cli(['stop', task.id]);
+        expect(stopped.code).toBe(0);
+      })(),
       expect(statusBadge(page)).toHaveText(STATUS_LABELS.needsMe, { timeout: 60_000 }),
     ]);
 
@@ -421,7 +433,7 @@ test.describe('reply drafting in WebKit', () => {
     await page.getByRole('heading', { name: marker }).click();
     await expect(reply).not.toBeFocused();
     await page.keyboard.press('Backspace');
-    await page.waitForTimeout(1_000);
+    await settleFrames(page);
     expect(page.url()).toBe(before);
     await expect(page.getByRole('heading', { name: marker })).toBeVisible();
     await expect(reply).toHaveValue(text);

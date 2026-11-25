@@ -5,6 +5,8 @@ import { UNLOCK_NAMES, unlockInPage } from '../fixtures/browser.js';
 import { DEFAULT_PASSPHRASE, unlockedKey, type UnlockedKey } from '../fixtures/keys.js';
 import { noLoginUser, type BoardUser } from '../fixtures/users.js';
 import type { Board } from '../harness/board.js';
+import { SERVER_LIST_KEY } from './servers.js';
+import { NAMES as TASK_PAGE, panelButton, replyBox } from './task-page.js';
 
 export const SETUP_NAMES = {
   passphrase: /^passphrase$/i,
@@ -26,7 +28,7 @@ export const SETTINGS_NAMES = {
   change: /^(change|save)( passphrase)?$/i,
 } as const;
 
-export const WRONG_PASSPHRASE = /wrong/i;
+export const WRONG_PASSPHRASE = /^wrong passphrase\.?$/i;
 export const FORBIDDEN_WRONG_DETAIL =
   /attempt|lock(ed|out)|too many|try again in|slot|argon|decrypt|salt/i;
 export const UI_TIMEOUT_MS = 15_000;
@@ -178,8 +180,6 @@ export const JOURNEY_NAMES = {
   create: /^(create|add)( task)?$/i,
   label: /labels?/i,
   notifications: /notifications/i,
-  reply: /(reply|message)/i,
-  send: /^send$/i,
 } as const;
 
 export function journeyMarker(marker: string): JourneyMarker {
@@ -218,24 +218,21 @@ export async function runJourney(page: Page, journey: JourneyMarker): Promise<vo
 
   await page.getByRole('link', { name: SETUP_NAMES.boardLink }).click();
   await cardOf(page, journey.title).getByRole('link', { name: journey.title }).click();
-  const reply = page.getByRole('textbox', { name: JOURNEY_NAMES.reply });
+  const reply = replyBox(page);
   await reply.fill(journey.draft);
-  await page.getByRole('button', { name: JOURNEY_NAMES.send }).click();
+  await panelButton(page, TASK_PAGE.send).click();
   await expect(reply).toHaveValue('');
   await reply.fill(`${journey.draft} still typing`);
   await page.getByRole('link', { name: SETUP_NAMES.boardLink }).click();
 }
 
 export async function clearWebStorageKeepingServerList(page: Page): Promise<string[]> {
-  return page.evaluate(() => {
-    const kept: [string, string][] = [];
-    for (let index = 0; index < localStorage.length; index += 1) {
-      const key = localStorage.key(index);
-      if (key !== null && /servers?/i.test(key)) kept.push([key, localStorage.getItem(key) ?? '']);
-    }
+  return page.evaluate((listKey) => {
+    const kept = localStorage.getItem(listKey);
     localStorage.clear();
     sessionStorage.clear();
-    for (const [key, value] of kept) localStorage.setItem(key, value);
-    return kept.map(([key]) => key);
-  });
+    if (kept === null) return [];
+    localStorage.setItem(listKey, kept);
+    return [listKey];
+  }, SERVER_LIST_KEY);
 }

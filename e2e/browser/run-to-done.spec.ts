@@ -6,6 +6,7 @@ import { startServerAppLayout, type ServerAppLayout } from '../src/fixtures/serv
 import { unlockedKey } from '../src/fixtures/keys.js';
 import { enrolledMachine } from '../src/fixtures/machines.js';
 import { noLoginUser } from '../src/fixtures/users.js';
+import { missingFeatures } from '../src/harness/board.js';
 import { missingParts } from '../src/harness/paths.js';
 import { featureSkipReason, partSkipReason, recordSkip } from '../src/harness/skip.js';
 import {
@@ -19,6 +20,7 @@ import {
   waitForStatus,
   type Account,
 } from '../src/steps/board.js';
+import { STATUS_LABELS, statusBadge } from '../src/steps/task-page.js';
 
 test.describe('server-app layout run to Done', () => {
   let layout: ServerAppLayout | null = null;
@@ -34,10 +36,10 @@ test.describe('server-app layout run to Done', () => {
     }
     layout = await startServerAppLayout({ web: true });
     const response = await fetch(`${layout.url}/api/version`);
+    if (!response.ok) throw new Error(`GET /api/version answered ${response.status}`);
     const body = (await response.json()) as { features?: string[] };
-    if (!(body.features ?? []).includes('machine-grant')) {
-      reason = featureSkipReason([{ name: 'machine-grant', label: 'machine grants' }]);
-    }
+    const lacking = missingFeatures(['machine-grant'], body.features ?? []);
+    if (lacking.length > 0) reason = featureSkipReason(lacking);
   });
 
   test.afterAll(async () => {
@@ -80,6 +82,7 @@ test.describe('server-app layout run to Done', () => {
       await page.getByRole('button', { name: BOARD_NAMES.newTask }).click();
       await page.getByLabel(BOARD_NAMES.prompt).fill(`${title}\n#stub: done`);
       await page.getByLabel(BOARD_NAMES.title).fill(title);
+      await page.getByRole('checkbox', { name: /auto-?done/i }).check();
       await page.getByRole('button', { name: BOARD_NAMES.create }).click();
 
       await expect(cardIn(page, 'done', title)).toBeVisible({ timeout: RUN_TIMEOUT_MS });
@@ -91,7 +94,7 @@ test.describe('server-app layout run to Done', () => {
       await waitForStatus(account, (task as { id: string }).id, 'done');
 
       await cardIn(page, 'done', title).getByRole('link', { name: title }).click();
-      await expect(page.getByText('done', { exact: true }).first()).toBeVisible({
+      await expect(statusBadge(page)).toHaveText(STATUS_LABELS.done, {
         timeout: UI_TIMEOUT_MS,
       });
       await boardLink(page).click();
