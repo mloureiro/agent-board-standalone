@@ -70,10 +70,6 @@ export function filesUnder(root: string): string[] {
   return found;
 }
 
-export function signingKeyFiles(configDir: string): string[] {
-  return filesUnder(configDir).filter((file) => /sign/i.test(path.basename(file)));
-}
-
 export function modeOf(file: string): number {
   return statSync(file).mode & 0o777;
 }

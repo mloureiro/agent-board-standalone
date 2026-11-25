@@ -25,7 +25,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      - run: pnpm catalogue:check
+      - run: pnpm catalogue:check --check-column
 
   sealing-runtimes:
     runs-on: ubuntu-latest
@@ -70,7 +70,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r --if-present run build
-      - run: pnpm --filter @agent-board/e2e e2e:blackbox
+      - run: pnpm --filter @agent-board/e2e e2e:blackbox --strict
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -126,7 +126,7 @@ jobs:
       - env:
           E2E_OUTPUT_DIR: ${{ runner.temp }}/e2e-results
           PROJECT: ${{ matrix.project }}
-        run: pnpm --filter @agent-board/e2e e2e:browser -- --project "$PROJECT"
+        run: pnpm --filter @agent-board/e2e e2e:browser --strict -- --project "$PROJECT"
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

@@ -306,7 +306,16 @@ describe('stub claude', () => {
     const session = start('#stub: ask [{"question":"Which?","options":["a","b"]}]', {
       fakeBoard: true,
     });
-    await until(() => existsSync(session.tmp.path('questions.json')), 'questions file');
+    const questionsFile = session.tmp.path('questions.json');
+    await until(() => {
+      if (!existsSync(questionsFile)) return false;
+      try {
+        JSON.parse(readFileSync(questionsFile, 'utf8'));
+        return true;
+      } catch {
+        return false;
+      }
+    }, 'questions file');
     expect(readFileSync(session.tmp.path('board.log'), 'utf8')).toMatch(
       /^ask stub-task --file \S+/,
     );
