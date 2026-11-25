@@ -332,6 +332,12 @@ importers:
       '@types/pg':
         specifier: ^8.23.1
         version: 8.23.1
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
+      pglite-target:
+        specifier: npm:@electric-sql/pglite@0.6.0
+        version: '@electric-sql/pglite@0.6.0'
 
   apps/mobile:
     dependencies:

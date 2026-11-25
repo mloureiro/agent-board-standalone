@@ -13,3 +13,19 @@ export {
 export { SourceError, type SourceReader, type SourceRow } from './source/reader.js';
 export { SOURCE_TABLES, type SourceTable } from './source/tables.js';
 export { exportRecords, type ExportRecordInput } from './transform/records.js';
+export { runMigration, type RunOptions } from './run/run-command.js';
+export { CountCheckFailure, ImportFailure, RunRefusal } from './run/errors.js';
+export {
+  compareCounts,
+  formatDifferences,
+  type CountDifference,
+  type OwnerCounts,
+} from './run/count-check.js';
+export { parseImportReport, runApiImport, type ImportReport } from './run/import-api.js';
+export {
+  checkOwners,
+  importEnv,
+  parseTarget,
+  refuseHeldTarget,
+  signInRuleOf,
+} from './run/target.js';

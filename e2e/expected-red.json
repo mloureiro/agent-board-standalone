@@ -5,9 +5,7 @@
       "board projects › [cli-039] board projects lists the server's projects",
       "board projects › [cli-039] a default project set on the host receives board schedule without --project"
     ],
-    "blackbox/legacy-dirs.test.ts": "*",
     "blackbox/matrix-refusal.test.ts": "*",
-    "blackbox/migrate.test.ts": "*",
     "blackbox/schedules.test.ts": [
       "[cli-036] board schedule › [cli-036] a key answers created, exists, rescheduled and requeued and always exits 0",
       "[api-077] an after schedule › [api-077] fires once when the upstream task moves from running to done",
@@ -69,7 +67,9 @@
     "browser/board.spec.ts": "*",
     "browser/client-app-bridge.spec.ts": "*",
     "browser/connection.spec.ts": "*",
-    "browser/migrate.spec.ts": "*",
+    "browser/migrate.spec.ts": [
+      "the migrated board in the browser › [migrate-003] the owner passphrase unlocks the migrated board and every task opens"
+    ],
     "browser/new-task.spec.ts": "*",
     "browser/parity.spec.ts": [
       "redirect sign-in › [P-05] SAML redirect sign-in finishes in the tab that started it",

@@ -253,7 +253,14 @@ describe('the CLI converts legacy directories', () => {
 
     expect((await machine.ok('machine.version', {})).legacyDirs).toBe(false);
     expect(counts.matched + counts.unmatched).toBe(before.tasks.length);
-    const afterTasks = (await user.ok('client.tasks.list', {})).tasks;
+    const afterTasks = [
+      ...new Map(
+        [
+          ...(await user.ok('client.tasks.list', {})).tasks,
+          ...(await user.ok('client.tasks.list', { closed: 'true' })).tasks,
+        ].map((task) => [task.id, task]),
+      ).values(),
+    ];
     const taskUses = new Set(
       before.tasks.filter((use) => use.kind === 'task').map((use) => use.id),
     );

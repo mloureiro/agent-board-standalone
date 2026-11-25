@@ -535,7 +535,9 @@ export async function startLegacyDirsProxy(target: string): Promise<LegacyDirsPr
   const server = http.createServer((request, response) => {
     void (async () => {
       const abort = new AbortController();
-      request.on('close', () => abort.abort());
+      response.on('close', () => {
+        if (!response.writableFinished) abort.abort();
+      });
       const chunks: Buffer[] = [];
       for await (const chunk of request) chunks.push(chunk as Buffer);
       const body = Buffer.concat(chunks);
@@ -568,7 +570,9 @@ export async function startLegacyDirsProxy(target: string): Promise<LegacyDirsPr
         response.end();
         return;
       }
-      Readable.fromWeb(upstream.body as import('node:stream/web').ReadableStream).pipe(response);
+      const relayed = Readable.fromWeb(upstream.body as import('node:stream/web').ReadableStream);
+      relayed.on('error', () => response.destroy());
+      relayed.pipe(response);
     })().catch(() => {
       if (!response.headersSent) response.writeHead(502);
       response.end();
