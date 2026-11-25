@@ -19,8 +19,8 @@ export interface Question {
 }
 
 export interface Answer {
-  readonly selected: readonly string[];
-  readonly other?: string;
+  readonly picks: readonly string[];
+  readonly other: string | null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -103,7 +103,7 @@ export function formatAnswers(
       const question = questions?.[index];
       const asked = question ? `${question.header}: ${question.question}` : `Question ${index + 1}`;
       const given =
-        [answer.selected.join(', '), answer.other ?? ''].filter((part) => part !== '').join('; ') ||
+        [answer.picks.join(', '), answer.other ?? ''].filter((part) => part !== '').join('; ') ||
         '(none)';
       return `- ${asked} → ${given}`;
     })
@@ -125,9 +125,9 @@ export function answersOf(opened: string): Answer[] | undefined {
     const list = isRecord(parsed) ? parsed.answers : parsed;
     if (!Array.isArray(list)) return undefined;
     return list.map((item: unknown) => {
-      if (!isRecord(item) || !Array.isArray(item.selected)) throw new Error('shape');
-      const selected = item.selected.filter((label): label is string => typeof label === 'string');
-      return typeof item.other === 'string' ? { selected, other: item.other } : { selected };
+      if (!isRecord(item) || !Array.isArray(item.picks)) throw new Error('shape');
+      const picks = item.picks.filter((label): label is string => typeof label === 'string');
+      return { picks, other: typeof item.other === 'string' ? item.other : null };
     });
   } catch {
     return undefined;
@@ -159,8 +159,8 @@ export function composeAnswers(
   const remaining = [...others];
   const answers = questions.map((question, index): Answer => {
     const chosen = selected[index] ?? [];
-    const other = chosen.length === 0 ? remaining.shift() : undefined;
-    return other === undefined ? { selected: chosen } : { selected: chosen, other };
+    const other = chosen.length === 0 ? (remaining.shift() ?? null) : null;
+    return { picks: chosen, other };
   });
   const leftover = remaining.shift();
   if (leftover !== undefined) {
@@ -168,7 +168,7 @@ export function composeAnswers(
   }
   questions.forEach((question, index) => {
     const answer = answers[index];
-    if (answer === undefined || (answer.selected.length === 0 && answer.other === undefined)) {
+    if (answer === undefined || (answer.picks.length === 0 && answer.other === null)) {
       throw new UsageError(
         `"${question.header}" has no answer: give a --pick or an --other for it`,
       );

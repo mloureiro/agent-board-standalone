@@ -49,7 +49,7 @@ describe('board answer and board dismiss', () => {
       bindings.note({ field: 'note.answers', taskId: 'taskAAAA', author: 'user', kind: 'answer' }),
       note.answers,
     );
-    expect(JSON.parse(answers)).toEqual([{ selected: ['Alpha', 'Gamma'] }]);
+    expect(JSON.parse(answers)).toEqual([{ picks: ['Alpha', 'Gamma'], other: null }]);
     expect(await noteBody(stub, 'taskAAAA')).toContain('Alpha, Gamma');
     expect(stub.tasks.get('taskAAAA')?.openQuestion).toBe(false);
     expect(cli.stdout()).toContain('answered the question on taskAAAA');
@@ -65,7 +65,7 @@ describe('board answer and board dismiss', () => {
       bindings.note({ field: 'note.answers', taskId: 'taskAAAA', author: 'user', kind: 'answer' }),
       note.answers,
     );
-    expect(JSON.parse(answers)).toEqual([{ selected: [], other: 'something else' }]);
+    expect(JSON.parse(answers)).toEqual([{ picks: [], other: 'something else' }]);
   });
 
   it('[cli-028] fills several questions in order: picks by label, Other for the first unanswered', async () => {
@@ -89,7 +89,10 @@ describe('board answer and board dismiss', () => {
       bindings.note({ field: 'note.answers', taskId: 'taskAAAA', author: 'user', kind: 'answer' }),
       note.answers,
     );
-    expect(JSON.parse(answers)).toEqual([{ selected: [], other: 'mine' }, { selected: ['Blue'] }]);
+    expect(JSON.parse(answers)).toEqual([
+      { picks: [], other: 'mine' },
+      { picks: ['Blue'], other: null },
+    ]);
   });
 
   it('[cli-028] refuses a wrong answer with exit 2 before sending anything', async () => {
