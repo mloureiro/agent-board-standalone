@@ -16,6 +16,7 @@ const running: ChildProcess[] = [];
 beforeAll(async () => {
   folder = mkdtempSync(join(tmpdir(), 'board-api-bin-'));
   entry = join(folder, 'main.js');
+  BASE.DATABASE_URL = `pglite://${join(folder, 'data')}`;
   await buildApi(entry);
 }, 60_000);
 
@@ -43,7 +44,7 @@ const run = (args: string[], env: Record<string, string>): Promise<Outcome> =>
     child.on('close', (code) => resolve({ code, stdout, stderr }));
   });
 
-const BASE = { NO_LOGIN_USER: 'owner', DATABASE_URL: 'pglite:///tmp/agent-board-api-test' };
+const BASE = { NO_LOGIN_USER: 'owner', DATABASE_URL: '' };
 
 interface Listening {
   child: ChildProcess;
