@@ -34,12 +34,39 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/client-app/src-tauri
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm catalogue:check --check-column
+
+  mobile-rust:
+    name: mobile (rust)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/mobile/src-tauri
+      - run: pnpm install --frozen-lockfile --filter @agent-board/contract...
+      - run: pnpm --filter @agent-board/contract run build
+      - run: pnpm --filter @agent-board/mobile lint:rust
+      - run: pnpm --filter @agent-board/mobile test:rust
 
   sealing-runtimes:
     runs-on: ubuntu-latest
@@ -207,6 +234,14 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+      - if: matrix.package == 'client-app' || matrix.package == 'mobile'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - if: hashFiles(format('apps/{0}/src-tauri/Cargo.toml', matrix.package)) != ''
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/${{ matrix.package }}/src-tauri
       - run: pnpm install --frozen-lockfile --filter "@agent-board/${{ matrix.package }}..."
       - run: pnpm --filter "@agent-board/${{ matrix.package }}..." --if-present run build
       - run: pnpm --filter "@agent-board/${{ matrix.package }}" run typecheck
