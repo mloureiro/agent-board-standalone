@@ -1,9 +1,9 @@
 import type { SessionState } from '@agent-board/contract';
-import type { FastifyRequest } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import type { ServerContext } from '../context.js';
 import { ApiError } from '../errors.js';
-import { readCredential } from './credentials.js';
+import { clearedSessionCookie, readCredential } from './credentials.js';
 import type { ClientPrincipal, MachinePrincipal } from './principal.js';
 
 const schemeOf = (context: ServerContext): 'http' | 'https' => {
@@ -26,6 +26,7 @@ export const sessionState = async (
 export const authenticateClient = async (
   context: ServerContext,
   request: FastifyRequest,
+  reply: FastifyReply,
 ): Promise<ClientPrincipal> => {
   const { signIn } = context.config;
   if (signIn.mode === 'no-login') return { kind: 'client', owner: signIn.user };
@@ -35,6 +36,8 @@ export const authenticateClient = async (
     if (stored?.expired === false) return { kind: 'client', owner: stored.owner };
     if (stored !== null)
       throw new ApiError('unauthorized', 'your session has expired: sign in again');
+    if (credential.kind === 'session' && signIn.mode === 'login')
+      reply.header('set-cookie', clearedSessionCookie(signIn.scheme));
   }
   throw new ApiError('unauthorized', 'sign in to use the board');
 };

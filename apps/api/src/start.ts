@@ -1,4 +1,6 @@
-import { emptyCredentialStore } from './auth/index.js';
+import { createCredentialStore } from './auth/index.js';
+import { clockFromEnv } from './clock.js';
+import { DEFAULT_SESSION_DAYS } from './modules/sign-in/index.js';
 import type { ServerServices } from './context.js';
 import { ANY_HOST, effectiveHost } from './modules/listen/index.js';
 import { DatabaseRefusal, openDatabase, type OpenDatabase } from './modules/database/index.js';
@@ -25,12 +27,19 @@ const printableHost = (host: string): string => {
 export const startServer = async (env: Env, options: StartOptions = {}): Promise<Started> => {
   const config = loadConfig(env);
   const open = options.openDatabase ?? openDatabase;
+  const clock = clockFromEnv(env);
+  const database = await open(config.database);
   const services: ServerServices = {
-    database: await open(config.database),
-    credentials: emptyCredentialStore,
+    database,
+    credentials: createCredentialStore({
+      database,
+      clock,
+      sessionDays:
+        config.signIn.mode === 'login' ? config.signIn.sessionDays : DEFAULT_SESSION_DAYS,
+    }),
     streams: createOpenStreams(),
   };
-  const app = await createServer(config, services);
+  const app = await createServer(config, services, { clock });
   const host = effectiveHost(config.listen, config.signIn.mode === 'login');
   try {
     await app.listen({ host, port: config.listen.port });

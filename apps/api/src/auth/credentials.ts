@@ -24,6 +24,16 @@ const cookieValue = (header: string | undefined, name: string): string | null =>
   return null;
 };
 
+export const sessionCookie = (
+  scheme: 'http' | 'https',
+  token: string,
+  maxAgeSeconds: number,
+): string =>
+  `${sessionCookieName(scheme)}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}${scheme === 'https' ? '; Secure' : ''}`;
+
+export const clearedSessionCookie = (scheme: 'http' | 'https'): string =>
+  sessionCookie(scheme, '', 0);
+
 export const readCredential = async (
   request: FastifyRequest,
   scheme: 'http' | 'https',
