@@ -1,3 +1,5 @@
+export { draftStore, lastDirectoryStore, textHash } from './drafts.js';
+export type { DraftScope, DraftStore, LastDirectory, LastDirectoryStore } from './drafts.js';
 export { prefixedStore } from './key-value.js';
 export type { KeyValueStore } from './key-value.js';
 export { deviceStore, serverNamespace } from './namespace.js';

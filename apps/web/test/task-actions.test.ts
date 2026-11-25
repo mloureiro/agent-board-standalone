@@ -1041,12 +1041,18 @@ describe('reply box', () => {
     expect(outside.defaultPrevented).toBe(true);
   });
 
-  it('[web-058] never writes the reply draft to web storage', async () => {
-    await world.seed({ id: ID, title: 'Drafting', status: 'needs-me' });
+  it('[web-058] keeps the typed reply only as a draft entry and never the decrypted task text', async () => {
+    await world.seed({
+      id: ID,
+      title: 'Hidden decrypted title',
+      status: 'needs-me',
+      prompt: 'Hidden decrypted prompt',
+    });
     const { user } = openTask();
-    await user.type(await replyBox(), 'Secret draft text');
+    await user.type(await replyBox(), 'Typed draft text');
 
     const stored = JSON.stringify({ ...localStorage }) + JSON.stringify({ ...sessionStorage });
-    expect(stored).not.toMatch(/Secret/);
+    expect(stored).toContain('Typed draft text');
+    expect(stored).not.toMatch(/Hidden decrypted/);
   });
 });

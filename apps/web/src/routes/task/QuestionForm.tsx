@@ -13,9 +13,11 @@ import {
 } from '@mantine/core';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
+import { useDraftStore } from '../../drafts/index.js';
 import {
-  initialPicks,
   isAnswered,
+  restoreAnswerDraft,
+  serializeAnswerDraft,
   toAnswers,
   togglePick,
   typeOther,
@@ -37,6 +39,7 @@ export interface QuestionFormProps {
   readonly noteId: string;
   readonly questions: readonly Question[];
   readonly source: string;
+  readonly draftName: string;
   readonly handover: string;
   readonly focusNote: boolean;
   readonly busy: boolean;
@@ -77,8 +80,12 @@ function Changed(props: {
 
 function Fields(props: QuestionFormProps): ReactNode {
   const { questions, busy } = props;
-  const [choices, setChoices] = useState<readonly Choice[]>(() => initialPicks(questions));
-  const [note, setNote] = useState(props.handover);
+  const drafts = useDraftStore();
+  const [restored] = useState(() =>
+    restoreAnswerDraft(questions, drafts?.read(props.draftName, props.source) ?? null),
+  );
+  const [choices, setChoices] = useState<readonly Choice[]>(restored.choices);
+  const [note, setNote] = useState(props.handover === '' ? (restored.note ?? '') : props.handover);
   const [active, setActive] = useState(0);
   const noteField = useRef<HTMLTextAreaElement>(null);
   const ready = choices.every(
@@ -92,6 +99,12 @@ function Fields(props: QuestionFormProps): ReactNode {
       field?.setSelectionRange(field.value.length, field.value.length);
     }
   }, [props.focusNote]);
+
+  useEffect(() => {
+    const serialized = serializeAnswerDraft(choices, note);
+    if (serialized === '') drafts?.clear(props.draftName);
+    else drafts?.write(props.draftName, serialized, props.source);
+  }, [drafts, props.draftName, props.source, choices, note]);
 
   const update = (index: number, change: (current: Choice) => Choice): void =>
     setChoices((all) => all.map((choice, at) => (at === index ? change(choice) : choice)));
