@@ -102,7 +102,9 @@ async function spawnUntilReady(
   running.child.stdout?.on('data', (chunk: Buffer | string) => log.write(chunk));
   running.child.stderr?.on('data', (chunk: Buffer | string) => log.write(chunk));
   try {
-    return { running, url: await ready };
+    const url = await ready;
+    await new Promise<void>((resolve) => log.write('', () => resolve()));
+    return { running, url };
   } catch (error) {
     await terminate(running, 1_000);
     throw error;
