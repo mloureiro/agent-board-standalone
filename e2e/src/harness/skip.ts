@@ -16,6 +16,13 @@ export function partSkipReason(missing: readonly { part: string; path: string }[
   return `part missing: ${first.part} (${first.path})`;
 }
 
+const UNSERVED_ROUTE = /(\S+) is not served by this build yet/;
+
+export function unservedSkipReason(error: unknown): string | null {
+  const match = UNSERVED_ROUTE.exec(error instanceof Error ? error.message : String(error));
+  return match === null ? null : `part missing: api (${match[1]} not served yet)`;
+}
+
 export function featureSkipReason(missing: readonly { name: string; label: string }[]): string {
   const first = missing[0];
   if (first === undefined) throw new Error('no missing feature to report');

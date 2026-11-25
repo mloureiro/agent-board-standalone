@@ -8,7 +8,7 @@ import { enrolledMachine, type EnrolledMachine } from '../src/fixtures/machines.
 import { createTask, type CreatedTask } from '../src/fixtures/tasks.js';
 import { signedInUser, type BoardUser } from '../src/fixtures/users.js';
 import { missingParts } from '../src/harness/paths.js';
-import { featureSkipReason, partSkipReason } from '../src/harness/skip.js';
+import { featureSkipReason, partSkipReason, unservedSkipReason } from '../src/harness/skip.js';
 import {
   accountRows,
   IMPORT_ORDER,
@@ -49,27 +49,32 @@ describe('moving an account between two servers', () => {
       return;
     }
 
-    const userA = await signedInUser(a);
-    const key = await unlockedKey(a, userA);
-    const tasks = [
-      await createTask(a, userA, key, { prompt: 'first card to move', status: 'todo' }),
-      await createTask(a, userA, key, { prompt: 'second card to move', status: 'backlog' }),
-    ];
-    const machine = await enrolledMachine(a, userA, { key, name: 'mover' });
+    try {
+      const userA = await signedInUser(a);
+      const key = await unlockedKey(a, userA);
+      const tasks = [
+        await createTask(a, userA, key, { prompt: 'first card to move', status: 'todo' }),
+        await createTask(a, userA, key, { prompt: 'second card to move', status: 'backlog' }),
+      ];
+      const machine = await enrolledMachine(a, userA, { key, name: 'mover' });
 
-    const userB = await signedInUser(b);
-    const keys = await userA.ok('client.keys.get', {});
-    if (keys.setup === null) throw new Error('the source account holds no key setup');
-    await userB.ok('client.keys.setup', keys.setup);
-    for (const table of IMPORT_ORDER) {
-      const rows = await accountRows(userA, table);
-      if (rows.length === 0) continue;
-      const result = await importAccountTable(userB, key.keyId, table, rows);
-      expect(result.invalid, table).toBe(0);
-      expect(result.orphaned, table).toBe(0);
-      expect(result.inserted + result.existing, table).toBe(rows.length);
+      const userB = await signedInUser(b);
+      const keys = await userA.ok('client.keys.get', {});
+      if (keys.setup === null) throw new Error('the source account holds no key setup');
+      await userB.ok('client.keys.setup', keys.setup);
+      for (const table of IMPORT_ORDER) {
+        const rows = await accountRows(userA, table);
+        if (rows.length === 0) continue;
+        const result = await importAccountTable(userB, key.keyId, table, rows);
+        expect(result.invalid, table).toBe(0);
+        expect(result.orphaned, table).toBe(0);
+        expect(result.inserted + result.existing, table).toBe(rows.length);
+      }
+      moved = { a, b, userA, userB, key, tasks, machine };
+    } catch (error) {
+      reason = unservedSkipReason(error);
+      if (reason === null) throw error;
     }
-    moved = { a, b, userA, userB, key, tasks, machine };
   }, SETUP_TIMEOUT_MS);
 
   afterAll(async () => {

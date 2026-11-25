@@ -16,7 +16,6 @@
     ],
     "blackbox/harness.test.ts": [
       "[harness] fixtures on a no-login board › [harness] the no-login user, key, task and enrolled machine work together",
-      "[harness] fixtures on a no-login board › [harness] the version proxy rewrites the version a real API answers",
       "[harness] fixtures on a login board › [harness] a signed-in user holds a cookie session and a client token user holds abc_"
     ],
     "blackbox/legacy-dirs.test.ts": "*",

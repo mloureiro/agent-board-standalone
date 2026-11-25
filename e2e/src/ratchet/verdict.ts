@@ -32,7 +32,12 @@ function verdict(level: Level, result: TestResult, message: string): Verdict {
 
 export const FILE_FAILED_PREFIX = '(file failed)';
 
-export function judgeResult(result: TestResult, listed: boolean, options: VerdictOptions): Verdict {
+export function judgeResult(
+  result: TestResult,
+  listed: boolean,
+  options: VerdictOptions,
+  followsFailure = false,
+): Verdict {
   if (titleOf(result).startsWith(FILE_FAILED_PREFIX)) {
     return verdict('fail', result, 'the file failed to run');
   }
@@ -44,7 +49,7 @@ export function judgeResult(result: TestResult, listed: boolean, options: Verdic
     if (result.outcome === 'skipped') {
       const kind = skipKind(result.skipReason);
       if (kind === 'part' || kind === 'feature') return verdict('ok', result, 'red as listed');
-      if (options.matrixCell && result.skipReason === null) {
+      if (result.skipReason === null && (options.matrixCell || followsFailure)) {
         return verdict('ok', result, 'red as listed');
       }
       return verdict(
@@ -89,8 +94,18 @@ export function judgeRun(
   scope: RunScope,
   options: VerdictOptions,
 ): Verdict[] {
+  const failedIn = new Set(
+    results
+      .filter((result) => result.outcome === 'failed')
+      .map((result) => `${result.project}\0${result.file}`),
+  );
   const verdicts = results.map((result) =>
-    judgeResult(result, isListed(expected, result), options),
+    judgeResult(
+      result,
+      isListed(expected, result),
+      options,
+      failedIn.has(`${result.project}\0${result.file}`),
+    ),
   );
   const staleLevel: Level = options.strict ? 'fail' : 'warn';
   const projectsRun = new Set(results.map((result) => result.project));
