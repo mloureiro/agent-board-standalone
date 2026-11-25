@@ -16,12 +16,30 @@ export interface LaunchOptions {
   readonly auth: AuthMode;
   readonly label?: string;
   readonly database?: DatabaseKind;
+  readonly postgresAllowed?: boolean;
   readonly features?: readonly Feature[];
   readonly web?: boolean;
   readonly port?: number;
   readonly env?: Readonly<Record<string, string>>;
   readonly readyTimeoutMs?: number;
   readonly onStop?: () => Promise<void>;
+}
+
+export const POSTGRES_PROJECT = 'chromium-desktop';
+
+export function postgresAllowedIn(project: string): boolean {
+  return project === POSTGRES_PROJECT;
+}
+
+const PORT_RACE = /EADDRINUSE|address already in use|not ready after|exited before it was ready/i;
+
+export async function retryOnPortRace<T>(attempt: () => Promise<T>): Promise<T> {
+  try {
+    return await attempt();
+  } catch (error) {
+    if (!PORT_RACE.test(error instanceof Error ? error.message : String(error))) throw error;
+    return attempt();
+  }
 }
 
 export function hostOf(auth: AuthMode): string {
@@ -41,6 +59,13 @@ async function readServerFeatures(url: string): Promise<string[]> {
     : [];
 }
 
+export function launchDatabaseKind(
+  options: Pick<LaunchOptions, 'database' | 'postgresAllowed'>,
+  env: NodeJS.ProcessEnv = process.env,
+): DatabaseKind {
+  return options.database ?? resolveDatabaseKind({}, options.postgresAllowed ?? true, env);
+}
+
 export async function launchBoard(options: LaunchOptions): Promise<Board> {
   const tmp = createTmp(options.label ?? 'board');
   let database: Database | null = null;
@@ -52,7 +77,7 @@ export async function launchBoard(options: LaunchOptions): Promise<Board> {
     tmp.remove();
   };
   try {
-    database = await createDatabase(options.database ?? resolveDatabaseKind({}, true), tmp);
+    database = await createDatabase(launchDatabaseKind(options), tmp);
     api = await startApi({
       tmp,
       database,
@@ -92,7 +117,11 @@ export interface BoardPair {
   stop(): Promise<void>;
 }
 
-export async function startBoardPair(options: BoardPairOptions): Promise<BoardPair> {
+export function startBoardPair(options: BoardPairOptions): Promise<BoardPair> {
+  return retryOnPortRace(() => startBoardPairOnce(options));
+}
+
+async function startBoardPairOnce(options: BoardPairOptions): Promise<BoardPair> {
   const [portA, portB] = [await freePort(), await freePort()];
   const origins = options.allowOrigins ?? true;
   const launch = (port: number, otherPort: number, label: string): Promise<Board> =>

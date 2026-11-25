@@ -21,7 +21,7 @@ import {
 
 test.describe('web storage holds volatile state only', () => {
   const harness = useBoard({
-    parts: ['api', 'web', 'cli'],
+    parts: ['api', 'web'],
     features: ['settings-document'],
     auth: 'no-login',
   });

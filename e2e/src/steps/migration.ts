@@ -61,7 +61,7 @@ export interface Fixture {
 }
 
 export function fixtureSkipReason(): string {
-  return `fixture missing: ${FIXTURE_RELATIVE_DIR}/manifest.json (migration tool fixture)`;
+  return partSkipReason([{ part: 'migrate', path: `${FIXTURE_RELATIVE_DIR}/manifest.json` }]);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -305,8 +305,7 @@ export async function openMigrated(options: MigratedOptions): Promise<MigratedBo
       env: { NO_LOGIN_USER: owner },
       ...(options.web === true ? { webRoot: partPath('web') } : {}),
     };
-    const port = await freePort();
-    const env = apiEnv(apiOptions, port);
+    const env = apiEnv(apiOptions, await freePort());
     const imported =
       options.via === 'import'
         ? await runProcess(partPath('api'), ['import', '--file', source.path], {
@@ -329,7 +328,7 @@ export async function openMigrated(options: MigratedOptions): Promise<MigratedBo
     if (imported.code !== 0) {
       throw new Error(`the ${options.via} exited ${imported.code}\n${outputOf(imported)}`);
     }
-    api = await startApi({ ...apiOptions, port });
+    api = await startApi(apiOptions).catch(() => startApi(apiOptions));
     const missingList = missingFeatures(options.features ?? [], await readServedFeatures(api.url));
     if (missingList.length > 0) {
       await stop();
@@ -387,6 +386,7 @@ export interface ExistingMachine {
   readonly tmp: Tmp;
   readonly tokenFile: string;
   readonly dataKeyFile: string;
+  readonly stubLog: string;
   readonly url: string;
   cli(
     args: readonly string[],
@@ -415,10 +415,11 @@ export function existingMachine(
   const tokenFile = writeSecretFile(tmp.path('secrets', 'token'), machine.token);
   const dataKeyFile = writeSecretFile(tmp.path('secrets', 'data-key'), key.dataKey);
   const cliBoard = { tmp };
+  const stubLog = tmp.path('stub.log');
   const credential = machineToken(machine.token);
   const server: ServerRef = { url: board.url };
   const run: ExistingMachine['cli'] = (args, options = {}) =>
-    runCli(args, { board: cliBoard, ...options });
+    runCli(args, { board: cliBoard, env: { STUB_CLAUDE_LOG: stubLog }, ...options });
   return {
     name: machine.name,
     token: machine.token,
@@ -426,9 +427,10 @@ export function existingMachine(
     tmp,
     tokenFile,
     dataKeyFile,
+    stubLog,
     url: board.url,
     cli: run,
-    start: (args) => startCli(args, { board: cliBoard }),
+    start: (args) => startCli(args, { board: cliBoard, env: { STUB_CLAUDE_LOG: stubLog } }),
     init: (url = board.url, extra = []) =>
       run([
         'init',

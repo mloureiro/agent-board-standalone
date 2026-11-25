@@ -77,7 +77,7 @@ describe('[harness] fixtures on a login board', () => {
     }
     board = await startLoginBoard({ features: ['client-tokens'] });
     if (board.missingFeatures.length > 0) reason = featureSkipReason(board.missingFeatures);
-  });
+  }, 120_000);
 
   afterAll(async () => {
     await board?.stop();

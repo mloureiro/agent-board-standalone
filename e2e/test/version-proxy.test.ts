@@ -116,6 +116,24 @@ describe('version proxy', () => {
   });
 });
 
+describe('retarget', () => {
+  it('moves the proxy to another upstream on the same port and stamps what it saw', async () => {
+    const second = await startVersionProxy({ target: api.url, override: { contract: 9 } });
+    const moving = await startVersionProxy({ target: api.url });
+    try {
+      expect((await call(moving, 'public.version', {}, anonymous)).body?.contract).toBe(1);
+      const port = moving.port;
+      moving.retarget(second.url);
+      expect(moving.port).toBe(port);
+      expect((await call(moving, 'public.version', {}, anonymous)).body?.contract).toBe(9);
+      expect(moving.seen.every((entry) => entry.at > 0)).toBe(true);
+    } finally {
+      await moving.stop();
+      await second.stop();
+    }
+  });
+});
+
 describe('patchVersion', () => {
   it('adds and removes features around a base list', () => {
     expect(

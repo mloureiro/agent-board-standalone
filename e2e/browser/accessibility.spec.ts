@@ -2,6 +2,8 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
 import { useBoard } from '../src/harness/playwright.js';
+import { hideAndShowTab } from '../src/steps/board.js';
+import { settleFrames } from '../src/steps/polling.js';
 import {
   NAMES,
   NOT_ANSWERING,
@@ -25,7 +27,6 @@ const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const SCHEMES = ['light', 'dark'] as const;
 const TAB_LIMIT = 150;
 const OUTAGE_TIMEOUT_MS = 60_000;
-const QUIET_MS = 4_000;
 
 async function violationsOf(page: Page): Promise<string[]> {
   const result = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
@@ -243,6 +244,7 @@ const PAGES: readonly PageUnderTest[] = [
       await createSchedule(world, uniqueMarker('a11y-schedule'), 'a prompt for the a11y schedule');
       await openBoard(page, world);
       await navigate(page, NAMES.schedules);
+      await expect(page).toHaveURL(/schedules/i, { timeout: UI_TIMEOUT_MS });
       await expect(page.getByRole('main')).toBeVisible({ timeout: UI_TIMEOUT_MS });
     },
   },
@@ -251,6 +253,7 @@ const PAGES: readonly PageUnderTest[] = [
     open: async (page, world) => {
       await openBoard(page, world);
       await navigate(page, NAMES.settings);
+      await expect(page).toHaveURL(/settings/i, { timeout: UI_TIMEOUT_MS });
       await expect(page.getByRole('main')).toBeVisible({ timeout: UI_TIMEOUT_MS });
     },
   },
@@ -288,35 +291,6 @@ test.describe('accessibility of the primary pages', () => {
       await expectKeyboardOperable(page);
     });
   }
-
-  test('[web-080] the not-answering banner is announced once and not again after a tab switch', async ({
-    page,
-  }) => {
-    const w = await world.get();
-    await openBoard(page, w);
-    await watchAnnouncements(page);
-    try {
-      await w.board.api.stop();
-      await triggerRefetch(page);
-      await expect(
-        page
-          .locator('[aria-live]:not([aria-live="off"]), [role="status"], [role="alert"]')
-          .filter({ hasText: NOT_ANSWERING })
-          .first(),
-      ).toBeVisible({ timeout: OUTAGE_TIMEOUT_MS });
-      await expect.poll(() => announcements(page)).toBe(1);
-
-      const other = await page.context().newPage();
-      await other.bringToFront();
-      await page.bringToFront();
-      await other.close();
-      await triggerRefetch(page);
-      await page.waitForTimeout(QUIET_MS);
-      expect(await announcements(page)).toBe(1);
-    } finally {
-      await w.board.api.restart();
-    }
-  });
 });
 
 test.describe('accessibility of the sign-in page', () => {
@@ -341,5 +315,39 @@ test.describe('accessibility of the sign-in page', () => {
       timeout: UI_TIMEOUT_MS,
     });
     await expectKeyboardOperable(page);
+  });
+});
+
+test.describe('accessibility of the connection banner on a board of its own', () => {
+  test.describe.configure({ timeout: 180_000 });
+  const harness = useBoard({ parts: ['api', 'web', 'cli'], features: [], auth: 'no-login' });
+  const world = useWorld(harness, { listener: false });
+
+  test('[web-080] the not-answering banner is announced once and not again after a tab switch', async ({
+    page,
+  }) => {
+    const w = await world.get();
+    await openBoard(page, w);
+    await watchAnnouncements(page);
+    try {
+      await w.board.api.stop();
+      await triggerRefetch(page);
+      await expect(
+        page
+          .locator('[aria-live]:not([aria-live="off"]), [role="status"], [role="alert"]')
+          .filter({ hasText: NOT_ANSWERING })
+          .first(),
+      ).toBeVisible({ timeout: OUTAGE_TIMEOUT_MS });
+      await expect.poll(() => announcements(page)).toBe(1);
+
+      await hideAndShowTab(page);
+      const retried = page.waitForEvent('requestfailed');
+      await triggerRefetch(page);
+      await retried;
+      await settleFrames(page);
+      expect(await announcements(page)).toBe(1);
+    } finally {
+      await w.board.api.restart();
+    }
   });
 });

@@ -86,13 +86,8 @@ test.describe('[web-067] Schedules page', () => {
   };
 
   const pickProject = async (page: Page, name: RegExp): Promise<void> => {
-    await page.getByRole('button', { name: NAMES.projectSwitcher }).click();
-    await page
-      .getByRole('option', { name })
-      .or(page.getByRole('menuitem', { name }))
-      .or(page.getByRole('menuitemradio', { name }))
-      .first()
-      .click();
+    await page.getByRole('combobox', { name: NAMES.projectFilter }).click();
+    await page.getByRole('option', { name }).click();
   };
 
   const rowOf = (page: Page, title: string) =>

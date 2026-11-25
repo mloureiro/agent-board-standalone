@@ -1,9 +1,9 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, describe, expect, it } from 'vitest';
 
-import { startApi, type ApiHandle } from '../src/harness/api.js';
+import { apiEnv, startApi, type ApiHandle } from '../src/harness/api.js';
 import { createPgliteDatabase } from '../src/harness/database.js';
 import { E2E_ROOT } from '../src/harness/paths.js';
 import { createTmp, type Tmp } from '../src/harness/tmp.js';
@@ -113,5 +113,24 @@ describe('startApi', () => {
     expect(api.host).toBe('localhost');
     expect(api.env.PUBLIC_URL).toBe(`http://localhost:${api.port}`);
     expect(api.env.ALLOWED_HOSTS).toBe('localhost');
+  });
+});
+
+describe('apiEnv', () => {
+  const tmp = createTmp('api-env');
+  const base = { tmp, database: createPgliteDatabase(tmp) };
+  afterAll(() => tmp.remove());
+
+  it('sets the no-login user for a no-login board', () => {
+    expect(apiEnv({ ...base, auth: 'no-login' }, 1).NO_LOGIN_USER).toBe('e2e-owner');
+  });
+
+  it('lets the caller choose the no-login user', () => {
+    const env = apiEnv({ ...base, auth: 'no-login', env: { NO_LOGIN_USER: 'someone' } }, 1);
+    expect(env.NO_LOGIN_USER).toBe('someone');
+  });
+
+  it('sets no no-login user for a login board', () => {
+    expect(apiEnv({ ...base, auth: 'login' }, 1).NO_LOGIN_USER).toBeUndefined();
   });
 });

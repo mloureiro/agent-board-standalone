@@ -92,6 +92,64 @@ describe('ratchet runRunner', () => {
     expect(outcome.verdicts[0]?.message).toContain('unlisted test skipped: part missing');
   });
 
+  it('[repo-009] fails a Playwright run that reports global errors', () => {
+    const outcome = runRunner(
+      'playwright',
+      [],
+      options,
+      {},
+      {
+        root,
+        expectedFile,
+        spawn: (_args, env) => {
+          writeFileSync(
+            env.E2E_REPORT ?? '',
+            JSON.stringify({
+              config: {},
+              suites: [],
+              errors: [{ message: 'import failed\n at z' }],
+            }),
+          );
+        },
+      },
+    );
+    expect(outcome.code).toBe(1);
+    expect(outcome.verdicts[0]?.message).toBe('playwright reported an error: import failed');
+  });
+
+  it('[repo-009] fails a Vitest run whose file crashed in a hook', () => {
+    const outcome = runRunner(
+      'vitest',
+      [],
+      options,
+      {},
+      {
+        root,
+        expectedFile,
+        spawn: (args) => {
+          const flag = args.find((arg) => arg.startsWith('--outputFile.json=')) ?? '';
+          writeFileSync(
+            flag.split('=')[1] ?? '',
+            JSON.stringify({
+              testResults: [
+                {
+                  name: path.join(root, 'blackbox/h.test.ts'),
+                  status: 'failed',
+                  message: 'the board is not started',
+                  assertionResults: [],
+                },
+              ],
+            }),
+          );
+        },
+      },
+    );
+    expect(outcome.code).toBe(1);
+    expect(outcome.verdicts.map((entry) => entry.message).join('\n')).toContain(
+      '(file failed) the board is not started',
+    );
+  });
+
   it('[repo-009] fails when the runner wrote no report', () => {
     const outcome = runRunner(
       'vitest',

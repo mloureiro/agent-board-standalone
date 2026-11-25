@@ -1,4 +1,4 @@
-import type { Browser, BrowserContext, Page } from '@playwright/test';
+import { expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
 
 import type { Feature } from '@agent-board/contract';
 
@@ -18,7 +18,7 @@ export const HANDOFF_EXPIRY_SECONDS = 10 * 60;
 export const HANDOFF_CODE_PATTERN = /^[A-Z0-9]{4}-[A-Z0-9]{4}$/;
 export const CLIENT_TOKEN_PATTERN = /abc_[A-Za-z0-9_-]{43}/;
 export const SESSION_TOKEN_PATTERN = /^abs_[A-Za-z0-9_-]{43}$/;
-export const SIGN_UP_TOKEN = 'e2e-signup-token';
+export const SIGN_UP_TOKEN = 'e2e-signup-token-0123456789abcdef';
 export const HANDOFF_BUTTON = /^sign in with your browser$/i;
 
 export interface SignInBoardDeclaration {
@@ -230,26 +230,37 @@ export function watchMainFrame(page: Page): WatchedNavigations {
   return { urls, stop: () => page.off('framenavigated', listener) };
 }
 
-export function countRequests(page: Page, pathname: string): { count(): number } {
+export interface CountedRequests {
+  count(): number;
+  settled(): Promise<void>;
+}
+
+export function countRequests(page: Page, pathname: string): CountedRequests {
   let seen = 0;
+  let inFlight = 0;
+  const matches = (url: string): boolean => new URL(url).pathname === pathname;
   page.on('request', (request) => {
-    if (new URL(request.url()).pathname === pathname) seen += 1;
+    if (!matches(request.url())) return;
+    seen += 1;
+    inFlight += 1;
   });
-  return { count: () => seen };
+  const done = (request: { url(): string }): void => {
+    if (matches(request.url())) inFlight -= 1;
+  };
+  page.on('requestfinished', done);
+  page.on('requestfailed', done);
+  return {
+    count: () => seen,
+    settled: async () => {
+      await expect.poll(() => inFlight).toBe(0);
+    },
+  };
 }
 
 export async function shownHandoffCode(page: Page): Promise<string> {
   const text = (await page.locator('body').innerText()).match(/\b[A-Z0-9]{4}-[A-Z0-9]{4}\b/);
   if (text === null) throw new Error('the page shows no hand-off code');
   return text[0];
-}
-
-export async function addServerInClient(page: Page, address: string, name: string): Promise<void> {
-  await page.getByRole('button', { name: /add (a )?server/i }).click();
-  await page.getByLabel(/address|url/i).fill(address);
-  const nameField = page.getByLabel(/^name$/i);
-  if (await nameField.count()) await nameField.fill(name);
-  await page.getByRole('button', { name: /^(add|save|connect)( server)?$/i }).click();
 }
 
 export async function signUpWithPasskey(

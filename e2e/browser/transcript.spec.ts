@@ -107,7 +107,7 @@ test.describe('transcript drawer and context bar', () => {
     const w = await world.get();
     const marker = 'live-transcript-marker';
     const task = await newTask(w, {
-      prompt: `#stub: sleep 5\n#stub: tool Late\n#stub: sleep 60\n${marker}`,
+      prompt: `#stub: sleep 25\n#stub: tool Late\n#stub: sleep 60\n${marker}`,
       title: marker,
     });
     await waitForStatus(w, task.id, 'running');

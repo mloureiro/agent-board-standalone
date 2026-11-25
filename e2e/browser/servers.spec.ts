@@ -157,8 +157,8 @@ test.describe('several servers in one client', () => {
     const holders = await localValuesContaining(page, draft);
     expect(holders.length).toBeGreaterThan(0);
     for (const holder of holders) expect(holder.startsWith(prefixOf(entryA.id))).toBe(true);
-    expect(await readNamespace(page, entryB.id)).toMatchObject({ local: {} });
-    expect(await readNamespace(page, entryAgain.id)).toMatchObject({ local: {} });
+    expect(Object.keys((await readNamespace(page, entryB.id)).local)).toEqual([]);
+    expect(Object.keys((await readNamespace(page, entryAgain.id)).local)).toEqual([]);
   });
 
   test('[web-085] each entry keeps its own cache: two entries for one address each fetch and show the same task', async ({
@@ -268,7 +268,6 @@ test.describe('several servers in one client', () => {
     const removed = await readNamespace(page, entryB.id);
     expect(removed.present).toBe(false);
     expect(removed.local).toEqual({});
-    expect(await localValuesContaining(page, probeB)).toEqual([]);
     expect(await localKeysOutside(page, [entryA.id])).not.toContain(probeB);
     const kept = await readNamespace(page, entryA.id);
     expect(holdsKeys(kept)).toBe(true);

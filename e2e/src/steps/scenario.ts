@@ -9,15 +9,17 @@ import { test, type Browser, type BrowserContext, type Locator, type Page } from
 import type { RouteOutput } from '../client/contract-client.js';
 import { unlockInPage } from '../fixtures/browser.js';
 import { unlockedKey, type UnlockedKey } from '../fixtures/keys.js';
+import { postgresAllowedIn } from '../fixtures/boards.js';
 import { startServerAppLayout, type ServerAppLayout } from '../fixtures/server-app-layout.js';
 import { startLoginBoard, type LoginBoard } from '../fixtures/login-board.js';
 import { enrolledMachine, type EnrolledMachine } from '../fixtures/machines.js';
 import type { BoardUser } from '../fixtures/users.js';
-import { resolveDatabaseKind, type Board } from '../harness/board.js';
-import { missingParts, partPath, type PartName } from '../harness/paths.js';
-import { runProcess, type RunResult } from '../harness/run.js';
+import { missingFeatures, type Board } from '../harness/board.js';
+import { missingParts, type PartName } from '../harness/paths.js';
 import { featureSkipReason, partSkipReason, recordSkip } from '../harness/skip.js';
 import type { RunningCli } from '../harness/cli.js';
+import { eventually, runIn } from './polling.js';
+import { NAMES as TASK_PAGE, panelButton, questionForm, replyBox } from './task-page.js';
 
 export const NAMES = {
   newTask: /^new task$/i,
@@ -25,14 +27,10 @@ export const NAMES = {
   title: /title/i,
   directory: /directory/i,
   createTask: /^create( task)?$/i,
-  other: /other/i,
-  answer: /^(answer|submit)$/i,
-  reply: /reply/i,
-  sendReply: /^(send|reply)$/i,
   settings: /^settings$/i,
   notifications: /notifications/i,
-  projectSwitcher: /project/i,
-  allProjects: /all projects/i,
+  projectFilter: /^project( filter)?$/i,
+  allProjects: /^all projects$/i,
 } as const;
 
 export const SETTINGS_PAGES = {
@@ -41,44 +39,6 @@ export const SETTINGS_PAGES = {
   notifications: /^notifications$/i,
   account: /^account$/i,
 } as const;
-
-export interface PollOptions {
-  readonly label: string;
-  readonly timeoutMs?: number;
-  readonly intervalMs?: number;
-}
-
-export async function eventually<T>(
-  read: () => Promise<T>,
-  accept: (value: T) => boolean | Promise<boolean>,
-  options: PollOptions,
-): Promise<T> {
-  const deadline = Date.now() + (options.timeoutMs ?? 60_000);
-  const interval = options.intervalMs ?? 500;
-  let last: T | undefined;
-  for (;;) {
-    last = await read();
-    if (await accept(last)) return last;
-    if (Date.now() > deadline) {
-      throw new Error(`${options.label} did not happen: ${JSON.stringify(last)}`);
-    }
-    await new Promise((resolve) => setTimeout(resolve, interval));
-  }
-}
-
-export function runIn(
-  machine: Pick<EnrolledMachine, 'env'>,
-  cwd: string,
-  args: readonly string[],
-  options: { readonly stdin?: string; readonly timeoutMs?: number } = {},
-): Promise<RunResult> {
-  return runProcess(partPath('cli'), args, {
-    env: machine.env,
-    cwd,
-    ...(options.stdin === undefined ? {} : { stdin: options.stdin }),
-    ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
-  });
-}
 
 export function escapeRegExp(text: string): RegExp {
   return new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
@@ -221,7 +181,6 @@ export interface LoginBoardHandle {
 }
 
 const LOGIN_START_TIMEOUT_MS = 120_000;
-const POSTGRES_PROJECT = 'chromium-desktop';
 
 export function useLoginBoard(declaration: LoginBoardDeclaration): LoginBoardHandle {
   let board: LoginBoard | null = null;
@@ -239,7 +198,7 @@ export function useLoginBoard(declaration: LoginBoardDeclaration): LoginBoardHan
       web: declaration.parts.includes('web'),
       features: declaration.features,
       passkeys: declaration.passkeys === true,
-      database: resolveDatabaseKind({}, testInfo.project.name === POSTGRES_PROJECT),
+      postgresAllowed: postgresAllowedIn(testInfo.project.name),
     });
     if (board.missingFeatures.length > 0) reason = featureSkipReason(board.missingFeatures);
   });
@@ -271,6 +230,7 @@ export function useLoginBoard(declaration: LoginBoardDeclaration): LoginBoardHan
 
 export interface ServerAppDeclaration {
   readonly parts: readonly PartName[];
+  readonly features?: readonly Feature[];
 }
 
 export interface ServerAppHandle {
@@ -290,6 +250,11 @@ export function useServerAppLayout(declaration: ServerAppDeclaration): ServerApp
       return;
     }
     layout = await startServerAppLayout({ web: declaration.parts.includes('web') });
+    const served = await fetch(`${layout.url}/api/version`).then(
+      (response) => response.json() as Promise<{ features?: string[] }>,
+    );
+    const lacking = missingFeatures(declaration.features ?? [], served.features ?? []);
+    if (lacking.length > 0) reason = featureSkipReason(lacking);
   });
 
   test.afterAll(async () => {
@@ -440,16 +405,19 @@ export async function runScenario(input: ScenarioInput): Promise<ScenarioResult>
 
   await settle(user, taskId, (detail) => detail.task.openQuestion, 'the run asks its question');
   await page.getByText(title).first().click();
-  await page.getByLabel(NAMES.other).fill(answer);
-  await page.getByRole('button', { name: NAMES.answer }).click();
+  const questionPanel = questionForm(page);
+  await questionPanel
+    .getByRole('textbox', { name: TASK_PAGE.questionOther, exact: true })
+    .fill(answer);
+  await questionPanel.getByRole('button', { name: TASK_PAGE.submitAnswer, exact: true }).click();
   await settle(
     user,
     taskId,
     (detail) => detail.task.status === 'needs-me' && !detail.task.openQuestion,
     'the run ends after the answer',
   );
-  await page.getByLabel(NAMES.reply).fill(reply);
-  await page.getByRole('button', { name: NAMES.sendReply }).click();
+  await replyBox(page).fill(reply);
+  await panelButton(page, TASK_PAGE.sendAndContinue).click();
   await settle(
     user,
     taskId,

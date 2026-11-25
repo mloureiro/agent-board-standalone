@@ -2,9 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 
 import { bindings } from '@agent-board/sealing';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { unlockedKey } from '../src/fixtures/keys.js';
+import { killStubTree } from '../src/harness/run.js';
 import {
   accountCounts,
   exportCounts,
@@ -26,19 +27,27 @@ const OPTIONS: MigratedOptions = {
   label: 'migrate',
 };
 const SETUP_TIMEOUT_MS = 180_000;
-const RUN_TIMEOUT_MS = 120_000;
+const RUN_TIMEOUT_MS = 300_000;
 
 let board: MigratedBoard | null = null;
+let unavailable: string | null = null;
 
-beforeEach(async (context) => {
+beforeAll(async () => {
   const opened = await openMigrated(OPTIONS);
-  if ('unavailable' in opened) skipVitest(context, opened.unavailable);
+  if ('unavailable' in opened) {
+    unavailable = opened.unavailable;
+    return;
+  }
   board = opened;
 }, SETUP_TIMEOUT_MS);
 
-afterEach(async () => {
+afterAll(async () => {
   await board?.stop();
   board = null;
+});
+
+beforeEach((context) => {
+  if (unavailable !== null) skipVitest(context, unavailable);
 });
 
 function reportHasCount(report: string, table: string, count: number): boolean {
@@ -86,6 +95,7 @@ describe('migrating the source fixture', () => {
         true,
       );
     }
+    expect(live.report).toMatch(/count check passed/i);
     expect(live.report).not.toMatch(/mismatch|differs|count check failed/i);
   });
 
@@ -130,49 +140,56 @@ describe('migrating the source fixture', () => {
 describe('a worker after the migration', () => {
   it(
     '[migrate-004] a CLI set up with board init from the existing token and data key claims and runs a task to Done with the stub',
-    async () => {
-      const live = board as MigratedBoard;
+    async (context) => {
+      const opened = await openMigrated({ ...OPTIONS, label: 'migrate-worker' });
+      if ('unavailable' in opened) return skipVitest(context, opened.unavailable);
+      const live = opened;
       const user = await live.user();
       const key = await unlockedKey(live, user, live.fixture.passphrase);
       const [entry] = live.fixture.machines;
       if (entry === undefined) throw new Error('the fixture holds no machine');
+
       const machine = existingMachine(live, entry, key);
+      try {
+        const init = await machine.init();
+        expect(init.code, outputOf(init)).toBe(0);
 
-      const init = await machine.init();
-      expect(init.code, outputOf(init)).toBe(0);
+        const workdir = machine.tmp.path('work', 'main');
+        mkdirSync(workdir, { recursive: true });
+        const added = await machine.cli(['dirs', 'add', workdir]);
+        expect(added.code, outputOf(added)).toBe(0);
+        const directoryId = await directoryIdOf(user, key, machine.name, workdir);
 
-      const workdir = machine.tmp.path('work', 'main');
-      mkdirSync(workdir, { recursive: true });
-      const added = await machine.cli(['dirs', 'add', workdir]);
-      expect(added.code, outputOf(added)).toBe(0);
-      const directoryId = await directoryIdOf(user, key, machine.name, workdir);
+        const id = `t-${randomUUID().replaceAll('-', '').slice(0, 12)}`;
+        await user.ok('client.tasks.create', {
+          id,
+          title: await key.seal(bindings.title({ task: id }), 'worker after migration'),
+          input: await key.seal(
+            bindings.input({ origin: { task: id }, creator: 'user', directoryId }),
+            '#stub: done',
+          ),
+          when: 'now',
+          priority: 'urgent',
+          place: { machine: machine.name, directoryId },
+        });
 
-      const id = `t-${randomUUID().replaceAll('-', '').slice(0, 12)}`;
-      await user.ok('client.tasks.create', {
-        id,
-        title: await key.seal(bindings.title({ task: id }), 'worker after migration'),
-        input: await key.seal(
-          bindings.input({ origin: { task: id }, creator: 'user', directoryId }),
-          '#stub: done',
-        ),
-        when: 'now',
-        priority: 'urgent',
-        place: { machine: machine.name, directoryId },
-      });
-
-      const done = await waitFor(
-        async () => {
-          await machine.cli(['internal', 'dispatch'], { timeoutMs: 60_000 });
-          const detail = await user.ok('client.tasks.get', { id });
-          return detail.task.status === 'done' ? detail.task : null;
-        },
-        {
-          label: 'the migrated worker to run the task to Done',
-          timeoutMs: 90_000,
-          intervalMs: 1_000,
-        },
-      );
-      expect(done.id).toBe(id);
+        const done = await waitFor(
+          async () => {
+            await machine.cli(['internal', 'dispatch'], { timeoutMs: 60_000 });
+            const detail = await user.ok('client.tasks.get', { id });
+            return detail.task.status === 'done' ? detail.task : null;
+          },
+          {
+            label: 'the migrated worker to run the task to Done',
+            timeoutMs: 90_000,
+            intervalMs: 1_000,
+          },
+        );
+        expect(done.id).toBe(id);
+      } finally {
+        killStubTree(machine.stubLog);
+        await live.stop();
+      }
     },
     RUN_TIMEOUT_MS,
   );

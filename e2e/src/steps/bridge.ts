@@ -3,16 +3,15 @@ import { expect, test, type Browser, type BrowserContext, type Page } from '@pla
 
 import { createBridgeHost, type BridgeHost } from '../fakes/bridge/host.js';
 import { approveHandoff } from '../fixtures/browser.js';
+import { postgresAllowedIn } from '../fixtures/boards.js';
 import { startLoginBoard, type LoginBoard } from '../fixtures/login-board.js';
 import { unlockedKey } from '../fixtures/keys.js';
 import { createTask, type CreatedTask } from '../fixtures/tasks.js';
 import { signedInUser, type BoardUser } from '../fixtures/users.js';
-import { resolveDatabaseKind } from '../harness/board.js';
 import { missingParts, type PartName } from '../harness/paths.js';
 import { featureSkipReason, partSkipReason, recordSkip } from '../harness/skip.js';
 
 const START_TIMEOUT_MS = 120_000;
-const POSTGRES_PROJECT = 'chromium-desktop';
 
 export const BRIDGE_NAMES = {
   signInWithBrowser: /sign in with your browser/i,
@@ -50,7 +49,7 @@ export function useLoginBoard(declaration: LoginBoardDeclaration): LoginBoardHan
     board = await startLoginBoard({
       web: declaration.parts.includes('web'),
       features: declaration.features,
-      database: resolveDatabaseKind({}, testInfo.project.name === POSTGRES_PROJECT),
+      postgresAllowed: postgresAllowedIn(testInfo.project.name),
     });
     if (board.missingFeatures.length > 0) reason = featureSkipReason(board.missingFeatures);
   });
@@ -132,22 +131,24 @@ export async function approverContext(browser: Browser, user: BoardUser): Promis
   return context;
 }
 
-export function handoffCodeOf(host: BridgeHost): string | null {
-  for (const entry of host.passedToPage) {
+export function handoffCodeOf(host: BridgeHost, since = 0): string | null {
+  let found: string | null = null;
+  for (const entry of host.passedToPage.slice(since)) {
     try {
       const parsed = JSON.parse(entry) as { flow?: unknown; code?: unknown };
-      if (typeof parsed.flow === 'string' && typeof parsed.code === 'string') return parsed.code;
+      if (typeof parsed.flow === 'string' && typeof parsed.code === 'string') found = parsed.code;
     } catch {
       continue;
     }
   }
-  return null;
+  return found;
 }
 
 export async function startHandoff(page: Page, host: BridgeHost): Promise<string> {
+  const since = host.passedToPage.length;
   await page.getByRole('button', { name: BRIDGE_NAMES.signInWithBrowser }).click();
-  await expect.poll(() => handoffCodeOf(host), { timeout: 15_000 }).not.toBeNull();
-  return handoffCodeOf(host) ?? '';
+  await expect.poll(() => handoffCodeOf(host, since), { timeout: 15_000 }).not.toBeNull();
+  return handoffCodeOf(host, since) ?? '';
 }
 
 export async function signInThroughBridge(

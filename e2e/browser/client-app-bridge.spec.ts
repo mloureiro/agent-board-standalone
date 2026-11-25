@@ -22,10 +22,12 @@ import {
   startHandoff,
   useLoginBoard,
 } from '../src/steps/bridge.js';
+import { NOT_ANSWERING } from '../src/steps/journeys.js';
 import { UI_TIMEOUT_MS, unlockIfAsked, waitForBoard } from '../src/steps/keys.js';
 import { approveHandoff } from '../src/fixtures/browser.js';
 
 const PASSPHRASE = 'bridge passphrase here';
+const UNREACHABLE_URL = 'http://127.0.0.1:9';
 
 test.describe('client app sessions through the native bridge', () => {
   const harness = useLoginBoard({ parts: ['api', 'web'], features: ['client-tokens'] });
@@ -173,7 +175,7 @@ test.describe('client app sessions through the native bridge', () => {
         timeout: UI_TIMEOUT_MS,
       });
 
-      const other = host.seedServer({ name: 'Other server', url: 'http://127.0.0.1:9' });
+      const other = host.seedServer({ name: 'Other server', url: UNREACHABLE_URL });
       await seedNamespace(client.page, other.id, 'other server marker');
 
       await client.page.getByRole('button', { name: /new task/i }).click();
@@ -191,6 +193,12 @@ test.describe('client app sessions through the native bridge', () => {
       expect(await indexedDbNames(client.page)).not.toContain(`agent-board:${serverId}`);
       await client.page.reload();
       await expect(signInButton(client.page)).toBeVisible({ timeout: UI_TIMEOUT_MS });
+      await signInThroughBridge(client, board, approver);
+      host.seedServer({ id: serverId, name: 'Unreachable', url: UNREACHABLE_URL });
+      await client.page.reload();
+      await expect(client.page.getByText(NOT_ANSWERING).first()).toBeVisible({
+        timeout: UI_TIMEOUT_MS,
+      });
       await expect(client.page.getByText(task.title)).toHaveCount(0);
 
       expect(await localKeysWithPrefix(client.page, `ab:${other.id}:`)).toEqual([

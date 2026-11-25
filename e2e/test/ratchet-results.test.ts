@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   joinSkipReasons,
+  parsePlaywrightErrors,
   parsePlaywrightReport,
   parseSkipLog,
   parseVitestReport,
@@ -80,6 +81,43 @@ describe('ratchet results', () => {
   it('[repo-009] leaves the reason null when the skip log has no entry', () => {
     const results = parseVitestReport(JSON.parse(fixture('vitest.json')), ROOT);
     expect(joinSkipReasons(results, []).at(-1)?.skipReason).toBeNull();
+  });
+
+  it('[repo-009] turns a failed Vitest file with no failed assertion into a synthetic failure', () => {
+    const report = {
+      testResults: [
+        {
+          name: '/work/e2e/blackbox/a.test.ts',
+          status: 'failed',
+          message: '\n  beforeAll crashed\n  at x',
+          assertionResults: [{ title: 't', ancestorTitles: [], status: 'skipped' }],
+        },
+        {
+          name: '/work/e2e/blackbox/b.test.ts',
+          status: 'failed',
+          message: 'assertion',
+          assertionResults: [{ title: 't', ancestorTitles: [], status: 'failed' }],
+        },
+      ],
+    };
+    const results = parseVitestReport(report, ROOT);
+    expect(results.filter((result) => result.titlePath[0]?.startsWith('(file failed)'))).toEqual([
+      {
+        file: 'blackbox/a.test.ts',
+        titlePath: ['(file failed) beforeAll crashed'],
+        project: 'blackbox',
+        outcome: 'failed',
+        skipReason: null,
+      },
+    ]);
+    expect(results).toHaveLength(3);
+  });
+
+  it('[repo-009] returns the Playwright report errors by first line', () => {
+    expect(
+      parsePlaywrightErrors({ errors: [{ message: 'load failed\n  at y' }, { value: 'x' }, {}] }),
+    ).toEqual(['load failed', 'x', 'no message']);
+    expect(parsePlaywrightErrors({})).toEqual([]);
   });
 
   it('[repo-009] rejects reports that are not objects', () => {

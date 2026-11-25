@@ -30,10 +30,28 @@ function verdict(level: Level, result: TestResult, message: string): Verdict {
   return { level, message: `${labelOf(result)}: ${message}` };
 }
 
+export const FILE_FAILED_PREFIX = '(file failed)';
+
 export function judgeResult(result: TestResult, listed: boolean, options: VerdictOptions): Verdict {
+  if (titleOf(result).startsWith(FILE_FAILED_PREFIX)) {
+    return verdict('fail', result, 'the file failed to run');
+  }
+
   if (listed) {
     if (result.outcome === 'passed') {
       return verdict('fail', result, 'now passes; remove it from e2e/expected-red.json');
+    }
+    if (result.outcome === 'skipped') {
+      const kind = skipKind(result.skipReason);
+      if (kind === 'part' || kind === 'feature') return verdict('ok', result, 'red as listed');
+      if (options.matrixCell && result.skipReason === null) {
+        return verdict('ok', result, 'red as listed');
+      }
+      return verdict(
+        'fail',
+        result,
+        `listed test skipped without a part/feature reason: ${result.skipReason ?? 'no reason recorded'}`,
+      );
     }
     return verdict('ok', result, 'red as listed');
   }
@@ -61,6 +79,8 @@ function entryTitle(entry: ExpectedEntry): string {
 export interface RunScope {
   readonly prefix: string;
   readonly fileExists: (file: string) => boolean;
+  readonly filtered?: boolean;
+  readonly outOfRun?: readonly string[];
 }
 
 export function judgeRun(
@@ -81,9 +101,15 @@ export function judgeRun(
       verdicts.push({ level: staleLevel, message: `${file}: listed file not found` });
       continue;
     }
-    if (listed === '*') continue;
+    if (scope.outOfRun?.includes(file) === true) continue;
     const inFile = results.filter((result) => result.file === file);
-    if (inFile.length === 0) continue;
+    if (inFile.length === 0) {
+      if (scope.filtered !== true) {
+        verdicts.push({ level: staleLevel, message: `${file}: listed file produced no results` });
+      }
+      continue;
+    }
+    if (listed === '*') continue;
     for (const entry of listed) {
       const projects = typeof entry === 'string' ? null : entry.projects;
       if (projects !== null && !projects.some((project) => projectsRun.has(project))) continue;

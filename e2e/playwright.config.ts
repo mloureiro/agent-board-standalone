@@ -12,8 +12,16 @@ export default defineConfig({
   outputDir: process.env.E2E_OUTPUT_DIR ?? path.join(os.tmpdir(), 'agent-board-e2e-results'),
   reporter: reportFile ? [['json', { outputFile: reportFile }], ['list']] : [['list']],
   projects: [
-    { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'] }, grepInvert: /@webkit/ },
-    { name: 'webkit-desktop', use: { ...devices['Desktop Safari'] }, grepInvert: /@chromium/ },
+    {
+      name: 'chromium-desktop',
+      use: { ...devices['Desktop Chrome'] },
+      grepInvert: /@webkit|@phone-only/,
+    },
+    {
+      name: 'webkit-desktop',
+      use: { ...devices['Desktop Safari'] },
+      grepInvert: /@chromium|@phone-only/,
+    },
     {
       name: 'chromium-phone',
       use: { ...devices['Pixel 7'] },
