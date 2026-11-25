@@ -101,3 +101,32 @@ fn links_open_externally_only_for_safe_schemes() {
         assert!(external_link(bad).is_none(), "{bad}");
     }
 }
+
+#[test]
+fn navigation_stays_in_the_app_opens_other_origins_outside_and_drops_the_rest() {
+    use agent_board_bridge_core::links::{Navigation, navigation};
+    let hosts = ["tauri.localhost"];
+    assert_eq!(
+        navigation("http://tauri.localhost/board/1", &hosts),
+        Navigation::Allow
+    );
+    assert_eq!(navigation("tauri://localhost/", &hosts), Navigation::Allow);
+    assert_eq!(
+        navigation("https://example.com/x", &hosts),
+        Navigation::External("https://example.com/x".into())
+    );
+    assert_eq!(
+        navigation("https://tauri.localhost.evil.example/", &hosts),
+        Navigation::External("https://tauri.localhost.evil.example/".into())
+    );
+    for dropped in [
+        "javascript:alert(1)",
+        "data:text/html,x",
+        "file:///etc/hosts",
+        "intent://x#Intent;end",
+        "about:blank",
+        "garbage",
+    ] {
+        assert_eq!(navigation(dropped, &hosts), Navigation::Drop, "{dropped}");
+    }
+}

@@ -1,7 +1,11 @@
 use crate::adapters::{DialogConfirm, FileStore, PluginKeys, ReqwestHttp, SystemEnv};
 use crate::commands;
 use agent_board_bridge_core::bridge::{Bridge, BridgeConfig, CONTRACT_LEVEL};
+use agent_board_bridge_core::links::{Navigation, navigation};
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri_plugin_opener::OpenerExt;
+
+const APP_HOSTS: &[&str] = &["tauri.localhost", "localhost"];
 
 const SHIM: &str = include_str!("../shim.js");
 
@@ -26,8 +30,17 @@ pub fn run() {
                 },
             );
             app.manage(bridge);
+            let opener = app.handle().clone();
             WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
                 .initialization_script(SHIM)
+                .on_navigation(move |url| match navigation(url.as_str(), APP_HOSTS) {
+                    Navigation::Allow => true,
+                    Navigation::External(link) => {
+                        let _ = opener.opener().open_url(link, None::<&str>);
+                        false
+                    }
+                    Navigation::Drop => false,
+                })
                 .build()?;
             Ok(())
         })
