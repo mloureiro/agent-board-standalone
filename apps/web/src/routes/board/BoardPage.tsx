@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 
-import { PlaceholderPage } from '../PlaceholderPage.js';
+import { usePageTitle } from '../../components/index.js';
+import { BoardView } from './Board.js';
 
 export function BoardPage(): ReactNode {
-  return <PlaceholderPage title="Board" />;
+  usePageTitle('Board');
+  return <BoardView heading="Board" />;
 }

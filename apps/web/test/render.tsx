@@ -52,6 +52,7 @@ export interface RenderOptions {
   readonly environment?: BrowserEnvironment;
   readonly inspectKeys?: KeyInspector | 'real';
   readonly kdf?: KdfParams;
+  readonly clock?: () => number;
 }
 
 export const alreadyUnlocked: KeyInspector = async () => ({
@@ -85,6 +86,7 @@ export function renderApp(options: RenderOptions = {}) {
         ? {}
         : { inspectKeys: options.inspectKeys ?? alreadyUnlocked })}
       {...(options.kdf === undefined ? {} : { kdf: options.kdf })}
+      {...(options.clock === undefined ? {} : { clock: options.clock })}
       mantineEnv="test"
     />,
   );

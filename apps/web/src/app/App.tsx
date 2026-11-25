@@ -8,6 +8,7 @@ import { ApprovePage, OIDC_RETURN_PATH, ReturnPage, SAML_RETURN_PATH } from '../
 import { currentBridge } from '../bridge/index.js';
 import { ToastProvider, useToastHub } from '../components/index.js';
 import { KeysProvider, type KeyInspector } from '../keys/index.js';
+import { ClockProvider, type Clock } from '../routes/board/clock.js';
 import {
   BacklogPage,
   BoardPage,
@@ -47,6 +48,7 @@ export interface AppProps {
   readonly environment?: BrowserEnvironment;
   readonly inspectKeys?: KeyInspector;
   readonly kdf?: KdfParams;
+  readonly clock?: Clock;
 }
 
 export function App(props: AppProps): ReactNode {
@@ -101,29 +103,31 @@ export function App(props: AppProps): ReactNode {
                 {...(props.kdf === undefined ? {} : { kdf: props.kdf })}
               >
                 <ToastProvider hub={toastHub}>
-                  <Router>
-                    <Routes>
-                      <Route element={<AuthLayout />}>
-                        <Route path="approve" element={<ApprovePage />} />
-                        <Route
-                          path={OIDC_RETURN_PATH.slice(1)}
-                          element={<ReturnPage kind="oidc" />}
-                        />
-                        <Route
-                          path={SAML_RETURN_PATH.slice(1)}
-                          element={<ReturnPage kind="saml" />}
-                        />
-                      </Route>
-                      <Route element={<Shell />}>
-                        <Route index element={<BoardPage />} />
-                        <Route path="backlog" element={<BacklogPage />} />
-                        <Route path="schedules" element={<SchedulesPage />} />
-                        <Route path="closed" element={<ClosedPage />} />
-                        <Route path="settings" element={<SettingsPage />} />
-                        <Route path="*" element={<NotFoundPage />} />
-                      </Route>
-                    </Routes>
-                  </Router>
+                  <ClockProvider clock={props.clock ?? Date.now}>
+                    <Router>
+                      <Routes>
+                        <Route element={<AuthLayout />}>
+                          <Route path="approve" element={<ApprovePage />} />
+                          <Route
+                            path={OIDC_RETURN_PATH.slice(1)}
+                            element={<ReturnPage kind="oidc" />}
+                          />
+                          <Route
+                            path={SAML_RETURN_PATH.slice(1)}
+                            element={<ReturnPage kind="saml" />}
+                          />
+                        </Route>
+                        <Route element={<Shell />}>
+                          <Route index element={<BoardPage />} />
+                          <Route path="backlog" element={<BacklogPage />} />
+                          <Route path="schedules" element={<SchedulesPage />} />
+                          <Route path="closed" element={<ClosedPage />} />
+                          <Route path="settings" element={<SettingsPage />} />
+                          <Route path="*" element={<NotFoundPage />} />
+                        </Route>
+                      </Routes>
+                    </Router>
+                  </ClockProvider>
                 </ToastProvider>
               </KeysProvider>
             </EnvironmentProvider>
