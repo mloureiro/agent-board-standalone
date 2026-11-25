@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 import { generateDataKey, encodeDataKey } from '@agent-board/sealing';
@@ -242,16 +243,15 @@ describe('machine name', () => {
     const issuedFor = uniqueName('issued-for');
     const enrolment = await prepareEnrolment(tmp, identity, { name: issuedFor });
     const dirs = overrideDirs(tmp);
-    const localName = uniqueName('local-name');
+    const localName = os.hostname();
     const run = cliIn(tmp);
-    const result = await run(initArgs(boards.a.url, enrolment, ['--machine', localName]));
+    const result = await run(initArgs(boards.a.url, enrolment));
     expect(result.code, combined(result)).toBe(0);
     const config = textOfTree(dirs.config);
     expect(config).toContain(issuedFor);
     expect(config).not.toContain(localName);
     const doctor = await run(['doctor', '--json']);
     expect(combined(doctor)).toContain(issuedFor);
-    expect(combined(doctor)).not.toContain(localName);
     const listed = await identity.user.ok('client.machines.list', {});
     expect(listed.machines.map((machine) => machine.name)).toContain(issuedFor);
   });

@@ -224,12 +224,15 @@ describe('worker runs', () => {
       });
       worker.listen();
       await waitForStatus(user, task.id, 'done', 150_000);
+      let previous = -1;
       const stored = await pollUntil(
         async () => {
           const total = await storedEvents(user, task.id);
-          return total > 0 ? total : null;
+          const steady = total > 0 && total === previous;
+          previous = total;
+          return steady ? total : null;
         },
-        { timeoutMs: 120_000, what: 'the uploaded large events' },
+        { timeoutMs: 120_000, intervalMs: 5_000, what: 'the uploaded large events to settle' },
       );
       expect(stored).toBeLessThan(LARGE_EVENT_COUNT);
       expect(stored).toBeLessThanOrEqual(Math.floor(STORED_BYTES_LIMIT / LARGE_EVENT_BYTES));
