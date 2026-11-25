@@ -13,7 +13,10 @@ pub mod paths;
 pub mod ports;
 pub mod removal;
 pub mod servers;
+pub mod shortcuts;
 pub mod signing;
+pub mod tab_file;
+pub mod tabs;
 pub mod tokens;
 
 pub const BUNDLE_ID: &str = "com.mloureiro.agent-board-client";
