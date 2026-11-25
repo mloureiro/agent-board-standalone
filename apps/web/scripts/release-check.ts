@@ -35,7 +35,7 @@ async function main(): Promise<void> {
   const { CONTRACT } = await import('@agent-board/contract');
   const target = process.argv[2];
   if (target === undefined) throw new Error('usage: release-check <version>');
-  let built: ReleaseInputs['built'] = null;
+  let built: ReleaseInputs['built'];
   try {
     built = JSON.parse(read('dist/version.json')) as NonNullable<ReleaseInputs['built']>;
   } catch {

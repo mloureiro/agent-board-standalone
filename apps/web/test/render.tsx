@@ -11,7 +11,6 @@ import type { KeyInspector } from '../src/keys/index.js';
 import type { BrowserEnvironment, SessionChannel } from '../src/session/index.js';
 import {
   createBrowserRegistry,
-  parseServerVersion,
   type ConnectionCheck,
   type ConnectionState,
   type ServerRegistry,

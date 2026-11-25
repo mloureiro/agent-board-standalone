@@ -113,7 +113,6 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
   const passedToPage: string[] = [];
   const confirmations: ConfirmAction[] = [];
   const refusals: { path: string; reason: string }[] = [];
-  let attached: BrowserContext | null = null;
   let confirm = options.confirm ?? (() => true);
   const clientVersion = options.clientVersion ?? PART_VERSION;
 
@@ -367,7 +366,6 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
     },
     handle,
     async attach(context) {
-      attached = context;
       await context.exposeBinding(BRIDGE_BINDING, async (source, op, args) =>
         handle(op as BridgeOp, (args ?? {}) as Record<string, unknown>, (id, delivery) => {
           void source.page.evaluate(inbox, [BRIDGE_INBOX, id, delivery] as const);
