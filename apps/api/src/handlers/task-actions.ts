@@ -160,6 +160,7 @@ export const createTaskActionHandlers =
             id,
             { ...message, wakeAt: new Date(wakeAt), check },
             { machine: principal.machineId, run },
+            context.clock.now(),
           );
           return wireOne(tx, request, row);
         }),
@@ -274,7 +275,11 @@ export const createTaskActionHandlers =
 
       'client.tasks.take-back': ({ input, principal, request }) =>
         write(principal.owner, async (tx) =>
-          uiOne(tx, request, await takeBackTask(tx, input.id, { by: principal.owner })),
+          uiOne(
+            tx,
+            request,
+            await takeBackTask(tx, input.id, { by: principal.owner }, context.clock.now()),
+          ),
         ),
 
       'client.tasks.edit': ({ input, principal, request }) =>
