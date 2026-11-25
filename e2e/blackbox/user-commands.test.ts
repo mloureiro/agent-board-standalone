@@ -253,7 +253,7 @@ describe('user commands with a worker', () => {
   });
 
   afterAll(async () => {
-    setClockOffset(harness.board, 0);
+    if (started !== null) setClockOffset(started.board, 0);
     await finishFixture(started);
   });
 
