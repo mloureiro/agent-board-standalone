@@ -295,6 +295,16 @@ describe('upgrade from the previous release', () => {
       ),
     );
     expect(constraints).toHaveLength(2);
+    await database.withOwner('legacy', async (tx) => {
+      await tx.insert(schema.task).values({
+        id: 'upgraded-task',
+        title: envelope(),
+        input: envelope(),
+        position: 2,
+        projectId: '00000000-0000-4000-8000-000000000001',
+        watchStops: Array.from({ length: 256 }, (_, index) => index.toString(16).padStart(16, '0')),
+      });
+    });
   };
 
   it('[api-018] a PGlite database written by the previous release migrates and keeps its rows', async () => {

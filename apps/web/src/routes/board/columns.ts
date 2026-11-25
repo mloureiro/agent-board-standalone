@@ -1,6 +1,6 @@
 import { TASK_STATUSES, type TaskStatus } from '@agent-board/contract';
 
-import type { BoardCard } from './card-model.js';
+import { cardUid, type BoardCard } from './card-model.js';
 
 export const COLUMN_LABELS: Record<TaskStatus, string> = {
   backlog: 'Backlog',
@@ -63,10 +63,10 @@ export function moveFor(
       ...(target.before ? { beforeId: target.overCard } : { afterId: target.overCard }),
     };
   }
-  const last = [...columnCards].reverse().find((card) => card.task.id !== activeId);
+  const last = [...columnCards].reverse().find((card) => cardUid(card) !== activeId);
   return {
     id: activeId,
     status: target.status,
-    ...(last === undefined ? {} : { afterId: last.task.id }),
+    ...(last === undefined ? {} : { afterId: cardUid(last) }),
   };
 }

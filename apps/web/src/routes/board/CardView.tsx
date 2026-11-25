@@ -5,7 +5,8 @@ import { Link } from 'react-router';
 
 import { badgesOf, prSummaries, prText } from './badges.js';
 import { CardEditDialog, type CardEdit, type CardEditValue } from './CardEditDialog.js';
-import type { BoardCard } from './card-model.js';
+import { useServers } from '../../servers/index.js';
+import { cardUid, type BoardCard } from './card-model.js';
 import { canDragFrom, canDropOn } from './columns.js';
 import { useCardDrag } from './drag.js';
 import { agoText, parseTime } from './format.js';
@@ -16,14 +17,21 @@ export interface CardViewProps {
   readonly card: BoardCard;
   readonly now: number;
   readonly projectName: string | null;
+  readonly serverName: string | null;
   readonly usageHoldUntil: number | null;
   readonly onEdit: (value: CardEditValue) => void;
 }
 
 export function CardView(props: CardViewProps): ReactNode {
-  const { card, now, projectName, usageHoldUntil, onEdit } = props;
+  const { card, now, projectName, serverName, usageHoldUntil, onEdit } = props;
+  const { active, select } = useServers();
   const { task } = card;
-  const drag = useCardDrag(task.id, task.status, canDragFrom(task.status), canDropOn(task.status));
+  const drag = useCardDrag(
+    cardUid(card),
+    task.status,
+    canDragFrom(task.status),
+    canDropOn(task.status),
+  );
   const hoverRef = useRef<HTMLElement | null>(null);
   const ref = useMergedRef(drag.setNodeRef, hoverRef);
   const coarse = useMediaQuery(COARSE_QUERY, false, { getInitialValueInEffect: false }) ?? false;
@@ -71,7 +79,17 @@ export function CardView(props: CardViewProps): ReactNode {
                   {card.icon}
                 </span>
               )}
-              <Anchor component={Link} to={`/tasks/${task.id}`} fw={600} size="sm" lh={1.3}>
+              <Anchor
+                component={Link}
+                to={`/tasks/${task.id}`}
+                fw={600}
+                size="sm"
+                lh={1.3}
+                onClick={() => {
+                  if (card.serverId !== undefined && card.serverId !== active?.id)
+                    select(card.serverId);
+                }}
+              >
                 {card.title}
               </Anchor>
             </Group>
@@ -152,6 +170,11 @@ export function CardView(props: CardViewProps): ReactNode {
           {projectName === null ? null : (
             <Text size="xs" c="dimmed">
               {projectName}
+            </Text>
+          )}
+          {serverName === null ? null : (
+            <Text size="xs" c="dimmed">
+              {serverName}
             </Text>
           )}
         </Stack>

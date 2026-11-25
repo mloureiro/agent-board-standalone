@@ -8,6 +8,7 @@ import type { Env } from '../src/modules/index.js';
 import { CONTRACT_HEADERS, JSON_HEADERS } from './helpers.js';
 import { openPgliteBoard, type PgliteBoard } from './pglite-board.js';
 import { SoftwareAuthenticator } from './software-authenticator.js';
+import { newSigner } from './signing.js';
 
 const ORIGIN = 'http://localhost:4000';
 const RP_ID = 'localhost';
@@ -117,6 +118,21 @@ describe('passkey login', () => {
     expect(sessions.some((session) => session.method === 'passkey')).toBe(true);
   });
 
+  it('[api-120] a passkey login carrying a public key binds it to the new session when signatures are on', async () => {
+    const board = await started({ REQUEST_SIGNATURE: 'on' });
+    const { device } = await registered(board);
+    const { flow, options } = await loginBegin(board);
+    const signer = await newSigner();
+    const answer = await post(board.app, '/api/auth/passkey/login', {
+      flow,
+      response: device.assert({ challenge: options.challenge }),
+      publicKey: signer.publicKey,
+    });
+    expect(answer.statusCode, answer.body).toBe(200);
+    const keys = await board.database.withOwner('ada', (tx) => tx.select().from(schema.clientKey));
+    expect(keys).toMatchObject([{ keyId: signer.keyId, kind: 'session' }]);
+  });
+
   it('[api-032] an unknown credential is refused and sets no cookie', async () => {
     const board = await started();
     await registered(board);
@@ -210,6 +226,8 @@ describe('passkey login', () => {
       PASSKEYS: 'off',
       SIGNUP_TOKEN: undefined,
       OIDC_ISSUER: 'https://idp.example.com',
+      OIDC_CLIENT_ID: 'board',
+      OIDC_CLIENT_SECRET: 'secret',
     } as Env);
     const answer = await post(board.app, '/api/auth/passkey/login-options', {});
     expect(answer.statusCode).toBe(404);
@@ -496,7 +514,11 @@ describe('a signed-in user passkeys', () => {
   });
 
   it('[api-034] the last passkey may go on a board another method created', async () => {
-    const board = await started({ OIDC_ISSUER: 'https://idp.example.com' } as Env);
+    const board = await started({
+      OIDC_ISSUER: 'https://idp.example.com',
+      OIDC_CLIENT_ID: 'board',
+      OIDC_CLIENT_SECRET: 'secret',
+    } as Env);
     await board.database.withOwner('grace', (tx) => ensureUser(tx, 'grace', 'oidc'));
     const token = (await issueSession(board.deps, 'grace', 'cookie', 'oidc')).token;
     const device = authenticator();

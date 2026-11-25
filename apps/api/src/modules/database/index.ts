@@ -7,6 +7,7 @@ export {
   stubDatabase,
   type Database,
   type OpenDatabase,
+  type OwnerScopes,
   type ScopedDatabase,
 } from './database.js';
 export { DatabaseRefusal, StatementRefused } from './errors.js';
@@ -14,3 +15,4 @@ export { openDatabase } from './open.js';
 export { openPgliteDatabase, defaultPgliteFactory, type PgliteFactory } from './pglite.js';
 export { openPostgresDatabase } from './postgres.js';
 export const databaseModule = defineModule({ name: 'database', schema: databaseSchema });
+export { holdableDatabase, type HoldableDatabase } from './holdable.js';

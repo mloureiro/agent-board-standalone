@@ -7,6 +7,8 @@ export {
   signInMethods,
   type LoginConfig,
   type NoLoginConfig,
+  type OidcSettings,
+  type SamlSettings,
   type SignInConfig,
 } from './config.js';
 export const signInModule = defineModule({ name: 'signIn', schema: signInSchema });

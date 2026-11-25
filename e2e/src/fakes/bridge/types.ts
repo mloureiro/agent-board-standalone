@@ -22,28 +22,46 @@ export interface BridgeStreamEvent {
   readonly data: string;
 }
 
-export interface BridgeHandoffStarted {
-  readonly flow: string;
-  readonly code: string;
+export interface BridgeStreamedResponse {
+  readonly status: number;
+  readonly headers: Readonly<Record<string, string>>;
+  readonly body: ReadableStream<Uint8Array> | null;
 }
 
 export interface BridgeHandoffResult {
   readonly status: 'pending' | 'signed-in';
 }
 
+export interface BridgeNotification {
+  readonly serverId: string;
+  readonly taskId: string;
+  readonly title: string;
+}
+
+export interface BridgeTabReport {
+  readonly path: string;
+  readonly title: string;
+}
+
 export interface AgentBoardBridge {
-  listServers(): Promise<BridgeServerEntry[]>;
-  addServer(input: { name: string; url: string }): Promise<BridgeServerEntry | null>;
-  renameServer(serverId: string, name: string): Promise<void>;
-  removeServer(serverId: string): Promise<boolean>;
-  request(serverId: string, init: BridgeRequestInit): Promise<BridgeResponse>;
-  stream(serverId: string, path: string, signal?: AbortSignal): AsyncIterable<BridgeStreamEvent>;
-  handoffStart(serverId: string, challenge: string): Promise<BridgeHandoffStarted>;
-  handoffFinish(serverId: string, flow: string, verifier: string): Promise<BridgeHandoffResult>;
+  readonly kind: 'client-app' | 'mobile';
+  serverFetch(
+    serverId: string,
+    method: string,
+    path: string,
+    headers: Readonly<Record<string, string>>,
+    body: string | null,
+  ): Promise<BridgeStreamedResponse>;
+  handoffFinish(serverId: string, flowId: string, verifier: string): Promise<void>;
   pair(serverId: string, code: string, label: string): Promise<void>;
   signOut(serverId: string): Promise<void>;
-  openExternal(url: string): Promise<void>;
-  onHandover(listener: (link: string) => void): () => void;
+  notify(notification: BridgeNotification): Promise<void>;
+  openLink(url: string): Promise<void>;
+  reportTab(tab: BridgeTabReport): Promise<void>;
+  listServers(): Promise<BridgeServerEntry[]>;
+  addServer(input: { name: string; address: string }): Promise<BridgeServerEntry | null>;
+  removeServer(serverId: string): Promise<boolean>;
+  renameServer(serverId: string, name: string): Promise<void>;
 }
 
 export const BRIDGE_BINDING = '__abBridge';
@@ -58,11 +76,12 @@ export const BRIDGE_OPS = [
   'request',
   'stream.open',
   'stream.close',
-  'handoff.start',
   'handoff.finish',
   'pair',
   'sign-out',
-  'open-external',
+  'notify',
+  'open-link',
+  'report-tab',
 ] as const;
 
 export type BridgeOp = (typeof BRIDGE_OPS)[number];

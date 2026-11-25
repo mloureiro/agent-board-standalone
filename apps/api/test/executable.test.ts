@@ -116,12 +116,12 @@ describe('the built executable', () => {
     }
   });
 
-  it('[api-021] an unknown subcommand exits 2 and an unbuilt one says so', async () => {
+  it('[api-021] an unknown subcommand exits 2 and import without a file prints its usage', async () => {
     const unknown = await run(['frobnicate'], BASE);
     expect(unknown.code).toBe(2);
     expect(unknown.stderr).toContain('frobnicate');
-    const unbuilt = await run(['pair'], BASE);
-    expect(unbuilt.code).toBe(2);
-    expect(unbuilt.stderr).toContain('not available');
+    const usage = await run(['import'], BASE);
+    expect(usage.code).toBe(2);
+    expect(usage.stderr).toContain('usage: agent-board-api import');
   });
 });

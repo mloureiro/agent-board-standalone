@@ -1,5 +1,7 @@
 import type { SignInMethod } from '@agent-board/contract';
 
+import type { z } from 'zod';
+
 import { csv, envObject, onOff, refuse } from '../env.js';
 
 export interface NoLoginConfig {
@@ -16,14 +18,32 @@ export interface LoginConfig {
   signupToken: string | null;
   allowedGroups: string[];
   sessionDays: number;
-  oidc: boolean;
-  saml: boolean;
+  oidc: OidcSettings | null;
+  saml: SamlSettings | null;
+}
+
+export interface OidcSettings {
+  issuer: string;
+  clientId: string;
+  clientSecret: string;
+  scopes: string;
+  usernameClaim: string | null;
+  groupsClaim: string;
+  allowHttp: boolean;
+}
+
+export interface SamlSettings {
+  metadataUrl: string;
+  spEntityId: string;
+  usernameAttribute: string | null;
+  allowHttp: boolean;
 }
 
 export type SignInConfig = NoLoginConfig | LoginConfig;
 
 export const MIN_SIGNUP_TOKEN_LENGTH = 32;
 export const DEFAULT_SESSION_DAYS = 30;
+const DEFAULT_OIDC_SCOPES = 'openid profile email';
 const MAX_SESSION_DAYS = 365;
 const MAX_USER_LENGTH = 128;
 const LOGIN_ONLY_NAMES = [
@@ -67,6 +87,82 @@ const parsePublicUrl = (
     return null;
   }
   return url;
+};
+
+const parseProviderUrl = (
+  value: string,
+  production: boolean,
+  fail: (message: string) => void,
+): { url: string; allowHttp: boolean } | null => {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    fail('must be a URL such as https://idp.example.com');
+    return null;
+  }
+  if (url.protocol === 'https:') return { url: value, allowHttp: false };
+  if (url.protocol === 'http:' && !production) return { url: value, allowHttp: true };
+  fail(production ? 'must be an https URL in production' : 'must be an http or https URL');
+  return null;
+};
+
+const parseOidc = (
+  env: Record<string, string>,
+  production: boolean,
+  ctx: z.RefinementCtx,
+): OidcSettings | null => {
+  const names = ['OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET', 'OIDC_SCOPES', 'OIDC_USERNAME_CLAIM'];
+  const issuer = env.OIDC_ISSUER;
+  if (issuer === undefined) {
+    for (const name of [...names, 'OIDC_GROUPS_CLAIM'])
+      if (env[name] !== undefined) refuse(ctx, name, 'needs OIDC_ISSUER');
+    return null;
+  }
+  const clientId = env.OIDC_CLIENT_ID;
+  const clientSecret = env.OIDC_CLIENT_SECRET;
+  if (clientId === undefined) refuse(ctx, 'OIDC_CLIENT_ID', 'is required with OIDC_ISSUER');
+  if (clientSecret === undefined) refuse(ctx, 'OIDC_CLIENT_SECRET', 'is required with OIDC_ISSUER');
+  const scopes = env.OIDC_SCOPES ?? DEFAULT_OIDC_SCOPES;
+  if (!scopes.split(/\s+/).includes('openid'))
+    refuse(ctx, 'OIDC_SCOPES', 'must include the openid scope');
+  const parsed = parseProviderUrl(issuer, production, (message) =>
+    refuse(ctx, 'OIDC_ISSUER', message),
+  );
+  if (parsed === null || clientId === undefined || clientSecret === undefined) return null;
+  return {
+    issuer: parsed.url,
+    clientId,
+    clientSecret,
+    scopes,
+    usernameClaim: env.OIDC_USERNAME_CLAIM ?? null,
+    groupsClaim: env.OIDC_GROUPS_CLAIM ?? 'groups',
+    allowHttp: parsed.allowHttp,
+  };
+};
+
+const parseSaml = (
+  env: Record<string, string>,
+  production: boolean,
+  publicUrl: string,
+  ctx: z.RefinementCtx,
+): SamlSettings | null => {
+  const metadataUrl = env.SAML_IDP_METADATA_URL;
+  if (metadataUrl === undefined) {
+    for (const name of ['SAML_SP_ENTITY_ID', 'SAML_USERNAME_ATTRIBUTE'])
+      if (env[name] !== undefined) refuse(ctx, name, 'needs SAML_IDP_METADATA_URL');
+    return null;
+  }
+  const parsed = parseProviderUrl(metadataUrl, production, (message) =>
+    refuse(ctx, 'SAML_IDP_METADATA_URL', message),
+  );
+  if (parsed === null) return null;
+  return {
+    metadataUrl: parsed.url,
+    spEntityId: env.SAML_SP_ENTITY_ID ?? `${publicUrl}/saml/metadata`,
+    usernameAttribute: env.SAML_USERNAME_ATTRIBUTE ?? null,
+    allowHttp: parsed.allowHttp,
+  };
 };
 
 const parseSessionDays = (value: string | undefined, fail: (message: string) => void): number => {
@@ -133,8 +229,9 @@ export const signInSchema = envObject.transform((env, ctx): SignInConfig => {
     refuse(ctx, 'PUBLIC_URL', message),
   );
   const passkeys = onOff(env, 'PASSKEYS', true, ctx);
-  const oidc = env.OIDC_ISSUER !== undefined;
-  const saml = env.SAML_ENTRY_POINT !== undefined;
+  const production = env.NODE_ENV === 'production';
+  const oidc = parseOidc(env, production, ctx);
+  const saml = parseSaml(env, production, url?.origin ?? '', ctx);
   const allowedGroups = csv(env.ALLOWED_GROUPS);
   const signupToken = env.SIGNUP_TOKEN ?? null;
   const sessionDays = parseSessionDays(env.SESSION_DAYS, (message) =>
@@ -151,7 +248,7 @@ export const signInSchema = envObject.transform((env, ctx): SignInConfig => {
     refuse(
       ctx,
       'PASSKEYS',
-      'no way to sign in: leave PASSKEYS on, or set OIDC_ISSUER or SAML_ENTRY_POINT',
+      'no way to sign in: leave PASSKEYS on, or set OIDC_ISSUER or SAML_IDP_METADATA_URL',
     );
 
   return {

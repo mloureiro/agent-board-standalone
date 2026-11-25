@@ -28,13 +28,24 @@ const enterScope = async (tx: ScopedDatabase, owner: string, hooks: ScopeHooks):
 export const scopedOperations = (
   runner: TransactionRunner,
   hooks: ScopeHooks,
-): Pick<Database, 'withOwner' | 'withSystem'> => ({
+): Pick<Database, 'withOwner' | 'withOwners' | 'withSystem'> => ({
   withOwner: (owner, work) =>
     hooks.serialise(() =>
       runner.transaction(async (tx) => {
         await enterScope(tx, owner, hooks);
         return work(tx);
       }),
+    ),
+  withOwners: (work) =>
+    hooks.serialise(() =>
+      runner.transaction((tx) =>
+        work({
+          as: async (owner, inner) => {
+            await enterScope(tx, owner, hooks);
+            return inner(tx);
+          },
+        }),
+      ),
     ),
   withSystem: (work) =>
     hooks.serialise(() =>

@@ -543,7 +543,13 @@ describe('no-login mode', () => {
 describe('sign-in methods', () => {
   it('[api-031] the public config lists what is offered, and the version lists the same methods', async () => {
     const board = await started(
-      login({ PASSKEYS: 'on', SIGNUP_TOKEN: 's'.repeat(40), OIDC_ISSUER: 'https://idp.example' }),
+      login({
+        PASSKEYS: 'on',
+        SIGNUP_TOKEN: 's'.repeat(40),
+        OIDC_ISSUER: 'https://idp.example',
+        OIDC_CLIENT_ID: 'board',
+        OIDC_CLIENT_SECRET: 'secret',
+      }),
     );
     const answer = await board.app.inject({ url: '/api/auth/config' });
     expect(answer.statusCode).toBe(200);
@@ -560,7 +566,7 @@ describe('sign-in methods', () => {
 
   it('[api-031] with passkeys off and no signup token only hand-off and the configured methods remain', async () => {
     const board = await started(
-      login({ PASSKEYS: 'off', SAML_ENTRY_POINT: 'https://idp.example/sso' }),
+      login({ PASSKEYS: 'off', SAML_IDP_METADATA_URL: 'https://idp.example/metadata' }),
     );
     const answer = await board.app.inject({ url: '/api/auth/config' });
     expect(answer.json()).toEqual({

@@ -99,7 +99,7 @@ export const clientKey = pgTable(
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
   },
   (t) => [
-    check('client_key_id_shape', sql`${t.keyId} ~ '^[0-9a-f]{16}$'`),
+    check('client_key_id_shape', sql`${t.keyId} ~ '^([0-9a-f]{16}|[A-Za-z0-9_-]{43})$'`),
     check('client_key_label_length', sql`char_length(${t.label}) <= 256`),
     check(
       'client_key_binding',

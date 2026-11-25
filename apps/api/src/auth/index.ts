@@ -58,3 +58,35 @@ export {
   verifyRegistration,
   type VerifiedPasskey,
 } from './passkeys.js';
+export { claimUsername, parseProviderUsername } from './provider-user.js';
+export {
+  authorizationUrl,
+  finishOidc,
+  newOidcChecks,
+  OIDC_RETURN_PATH,
+  oidcStillAccepts,
+  type OidcDeps,
+} from './oidc.js';
+export {
+  acceptSamlResponse,
+  isAccepted,
+  parseIdpMetadata,
+  SAML_ACS_PATH,
+  SAML_RETURN_PATH,
+  samlAuthorizeUrl,
+} from './saml.js';
+export {
+  createIdentityRecheck,
+  dropUpkeep,
+  keepUpkeep,
+  type SessionRecheck,
+} from './identity-recheck.js';
+export {
+  bindClientKey,
+  bindSessionKey,
+  clearMachineKey,
+  parseSigningKey,
+  type BindKeyInput,
+  type ClientKeyKind,
+  type KeyBinding,
+} from './client-keys.js';

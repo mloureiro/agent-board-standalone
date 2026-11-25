@@ -89,7 +89,7 @@ describe('authentication mode', () => {
       ['SIGNUP_TOKEN', 'x'.repeat(40)],
       ['ALLOWED_GROUPS', 'admins'],
       ['OIDC_ISSUER', 'https://idp.example'],
-      ['SAML_ENTRY_POINT', 'https://idp.example/sso'],
+      ['SAML_IDP_METADATA_URL', 'https://idp.example/metadata'],
       ['SESSION_DAYS', '7'],
     ] as const) {
       expect(refusal(noLoginEnv({ [name]: value })), name).toContain(name);
@@ -145,8 +145,18 @@ describe('authentication mode', () => {
   it('[api-007] refuses allowed groups without OIDC', () => {
     expect(refusal(loginEnv({ ALLOWED_GROUPS: 'admins' }))).toContain('ALLOWED_GROUPS');
     expect(
-      loadConfig(loginEnv({ ALLOWED_GROUPS: 'admins', OIDC_ISSUER: 'https://idp.example' })).signIn,
-    ).toMatchObject({ allowedGroups: ['admins'], oidc: true });
+      loadConfig(
+        loginEnv({
+          ALLOWED_GROUPS: 'admins',
+          OIDC_ISSUER: 'https://idp.example',
+          OIDC_CLIENT_ID: 'board',
+          OIDC_CLIENT_SECRET: 'secret',
+        }),
+      ).signIn,
+    ).toMatchObject({
+      allowedGroups: ['admins'],
+      oidc: { issuer: 'https://idp.example', clientId: 'board' },
+    });
   });
 
   it('[api-007] refuses a sign-up token under 32 characters and one next to passkeys off', () => {
@@ -159,6 +169,8 @@ describe('authentication mode', () => {
           SIGNUP_TOKEN: 'x'.repeat(32),
           PASSKEYS: 'off',
           OIDC_ISSUER: 'https://idp.example',
+          OIDC_CLIENT_ID: 'board',
+          OIDC_CLIENT_SECRET: 'secret',
         }),
       ),
     ).toContain('SIGNUP_TOKEN: needs PASSKEYS=on');
@@ -170,8 +182,10 @@ describe('authentication mode', () => {
   it('[api-007] refuses login mode with no method enabled', () => {
     expect(refusal(loginEnv({ PASSKEYS: 'off' }))).toContain('no way to sign in');
     expect(
-      loadConfig(loginEnv({ PASSKEYS: 'off', SAML_ENTRY_POINT: 'https://idp.example/sso' })).signIn,
-    ).toMatchObject({ passkeys: false, saml: true });
+      loadConfig(
+        loginEnv({ PASSKEYS: 'off', SAML_IDP_METADATA_URL: 'https://idp.example/metadata' }),
+      ).signIn,
+    ).toMatchObject({ passkeys: false, saml: { metadataUrl: 'https://idp.example/metadata' } });
   });
 
   it('[api-007] a secret never appears in a refusal message', () => {

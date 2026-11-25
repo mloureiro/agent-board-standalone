@@ -1,9 +1,15 @@
-import { createCredentialStore } from './auth/index.js';
+import { createCredentialStore, createIdentityRecheck } from './auth/index.js';
 import { clockFromEnv } from './clock.js';
 import { DEFAULT_SESSION_DAYS } from './modules/sign-in/index.js';
 import type { ServerServices } from './context.js';
 import { ANY_HOST, effectiveHost } from './modules/listen/index.js';
-import { DatabaseRefusal, openDatabase, type OpenDatabase } from './modules/database/index.js';
+import { startControlSocket, type ControlSocket } from './modules/control/index.js';
+import {
+  DatabaseRefusal,
+  holdableDatabase,
+  openDatabase,
+  type OpenDatabase,
+} from './modules/database/index.js';
 import { ConfigError, loadConfig, type Env } from './modules/index.js';
 import { openEvents } from './modules/events/index.js';
 import { createServer } from './server.js';
@@ -29,15 +35,20 @@ export const startServer = async (env: Env, options: StartOptions = {}): Promise
   const config = loadConfig(env);
   const open = options.openDatabase ?? openDatabase;
   const clock = clockFromEnv(env);
-  const database = await open(config.database);
+  const database = holdableDatabase(await open(config.database), open, config.database);
   const services: ServerServices = {
     database,
-    credentials: createCredentialStore({
-      database,
-      clock,
-      sessionDays:
-        config.signIn.mode === 'login' ? config.signIn.sessionDays : DEFAULT_SESSION_DAYS,
-    }),
+    credentials: createCredentialStore(
+      {
+        database,
+        clock,
+        sessionDays:
+          config.signIn.mode === 'login' ? config.signIn.sessionDays : DEFAULT_SESSION_DAYS,
+      },
+      config.signIn.mode === 'login'
+        ? createIdentityRecheck(database, clock, config.signIn)
+        : undefined,
+    ),
     streams: createOpenStreams(),
     events: await openEvents(config),
   };
@@ -49,6 +60,21 @@ export const startServer = async (env: Env, options: StartOptions = {}): Promise
     await app.close();
     throw error;
   }
+  let control: ControlSocket | null = null;
+  if (config.control !== null) {
+    try {
+      control = await startControlSocket(config.control, {
+        config,
+        clock,
+        gate: app.hold,
+        database,
+        streams: services.streams,
+      });
+    } catch (error) {
+      await app.close();
+      throw error;
+    }
+  }
   const address = app.server.address();
   const port = typeof address === 'object' && address !== null ? address.port : config.listen.port;
   const url = `http://${printableHost(host)}:${port}`;
@@ -58,7 +84,11 @@ export const startServer = async (env: Env, options: StartOptions = {}): Promise
   let closing: Promise<void> | null = null;
   return {
     url,
-    close: () => (closing ??= app.close()),
+    close: () =>
+      (closing ??= (async () => {
+        await control?.close();
+        await app.close();
+      })()),
   };
 };
 

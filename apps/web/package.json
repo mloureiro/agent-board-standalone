@@ -10,7 +10,9 @@
     "build": "vite build && tsx scripts/write-version.ts",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "release:check": "tsx scripts/release-check.ts",
+    "phone": "vite build && tsx scripts/write-version.ts && playwright test"
   },
   "dependencies": {
     "@agent-board/contract": "workspace:^1.0.0",
@@ -26,6 +28,7 @@
     "rehype-sanitize": "^6.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@testing-library/jest-dom": "^8.0.0",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.13",
