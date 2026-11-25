@@ -167,25 +167,28 @@ describe('[cli-036] board schedule', () => {
     const keyed = (extra: readonly string[]) =>
       board(['schedule', '--key', dedupeKey, '--title', title, ...extra, 'keyed prompt']);
 
-    const created = await keyed(['--in', '1h']);
+    const firstAt = new Date(Math.ceil((Date.now() + HOUR_MS) / 60_000) * 60_000);
+    const secondAt = new Date(firstAt.getTime() + HOUR_MS);
+
+    const created = await keyed(['--at', firstAt.toISOString()]);
     expect(created.code, created.stderr).toBe(0);
     expect(created.stdout).toMatch(/\bcreated\b/);
     const first = await tasksTitled(title);
     expect(first).toHaveLength(1);
     const id = (first[0] as WireTask).id;
+    expect(Date.parse((first[0] as WireTask).notBefore ?? '')).toBe(firstAt.getTime());
 
-    const exists = await keyed(['--in', '1h']);
+    const exists = await keyed(['--at', firstAt.toISOString()]);
     expect(exists.code, exists.stderr).toBe(0);
     expect(exists.stdout).toMatch(/\bexists\b/);
     expect((await tasksTitled(title)).map((task) => task.id)).toEqual([id]);
 
-    const rescheduled = await keyed(['--in', '2h']);
+    const rescheduled = await keyed(['--at', secondAt.toISOString()]);
     expect(rescheduled.code, rescheduled.stderr).toBe(0);
     expect(rescheduled.stdout).toMatch(/\brescheduled\b/);
     const moved = await tasksTitled(title);
     expect(moved.map((task) => task.id)).toEqual([id]);
-    const movedTo = Date.parse((moved[0] as WireTask).notBefore ?? '');
-    expect(Math.abs(movedTo - (Date.now() + 2 * HOUR_MS))).toBeLessThan(SLACK_MS);
+    expect(Date.parse((moved[0] as WireTask).notBefore ?? '')).toBe(secondAt.getTime());
 
     setClockOffset(harness.board, 3 * 3600);
     try {
@@ -303,13 +306,20 @@ describe('[api-077] an after schedule', () => {
     return claimed.run;
   };
 
-  const move = (pair: Pair, run: string | undefined, status: 'needs-me' | 'done') =>
+  const move = (
+    pair: Pair,
+    run: string | undefined,
+    status: 'needs-me' | 'done',
+    from: 'running' | null = 'running',
+  ) =>
     pair.machine.call('machine.update-task', {
       id: pair.firstUpstreamTask,
       status,
-      expect: 'running',
+      ...(from === null ? {} : { expect: from }),
       ...(run === undefined ? {} : { run }),
     });
+
+  const settleWindow = () => new Promise((resolve) => setTimeout(resolve, 2_000));
 
   it('[api-077] fires once when the upstream task moves from running to needs-me', async () => {
     const pair = await start();
@@ -351,8 +361,9 @@ describe('[api-077] an after schedule', () => {
         label: 'the after schedule fires',
       },
     );
-    await move(pair, runId, 'needs-me');
-    await move(pair, runId, 'needs-me');
+    await move(pair, runId, 'needs-me', null);
+    await move(pair, runId, 'needs-me', null);
+    await settleWindow();
     expect(await occurrences(pair)).toHaveLength(1);
   });
 
@@ -395,7 +406,8 @@ describe('[api-077] an after schedule', () => {
         label: 'the after schedule fires for done',
       },
     );
-    await move(pair, secondRun, 'done');
+    await move(pair, secondRun, 'done', null);
+    await settleWindow();
     expect(await occurrences(pair)).toHaveLength(2);
   });
 });

@@ -134,6 +134,13 @@ test.describe('[server-app-008] [server-app-072] Sealing in the server-app layou
       { source: 'listener stderr', text: finished.listener.output.stderr },
     );
     expect(texts.some((entry) => entry.source === layout.api.logPath)).toBe(true);
+    const control = `token ${finished.machine.token} key ${finished.key.dataKey}`;
+    const caught = SECRET_PATTERNS.filter(([, pattern]) => pattern.test(control)).map(
+      ([label]) => label,
+    );
+    expect(caught, 'the patterns recognise the issued secrets').toEqual(
+      expect.arrayContaining(['an issued token', 'a data key']),
+    );
 
     const found: string[] = [];
     for (const entry of texts) {
