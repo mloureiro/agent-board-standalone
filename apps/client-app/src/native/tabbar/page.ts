@@ -1,10 +1,19 @@
 import { h } from '../shared/dom.js';
-import type { PaneView, TabView, TabbarBackend } from './backend.js';
+import type { LayoutView, PaneView, TabView, TabbarBackend } from './backend.js';
 
 export const FADE_PX = 24;
+export const NUDGE = 0.02;
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 const HOME_ICON_PATH = 'M2 7.5 8 2l6 5.5V14H10V9.5H6V14H2z';
 const EDITABLE = 'input, textarea, select, [contenteditable=""], [contenteditable="true"]';
+
+interface PaneBar {
+  readonly element: HTMLElement;
+  readonly homeSlot: HTMLElement;
+  readonly scroller: HTMLElement;
+  readonly actions: HTMLElement;
+  selected: number | undefined;
+}
 
 function homeIcon(): SVGSVGElement {
   const icon = document.createElementNS(SVG_NAMESPACE, 'svg');
@@ -23,10 +32,12 @@ function isTyping(target: EventTarget | null): boolean {
   return target instanceof Element && target.closest(EDITABLE) !== null;
 }
 
+function edges(split: readonly number[]): number[] {
+  return [0, ...split, 1];
+}
+
 export async function mountTabbar(root: HTMLElement, backend: TabbarBackend): Promise<void> {
-  const homeSlot = h('div', { class: 'home-slot' });
-  const scroller = h('div', { class: 'scroller' });
-  const bar = h('div', { class: 'bar', role: 'tablist', 'aria-label': 'Tabs' }, homeSlot, scroller);
+  const bar = h('div', { class: 'bar' });
   root.replaceChildren(bar);
 
   const fail = (action: string) => (): void => {
@@ -36,16 +47,29 @@ export async function mountTabbar(root: HTMLElement, backend: TabbarBackend): Pr
   const close = (tab: number): void => void backend.close(tab).catch(fail('close'));
   const cycle = (direction: 'next' | 'previous'): void =>
     void backend.cycle(direction).catch(fail('cycle'));
+  const focusPane = (pane: number): void => void backend.focusPane(pane).catch(fail('focus'));
+  const closePane = (pane: number): void => void backend.closePane(pane).catch(fail('close pane'));
+  const resize = (divider: number, ratio: number, commit: boolean): void =>
+    void backend.resize(divider, ratio, commit).catch(fail('resize'));
+  const splitFrom = (pane: number): void => {
+    void backend
+      .focusPane(pane)
+      .then(() => backend.split())
+      .catch(fail('split'));
+  };
 
-  let selected: number | undefined;
+  const paneBars: PaneBar[] = [];
+  const dividers: HTMLElement[] = [];
+  let current: LayoutView = { panes: [], focused: 0, split: [] };
+  let dragged: number | undefined;
 
-  function updateClip(): void {
+  function updateClip(scroller: HTMLElement): void {
     const { scrollLeft, clientWidth, scrollWidth } = scroller;
     scroller.toggleAttribute('data-clip-start', scrollLeft > 0);
     scroller.toggleAttribute('data-clip-end', scrollLeft + clientWidth < scrollWidth - 1);
   }
 
-  function revealSelected(): void {
+  function revealSelected(scroller: HTMLElement): void {
     const tab = scroller.querySelector<HTMLElement>('.tab[data-selected]');
     if (!tab) return;
     const left = tab.offsetLeft;
@@ -101,21 +125,169 @@ export async function mountTabbar(root: HTMLElement, backend: TabbarBackend): Pr
         event.preventDefault();
         close(tab.id);
       });
+      wrapper.draggable = true;
+      wrapper.addEventListener('dragstart', (event) => {
+        dragged = tab.id;
+        event.dataTransfer?.setData('text/plain', String(tab.id));
+      });
+      wrapper.addEventListener('dragend', () => {
+        dragged = undefined;
+      });
     }
     return wrapper;
   }
 
-  function render(view: PaneView): void {
+  function createPaneBar(index: number): PaneBar {
+    const homeSlot = h('div', { class: 'home-slot' });
+    const scroller = h('div', { class: 'scroller' });
+    const actions = h('div', { class: 'pane-actions' });
+    const element = h(
+      'div',
+      { class: 'pane', role: 'tablist', 'data-pane': String(index) },
+      homeSlot,
+      scroller,
+      actions,
+    );
+    scroller.addEventListener('scroll', () => updateClip(scroller));
+    scroller.addEventListener(
+      'wheel',
+      (event) => {
+        if (event.deltaX !== 0) return;
+        scroller.scrollLeft += event.deltaY;
+        updateClip(scroller);
+      },
+      { passive: true },
+    );
+    element.addEventListener('click', (event) => {
+      const onControl = event.target instanceof Element && event.target.closest('button');
+      if (!onControl && index !== current.focused) focusPane(index);
+    });
+    element.addEventListener('dragover', (event) => {
+      if (dragged !== undefined) event.preventDefault();
+    });
+    element.addEventListener('drop', (event) => {
+      if (dragged === undefined) return;
+      event.preventDefault();
+      const tab = dragged;
+      dragged = undefined;
+      const owner = current.panes.findIndex((pane) => pane.tabs.some((entry) => entry.id === tab));
+      if (owner !== index) void backend.move(tab, index).catch(fail('move'));
+    });
+    return { element, homeSlot, scroller, actions, selected: undefined };
+  }
+
+  function buildActions(index: number, count: number): HTMLElement[] {
+    const split = h(
+      'button',
+      {
+        type: 'button',
+        class: 'pane-action pane-split',
+        'aria-label': count > 1 ? `Split pane ${index + 1}` : 'Split tab',
+        title: 'Split tab into a new pane',
+      },
+      '◫',
+    );
+    split.addEventListener('click', () => splitFrom(index));
+    if (index === 0) return [split];
+    const shut = h(
+      'button',
+      {
+        type: 'button',
+        class: 'pane-action pane-close',
+        'aria-label': `Close pane ${index + 1}`,
+        title: 'Close pane, moving its tabs left',
+      },
+      '×',
+    );
+    shut.addEventListener('click', () => closePane(index));
+    return [split, shut];
+  }
+
+  function createDivider(index: number): HTMLElement {
+    const divider = h('div', {
+      class: 'divider',
+      role: 'separator',
+      'aria-orientation': 'vertical',
+      'aria-label': 'Resize panes',
+      tabindex: '0',
+      'data-index': String(index),
+    });
+    const ratioAt = (event: MouseEvent): number => {
+      const { left, width } = bar.getBoundingClientRect();
+      return width > 0 ? (event.clientX - left) / width : 0;
+    };
+    let last = 0;
+    let dragging = false;
+    divider.addEventListener('pointerdown', (event) => {
+      dragging = true;
+      divider.setAttribute('data-dragging', '');
+      if (typeof divider.setPointerCapture === 'function') {
+        divider.setPointerCapture(event.pointerId);
+      }
+      event.preventDefault();
+    });
+    divider.addEventListener('pointermove', (event) => {
+      if (!dragging) return;
+      last = ratioAt(event);
+      resize(index, last, false);
+    });
+    const release = (event: MouseEvent): void => {
+      if (!dragging) return;
+      dragging = false;
+      divider.removeAttribute('data-dragging');
+      last = ratioAt(event);
+      resize(index, last, true);
+    };
+    divider.addEventListener('pointerup', release);
+    divider.addEventListener('pointercancel', release);
+    return divider;
+  }
+
+  function render(view: LayoutView): void {
     const focusedId = bar.contains(document.activeElement)
       ? document.activeElement?.closest<HTMLElement>('.tab')?.dataset.id
       : undefined;
-    const changed = selected !== view.selected;
-    selected = view.selected;
+    current = view;
+    const count = view.panes.length;
+    const bounds = edges(view.split);
+    bar.toggleAttribute('data-split', count > 1);
 
-    const built = view.tabs.map((tab) => buildTab(tab, tab.id === view.selected));
-    const home = built.filter((element) => 'home' in element.dataset);
-    homeSlot.replaceChildren(...home);
-    scroller.replaceChildren(...built.filter((element) => !('home' in element.dataset)));
+    while (paneBars.length > count) paneBars.pop()?.element.remove();
+    while (paneBars.length < count) {
+      const created = createPaneBar(paneBars.length);
+      paneBars.push(created);
+      bar.append(created.element);
+    }
+    while (dividers.length > count - 1) dividers.pop()?.remove();
+    while (dividers.length < count - 1) {
+      const created = createDivider(dividers.length);
+      dividers.push(created);
+      bar.append(created);
+    }
+
+    view.panes.forEach((pane: PaneView, index: number) => {
+      const paneBar = paneBars[index];
+      if (!paneBar) return;
+      const start = bounds[index] ?? 0;
+      const end = bounds[index + 1] ?? 1;
+      paneBar.element.style.width = `${(end - start) * 100}%`;
+      paneBar.element.toggleAttribute('data-focused', index === view.focused && count > 1);
+      paneBar.element.setAttribute('aria-label', count > 1 ? `Pane ${index + 1} tabs` : 'Tabs');
+      const changed = paneBar.selected !== pane.selected;
+      paneBar.selected = pane.selected;
+
+      const built = pane.tabs.map((tab) => buildTab(tab, tab.id === pane.selected));
+      paneBar.homeSlot.replaceChildren(...built.filter((element) => 'home' in element.dataset));
+      paneBar.scroller.replaceChildren(...built.filter((element) => !('home' in element.dataset)));
+      paneBar.actions.replaceChildren(...buildActions(index, count));
+      if (changed) revealSelected(paneBar.scroller);
+      updateClip(paneBar.scroller);
+    });
+    dividers.forEach((divider, index) => {
+      const edge = bounds[index + 1] ?? 1;
+      divider.style.left = `${edge * 100}%`;
+      divider.setAttribute('aria-valuenow', String(Math.round(edge * 100)));
+    });
 
     if (focusedId !== undefined) {
       const target =
@@ -123,8 +295,6 @@ export async function mountTabbar(root: HTMLElement, backend: TabbarBackend): Pr
         bar.querySelector<HTMLElement>('.tab[data-selected] .tab-select');
       target?.focus();
     }
-    if (changed) revealSelected();
-    updateClip();
   }
 
   bar.addEventListener('keydown', (event) => {
@@ -135,14 +305,26 @@ export async function mountTabbar(root: HTMLElement, backend: TabbarBackend): Pr
       return;
     }
     const target = event.target instanceof Element ? event.target : null;
+    const divider = target?.closest<HTMLElement>('.divider');
+    if (divider && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+      event.preventDefault();
+      const index = Number(divider.dataset.index);
+      const edge = current.split[index];
+      if (edge !== undefined) {
+        resize(index, edge + (event.key === 'ArrowLeft' ? -NUDGE : NUDGE), true);
+      }
+      return;
+    }
     const tab = target?.closest<HTMLElement>('.tab');
     if (!tab) return;
-    const buttons = Array.from(bar.querySelectorAll<HTMLElement>('.tab-select'));
-    const current = buttons.findIndex((button) => button.closest('.tab') === tab);
+    const buttons = Array.from(
+      (tab.closest('.pane') ?? bar).querySelectorAll<HTMLElement>('.tab-select'),
+    );
+    const position = buttons.findIndex((button) => button.closest('.tab') === tab);
     const last = buttons.length - 1;
     const moves: Record<string, number> = {
-      ArrowLeft: Math.max(current - 1, 0),
-      ArrowRight: Math.min(current + 1, last),
+      ArrowLeft: Math.max(position - 1, 0),
+      ArrowRight: Math.min(position + 1, last),
       Home: 0,
       End: last,
     };
@@ -163,19 +345,11 @@ export async function mountTabbar(root: HTMLElement, backend: TabbarBackend): Pr
     }
   });
 
-  scroller.addEventListener('scroll', updateClip);
-  scroller.addEventListener(
-    'wheel',
-    (event) => {
-      if (event.deltaX !== 0) return;
-      scroller.scrollLeft += event.deltaY;
-      updateClip();
-    },
-    { passive: true },
-  );
   window.addEventListener('resize', () => {
-    revealSelected();
-    updateClip();
+    for (const paneBar of paneBars) {
+      revealSelected(paneBar.scroller);
+      updateClip(paneBar.scroller);
+    }
   });
 
   let live = false;

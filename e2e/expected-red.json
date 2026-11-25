@@ -37,71 +37,59 @@
       "user commands with a worker › [cli-030] board take-back works on a run quiet for 20 minutes",
       "user commands without a worker › [cli-029] board reply --resume sends the task back to the top of Todo"
     ],
-    "browser/accessibility.spec.ts": "*",
+    "browser/accessibility.spec.ts": [
+      "accessibility of the primary pages › [web-080] the unlock page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
+      "accessibility of the primary pages › [web-080] the board page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
+      {
+        "title": "accessibility of the primary pages › [web-080] the board page is operable by keyboard alone with a visible focus indicator @chromium",
+        "projects": ["chromium-desktop"]
+      },
+      "accessibility of the primary pages › [web-080] the new task page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
+      {
+        "title": "accessibility of the primary pages › [web-080] the new task page is operable by keyboard alone with a visible focus indicator @chromium",
+        "projects": ["chromium-desktop"]
+      },
+      "accessibility of the primary pages › [web-080] the task page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
+      {
+        "title": "accessibility of the primary pages › [web-080] the task page is operable by keyboard alone with a visible focus indicator @chromium",
+        "projects": ["chromium-desktop"]
+      },
+      "accessibility of the primary pages › [web-080] the schedules page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
+      {
+        "title": "accessibility of the primary pages › [web-080] the schedules page is operable by keyboard alone with a visible focus indicator @chromium",
+        "projects": ["chromium-desktop"]
+      },
+      "accessibility of the primary pages › [web-080] the settings page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
+      {
+        "title": "accessibility of the primary pages › [web-080] the settings page is operable by keyboard alone with a visible focus indicator @chromium",
+        "projects": ["chromium-desktop"]
+      },
+      "accessibility of the sign-in page › [web-080] the sign-in page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme"
+    ],
     "browser/board.spec.ts": "*",
     "browser/client-app-bridge.spec.ts": "*",
     "browser/connection.spec.ts": "*",
-    "browser/handover.spec.ts": "*",
-    "browser/handshake.spec.ts": "*",
-    "browser/harness.spec.ts": "*",
-    "browser/keys.spec.ts": "*",
     "browser/migrate.spec.ts": "*",
     "browser/new-task.spec.ts": "*",
-    "browser/parity.spec.ts": "*",
+    "browser/parity.spec.ts": [
+      "redirect sign-in › [P-05] SAML redirect sign-in finishes in the tab that started it",
+      "open client sessions › [P-10] after sign-out elsewhere the event stream ends, the reconnect gets 401 and the client shows sign-in",
+      "hand-off finish from another origin › [P-11] a hand-off finish with a wrong verifier leaves the flow usable and the right verifier completes it",
+      {
+        "title": "hand-off from WebKit › [P-03] a WebKit client completes hand-off sign-in through a second browser context that approves @webkit",
+        "projects": ["webkit-desktop"]
+      },
+      {
+        "title": "reply drafting in WebKit › [P-18] [web-058] a status change while typing keeps focus, caret and text, and Backspace outside a field does not navigate @webkit",
+        "projects": ["webkit-desktop"]
+      }
+    ],
     "browser/projects.spec.ts": [
       {
         "title": "project filter on the task, schedule and event queries › [api-104] client.events with a project raises changed only for that project's changes",
         "projects": ["chromium-desktop", "webkit-desktop"]
       },
-      {
-        "title": "projects in the browser client › [web-081] the board shows the tasks of all projects together",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "projects in the browser client › [web-081] the project filter narrows the board to one project",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "projects in the browser client › [web-081] the chosen project survives a reload on the same device",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "projects in the browser client › [web-081] the chosen project is absent in a new browser context",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "projects in the browser client › [web-082] the sidebar lists the projects and navigates by project",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
       "projects in the browser client › [web-082] the sidebar is a drawer on a phone @phone",
-      {
-        "title": "projects in the browser client › [web-083] a project is created from the client with its name sealed",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "projects in the browser client › [web-083] a project is renamed from the client with the new name sealed",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "projects in the browser client › [web-083] a project gets a new icon from the client with the icon sealed",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "projects in the browser client › [web-083] an archived project leaves the switcher",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "projects in the browser client › [web-083] an empty project is deleted from the client",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "projects in the browser client › [web-083] deleting a project with tasks asks what happens to them and moves them to the default project",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "projects in the browser client › [web-083] deleting a project with tasks can delete the tasks too",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
       {
         "title": "projects of several servers in the sidebar › [web-082] the sidebar lists the projects of each open server and navigates by project",
         "projects": ["chromium-desktop", "webkit-desktop"]
@@ -109,19 +97,50 @@
     ],
     "browser/proposals.spec.ts": "*",
     "browser/questions.spec.ts": "*",
-    "browser/responsive.spec.ts": "*",
+    "browser/responsive.spec.ts": [
+      "phone viewport journeys on a no-login board › [web-049] the pinned panel stays visible and its send button works with the keyboard open @phone",
+      "phone viewport journeys on a no-login board › [web-098] the board journey completes at the phone viewport @phone",
+      "phone viewport journeys on a no-login board › [web-098] the project filter journey completes at the phone viewport @phone",
+      "phone viewport journeys on a no-login board › [web-098] the task page journey completes at the phone viewport @phone",
+      "phone viewport journeys on a no-login board › [web-098] the reply journey completes at the phone viewport @phone",
+      "phone viewport journeys on a no-login board › [web-098] the answer a question journey completes at the phone viewport @phone",
+      "phone viewport journeys on a no-login board › [web-098] the new task journey completes at the phone viewport @phone",
+      "phone viewport journeys on a no-login board › [web-098] the schedules journey completes at the phone viewport @phone",
+      "phone viewport journeys on a no-login board › [web-098] the settings journey completes at the phone viewport @phone",
+      "phone viewport sign-in on a login board › [web-098] the sign in journey completes at the phone viewport @phone"
+    ],
     "browser/run-to-done.spec.ts": "*",
-    "browser/schedules.spec.ts": "*",
+    "browser/schedules.spec.ts": [
+      "[web-067] Schedules page › [web-067] a paused schedule does not fire when the test clock passes its next time"
+    ],
     "browser/sealing-at-rest.spec.ts": "*",
     "browser/server-app-layout.spec.ts": [
-      "the server app layout from a cleared environment › [server-app-074] every request is the settings user and no sign-in page shows",
       "the server app layout with a remote host › [server-app-074] a remoteHosts name is an allowed host",
-      "opening the board of the server app › [server-app-001] the board URL shows the board and a card can be created",
       "restarting the server app on the same root › [server-app-002] cards stay, the worker reconnects without board init and the client opens unlocked"
     ],
     "browser/servers.spec.ts": "*",
-    "browser/settings.spec.ts": "*",
-    "browser/sign-in.spec.ts": "*",
+    "browser/settings.spec.ts": [
+      {
+        "title": "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] a task newly in Needs me fires a notification while the page is unfocused",
+        "projects": ["chromium-desktop"]
+      },
+      {
+        "title": "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] the on and off setting is read back from the server in a new context",
+        "projects": ["chromium-desktop"]
+      },
+      {
+        "title": "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] a context without the permission grant does not fire",
+        "projects": ["chromium-desktop"]
+      },
+      "[web-075] Settings › Account › [web-075] deleting the account signs out and the user cannot sign back in to the old data",
+      "[web-075] Settings › Account › [web-075] importing the exported file into a fresh account restores its tasks"
+    ],
+    "browser/sign-in.spec.ts": [
+      "sign-in page › [web-014] SAML returns to the client return page and lands signed in, in the same tab",
+      "sign-in page › [web-014] a SAML provider error shows on the sign-in page",
+      "sign-in page › [web-016] approving from another browser signs the client in without a navigation",
+      "another server › [web-103] approving there signs the client in without reload and it holds an abc_ token for that server and no cookie"
+    ],
     "browser/signature.spec.ts": "*",
     "browser/storage.spec.ts": "*",
     "browser/task-page.spec.ts": "*",

@@ -7,6 +7,7 @@ pub mod handshake;
 pub mod headers;
 pub mod http;
 pub mod ids;
+pub mod keybindings;
 pub mod layout;
 pub mod legacy;
 pub mod links;
