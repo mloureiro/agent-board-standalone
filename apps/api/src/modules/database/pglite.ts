@@ -6,6 +6,7 @@ import { migrate } from 'drizzle-orm/pglite/migrator';
 
 import { APP_ROLE } from '../../db/schema/index.js';
 import * as schema from '../../db/schema/index.js';
+import { embeddedAssets } from './embedded.js';
 import type { DatabaseConfig } from './config.js';
 import type { Database } from './database.js';
 import { guardClient, type QueryClient, type Unlock } from './guard.js';
@@ -15,7 +16,8 @@ import { scopedOperations } from './scoped.js';
 
 export type PgliteFactory = (dataDir: string) => Promise<PGlite>;
 
-export const defaultPgliteFactory: PgliteFactory = (dataDir) => PGlite.create(dataDir);
+export const defaultPgliteFactory: PgliteFactory = (dataDir) =>
+  (embeddedAssets().pglite ?? ((folder) => PGlite.create(folder)))(dataDir);
 
 export interface PgliteOptions {
   factory?: PgliteFactory;

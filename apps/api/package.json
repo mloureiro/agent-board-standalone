@@ -12,7 +12,9 @@
     "build": "tsx scripts/build.ts",
     "start": "node dist/main.js",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:executable": "tsx scripts/build-executable.ts",
+    "release": "tsx scripts/release.ts"
   },
   "dependencies": {
     "@agent-board/contract": "workspace:^1.0.0",

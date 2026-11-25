@@ -68,6 +68,21 @@ jobs:
       - run: pnpm --filter @agent-board/mobile lint:rust
       - run: pnpm --filter @agent-board/mobile test:rust
 
+  api-executable:
+    runs-on: ubuntu-latest
+    env:
+      REQUIRE_BUN_EXECUTABLE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: oven-sh/setup-bun@v2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @agent-board/api exec vitest run test/bun-executable.test.ts
+
   mobile-phone:
     name: mobile (phone)
     runs-on: ubuntu-latest
