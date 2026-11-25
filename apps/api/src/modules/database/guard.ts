@@ -3,6 +3,7 @@ import { StatementRefused } from './errors.js';
 const FORBIDDEN: readonly RegExp[] = [
   /\b(?:set|reset)\s+(?:local\s+|session\s+)?(?:role|session\s+authorization)\b/,
   /\b(?:set|reset)\s+(?:local\s+|session\s+)?row_security\b/,
+  /\b(?:set|reset)\s+(?:local\s+|session\s+)?app\s?\.\s?owner\b/,
   /\breset\s+all\b/,
   /\bdiscard\s+(?:all|sessions?)\b/,
   /\bset_config\b/,
@@ -15,7 +16,7 @@ const FORBIDDEN: readonly RegExp[] = [
 ];
 
 export const assertAllowedStatement = (text: string): void => {
-  const normalised = text.toLowerCase().replaceAll('"', '').replace(/\s+/g, ' ');
+  const normalised = text.toLowerCase().replaceAll('"', ' ').replace(/\s+/g, ' ');
   if (FORBIDDEN.some((pattern) => pattern.test(normalised))) throw new StatementRefused();
 };
 
