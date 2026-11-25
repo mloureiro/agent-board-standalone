@@ -96,11 +96,12 @@ export function judgeRun(
   const projectsRun = new Set(results.map((result) => result.project));
 
   for (const [file, listed] of Object.entries(expected.files)) {
-    if (!file.startsWith(scope.prefix) || scope.outOfRun?.includes(file) === true) continue;
+    if (!file.startsWith(scope.prefix)) continue;
     if (!scope.fileExists(file)) {
       verdicts.push({ level: staleLevel, message: `${file}: listed file not found` });
       continue;
     }
+    if (scope.outOfRun?.includes(file) === true) continue;
     const inFile = results.filter((result) => result.file === file);
     if (inFile.length === 0) {
       if (scope.filtered !== true) {

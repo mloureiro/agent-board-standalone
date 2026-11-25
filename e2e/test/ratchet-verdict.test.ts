@@ -200,6 +200,19 @@ describe('ratchet run', () => {
     expect(verdicts).toEqual([]);
   });
 
+  it('[repo-009] a listed file outside this run is still reported when it is missing', () => {
+    const expected = parseExpectedRed({ files: { 'browser/board.spec.ts': '*' } });
+    const verdicts = judgeRun(
+      [],
+      expected,
+      { prefix: 'browser/', fileExists: () => false, outOfRun: ['browser/board.spec.ts'] },
+      { ...plain, strict: true },
+    );
+    expect(verdicts).toEqual([
+      { level: 'fail', message: 'browser/board.spec.ts: listed file not found' },
+    ]);
+  });
+
   it('[repo-009] a scoped title for projects that did not run is not reported missing', () => {
     const expected = parseExpectedRed({
       files: {
