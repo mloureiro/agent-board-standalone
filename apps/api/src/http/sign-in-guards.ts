@@ -29,6 +29,7 @@ export const registerSignInGuards = (
   limit: RateLimitOptions = DEFAULT_RATE_LIMIT,
 ): void => {
   const windows = new Map<string, Window>();
+  let nextSweepAt = 0;
 
   app.addHook('onRequest', async (request, reply) => {
     const route = request.routeOptions.config.route;
@@ -38,7 +39,8 @@ export const registerSignInGuards = (
     if (route.auth !== 'public') return;
 
     const now = Date.now();
-    if (windows.size >= SWEEP_AT) {
+    if (windows.size >= SWEEP_AT && now >= nextSweepAt) {
+      nextSweepAt = now + limit.windowMs;
       for (const [key, window] of windows) if (window.resetAt <= now) windows.delete(key);
     }
     const key = `${request.ip}\n${route.name}`;
