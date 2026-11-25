@@ -62,6 +62,6 @@ describe('expected-red.json', () => {
     const expected = loadExpectedRed(new URL('../expected-red.json', import.meta.url).pathname);
     expect(Array.isArray(expected.files['blackbox/harness.test.ts'])).toBe(true);
     expect(expected.files['browser/harness.spec.ts']).toBe('*');
-    expect(Object.keys(expected.files)).toHaveLength(40);
+    expect(Object.keys(expected.files)).toHaveLength(39);
   });
 });
