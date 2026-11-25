@@ -40,9 +40,13 @@ function pathOnly(baseUrl: string, pathWithQuery: string): string {
   return `${prefix}${pathWithQuery}`;
 }
 
-export async function sendRequest(deps: HttpDeps, request: HttpRequest): Promise<unknown> {
-  const body = request.body === undefined ? undefined : JSON.stringify(request.body);
-  const headers: Record<string, string> = { accept: 'application/json' };
+export async function requestHeaders(
+  deps: HttpDeps,
+  request: HttpRequest,
+  body: string | undefined,
+  accept = 'application/json',
+): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { accept };
   if (request.contractHeaders !== false) {
     headers[CONTRACT_HEADER] = String(CONTRACT);
     headers[CLIENT_HEADER] = clientHeaderValue();
@@ -58,6 +62,32 @@ export async function sendRequest(deps: HttpDeps, request: HttpRequest): Promise
       ),
     );
   }
+  return headers;
+}
+
+export function transportFailure(deps: HttpDeps, error: unknown): CliError {
+  if (error instanceof Error && error.name === 'TimeoutError') {
+    return new CliError(
+      `the server at ${deps.baseUrl} did not answer within ${REQUEST_TIMEOUT_MS / 1000} s`,
+    );
+  }
+  const cause = error instanceof Error && error.cause instanceof Error ? error.cause.message : '';
+  return new CliError(
+    `cannot reach the server at ${deps.baseUrl}${cause === '' ? '' : `: ${cause}`}`,
+  );
+}
+
+export function refuseRedirect(status: number): void {
+  if (status >= 300 && status < 400) {
+    throw new CliError(
+      `the server answered a redirect (${status}) and the CLI does not follow redirects; check the URL in server.json`,
+    );
+  }
+}
+
+export async function sendRequest(deps: HttpDeps, request: HttpRequest): Promise<unknown> {
+  const body = request.body === undefined ? undefined : JSON.stringify(request.body);
+  const headers = await requestHeaders(deps, request, body);
 
   let response: Response;
   try {
@@ -69,34 +99,25 @@ export async function sendRequest(deps: HttpDeps, request: HttpRequest): Promise
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch (error) {
-    if (error instanceof Error && error.name === 'TimeoutError') {
-      throw new CliError(
-        `the server at ${deps.baseUrl} did not answer within ${REQUEST_TIMEOUT_MS / 1000} s`,
-      );
-    }
-    const cause = error instanceof Error && error.cause instanceof Error ? error.cause.message : '';
-    throw new CliError(
-      `cannot reach the server at ${deps.baseUrl}${cause === '' ? '' : `: ${cause}`}`,
-    );
+    throw transportFailure(deps, error);
   }
 
-  if (response.status >= 300 && response.status < 400) {
-    throw new CliError(
-      `the server answered a redirect (${response.status}) and the CLI does not follow redirects; check the URL in server.json`,
-    );
-  }
+  refuseRedirect(response.status);
   const text = await response.text();
-  let json: unknown;
-  try {
-    json = text === '' ? null : JSON.parse(text);
-  } catch {
-    json = null;
-  }
+  const json = parseBody(text);
   if (!response.ok) throw apiError(response.status, json, text);
   return json;
 }
 
-function apiError(status: number, json: unknown, text: string): ApiError {
+export function parseBody(text: string): unknown {
+  try {
+    return text === '' ? null : JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+export function apiError(status: number, json: unknown, text: string): ApiError {
   const error = (json as { error?: { code?: unknown; message?: unknown } } | null)?.error;
   const code = typeof error?.code === 'string' ? error.code : 'error';
   const message =

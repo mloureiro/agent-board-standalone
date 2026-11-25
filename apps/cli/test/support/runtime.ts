@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { ExecOptions, ExecResult, Runtime } from '../../src/runtime.js';
+import type { ExecOptions, ExecResult, InteractiveOptions, Runtime } from '../../src/runtime.js';
 
 export interface Captured {
   stdout: string;
@@ -15,8 +15,15 @@ export interface ExecCall {
   readonly options: ExecOptions;
 }
 
+export interface SpawnCall {
+  readonly file: string;
+  readonly args: readonly string[];
+  readonly options: InteractiveOptions;
+}
+
 export interface TestRuntime {
   readonly rt: Runtime;
+  readonly spawnCalls: SpawnCall[];
   readonly captured: Captured;
   readonly execCalls: ExecCall[];
   readonly root: string;
@@ -30,12 +37,21 @@ export interface TestRuntimeOptions {
   readonly fetch?: typeof fetch;
   readonly exec?: (file: string, args: readonly string[], options: ExecOptions) => ExecResult;
   readonly overrideDirs?: boolean;
+  readonly cwd?: string;
+  readonly stdin?: string;
+  readonly interrupt?: AbortSignal;
+  readonly spawn?: (
+    file: string,
+    args: readonly string[],
+    options: InteractiveOptions,
+  ) => number | Promise<number>;
 }
 
 export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
   const root = mkdtempSync(path.join(os.tmpdir(), 'board-cli-test-'));
   const captured: Captured = { stdout: '', stderr: '' };
   const execCalls: ExecCall[] = [];
+  const spawnCalls: SpawnCall[] = [];
   const dirEnv =
     options.overrideDirs === false
       ? {
@@ -49,6 +65,13 @@ export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
         };
   const rt: Runtime = {
     env: { ...dirEnv, ...options.env },
+    interrupt: options.interrupt ?? new AbortController().signal,
+    cwd: () => options.cwd ?? root,
+    readStdin: () => Promise.resolve(options.stdin ?? ''),
+    spawnInteractive: (file, args, spawnOptions) => {
+      spawnCalls.push({ file, args, options: spawnOptions });
+      return Promise.resolve(options.spawn?.(file, args, spawnOptions) ?? 0);
+    },
     io: {
       stdout: (text) => {
         captured.stdout += text;
@@ -74,6 +97,7 @@ export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
     rt,
     captured,
     execCalls,
+    spawnCalls,
     root,
     path: (...segments) => path.join(root, ...segments),
     dispose: () => {
