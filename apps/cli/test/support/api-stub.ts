@@ -85,6 +85,9 @@ export interface ApiStub {
   ): void;
   setBoardAgents(version: number, document: string): void;
   commands(): string[];
+  bodies(command: string): Record<string, unknown>[];
+  setFeedRequests(requests: readonly string[]): void;
+  setAdvertisedCli(version: string | null): void;
   setGrant(granted: boolean): void;
   setMachines(machines: readonly { name: string; lastSeenAt: string | null }[]): void;
   forbid(command: string): void;
@@ -134,6 +137,11 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
   let granted = true;
   let peers: readonly { name: string; lastSeenAt: string | null }[] = [];
   const held = new Set<string>();
+  const bodiesOf = new Map<string, Record<string, unknown>[]>();
+  let feedRequests: readonly string[] = [];
+  let advertisedCli: string | null = null;
+  let usageIndex: string | null = null;
+  let runCounter = 0;
   const forbidden = new Set<string>();
   const runs = new Map<string, StubRun[]>();
   const holder: { keys?: Keys } = {};
@@ -583,6 +591,104 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
       schedules.delete(body.id as string);
       return {};
     },
+    'claim-task': (body) => {
+      const task = taskOf(body.id as string);
+      if (task.status !== 'todo') throw new Refusal(409, 'conflict', `the task is ${task.status}`);
+      if (task.createdBy === 'agent') throw new Refusal(409, 'conflict', 'an agent proposed this');
+      if (task.notBefore !== null && Date.parse(task.notBefore) > Date.now()) {
+        throw new Refusal(409, 'conflict', 'the task is not due yet');
+      }
+      if (
+        task.machine !== null &&
+        task.machine !== body.machine &&
+        (task.directoryId !== null || (task.next === 'resume' && task.sessionId !== null))
+      ) {
+        throw new Refusal(409, 'conflict', `the task is pinned to ${task.machine}`);
+      }
+      runCounter += 1;
+      const claimed = {
+        ...task,
+        status: 'running' as const,
+        machine: body.machine as string,
+        run: `run${String(runCounter).padStart(16, '0')}`,
+        runStartedAt: new Date().toISOString(),
+      };
+      tasks.set(task.id, claimed);
+      return claimed;
+    },
+    heartbeat: (body) => {
+      taskOf(body.id as string);
+      return {};
+    },
+    fail: async (body) => {
+      const task = taskOf(body.id as string);
+      if (task.status !== 'running') return { applied: false, task };
+      noteSequence += 1;
+      const wire = {
+        id: `n${noteSequence}`,
+        preview: null,
+        createdAt: new Date().toISOString(),
+        kind: 'event',
+        author: 'system',
+        body: body.body as string,
+      } as WireNote;
+      notes.set(task.id, [...(notes.get(task.id) ?? []), wire]);
+      const updated = { ...task, status: 'needs-me' as const };
+      tasks.set(task.id, updated);
+      return { applied: true, task: updated };
+    },
+    pause: (body) => {
+      const task = taskOf(body.id as string);
+      if (task.status !== 'running') throw new Refusal(409, 'conflict', 'the task is not running');
+      const updated = { ...task, status: 'todo' as const, paused: true };
+      tasks.set(task.id, updated);
+      return updated;
+    },
+    wake: (body) => {
+      const task = taskOf(body.id as string);
+      if (task.status !== 'waiting') return { applied: false, task };
+      noteSequence += 1;
+      const wire = {
+        id: `n${noteSequence}`,
+        preview: null,
+        createdAt: new Date().toISOString(),
+        kind: 'event',
+        author: 'system',
+        body: body.body as string,
+      } as WireNote;
+      notes.set(task.id, [...(notes.get(task.id) ?? []), wire]);
+      const updated = { ...task, status: 'todo' as const };
+      tasks.set(task.id, updated);
+      return { applied: true, task: updated };
+    },
+    'set-usage': (body) => {
+      usageIndex = body.index as string;
+      return {};
+    },
+    'ack-feed-requests': (body) => {
+      const acked = new Set(body.requests as string[]);
+      feedRequests = feedRequests.filter((request) => !acked.has(request));
+      return {};
+    },
+    'ack-watch-stops': (body) => {
+      const task = taskOf(body.id as string);
+      tasks.set(task.id, { ...task, watchStops: [] });
+      return {};
+    },
+    'set-pr-states': (body) => {
+      const task = taskOf(body.id as string);
+      const states = new Map(
+        ((body.prs as { id: string; state: WireTask['promptPrState'] }[] | undefined) ?? []).map(
+          (entry) => [entry.id, entry.state],
+        ),
+      );
+      tasks.set(task.id, {
+        ...task,
+        promptPrState: (body.prompt as WireTask['promptPrState'] | undefined) ?? task.promptPrState,
+        prs: task.prs.map((pr) => ({ ...pr, state: states.get(pr.id) ?? pr.state })),
+      });
+      return {};
+    },
     'revoke-token': () => {
       tokenRefused = true;
       revocations += 1;
@@ -781,6 +887,9 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
       legacyDirs: legacy.document !== null,
       agentsVersion: boardAgents?.version ?? null,
       feedsIndex,
+      usageIndex,
+      feedRequests,
+      cli: advertisedCli,
     }),
     extra: async (request): Promise<Answer | undefined> => {
       const pathname = request.path.split('?')[0] ?? '';
@@ -822,6 +931,10 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
         };
       }
       commands.push(commandOf(route));
+      bodiesOf.set(commandOf(route), [
+        ...(bodiesOf.get(commandOf(route)) ?? []),
+        parsed.data as Record<string, unknown>,
+      ]);
       if (forbidden.has(commandOf(route))) {
         return { status: 403, body: { error: { code: 'forbidden', message: 'not for you' } } };
       }
@@ -863,6 +976,13 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
       boardAgents = { version, document };
     },
     commands: () => commands,
+    bodies: (command) => bodiesOf.get(command) ?? [],
+    setFeedRequests: (requests) => {
+      feedRequests = requests;
+    },
+    setAdvertisedCli: (version) => {
+      advertisedCli = version;
+    },
     setGrant: (value) => {
       granted = value;
     },

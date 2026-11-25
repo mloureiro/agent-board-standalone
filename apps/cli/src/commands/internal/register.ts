@@ -8,13 +8,26 @@ import {
   shutdownWorkers,
   systemProcessOps,
 } from '../../shutdown/index.js';
+import { runDispatch } from '../../dispatch/run.js';
+import { runListener } from '../../dispatch/listen.js';
 import { now } from '../../transport/clock.js';
+import { runWatchCommand } from '../../watch/unit.js';
+import { runWorker } from '../../worker/run.js';
 import { describePlan, planMigration, readPendingMigration } from '../../update/migrations.js';
 import { isUnitPlatform, resolveWorkerUnits } from '../../units/index.js';
 import { PART_VERSION } from '../../version.js';
 import type { Context } from '../context.js';
 
-const SUBCOMMANDS = ['units', 'shutdown', 'migration-plan', 'selftest'];
+const SUBCOMMANDS = [
+  'dispatch',
+  'listen',
+  'watch',
+  'worker',
+  'units',
+  'shutdown',
+  'migration-plan',
+  'selftest',
+];
 
 function refuseInRun(ctx: Context, name: string): void {
   if (ctx.inRun) throw new CliError(`\`board internal ${name}\` cannot run inside a board run`);
@@ -86,6 +99,37 @@ export function registerInternal(
     .description('Commands the units and the server app call')
     .action(() => {
       throw new UsageError(`board internal needs a subcommand: ${SUBCOMMANDS.join(', ')}`);
+    });
+
+  internal
+    .command('dispatch')
+    .description('Run one dispatch tick: sweep, wake, claim and start workers')
+    .option('--dry-run', 'read everything and print every write and process start instead')
+    .action(async (_options: unknown, command: Command) => {
+      await runDispatch(withContext(command));
+    });
+
+  internal
+    .command('listen')
+    .description('Hold the event stream of the board and run a tick on each change')
+    .action(async (_options: unknown, command: Command) => {
+      await runListener(withContext(command));
+    });
+
+  internal
+    .command('watch')
+    .description('Run the watches stored by `board watch` and wake the tasks they end')
+    .action(async (_options: unknown, command: Command) => {
+      await runWatchCommand(withContext(command));
+    });
+
+  internal
+    .command('worker')
+    .argument('<task>', 'the claimed task to run')
+    .description('Run the agent of one claimed task')
+    .action(async (task: string, _options: unknown, command: Command) => {
+      const code = await runWorker(withContext(command), task);
+      if (code !== 0) throw new ReportedFailure(code);
     });
 
   internal
