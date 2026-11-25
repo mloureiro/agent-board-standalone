@@ -31,7 +31,7 @@ tokens or owner names into an issue, a commit or a pull request, and never commi
 ## 1. Stop the workers
 
 On every worker host stop the old listener and watcher, and wait until no `claude` run of the board is left. A task
-that is `running` in the old board imports as `running` with no run behind it. The plan report in step 5 warns with
+that is `running` in the old board imports as `running` with no run behind it. The output of `run` in step 8 warns with
 the count. With the workers stopped before the export, that count is 0.
 
 Expected: the old board shows no running task.
@@ -74,8 +74,8 @@ journal count it does not support, stop: the old board needs a version this tool
 owner only, because they hold machine token hashes and wrapped key slots. Delete both when the walk is over.
 
 Expected: a plan with one owner. Write the owner name down as `<owner>`. The per-table counts equal the counts of
-step 4, except that `machine` documents with a `dirs` value show as `legacy_dirs` and the owner has one `project`. A
-warning appears only when a task was still running.
+step 4, except that `machine` documents with a `dirs` value show as `legacy_dirs` and the owner has one `project`.
+`export` prints no running-task warning: that warning comes from `run` in step 8.
 
 If the board has no owner, `run` refuses with "the source holds no owner to migrate". An empty board needs no
 migration.
@@ -93,11 +93,13 @@ schema on the first import.
 
 ## 7. Set the server app's user name
 
-In the server app's settings set `userName` to `<owner>`, exactly as the dry run printed it, then quit the app again if
-it restarted. Content keys derive from the owner name, so any other value opens nothing. The tool refuses a different
-name before it writes anything, naming both names.
+With the server app still quit, edit its settings file (the tray's Open settings file names it) and set `userName` to
+`<owner>`, exactly as the dry run printed it. The app reads the file only at start. Content keys derive from the owner
+name, so any other value opens nothing. The tool refuses a different name before it writes anything, naming both names.
+The server app accepts only a `userName` of 1 to 64 characters from `a-z`, `0-9`, `.`, `_` and `-`. If `<owner>` has
+any other character, stop: this board cannot move into the server app.
 
-Expected: the settings show `<owner>` as the user name.
+Expected: the settings file holds `"userName": "<owner>"`.
 
 ## 8. Run into the scratch copy
 
@@ -113,12 +115,12 @@ Expected output, in order: the plan, `owner check: ok, "<owner>" is the NO_LOGIN
 Count check expectations: for each table the target's per-owner count equals the export's. Source `dirs` documents
 count against target `legacy_dirs` rows, and the other machine documents count against target machine documents.
 
-| Exit code | Meaning                                                                     | What to do                                                         |
-| --------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| 0         | done                                                                        | continue                                                           |
-| 1         | the import failed; it is one transaction, so no board rows were written     | read the API's message, fix it, run again                          |
-| 2         | refused: unreadable source, owner differs, target folder held, owner exists | fix what the message names                                         |
-| 3         | the import committed but a count differs                                    | delete the scratch copy (see Recovery), find the difference, rerun |
+| Exit code | Meaning                                                                                                                     | What to do                                                                                                         |
+| --------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 0         | done                                                                                                                        | continue                                                                                                           |
+| 1         | the import failed, for example because the owner exists in the target; it is one transaction, so no board rows were written | read the API's message, fix it, run again                                                                          |
+| 2         | refused before the import: unreadable source, owner differs, target folder held, missing variable                           | fix what the message names                                                                                         |
+| 3         | a count differs: before the import (the export misses source rows, nothing written) or after it (the import committed)      | read which one the message says; after a commit delete the scratch copy (see Recovery), find the difference, rerun |
 
 ## 9. Run into the real data folder
 
@@ -215,7 +217,7 @@ A run that is killed (Ctrl-C twice, a power cut, a kill signal) can leave its te
 its scratch export behind. Both are in the system temporary directory and start with `agent-board-migrate-`:
 
 ```bash
-ls "$TMPDIR" | grep agent-board-migrate-
+ls "${TMPDIR:-/tmp}" | grep agent-board-migrate-
 ```
 
 Delete each one with `rm -r` after checking that no migration is running. The export holds token hashes, so do not
