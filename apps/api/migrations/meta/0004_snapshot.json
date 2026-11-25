@@ -50,9 +50,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"username\" = (select current_setting('app.owner', true))",
           "withCheck": "\"username\" = (select current_setting('app.owner', true))"
         }
@@ -164,12 +162,8 @@
           "name": "auth_flow_owner_app_user_username_fk",
           "tableFrom": "auth_flow",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -265,12 +259,8 @@
           "name": "client_key_owner_app_user_username_fk",
           "tableFrom": "client_key",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -278,14 +268,8 @@
           "name": "client_key_machine_fk",
           "tableFrom": "client_key",
           "tableTo": "machine",
-          "columnsFrom": [
-            "owner",
-            "machine_id"
-          ],
-          "columnsTo": [
-            "owner",
-            "id"
-          ],
+          "columnsFrom": ["owner", "machine_id"],
+          "columnsTo": ["owner", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -293,14 +277,8 @@
           "name": "client_key_session_fk",
           "tableFrom": "client_key",
           "tableTo": "session",
-          "columnsFrom": [
-            "owner",
-            "session_token_hash"
-          ],
-          "columnsTo": [
-            "owner",
-            "token_hash"
-          ],
+          "columnsFrom": ["owner", "session_token_hash"],
+          "columnsTo": ["owner", "token_hash"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -310,26 +288,17 @@
         "client_key_owner_key_id_unique": {
           "name": "client_key_owner_key_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "owner",
-            "key_id"
-          ]
+          "columns": ["owner", "key_id"]
         },
         "client_key_owner_machine_unique": {
           "name": "client_key_owner_machine_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "owner",
-            "machine_id"
-          ]
+          "columns": ["owner", "machine_id"]
         },
         "client_key_owner_session_unique": {
           "name": "client_key_owner_session_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "owner",
-            "session_token_hash"
-          ]
+          "columns": ["owner", "session_token_hash"]
         }
       },
       "policies": {
@@ -337,9 +306,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -347,7 +314,7 @@
       "checkConstraints": {
         "client_key_id_shape": {
           "name": "client_key_id_shape",
-          "value": "\"client_key\".\"key_id\" ~ '^[A-Za-z0-9_-]{43}$'"
+          "value": "\"client_key\".\"key_id\" ~ '^([0-9a-f]{16}|[A-Za-z0-9_-]{43})$'"
         },
         "client_key_label_length": {
           "name": "client_key_label_length",
@@ -459,12 +426,8 @@
           "name": "directory_owner_app_user_username_fk",
           "tableFrom": "directory",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -472,14 +435,8 @@
           "name": "directory_machine_fk",
           "tableFrom": "directory",
           "tableTo": "machine",
-          "columnsFrom": [
-            "owner",
-            "machine_id"
-          ],
-          "columnsTo": [
-            "owner",
-            "id"
-          ],
+          "columnsFrom": ["owner", "machine_id"],
+          "columnsTo": ["owner", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -487,14 +444,8 @@
           "name": "directory_project_fk",
           "tableFrom": "directory",
           "tableTo": "project",
-          "columnsFrom": [
-            "owner",
-            "project_id"
-          ],
-          "columnsTo": [
-            "owner",
-            "id"
-          ],
+          "columnsFrom": ["owner", "project_id"],
+          "columnsTo": ["owner", "id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -502,21 +453,14 @@
       "compositePrimaryKeys": {
         "directory_owner_id_pk": {
           "name": "directory_owner_id_pk",
-          "columns": [
-            "owner",
-            "id"
-          ]
+          "columns": ["owner", "id"]
         }
       },
       "uniqueConstraints": {
         "directory_owner_id_project_unique": {
           "name": "directory_owner_id_project_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "owner",
-            "id",
-            "project_id"
-          ]
+          "columns": ["owner", "id", "project_id"]
         }
       },
       "policies": {
@@ -524,9 +468,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -587,12 +529,8 @@
           "name": "document_owner_app_user_username_fk",
           "tableFrom": "document",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -600,10 +538,7 @@
       "compositePrimaryKeys": {
         "document_owner_kind_pk": {
           "name": "document_owner_kind_pk",
-          "columns": [
-            "owner",
-            "kind"
-          ]
+          "columns": ["owner", "kind"]
         }
       },
       "uniqueConstraints": {},
@@ -612,9 +547,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -668,12 +601,8 @@
           "name": "legacy_dirs_owner_app_user_username_fk",
           "tableFrom": "legacy_dirs",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -681,14 +610,8 @@
           "name": "legacy_dirs_machine_fk",
           "tableFrom": "legacy_dirs",
           "tableTo": "machine",
-          "columnsFrom": [
-            "owner",
-            "machine_id"
-          ],
-          "columnsTo": [
-            "owner",
-            "id"
-          ],
+          "columnsFrom": ["owner", "machine_id"],
+          "columnsTo": ["owner", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -696,10 +619,7 @@
       "compositePrimaryKeys": {
         "legacy_dirs_owner_machine_id_pk": {
           "name": "legacy_dirs_owner_machine_id_pk",
-          "columns": [
-            "owner",
-            "machine_id"
-          ]
+          "columns": ["owner", "machine_id"]
         }
       },
       "uniqueConstraints": {},
@@ -708,9 +628,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -852,12 +770,8 @@
           "name": "machine_owner_app_user_username_fk",
           "tableFrom": "machine",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -865,19 +779,14 @@
       "compositePrimaryKeys": {
         "machine_owner_id_pk": {
           "name": "machine_owner_id_pk",
-          "columns": [
-            "owner",
-            "id"
-          ]
+          "columns": ["owner", "id"]
         }
       },
       "uniqueConstraints": {
         "machine_token_hash_unique": {
           "name": "machine_token_hash_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token_hash"
-          ]
+          "columns": ["token_hash"]
         }
       },
       "policies": {
@@ -885,9 +794,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -1085,12 +992,8 @@
           "name": "note_owner_app_user_username_fk",
           "tableFrom": "note",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1098,14 +1001,8 @@
           "name": "note_task_fk",
           "tableFrom": "note",
           "tableTo": "task",
-          "columnsFrom": [
-            "owner",
-            "task_id"
-          ],
-          "columnsTo": [
-            "owner",
-            "id"
-          ],
+          "columnsFrom": ["owner", "task_id"],
+          "columnsTo": ["owner", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1113,10 +1010,7 @@
       "compositePrimaryKeys": {
         "note_owner_id_pk": {
           "name": "note_owner_id_pk",
-          "columns": [
-            "owner",
-            "id"
-          ]
+          "columns": ["owner", "id"]
         }
       },
       "uniqueConstraints": {},
@@ -1125,9 +1019,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -1243,12 +1135,8 @@
           "name": "passkey_owner_app_user_username_fk",
           "tableFrom": "passkey",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1260,9 +1148,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -1371,12 +1257,8 @@
           "name": "project_owner_app_user_username_fk",
           "tableFrom": "project",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1384,10 +1266,7 @@
       "compositePrimaryKeys": {
         "project_owner_id_pk": {
           "name": "project_owner_id_pk",
-          "columns": [
-            "owner",
-            "id"
-          ]
+          "columns": ["owner", "id"]
         }
       },
       "uniqueConstraints": {},
@@ -1396,9 +1275,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -1476,12 +1353,8 @@
           "name": "request_nonce_owner_app_user_username_fk",
           "tableFrom": "request_nonce",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1489,14 +1362,8 @@
           "name": "request_nonce_key_fk",
           "tableFrom": "request_nonce",
           "tableTo": "client_key",
-          "columnsFrom": [
-            "owner",
-            "key_id"
-          ],
-          "columnsTo": [
-            "owner",
-            "key_id"
-          ],
+          "columnsFrom": ["owner", "key_id"],
+          "columnsTo": ["owner", "key_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1504,10 +1371,7 @@
       "compositePrimaryKeys": {
         "request_nonce_key_id_nonce_pk": {
           "name": "request_nonce_key_id_nonce_pk",
-          "columns": [
-            "key_id",
-            "nonce"
-          ]
+          "columns": ["key_id", "nonce"]
         }
       },
       "uniqueConstraints": {},
@@ -1516,9 +1380,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -1778,12 +1640,8 @@
           "name": "schedule_owner_app_user_username_fk",
           "tableFrom": "schedule",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1791,14 +1649,8 @@
           "name": "schedule_project_fk",
           "tableFrom": "schedule",
           "tableTo": "project",
-          "columnsFrom": [
-            "owner",
-            "project_id"
-          ],
-          "columnsTo": [
-            "owner",
-            "id"
-          ],
+          "columnsFrom": ["owner", "project_id"],
+          "columnsTo": ["owner", "id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1806,10 +1658,7 @@
       "compositePrimaryKeys": {
         "schedule_owner_id_pk": {
           "name": "schedule_owner_id_pk",
-          "columns": [
-            "owner",
-            "id"
-          ]
+          "columns": ["owner", "id"]
         }
       },
       "uniqueConstraints": {},
@@ -1818,9 +1667,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -1962,12 +1809,8 @@
           "name": "session_owner_app_user_username_fk",
           "tableFrom": "session",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1977,10 +1820,7 @@
         "session_owner_token_hash_unique": {
           "name": "session_owner_token_hash_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "owner",
-            "token_hash"
-          ]
+          "columns": ["owner", "token_hash"]
         }
       },
       "policies": {
@@ -1988,9 +1828,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -2450,12 +2288,8 @@
           "name": "task_owner_app_user_username_fk",
           "tableFrom": "task",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2463,14 +2297,8 @@
           "name": "task_project_fk",
           "tableFrom": "task",
           "tableTo": "project",
-          "columnsFrom": [
-            "owner",
-            "project_id"
-          ],
-          "columnsTo": [
-            "owner",
-            "id"
-          ],
+          "columnsFrom": ["owner", "project_id"],
+          "columnsTo": ["owner", "id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2478,20 +2306,14 @@
       "compositePrimaryKeys": {
         "task_owner_id_pk": {
           "name": "task_owner_id_pk",
-          "columns": [
-            "owner",
-            "id"
-          ]
+          "columns": ["owner", "id"]
         }
       },
       "uniqueConstraints": {
         "task_owner_dedupe_key_unique": {
           "name": "task_owner_dedupe_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "owner",
-            "dedupe_key"
-          ]
+          "columns": ["owner", "dedupe_key"]
         }
       },
       "policies": {
@@ -2499,9 +2321,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -2632,12 +2452,8 @@
           "name": "task_pr_owner_app_user_username_fk",
           "tableFrom": "task_pr",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2645,14 +2461,8 @@
           "name": "task_pr_task_fk",
           "tableFrom": "task_pr",
           "tableTo": "task",
-          "columnsFrom": [
-            "owner",
-            "task_id"
-          ],
-          "columnsTo": [
-            "owner",
-            "id"
-          ],
+          "columnsFrom": ["owner", "task_id"],
+          "columnsTo": ["owner", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2660,10 +2470,7 @@
       "compositePrimaryKeys": {
         "task_pr_owner_id_pk": {
           "name": "task_pr_owner_id_pk",
-          "columns": [
-            "owner",
-            "id"
-          ]
+          "columns": ["owner", "id"]
         }
       },
       "uniqueConstraints": {},
@@ -2672,9 +2479,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -2753,12 +2558,8 @@
           "name": "transcript_event_owner_app_user_username_fk",
           "tableFrom": "transcript_event",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2766,14 +2567,8 @@
           "name": "transcript_event_run_fk",
           "tableFrom": "transcript_event",
           "tableTo": "transcript_run",
-          "columnsFrom": [
-            "owner",
-            "run_id"
-          ],
-          "columnsTo": [
-            "owner",
-            "id"
-          ],
+          "columnsFrom": ["owner", "run_id"],
+          "columnsTo": ["owner", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2781,11 +2576,7 @@
       "compositePrimaryKeys": {
         "transcript_event_owner_run_id_seq_pk": {
           "name": "transcript_event_owner_run_id_seq_pk",
-          "columns": [
-            "owner",
-            "run_id",
-            "seq"
-          ]
+          "columns": ["owner", "run_id", "seq"]
         }
       },
       "uniqueConstraints": {},
@@ -2794,9 +2585,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -2921,12 +2710,8 @@
           "name": "transcript_run_owner_app_user_username_fk",
           "tableFrom": "transcript_run",
           "tableTo": "app_user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "username"
-          ],
+          "columnsFrom": ["owner"],
+          "columnsTo": ["username"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2934,14 +2719,8 @@
           "name": "transcript_run_task_fk",
           "tableFrom": "transcript_run",
           "tableTo": "task",
-          "columnsFrom": [
-            "owner",
-            "task_id"
-          ],
-          "columnsTo": [
-            "owner",
-            "id"
-          ],
+          "columnsFrom": ["owner", "task_id"],
+          "columnsTo": ["owner", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2949,10 +2728,7 @@
       "compositePrimaryKeys": {
         "transcript_run_owner_id_pk": {
           "name": "transcript_run_owner_id_pk",
-          "columns": [
-            "owner",
-            "id"
-          ]
+          "columns": ["owner", "id"]
         }
       },
       "uniqueConstraints": {},
@@ -2961,9 +2737,7 @@
           "name": "tenant",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "board_app"
-          ],
+          "to": ["board_app"],
           "using": "\"owner\" = (select current_setting('app.owner', true))",
           "withCheck": "\"owner\" = (select current_setting('app.owner', true))"
         }
@@ -2994,127 +2768,67 @@
     "public.device_kind": {
       "name": "device_kind",
       "schema": "public",
-      "values": [
-        "session",
-        "machine",
-        "paired"
-      ]
+      "values": ["session", "machine", "paired"]
     },
     "public.document_kind": {
       "name": "document_kind",
       "schema": "public",
-      "values": [
-        "agents",
-        "links",
-        "titles",
-        "settings"
-      ]
+      "values": ["agents", "links", "titles", "settings"]
     },
     "public.next_run": {
       "name": "next_run",
       "schema": "public",
-      "values": [
-        "fresh",
-        "resume"
-      ]
+      "values": ["fresh", "resume"]
     },
     "public.note_author": {
       "name": "note_author",
       "schema": "public",
-      "values": [
-        "agent",
-        "user",
-        "system",
-        "server"
-      ]
+      "values": ["agent", "user", "system", "server"]
     },
     "public.note_kind": {
       "name": "note_kind",
       "schema": "public",
-      "values": [
-        "comment",
-        "question",
-        "answer",
-        "event",
-        "polish"
-      ]
+      "values": ["comment", "question", "answer", "event", "polish"]
     },
     "public.pr_state": {
       "name": "pr_state",
       "schema": "public",
-      "values": [
-        "open",
-        "merged",
-        "closed"
-      ]
+      "values": ["open", "merged", "closed"]
     },
     "public.session_kind": {
       "name": "session_kind",
       "schema": "public",
-      "values": [
-        "cookie",
-        "client"
-      ]
+      "values": ["cookie", "client"]
     },
     "public.session_method": {
       "name": "session_method",
       "schema": "public",
-      "values": [
-        "passkey",
-        "oidc",
-        "saml"
-      ]
+      "values": ["passkey", "oidc", "saml"]
     },
     "public.task_actor": {
       "name": "task_actor",
       "schema": "public",
-      "values": [
-        "user",
-        "agent",
-        "machine"
-      ]
+      "values": ["user", "agent", "machine"]
     },
     "public.task_creator": {
       "name": "task_creator",
       "schema": "public",
-      "values": [
-        "intake",
-        "user",
-        "agent"
-      ]
+      "values": ["intake", "user", "agent"]
     },
     "public.task_effort": {
       "name": "task_effort",
       "schema": "public",
-      "values": [
-        "low",
-        "medium",
-        "high",
-        "xhigh",
-        "max"
-      ]
+      "values": ["low", "medium", "high", "xhigh", "max"]
     },
     "public.task_priority": {
       "name": "task_priority",
       "schema": "public",
-      "values": [
-        "urgent",
-        "high",
-        "normal",
-        "low"
-      ]
+      "values": ["urgent", "high", "normal", "low"]
     },
     "public.task_status": {
       "name": "task_status",
       "schema": "public",
-      "values": [
-        "backlog",
-        "todo",
-        "running",
-        "waiting",
-        "needs-me",
-        "done"
-      ]
+      "values": ["backlog", "todo", "running", "waiting", "needs-me", "done"]
     }
   },
   "schemas": {},

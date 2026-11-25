@@ -314,7 +314,7 @@
       "checkConstraints": {
         "client_key_id_shape": {
           "name": "client_key_id_shape",
-          "value": "\"client_key\".\"key_id\" ~ '^[A-Za-z0-9_-]{43}$'"
+          "value": "\"client_key\".\"key_id\" ~ '^([0-9a-f]{16}|[A-Za-z0-9_-]{43})$'"
         },
         "client_key_label_length": {
           "name": "client_key_label_length",

@@ -1,2 +1,2 @@
 ALTER TABLE "client_key" DROP CONSTRAINT "client_key_id_shape";--> statement-breakpoint
-ALTER TABLE "client_key" ADD CONSTRAINT "client_key_id_shape" CHECK ("client_key"."key_id" ~ '^[A-Za-z0-9_-]{43}$');
+ALTER TABLE "client_key" ADD CONSTRAINT "client_key_id_shape" CHECK ("client_key"."key_id" ~ '^([0-9a-f]{16}|[A-Za-z0-9_-]{43})$');
