@@ -1,12 +1,38 @@
 # Client app: manual walk
 
-Steps that no automated test can drive, because they need real native window chrome, the Dock or the macOS
-Keychain. Each entry names the requirement row it covers in `requirements/catalogue/client-app.md`. The walk runs on
-a Mac with macOS 14 or later, against a built app (`pnpm --filter @agent-board/client-app bundle`, then open
-`apps/client-app/src-tauri/target/release/bundle/macos/Agent Board.app`).
+Steps that no automated test can drive, because they need real native window chrome, the Dock, notifications or the
+macOS Keychain. Each entry names the requirement row it covers in `requirements/catalogue/client-app.md`. The walk
+runs once per release on a Mac with macOS 14 or later, against a built app: either the `Agent Board` or
+`Agent Board Debug` zip attached to the `client-app-v<version>` release (unzip it outside `/tmp`), or a local build
+(`pnpm --filter @agent-board/client-app bundle`, then open
+`apps/client-app/src-tauri/target/release/bundle/macos/Agent Board.app`). The debug variant has the same bundle id, so
+it shares the Keychain items, the notification permission and the data of the release one, and adds the Web Inspector
+(right-click a page, Inspect Element).
 
-Preparation: run an API server that needs no sign-in and add it to the list with its address. A second, unreachable
-entry (for example `http://localhost:1`) is useful for the failure checks of later entries.
+## Before you start
+
+**The first launch of the new app deletes data of the OLD client app.** It removes the old app's per-server WebKit
+stores, its `tabs/` folder and its Keychain session entry (`<bundle id>.session`). It keeps `servers.json`, so the
+server list survives. Do not start the new app on a Mac whose old client app data you still need.
+
+To walk without touching anything that matters, use a throwaway state:
+
+1. Make a new macOS user (System Settings › Users & Groups) and run the walk there, or
+2. Back up `~/Library/Application Support/com.mloureiro.agent-board-client` and `~/Library/WebKit/com.mloureiro.agent-board-client`
+   first, and restore them afterwards.
+
+Entry 008 needs old-app data on purpose. Every other entry wants a clean state: no `servers.json`, no Agent Board items
+in Keychain Access (search `com.mloureiro.agent-board-client`) and no entry for the app in System Settings ›
+Notifications.
+
+Other preparation:
+
+- Run an API server that needs no sign-in and add it to the list with its address. A second, unreachable entry (for
+  example `http://localhost:1`) is useful for the failure checks of later entries.
+- Entries that name a login-mode server or a request-signature server say so at their start.
+- Keep the app out of `/tmp`: LaunchServices ignores bundles there, which breaks `agentboard://` links.
+- The app is ad-hoc signed, so macOS may refuse to open a downloaded copy on first launch. Remove the quarantine flag
+  with `xattr -dr com.apple.quarantine "Agent Board.app"` or approve it in System Settings › Privacy & Security.
 
 ## 010: a server window cannot be closed
 
@@ -248,21 +274,29 @@ key window stays silent, and a denial is logged once.
 
 Expected: a click lands on the task of that server and only on a server that has a window in this run.
 
-## 016, 050: a minimised window for ten minutes still notifies
+## 016, 050: hidden windows keep notifying (spike evidence and walk)
+
+The spike on macOS 27 (S2) showed that with background throttling off a minimised or covered server window kept its
+live view alive for three minutes per state: the SSE stream kept its pace of one event per second, and a 3 second
+timer ran at a steady 4 second cadence. Nothing was suspended. The poll of the attention route (row 050) exists for the
+macOS versions where this does not hold, and the spike did not cover Cmd-H, display sleep or runs of ten minutes.
 
 1. Open a server and select home. Minimise its window and leave it for ten minutes.
 2. Make a task need you every few minutes, at least once after the first five minutes. Each one raises a banner
    within a few seconds, and clicking it restores the window with the task tab selected.
 3. Restore the window and check that the board shows the changes made meanwhile without a reload.
-4. Where the live view of a hidden window is still throttled by macOS, the log shows "window throttled, polling
-   attention" for the server. From then on a task that needs you raises "A task needs you on <server>" within 30
-   seconds. A task that needed you before the poll started raises none of them.
-5. Restore the window. The log line does not repeat and polling stops: no further banner with the generic text shows.
-6. Sign the server out of its token from another device so the session ends, and leave the window minimised. Restore
+4. Repeat steps 1 to 3 with another app fullscreen in front of the window instead of minimising it, and once with
+   Cmd-H.
+5. Where the live view of a hidden window is still throttled by macOS, the log
+   (`log stream --predicate 'process == "agent-board-client"'`) shows "window throttled, polling attention" for the
+   server. From then on a task that needs you raises "A task needs you on <server>" within 30 seconds. A task that
+   needed you before the poll started raises none of them.
+6. Restore the window. The log line does not repeat and polling stops: no further banner with the generic text shows.
+7. Sign the server out of its token from another device so the session ends, and leave the window minimised. Restore
    it and check that the tab bar shows "Your session expired. Sign in again to keep receiving notifications."
 
-Expected: a hidden or minimised window keeps raising notifications, the generic poll runs only while heartbeats are
-missed, and an expired session shows the banner in the tab bar until the next sign-in.
+Expected: a hidden, covered or minimised window keeps raising notifications, the generic poll runs only while
+heartbeats are missed, and an expired session shows the banner in the tab bar until the next sign-in.
 
 ## 045: zoom acts on every tab of the key server window and not on the tab bar
 
@@ -282,3 +316,84 @@ Open three tabs in a server window and a second server window.
 
 Expected: zoom follows the key server window, covers all its tabs including new ones, never scales the tab bar, is not
 remembered, and Backspace outside a field never navigates back.
+
+## 047: the notification permission survives a rebuild with the same bundle id
+
+You need two builds of the app that differ in content and share the bundle id: for example the release zip of one
+version and the zip of the next, or two local `bundle` runs with a change between them. Use a Mac user that never
+answered the notification prompt for this app.
+
+1. Open build A and a server, select a task tab (or another window) so the home tab is not the key one, and make a
+   task need you. The system asks for permission once. Allow it.
+2. In System Settings › Notifications, the entry for the app reads Allow Notifications on. Quit the app.
+3. Replace build A with build B (same name, same location) and open it.
+4. Make another task need you. A banner shows and no permission prompt shows. The Notifications entry still reads
+   Allow Notifications on and no second entry exists.
+5. Repeat the steps with `Agent Board Debug` in place of build B. It shows banners without a prompt and without a
+   second entry, because it has the same bundle id.
+
+Expected: the permission is tied to the bundle id and not to the code signature, so an ad-hoc rebuild keeps it. If a
+prompt shows again after step 3, record it: the row no longer holds.
+
+## 048: runs on macOS 14 and later, on Apple silicon and Intel
+
+1. Check the bundle without launching it: `lipo -archs "Agent Board.app/Contents/MacOS/agent-board-client"` prints
+   `x86_64 arm64`, and
+   `/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "Agent Board.app/Contents/Info.plist"` prints `14.0`.
+2. On an Apple silicon Mac with macOS 14 or later, open the app, add a server and open it. The board loads.
+3. On an Intel Mac with macOS 14 or later, repeat step 2 with the same zip. If no Intel Mac is at hand, run
+   `arch -x86_64 "Agent Board.app/Contents/MacOS/agent-board-client"` on Apple silicon (Rosetta) and check that the
+   list window shows.
+4. On a Mac with macOS 13 or older, open the app. macOS refuses with a message that the app needs a newer macOS
+   version, and nothing launches.
+
+Expected: one universal bundle runs on both architectures from macOS 14 and does not start earlier.
+
+## Keychain prompt after an update (S4)
+
+An update that is signed ad hoc has a new code identity, and macOS treats it as a different app for the Keychain
+items written by the previous build. The spike (S4) showed that the new build cannot read those items silently: the
+read blocks on the system's Keychain access dialog until you answer, and with interaction switched off it fails
+instead of returning the value. Run this walk when you move from one build to the next with a signed-in server.
+
+1. With build A, sign in to a login-mode server (or pair with a signature-on server) so its `.client-token` item (and
+   its `.signing-key` item) exist. Quit the app.
+2. Replace build A with build B (a rebuild or the next release), keeping the bundle id. Open it and open that server.
+3. macOS shows a dialog that the app wants to use confidential information stored in the Keychain, naming the item.
+   One dialog shows per item that is read: the token and, for a signature-on server, the signing key. Answer Allow, or
+   Always Allow to stop it for this build.
+4. The server opens signed in with no new code. Quit and open it again: with Always Allow no dialog shows, with Allow
+   it shows again.
+5. Update to a later build C and open the server. The dialogs show again, because Always Allow applies to the build it
+   was given to.
+6. Repeat from step 2 and answer Deny. The item stays in the Keychain and the app treats it as absent: a denied token
+   shows sign-in, and a denied signing key makes requests to that server fail until you relaunch the app and answer
+   Allow. The app never replaces a denied key. The spike could not answer the dialog, so this behaviour is described by
+   the design and is not yet confirmed on a Mac: record what you see.
+7. While a dialog waits, the rest of the app stays responsive: other windows and the list still work.
+
+Expected: one prompt per Keychain item per update, never a crash or a silent loss of a session, and a denial reads as
+an absent item.
+
+## Acceptance walk: release build to Done
+
+The end-to-end check of a release. Use the zip attached to the `client-app-v<version>` release, on a clean state
+(see "Before you start"), with the server app of the same release train on the same Mac.
+
+1. Unzip `Agent-Board.zip` outside `/tmp`, remove the quarantine flag if macOS blocks it, and open the app once. The
+   list window shows with no server. The first launch ran the cleanup of the old app's stores.
+2. Start the server app. In its tray menu choose "Open board". The client app comes to the front and a server window
+   opens for the server app's address, already in the list. If the client app is not installed, the browser opens
+   instead.
+3. If the server asks you to sign in, sign in through the hand-off, or pair with a code, as in the entries above. The
+   board shows.
+4. Create a card with New task (a short prompt for a machine you have connected). The card appears in Backlog or Todo.
+5. Let it run. The card moves through Running and reaches Done, and the board updates without a reload. If a task asks
+   for you on the way, a native notification shows when the home tab is not in front, and clicking it opens the task.
+6. Quit with Cmd-Q and open the app again. The server window comes back with its tabs, the board shows the card in Done,
+   and no sign-in is asked.
+7. Repeat steps 2 to 4 with `Agent Board Debug`. It reaches the same server with the same sign-in, and right-click
+   Inspect Element opens the Web Inspector.
+
+Expected: from a clean Mac and a release zip, the server app hands the server over, a created card runs to Done, and
+a restart keeps the session.

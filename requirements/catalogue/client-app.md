@@ -72,11 +72,11 @@ explained in [../README.md](../README.md).
 
 ## Release and platform
 
-| ID             | Requirement                                                                                                                                          | Sources | Today | Test                                                       | Test ids                                                   |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ----- | ---------------------------------------------------------- | ---------------------------------------------------------- |
-| client-app-046 | Pushing a client-app release tag builds a universal macOS app (release plus a debug build with Web Inspector), ad-hoc signed, attached to a release. | APP-095 | works | part                                                       | planned: apps/client-app/test/release-and-platform.test.ts |
-| client-app-047 | An ad-hoc signed build keeps its notification permission across rebuilds with the same bundle id.                                                    | APP-096 | works | manual: needs two rebuilds and the macOS permission prompt | —                                                          |
-| client-app-048 | Runs on macOS 14+ (arm64 and Intel through the universal build).                                                                                     | APP-098 | works | manual: real macOS install                                 | —                                                          |
+| ID             | Requirement                                                                                                                                          | Sources | Today | Test                                                       | Test ids                                          |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ----- | ---------------------------------------------------------- | ------------------------------------------------- |
+| client-app-046 | Pushing a client-app release tag builds a universal macOS app (release plus a debug build with Web Inspector), ad-hoc signed, attached to a release. | APP-095 | works | part                                                       | apps/client-app/test/release-and-platform.test.ts |
+| client-app-047 | An ad-hoc signed build keeps its notification permission across rebuilds with the same bundle id.                                                    | APP-096 | works | manual: needs two rebuilds and the macOS permission prompt | —                                                 |
+| client-app-048 | Runs on macOS 14+ (arm64 and Intel through the universal build).                                                                                     | APP-098 | works | manual: real macOS install                                 | —                                                 |
 
 ## Added by the architecture
 
