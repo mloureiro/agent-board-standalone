@@ -1,8 +1,10 @@
-use crate::windows::LIST_LABEL;
+use crate::server_tabs::dispatch;
+use crate::windows::{LIST_LABEL, focused_server};
+use agent_board_client_core::shortcuts::{
+    Action, MENU_CLOSE_TAB, MENU_NEXT_TAB, MENU_PREVIOUS_TAB, from_menu_id, menu_select_id,
+};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Manager};
-
-const CLOSE_LIST: &str = "close-list";
 
 pub fn install(app: &AppHandle) -> tauri::Result<()> {
     let application = Submenu::with_items(
@@ -23,8 +25,8 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
         true,
         &[&MenuItem::with_id(
             app,
-            CLOSE_LIST,
-            "Close List Window",
+            MENU_CLOSE_TAB,
+            "Close Tab",
             true,
             Some("CmdOrCtrl+W"),
         )?],
@@ -49,20 +51,55 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
         true,
         &[&PredefinedMenuItem::minimize(app, None)?],
     )?;
+    let tabs = tabs_menu(app)?;
     app.set_menu(Menu::with_items(
         app,
-        &[&application, &file, &edit, &window],
+        &[&application, &file, &edit, &tabs, &window],
     )?)?;
     Ok(())
 }
 
-pub fn handle(app: &AppHandle, id: &str) {
-    if id != CLOSE_LIST {
-        return;
+fn tabs_menu(app: &AppHandle) -> tauri::Result<Submenu<tauri::Wry>> {
+    let tabs = Submenu::new(app, "Tabs", true)?;
+    tabs.append(&MenuItem::with_id(
+        app,
+        MENU_NEXT_TAB,
+        "Next Tab",
+        true,
+        Some("Ctrl+Tab"),
+    )?)?;
+    tabs.append(&MenuItem::with_id(
+        app,
+        MENU_PREVIOUS_TAB,
+        "Previous Tab",
+        true,
+        Some("Ctrl+Shift+Tab"),
+    )?)?;
+    tabs.append(&PredefinedMenuItem::separator(app)?)?;
+    for position in 1..=9 {
+        tabs.append(&MenuItem::with_id(
+            app,
+            menu_select_id(position),
+            format!("Select Tab {position}"),
+            true,
+            Some(format!("CmdOrCtrl+{position}")),
+        )?)?;
     }
-    if let Some(list) = app.get_webview_window(LIST_LABEL)
+    Ok(tabs)
+}
+
+pub fn handle(app: &AppHandle, id: &str) {
+    let Some(action) = from_menu_id(id) else {
+        return;
+    };
+    if action == Action::CloseTab
+        && let Some(list) = app.get_webview_window(LIST_LABEL)
         && list.is_focused().unwrap_or(false)
     {
         let _ = list.close();
+        return;
+    }
+    if let Some(server) = focused_server(app) {
+        dispatch(app, server, move |tabs| tabs.apply(action));
     }
 }

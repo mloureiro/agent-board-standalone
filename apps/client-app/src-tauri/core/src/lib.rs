@@ -1,4 +1,5 @@
 pub mod address;
+pub mod attention;
 pub mod bridge;
 pub mod files;
 pub mod handover;
@@ -6,8 +7,12 @@ pub mod handshake;
 pub mod headers;
 pub mod http;
 pub mod ids;
+pub mod layout;
 pub mod legacy;
+pub mod links;
 pub mod log;
+pub mod navigation;
+pub mod notify;
 pub mod opening;
 pub mod orphans;
 pub mod page_input;
@@ -19,6 +24,8 @@ pub mod shortcuts;
 pub mod signing;
 pub mod tab_file;
 pub mod tabs;
+pub mod throttle;
 pub mod tokens;
+pub mod zoom;
 
 pub const BUNDLE_ID: &str = "com.mloureiro.agent-board-client";

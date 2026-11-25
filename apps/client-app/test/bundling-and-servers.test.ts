@@ -79,6 +79,7 @@ describe('bundling', () => {
     }
     const added = (await filesUnder(outDir)).filter((name) => !(name in WEB_FILES));
     expect(added).toContain(path.join('_native', 'list.html'));
+    expect(added).toContain(path.join('_native', 'tabbar.html'));
     expect(added.every((name) => name.startsWith('_native'))).toBe(true);
     const page = await readFile(path.join(outDir, '_native', 'list.html'), 'utf8');
     expect(page).not.toMatch(/(?:src|href)="https?:/);
@@ -209,7 +210,7 @@ describe('bridge', () => {
     const own = ['list_add_server', 'list_remove_server', 'open_server', 'open_all_servers'];
     for (const command of own) expect(granted).not.toContain(permission(command));
 
-    for (const name of ['page', 'list', 'tabbar']) {
+    for (const name of ['page', 'list', 'tabbar', 'tab']) {
       const capability = await json('capabilities', `${name}.json`);
       expect(capability.windows, name).toBeUndefined();
       expect(capability.remote, name).toBeUndefined();
@@ -218,8 +219,17 @@ describe('bridge', () => {
     const list = await json('capabilities', 'list.json');
     expect(list.webviews).toEqual(['list']);
     expect(list.permissions).not.toContain(permission('server_fetch'));
+    const tab = await json('capabilities', 'tab.json');
+    expect(tab.webviews).toEqual(['tab-*']);
+    expect([...(tab.permissions as string[])].sort()).toEqual(
+      ['tab_navigate', 'tab_title', 'tab_cycle'].map(permission).sort(),
+    );
+    const tabbar = await json('capabilities', 'tabbar.json');
+    expect(tabbar.webviews).toEqual(['tabbar-*']);
+    expect(tabbar.permissions).not.toContain(permission('server_fetch'));
+    expect(tabbar.permissions).not.toContain(permission('tab_navigate'));
     const everyGranted = new Set<string>();
-    for (const name of ['page', 'list', 'tabbar']) {
+    for (const name of ['page', 'list', 'tabbar', 'tab']) {
       const capability = await json('capabilities', `${name}.json`);
       for (const entry of capability.permissions as string[]) everyGranted.add(entry);
     }

@@ -1,9 +1,10 @@
+use crate::commands::tabs;
 use crate::fetches::pump;
 use crate::state::AppState;
-use crate::{removals, windows};
+use crate::{links, removals, windows};
 use agent_board_client_core::bridge::{BridgeError, Scope};
 use agent_board_client_core::headers::Header;
-use agent_board_client_core::page_input;
+use agent_board_client_core::page_input::{self, TabIntent};
 use agent_board_client_core::ports::PortError;
 use agent_board_client_core::servers::ServerEntry;
 use serde::Serialize;
@@ -119,11 +120,16 @@ pub async fn handoff_finish(
     flow: String,
     verifier: String,
 ) -> Result<HandoffOutcome, String> {
-    let _ = (flow, verifier);
-    scope(&app, &state, &webview)
-        .resolve(&server_id)
-        .map_err(text)?;
-    Err("sign-in is not available in this build yet".to_owned())
+    page_input::sign_in(&flow, &verifier).map_err(input)?;
+    let scope = scope(&app, &state, &webview);
+    state
+        .bridge
+        .handoff_finish(&scope, &server_id, &flow, &verifier)
+        .await
+        .map(|status| HandoffOutcome {
+            status: status.as_str(),
+        })
+        .map_err(text)
 }
 
 #[tauri::command]
@@ -135,11 +141,13 @@ pub async fn pair(
     code: String,
     label: String,
 ) -> Result<(), String> {
-    let _ = (code, label);
-    scope(&app, &state, &webview)
-        .resolve(&server_id)
-        .map_err(text)?;
-    Err("pairing is not available in this build yet".to_owned())
+    page_input::pairing(&code, &label).map_err(input)?;
+    let scope = scope(&app, &state, &webview);
+    state
+        .bridge
+        .pair(&scope, &server_id, &code, &label)
+        .await
+        .map_err(text)
 }
 
 #[tauri::command]
@@ -149,9 +157,11 @@ pub async fn sign_out(
     state: Shared<'_>,
     server_id: String,
 ) -> Result<(), String> {
-    scope(&app, &state, &webview)
-        .resolve(&server_id)
-        .map(|_| ())
+    let scope = scope(&app, &state, &webview);
+    state
+        .bridge
+        .sign_out(&scope, &server_id)
+        .await
         .map_err(text)
 }
 
@@ -183,19 +193,25 @@ pub async fn open_link(
         return Err(text(BridgeError::UnknownServer));
     }
     let url = page_input::link(&url).map_err(input)?;
-    std::process::Command::new("open")
-        .arg("--")
-        .arg(url.as_str())
-        .spawn()
-        .map(|_| ())
-        .map_err(|_| "the link could not be opened".to_owned())
+    links::open_in_default_browser(url.as_str())
 }
 
 #[tauri::command]
-pub async fn report_tab(path: String, title: String) -> Result<(), String> {
-    page_input::tab_report(&path, &title)
-        .map(|_| ())
-        .map_err(input)
+pub async fn report_tab(
+    app: AppHandle,
+    webview: Webview,
+    path: String,
+    title: String,
+) -> Result<(), String> {
+    let report = page_input::tab_report(&path, &title).map_err(input)?;
+    if let Some((server, tab)) = windows::tab_of_label(webview.label()) {
+        crate::server_tabs::dispatch(&app, server, move |tabs| {
+            let mut effects = tabs::navigate(tabs, tab, TabIntent::Route, &report.path);
+            effects.extend(tabs.title(tab, &report.title));
+            effects
+        });
+    }
+    Ok(())
 }
 
 #[tauri::command]

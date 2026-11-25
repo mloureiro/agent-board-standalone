@@ -141,6 +141,19 @@ impl MemorySecrets {
             .insert((service.to_owned(), account.to_owned()), secret.to_vec());
     }
 
+    pub fn services(&self) -> Vec<String> {
+        let mut found: Vec<String> = self
+            .items
+            .lock()
+            .unwrap()
+            .keys()
+            .map(|(service, _)| service.clone())
+            .collect();
+        found.dedup();
+        found.sort();
+        found
+    }
+
     pub fn peek(&self, service: &str, account: &str) -> Option<Vec<u8>> {
         self.items
             .lock()
