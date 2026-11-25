@@ -217,9 +217,10 @@ Use a no-login API with the request signature on, for example the server app or 
 Expected: the key never leaves the Keychain except as its public half, a failed pairing leaves nothing, and
 revoking the device returns the page to `needs-pairing`.
 
-If macOS asks to allow access to a Keychain item after you rebuilt or updated the app, answer Allow. Answering Deny
-leaves the item in place and unused: a denied session token shows sign-in, and a denied signing key makes every
-request to that server fail until you relaunch the app and answer Allow. A denied key is never replaced.
+If macOS asks to allow access to a Keychain item after you rebuilt or updated the app, answer Allow. By design,
+answering Deny leaves the item in place and unused: a denied session token shows sign-in, and a denied signing key
+makes every request to that server fail until you relaunch the app and answer Allow. A denied key is never replaced.
+The Deny behaviour is not yet confirmed on a Mac: the "Keychain prompt after an update (S4)" walk records it.
 
 ## 040: a notification arrives when another app is in front and when the window is minimised
 
@@ -382,9 +383,9 @@ The end-to-end check of a release. Use the zip attached to the `client-app-v<ver
 
 1. Unzip `Agent-Board.zip` outside `/tmp`, remove the quarantine flag if macOS blocks it, and open the app once. The
    list window shows with no server. The first launch ran the cleanup of the old app's stores.
-2. Start the server app. In its tray menu choose "Open board". The client app comes to the front and a server window
-   opens for the server app's address, already in the list. If the client app is not installed, the browser opens
-   instead.
+2. Start the server app. In its tray menu choose "Open board". The client app comes to the front, a server window
+   opens for the server app's address, and the list gains an entry for it. If the client app is not installed, the
+   browser opens instead. Without a server app at hand, send the same handover link by hand as in entry 013.
 3. If the server asks you to sign in, sign in through the hand-off, or pair with a code, as in the entries above. The
    board shows.
 4. Create a card with New task (a short prompt for a machine you have connected). The card appears in Backlog or Todo.
