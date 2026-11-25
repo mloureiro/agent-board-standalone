@@ -1,8 +1,10 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
+import { constants as osConstants } from 'node:os';
 import os from 'node:os';
 
 export interface ExecOptions {
   readonly stdin?: string;
+  readonly cwd?: string;
   readonly timeoutMs: number;
   readonly maxBytes: number;
 }
@@ -19,9 +21,21 @@ export interface Io {
   readonly stderrIsTty: boolean;
 }
 
+export interface InteractiveOptions {
+  readonly cwd: string;
+}
+
 export interface Runtime {
   readonly env: Readonly<Record<string, string | undefined>>;
   readonly io: Io;
+  readonly interrupt: AbortSignal;
+  cwd(): string;
+  readStdin(): Promise<string>;
+  spawnInteractive(
+    file: string,
+    args: readonly string[],
+    options: InteractiveOptions,
+  ): Promise<number>;
   readonly fetch: typeof fetch;
   readonly platform: NodeJS.Platform;
   readonly homedir: string;
@@ -38,7 +52,12 @@ function execFileText(
     const child = execFile(
       file,
       [...args],
-      { timeout: options.timeoutMs, maxBuffer: options.maxBytes, encoding: 'utf8' },
+      {
+        timeout: options.timeoutMs,
+        maxBuffer: options.maxBytes,
+        encoding: 'utf8',
+        ...(options.cwd === undefined ? {} : { cwd: options.cwd }),
+      },
       (error, stdout) => {
         if (error === null) {
           resolve({ code: 0, stdout });
@@ -56,9 +75,44 @@ function execFileText(
   });
 }
 
+function spawnInteractive(
+  file: string,
+  args: readonly string[],
+  options: InteractiveOptions,
+): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(file, [...args], { cwd: options.cwd, stdio: 'inherit' });
+    child.on('error', reject);
+    child.on('close', (code, signal) => {
+      resolve(code ?? 128 + (signal === null ? 0 : (osConstants.signals[signal] ?? 0)));
+    });
+  });
+}
+
+async function readProcessStdin(): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of process.stdin) chunks.push(chunk as Buffer);
+  return Buffer.concat(chunks).toString('utf8');
+}
+
+function interruptSignal(): AbortSignal {
+  const controller = new AbortController();
+  const stop = (): void => {
+    controller.abort();
+  };
+  process.once('SIGINT', stop);
+  process.once('SIGTERM', stop);
+  process.stdout.on('error', stop);
+  return controller.signal;
+}
+
 export function systemRuntime(): Runtime {
   return {
     env: process.env,
+    interrupt: interruptSignal(),
+    cwd: () => process.cwd(),
+    readStdin: readProcessStdin,
+    spawnInteractive,
     io: {
       stdout: (text) => {
         process.stdout.write(text);

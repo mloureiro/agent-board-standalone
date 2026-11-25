@@ -12,7 +12,7 @@ export interface FakeBoardOptions {
   readonly minClient?: number;
   readonly requestSignature?: boolean;
   readonly features?: readonly string[];
-  readonly extra?: (request: SeenRequest) => Answer | undefined;
+  readonly extra?: (request: SeenRequest) => Answer | undefined | Promise<Answer | undefined>;
   readonly keyId?: string | null;
 }
 

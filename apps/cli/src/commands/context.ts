@@ -12,8 +12,16 @@ export interface Context {
   readonly dirs: ProfileDirs;
   readonly dryRun: boolean;
   readonly inRun: boolean;
+  readonly runTask: string | null;
+  readonly runId: string | null;
+  readonly startDir: string | null;
+  readonly restricted: boolean;
   out(line: string): void;
   err(line: string): void;
+}
+
+function nonEmpty(value: string | undefined): string | null {
+  return value === undefined || value === '' ? null : value;
 }
 
 export function buildContext(rt: Runtime, options: GlobalOptions, localDryRun = false): Context {
@@ -24,6 +32,10 @@ export function buildContext(rt: Runtime, options: GlobalOptions, localDryRun = 
     dirs: resolveProfileDirs({ env: rt.env, homedir: rt.homedir }, profile),
     dryRun: options.dryRun === true || localDryRun,
     inRun: task !== undefined && task !== '',
+    runTask: task === undefined || task === '' ? null : task,
+    runId: nonEmpty(rt.env.AGENT_BOARD_RUN),
+    startDir: nonEmpty(rt.env.AGENT_BOARD_START_DIR),
+    restricted: rt.env.AGENT_BOARD_RESTRICTED === '1',
     out: (line) => {
       rt.io.stdout(`${line}\n`);
     },

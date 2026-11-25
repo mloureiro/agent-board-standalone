@@ -13,9 +13,10 @@ export interface Answer {
   readonly body?: unknown;
   readonly headers?: Record<string, string>;
   readonly delayMs?: number;
+  readonly stream?: (response: http.ServerResponse) => void;
 }
 
-export type Handler = (request: SeenRequest) => Answer | undefined;
+export type Handler = (request: SeenRequest) => Answer | undefined | Promise<Answer | undefined>;
 
 export interface FakeServer {
   readonly url: string;
@@ -28,7 +29,7 @@ export async function startServer(handler: Handler): Promise<FakeServer> {
   const server = http.createServer((request, response) => {
     const chunks: Buffer[] = [];
     request.on('data', (chunk: Buffer) => chunks.push(chunk));
-    request.on('end', () => {
+    request.on('end', async () => {
       const entry: SeenRequest = {
         method: request.method ?? 'GET',
         path: request.url ?? '/',
@@ -36,10 +37,19 @@ export async function startServer(handler: Handler): Promise<FakeServer> {
         body: Buffer.concat(chunks).toString('utf8'),
       };
       seen.push(entry);
-      const answer = handler(entry) ?? {
+      const answer = (await handler(entry)) ?? {
         status: 404,
         body: { error: { code: 'not-found', message: 'no route' } },
       };
+      if (answer.stream !== undefined) {
+        response.writeHead(answer.status ?? 200, {
+          'content-type': 'text/event-stream',
+          'cache-control': 'no-store',
+          ...answer.headers,
+        });
+        answer.stream(response);
+        return;
+      }
       setTimeout(() => {
         response.writeHead(answer.status ?? 200, {
           'content-type': 'application/json',
