@@ -134,6 +134,11 @@ describe('[api-108] static files', () => {
     expect(version.json()).toHaveProperty('contract');
     const unknownPost = await app.inject({ method: 'POST', url: '/api/nowhere', payload: {} });
     expect(unknownPost.statusCode).toBe(404);
+    for (const url of ['/api', '/%61pi/nowhere']) {
+      const miss = await app.inject({ url });
+      expect(miss.statusCode, url).toBe(404);
+      expect(miss.json().error.code, url).toBe('not-found');
+    }
   });
 
   it('refuses traversal, NUL, backslash and bad encodings with 400', async () => {

@@ -7,12 +7,23 @@ import { contentTypeOf, openRoot } from './files.js';
 import { contentRange, multipartBody, newBoundary, selectRanges } from './ranges.js';
 
 const ASSETS_PREFIX = '/assets/';
-const API_PREFIX = '/api/';
+const API_ROOT = '/api';
+const API_PREFIX = `${API_ROOT}/`;
 const IMMUTABLE = 'public, max-age=31536000, immutable';
 const REVALIDATE = 'no-cache';
 const PLAIN = 'text/plain; charset=utf-8';
 
 const rawPathOf = (request: FastifyRequest): string => (request.raw.url ?? '/').split('?')[0]!;
+
+const isApiPath = (path: string): boolean => {
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(path);
+  } catch {
+    return false;
+  }
+  return decoded === API_ROOT || decoded.startsWith(API_PREFIX);
+};
 
 const requestedSelection = (request: FastifyRequest, size: number) => {
   if (request.headers['if-range'] !== undefined) return { kind: 'whole' } as const;
@@ -37,7 +48,7 @@ export const registerWeb = async (app: FastifyInstance, context: ServerContext):
     config: { answer: 'asset' },
     handler: async (request, reply) => {
       const path = rawPathOf(request);
-      if (path.startsWith(API_PREFIX)) return reply.callNotFound();
+      if (isApiPath(path)) return reply.callNotFound();
       const asset = path.startsWith(ASSETS_PREFIX);
       const cache = asset ? IMMUTABLE : REVALIDATE;
       const found = await resolve(path, asset);
@@ -82,7 +93,7 @@ export const registerWeb = async (app: FastifyInstance, context: ServerContext):
     config: { answer: 'asset' },
     handler: async (request, reply) => {
       const path = rawPathOf(request);
-      if (path.startsWith(API_PREFIX)) return reply.callNotFound();
+      if (isApiPath(path)) return reply.callNotFound();
       reply.header('allow', 'GET, HEAD');
       return answer(reply, path.startsWith(ASSETS_PREFIX) ? IMMUTABLE : REVALIDATE, 405);
     },
