@@ -1,10 +1,19 @@
 pub mod address;
+pub mod bridge;
+pub mod files;
 pub mod handover;
+pub mod handshake;
 pub mod headers;
+pub mod http;
 pub mod ids;
 pub mod log;
+pub mod opening;
+pub mod orphans;
 pub mod paths;
 pub mod ports;
+pub mod removal;
+pub mod servers;
 pub mod signing;
+pub mod tokens;
 
 pub const BUNDLE_ID: &str = "com.mloureiro.agent-board-client";
