@@ -18,10 +18,13 @@
     "@agent-board/contract": "workspace:^1.0.0",
     "@agent-board/sealing": "workspace:^1.0.0",
     "@electric-sql/pglite": "^0.6.0",
+    "@node-saml/node-saml": "5.2.0",
     "@simplewebauthn/server": "^14.1.0",
+    "@xmldom/xmldom": "^0.9.12",
     "croner": "^11.0.1",
     "drizzle-orm": "^0.45.4",
     "fastify": "^5.12.8",
+    "openid-client": "6.9.0",
     "pg": "^8.23.1",
     "zod": "^4.6.7"
   },
@@ -30,6 +33,7 @@
     "@types/pg": "^8.23.1",
     "drizzle-kit": "^0.31.11",
     "esbuild": "^0.28.2",
-    "tsx": "^4.23.15"
+    "tsx": "^4.23.15",
+    "xml-crypto": "^6.4.0"
   }
 }

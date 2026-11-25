@@ -4,9 +4,11 @@ import { TOKEN_PREFIXES, MAX_FEED_REQUEST_ACKS, type FeedAction } from '@agent-b
 import { tokenHash } from '@agent-board/sealing';
 import { and, asc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 
-import { appUser, clientKey, legacyDirs, machine } from '../../db/schema/index.js';
+import { clearMachineKey } from '../../auth/index.js';
+import { appUser, machine } from '../../db/schema/index.js';
 import { ApiError } from '../../errors.js';
 import type { ScopedDatabase } from '../database/index.js';
+import { hasLegacyDirs } from '../machine-directories/index.js';
 
 export type MachineDocument = 'catalog' | 'usage' | 'feeds';
 
@@ -28,7 +30,11 @@ const clearedDocuments = {
 export const newMachineToken = (): string =>
   `${TOKEN_PREFIXES.machine}${randomBytes(32).toString('base64url')}`;
 
-export const issueMachineToken = async (tx: ScopedDatabase, name: string): Promise<string> => {
+export const issueMachineToken = async (
+  tx: ScopedDatabase,
+  owner: string,
+  name: string,
+): Promise<string> => {
   const token = newMachineToken();
   const hash = await tokenHash(token);
   await tx
@@ -47,9 +53,7 @@ export const issueMachineToken = async (tx: ScopedDatabase, name: string): Promi
         ...clearedDocuments,
       },
     });
-  await tx
-    .delete(clientKey)
-    .where(and(eq(clientKey.machineId, name), eq(clientKey.kind, 'machine')));
+  await clearMachineKey(tx, owner, name);
   return token;
 };
 
@@ -203,11 +207,11 @@ export const machineState = async (
     .select({ keyId: appUser.keyId })
     .from(appUser)
     .where(eq(appUser.username, owner));
-  const [legacy] = await tx
-    .select({ machineId: legacyDirs.machineId })
-    .from(legacyDirs)
-    .where(eq(legacyDirs.machineId, name));
-  return { ...row, keyId: user?.keyId ?? null, legacyDirs: legacy !== undefined };
+  return {
+    ...row,
+    keyId: user?.keyId ?? null,
+    legacyDirs: await hasLegacyDirs(tx, owner, name),
+  };
 };
 
 export const ackFeedRequests = async (

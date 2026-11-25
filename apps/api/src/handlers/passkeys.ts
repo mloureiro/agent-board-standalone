@@ -116,7 +116,14 @@ export const passkeyHandlers: HandlerSet = (context) => {
           .returning({ credentialId: schema.passkey.credentialId }),
       );
       if (advanced.length === 0) throw new ApiError('forbidden', SIGN_IN_FAILED);
-      await startCookieSession(context, reply, login.scheme, stored.owner, 'passkey');
+      await startCookieSession(
+        context,
+        reply,
+        login.scheme,
+        stored.owner,
+        'passkey',
+        input.publicKey,
+      );
       return { ok: true };
     },
 
@@ -171,7 +178,7 @@ export const passkeyHandlers: HandlerSet = (context) => {
           .returning({ credentialId: schema.passkey.credentialId });
         if (stored.length === 0) throw new ApiError('forbidden', ALREADY_REGISTERED);
       });
-      await startCookieSession(context, reply, login.scheme, username, 'passkey');
+      await startCookieSession(context, reply, login.scheme, username, 'passkey', input.publicKey);
       return { ok: true };
     },
 

@@ -2,11 +2,14 @@ import { eq } from 'drizzle-orm';
 import type { FastifyReply } from 'fastify';
 
 import {
+  bindSessionKey,
   clearedSessionCookie,
   DAY_MS,
+  dropUpkeep,
   endSession,
   issueSession,
   newPairingCode,
+  parseSigningKey,
   readCredential,
   readFlow,
   sessionCookie,
@@ -28,6 +31,7 @@ export const OIDC_LABEL = 'OpenID Connect';
 export const SAML_LABEL = 'SAML';
 
 const SIGN_IN_FAILED = 'sign-in failed';
+const DEVICE_LABEL = 'Signed-in device';
 
 export const sessionDepsOf = (context: ServerContext): SessionDeps => ({
   database: context.services.database,
@@ -38,15 +42,30 @@ export const sessionDepsOf = (context: ServerContext): SessionDeps => ({
       : DEFAULT_SESSION_DAYS,
 });
 
+export const issueBoundSession = async (
+  context: ServerContext,
+  owner: string,
+  kind: 'cookie' | 'client',
+  method: SessionMethod,
+  publicKey: string | undefined,
+): Promise<Awaited<ReturnType<typeof issueSession>>> => {
+  const deps = sessionDepsOf(context);
+  const issued = await issueSession(deps, owner, kind, method);
+  if (publicKey !== undefined && context.config.requestSignature)
+    await bindSessionKey(deps.database, deps.clock, owner, issued.token, publicKey, DEVICE_LABEL);
+  return issued;
+};
+
 export const startCookieSession = async (
   context: ServerContext,
   reply: FastifyReply,
   scheme: 'http' | 'https',
   owner: string,
   method: SessionMethod,
+  publicKey?: string,
 ): Promise<void> => {
   const deps = sessionDepsOf(context);
-  const issued = await issueSession(deps, owner, 'cookie', method);
+  const issued = await issueBoundSession(context, owner, 'cookie', method, publicKey);
   reply.header(
     'set-cookie',
     sessionCookie(scheme, issued.token, deps.sessionDays * (DAY_MS / 1000)),
@@ -85,8 +104,10 @@ export const signInHandlers: HandlerSet = (context) => ({
     const { signIn } = context.config;
     if (signIn.mode === 'no-login') return {};
     const credential = await readCredential(request, signIn.scheme);
-    if (credential !== null && credential.kind !== 'machine' && request.principal !== null)
+    if (credential !== null && credential.kind !== 'machine' && request.principal !== null) {
       await endSession(sessionDepsOf(context), request.principal.owner, credential.hash);
+      await dropUpkeep(context.services.database, credential.hash);
+    }
     if (request.principal !== null)
       await announceChange(context.services.events, request.principal.owner);
     reply.header('set-cookie', clearedSessionCookie(signIn.scheme));
@@ -142,14 +163,21 @@ export const signInHandlers: HandlerSet = (context) => ({
     if (flow === null || !verifierMatches(flow, input.verifier))
       throw new ApiError('forbidden', SIGN_IN_FAILED);
     if (flow.owner === null) return { status: 'pending' };
+    if (input.publicKey !== undefined) await parseSigningKey(input.publicKey);
     const taken = await takeFlow(context, input.flow, 'handoff');
     if (taken === null || taken.owner === null) throw new ApiError('forbidden', SIGN_IN_FAILED);
     const method = handoffData(taken.data).method;
     if (input.tokenKind === 'client') {
-      const issued = await issueSession(sessionDepsOf(context), taken.owner, 'client', method);
+      const issued = await issueBoundSession(
+        context,
+        taken.owner,
+        'client',
+        method,
+        input.publicKey,
+      );
       return { status: 'signed-in', token: issued.token };
     }
-    await startCookieSession(context, reply, signIn.scheme, taken.owner, method);
+    await startCookieSession(context, reply, signIn.scheme, taken.owner, method, input.publicKey);
     return { status: 'signed-in' };
   },
 });

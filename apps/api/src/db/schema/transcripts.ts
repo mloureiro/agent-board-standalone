@@ -63,10 +63,6 @@ export const transcriptEvent = pgTable(
     check('transcript_event_seq_range', sql`${t.seq} >= 0`),
     check('transcript_event_kind', sql`${t.kind} in (${sql.raw(EVENT_KINDS)})`),
     check('transcript_event_output_size', sql`${t.outputSize} between 0 and 263168`),
-    check(
-      'transcript_event_output_with_size',
-      sql`(${t.output} is null) = (${t.outputSize} is null)`,
-    ),
     foreignKey({
       name: 'transcript_event_run_fk',
       columns: [t.owner, t.runId],
