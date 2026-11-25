@@ -12,6 +12,7 @@ export interface Plan {
   readonly binarySmoke: boolean;
   readonly mobile: boolean;
   readonly clientApp: boolean;
+  readonly serverApp: boolean;
   readonly installAlone: readonly string[];
 }
 
@@ -74,6 +75,7 @@ const FULL: Plan = {
   binarySmoke: true,
   mobile: true,
   clientApp: true,
+  serverApp: true,
   installAlone: INSTALL_ALONE,
 };
 
@@ -86,6 +88,7 @@ const MAIN: Plan = {
   binarySmoke: false,
   mobile: false,
   clientApp: false,
+  serverApp: false,
   installAlone: [],
 };
 
@@ -114,6 +117,7 @@ export function plan(mode: Mode, files: readonly string[]): Plan {
     binarySmoke: has('cli'),
     mobile: has('mobile', 'web'),
     clientApp: has('client-app', 'web'),
+    serverApp: has('server-app', 'api', 'cli', 'web'),
     installAlone: INSTALL_ALONE.filter((name) => installAlone.has(name)),
   };
 }
@@ -151,6 +155,7 @@ function main(): number {
     `binary_smoke=${result.binarySmoke}`,
     `mobile=${result.mobile}`,
     `client_app=${result.clientApp}`,
+    `server_app=${result.serverApp}`,
     `install_alone=${JSON.stringify(result.installAlone)}`,
   ];
   console.log(`mode: ${mode}`);

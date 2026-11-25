@@ -363,6 +363,10 @@ importers:
       '@agent-board/api':
         specifier: workspace:^0.0.0
         version: link:../api
+    devDependencies:
+      '@tauri-apps/cli':
+        specifier: 2.12.6
+        version: 2.12.6
 
   apps/web:
     dependencies:

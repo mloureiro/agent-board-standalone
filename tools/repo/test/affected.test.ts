@@ -59,8 +59,23 @@ describe('plan', () => {
     expect(result.e2eBlackbox).toBe(false);
     expect(result.e2eBrowser).toBe(false);
     expect(result.clientApp).toBe(true);
+    expect(result.serverApp).toBe(false);
     expect(result.mobile).toBe(false);
     expect(result.installAlone).toEqual(['client-app']);
+  });
+
+  it('runs only the server app job and its install for a server-app-only change', () => {
+    const result = plan('branch', ['apps/server-app/src-tauri/core/src/a.rs']);
+    expect(result.e2eBlackbox).toBe(false);
+    expect(result.serverApp).toBe(true);
+    expect(result.clientApp).toBe(false);
+    expect(result.installAlone).toEqual(['server-app']);
+  });
+
+  it('runs the server app job for a change to a part it bundles', () => {
+    for (const file of ['apps/api/src/a.ts', 'apps/cli/src/a.ts', 'apps/web/src/a.tsx']) {
+      expect(plan('branch', [file]).serverApp, file).toBe(true);
+    }
   });
 
   it('runs the E2E suites and the wrappers of the web build for a web change', () => {

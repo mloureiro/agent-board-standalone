@@ -6,10 +6,19 @@
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "bundle": "tauri build -- --package agent-board-server",
+    "build:binary": "cargo build --manifest-path src-tauri/Cargo.toml --locked -p agent-board-server",
+    "test": "vitest run && pnpm run test:rust",
+    "typecheck": "tsc --noEmit && cargo check --manifest-path src-tauri/Cargo.toml --locked",
+    "format:check:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml --all --check",
+    "lint:rust": "cargo clippy --manifest-path src-tauri/Cargo.toml --locked --all-targets -- -D warnings",
+    "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml --locked",
+    "shell:check": "cargo clippy --manifest-path src-tauri/Cargo.toml --locked -p agent-board-server --all-targets -- -D warnings && cargo test --manifest-path src-tauri/Cargo.toml --locked -p agent-board-server"
   },
   "dependencies": {
     "@agent-board/api": "workspace:^0.0.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.6"
   }
 }
