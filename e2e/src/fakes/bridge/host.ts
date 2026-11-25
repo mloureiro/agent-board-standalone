@@ -8,6 +8,7 @@ import {
   PART_VERSION,
   SIGNATURE_HEADERS,
   formatClientHeader,
+  parseHandover,
   routes,
 } from '@agent-board/contract';
 
@@ -18,7 +19,8 @@ import {
   BRIDGE_BINDING,
   BRIDGE_INBOX,
   type BridgeHandoffResult,
-  type BridgeHandoffStarted,
+  type BridgeNotification,
+  type BridgeTabReport,
   type BridgeOp,
   type BridgeRequestInit,
   type BridgeResponse,
@@ -38,6 +40,8 @@ export interface BridgeHostOptions {
 
 export interface BridgeHost {
   readonly externalOpens: readonly string[];
+  readonly notifications: readonly BridgeNotification[];
+  readonly reportedTabs: readonly BridgeTabReport[];
   readonly passedToPage: readonly string[];
   readonly confirmations: readonly ConfirmAction[];
   readonly refusals: readonly { readonly path: string; readonly reason: string }[];
@@ -104,6 +108,8 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
   const signers = new Map<string, RequestSigner>();
   const streams = new Map<string, AbortController>();
   const externalOpens: string[] = [];
+  const notifications: BridgeNotification[] = [];
+  const reportedTabs: BridgeTabReport[] = [];
   const passedToPage: string[] = [];
   const confirmations: ConfirmAction[] = [];
   const refusals: { path: string; reason: string }[] = [];
@@ -209,7 +215,7 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
         return [...entries.values()];
       case 'servers.add': {
         const name = String(args.name);
-        const url = String(args.url);
+        const url = String(args.address);
         const action: ConfirmAction = { action: 'add', name, url };
         confirmations.push(action);
         return (await confirm(action)) ? seedServer({ name, url }) : null;
@@ -257,15 +263,6 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
         streams.get(String(args.id))?.abort();
         streams.delete(String(args.id));
         return null;
-      case 'handoff.start': {
-        const server = serverOf(args.serverId);
-        const started = await publicCall(server, '/api/auth/handoff/start', {
-          challenge: args.challenge,
-        });
-        if (started.status !== 200) throw new Error(`hand-off start answered ${started.status}`);
-        const body = started.json as BridgeHandoffStarted;
-        return { flow: body.flow, code: body.code } satisfies BridgeHandoffStarted;
-      }
       case 'handoff.finish': {
         const server = serverOf(args.serverId);
         const version = await fetch(`${server.url}/api/version`).then(
@@ -318,8 +315,14 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
         tokens.delete(server.id);
         return null;
       }
-      case 'open-external':
+      case 'notify':
+        notifications.push(args as unknown as BridgeNotification);
+        return null;
+      case 'open-link':
         externalOpens.push(String(args.url));
+        return null;
+      case 'report-tab':
+        reportedTabs.push(args as unknown as BridgeTabReport);
         return null;
     }
   };
@@ -347,6 +350,8 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
 
   return {
     externalOpens,
+    notifications,
+    reportedTabs,
     passedToPage,
     confirmations,
     refusals,
@@ -372,11 +377,15 @@ export function createBridgeHost(options: BridgeHostOptions = {}): BridgeHost {
     },
     async deliverHandover(link) {
       record(link);
-      await Promise.all(
-        (attached?.pages() ?? []).map((page) =>
-          page.evaluate(inbox, [BRIDGE_INBOX, 'handover', link] as const),
-        ),
-      );
+      const parsed = parseHandover(link);
+      if (!parsed.ok) return;
+      const url = parsed.url.replace(/\/+$/, '');
+      if ([...entries.values()].some((entry) => entry.url === url)) return;
+      const port = new URL(url).port;
+      seedServer({
+        name: port === '' ? new URL(url).hostname : `${new URL(url).hostname}:${port}`,
+        url,
+      });
     },
     stopStreams() {
       for (const controller of streams.values()) controller.abort();

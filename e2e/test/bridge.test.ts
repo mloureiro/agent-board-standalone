@@ -85,10 +85,16 @@ describe('bridge host', () => {
   const pageValues = (): readonly string[] => host.passedToPage;
 
   it('keeps the client token in Node after the hand-off finish', async () => {
-    const started = (await host.handle('handoff.start', {
+    const answer = (await host.handle('request', {
       serverId,
-      challenge: 'c'.repeat(43),
-    })) as { flow: string; code: string };
+      init: {
+        method: 'POST',
+        path: '/api/auth/handoff/start',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ challenge: 'c'.repeat(43) }),
+      },
+    })) as { body: string };
+    const started = JSON.parse(answer.body) as { flow: string; code: string };
     expect(started).toEqual({ flow: 'flow-1', code: 'ABCD-2345' });
     const finished = await host.handle('handoff.finish', {
       serverId,
@@ -146,7 +152,10 @@ describe('bridge host', () => {
 
   it('adds and removes servers behind a confirmation', async () => {
     host.setConfirm((action) => action.action === 'add');
-    const added = (await host.handle('servers.add', { name: 'b', url: 'http://127.0.0.1:1/' })) as {
+    const added = (await host.handle('servers.add', {
+      name: 'b',
+      address: 'http://127.0.0.1:1/',
+    })) as {
       id: string;
       url: string;
     };
@@ -166,7 +175,7 @@ describe('bridge host', () => {
   });
 
   it('records external-link opens', async () => {
-    await host.handle('open-external', { url: 'http://127.0.0.1:9/approve?code=ABCD-2345' });
+    await host.handle('open-link', { url: 'http://127.0.0.1:9/approve?code=ABCD-2345' });
     expect(host.externalOpens).toEqual(['http://127.0.0.1:9/approve?code=ABCD-2345']);
   });
 
@@ -206,7 +215,7 @@ describe('page side', () => {
           (window.__abBridgeIn as (id: string, message: unknown) => void)(id, delivery),
         );
       });
-    vm.runInNewContext(bridgeInitScript(), { window });
+    vm.runInNewContext(bridgeInitScript(), { window, ReadableStream, TextEncoder });
     return { window, bridge: window.agentBoardBridge as AgentBoardBridge, host };
   }
 
@@ -219,48 +228,89 @@ describe('page side', () => {
     }).toThrow();
   });
 
-  it('lists servers and forwards a request', async () => {
+  it('lists servers and forwards a request as a streamed response', async () => {
     const { bridge } = mount();
     const [server] = await bridge.listServers();
     expect(server?.name).toBe('local');
-    const response = await bridge.request(server?.id as string, {
-      method: 'GET',
-      path: '/api/client/me',
-    });
+    const response = await bridge.serverFetch(
+      server?.id as string,
+      'GET',
+      '/api/client/me',
+      {},
+      null,
+    );
     expect(response.status).toBe(200);
-    expect(JSON.parse(response.body)).toEqual({ username: 'tester', keyId: null });
+    expect(JSON.parse(await new Response(response.body).text())).toEqual({
+      username: 'tester',
+      keyId: null,
+    });
   });
 
-  it('hands a stream to the page event by event and ends it', async () => {
+  it('hands an event stream to the page event by event and ends it', async () => {
     const { bridge } = mount();
     const [server] = await bridge.listServers();
-    const seen: string[] = [];
-    for await (const event of bridge.stream(server?.id as string, '/api/machine/events')) {
-      seen.push(`${event.event}:${event.data}`);
-    }
-    expect(seen).toEqual(['tasks:{}', 'changed:{"n":2}']);
+    const response = await bridge.serverFetch(
+      server?.id as string,
+      'GET',
+      '/api/machine/events',
+      { accept: 'text/event-stream' },
+      null,
+    );
+    expect(response.headers['content-type']).toBe('text/event-stream');
+    expect(await new Response(response.body).text()).toBe(
+      'event: tasks\ndata: {}\n\nevent: changed\ndata: {"n":2}\n\n',
+    );
   });
 
-  it('delivers handover links to listeners until they unsubscribe', async () => {
-    const { bridge, window } = mount();
-    const links: string[] = [];
-    const off = bridge.onHandover((link) => links.push(link));
-    (window.__abBridgeIn as (id: string, message: unknown) => void)('handover', 'agentboard://a');
-    off();
-    (window.__abBridgeIn as (id: string, message: unknown) => void)('handover', 'agentboard://b');
-    expect(links).toEqual(['agentboard://a']);
+  it('exposes exactly the members of the web bridge interface', () => {
+    const { bridge } = mount();
+    expect(Object.keys(bridge).sort()).toEqual(
+      [
+        'addServer',
+        'handoffFinish',
+        'kind',
+        'listServers',
+        'notify',
+        'openLink',
+        'pair',
+        'removeServer',
+        'renameServer',
+        'reportTab',
+        'serverFetch',
+        'signOut',
+      ].sort(),
+    );
+  });
+
+  it('records notifications and tab reports', async () => {
+    const { bridge, host } = mount();
+    const [server] = await bridge.listServers();
+    await bridge.notify({ serverId: server?.id as string, taskId: 't1', title: 'Needs you' });
+    await bridge.reportTab({ path: '/tasks/t1', title: 'Task' });
+    expect(host.notifications).toEqual([
+      { serverId: server?.id, taskId: 't1', title: 'Needs you' },
+    ]);
+    expect(host.reportedTabs).toEqual([{ path: '/tasks/t1', title: 'Task' }]);
   });
 
   it('never shows the page a token across the hand-off', async () => {
     const { bridge, host } = mount();
     const [server] = await bridge.listServers();
-    const started = await bridge.handoffStart(server?.id as string, 'c'.repeat(43));
-    const finished = await bridge.handoffFinish(server?.id as string, started.flow, 'v'.repeat(43));
-    expect(finished).toEqual({ status: 'signed-in' });
+    const started = await bridge.serverFetch(
+      server?.id as string,
+      'POST',
+      '/api/auth/handoff/start',
+      { 'content-type': 'application/json' },
+      JSON.stringify({ challenge: 'c'.repeat(43) }),
+    );
+    const flow = (JSON.parse(await new Response(started.body).text()) as { flow: string }).flow;
+    await expect(
+      bridge.handoffFinish(server?.id as string, flow, 'v'.repeat(43)),
+    ).resolves.toBeUndefined();
     expect(host.tokenFor(server?.id as string)).toMatch(TOKEN_PATTERN);
     expect(host.passedToPage.join('\n')).not.toMatch(TOKEN_ANYWHERE);
     await expect(
-      bridge.request(server?.id as string, { method: 'POST', path: '/api/auth/handoff/finish' }),
+      bridge.serverFetch(server?.id as string, 'POST', '/api/auth/handoff/finish', {}, null),
     ).rejects.toThrow(/refuses/);
   });
 });
