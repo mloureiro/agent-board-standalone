@@ -41,13 +41,11 @@ pub async fn read_secret<S: SecretStore + 'static>(
     secrets: &Arc<S>,
     service: String,
     server: ServerId,
-) -> Option<Vec<u8>> {
+) -> Result<Option<Vec<u8>>, PortError> {
     off_thread(secrets, move |store| {
         store.get(&service, &server.to_string())
     })
     .await
-    .ok()
-    .flatten()
 }
 
 pub async fn write_secret<S: SecretStore + 'static>(
@@ -77,7 +75,10 @@ pub async fn read_token<S: SecretStore + 'static>(
     secrets: &Arc<S>,
     server: ServerId,
 ) -> Option<String> {
-    let stored = read_secret(secrets, token_service(), server).await?;
+    let stored = read_secret(secrets, token_service(), server)
+        .await
+        .ok()
+        .flatten()?;
     match String::from_utf8(stored) {
         Ok(token) if is_token(&token) => Some(token),
         _ => {

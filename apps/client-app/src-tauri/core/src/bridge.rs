@@ -256,9 +256,10 @@ where
 
     async fn signer(&self, server: ServerId) -> Result<RequestSigner, BridgeError> {
         let failed = || BridgeError::Native("signing key unavailable".to_owned());
-        if let Some(stored) = read_secret(&self.secrets, key_service(), server).await
-            && let Ok(signer) = RequestSigner::from_pkcs8_der(&stored)
-        {
+        let stored = read_secret(&self.secrets, key_service(), server)
+            .await
+            .map_err(|_| failed())?;
+        if let Some(signer) = stored.and_then(|der| RequestSigner::from_pkcs8_der(&der).ok()) {
             return Ok(signer);
         }
         let signer = RequestSigner::generate();
@@ -307,7 +308,7 @@ where
         body: Option<&str>,
     ) -> Result<ServerResponse, BridgeError> {
         let entry = self.entry(scope, server_id)?;
-        let path = paths::normalise(path).map_err(BridgeError::Path)?;
+        let path = paths::wire_form(&paths::normalise(path).map_err(BridgeError::Path)?);
         let method = method.to_ascii_uppercase();
         if !METHODS.contains(&method.as_str()) {
             return Err(BridgeError::Method);

@@ -300,6 +300,112 @@ async fn client_app_038_a_malformed_entry_is_deleted_on_read() {
     assert!(harness.secrets.peek(&token_service(), FIRST_ID).is_none());
 }
 
+#[tokio::test]
+async fn client_app_049_signs_exactly_the_path_put_on_the_wire() {
+    let harness = harness([Ok(Canned::json(200, "{}"))], listed(), true);
+    harness.bridge.record_handshake(
+        id(FIRST_ID),
+        Handshake {
+            request_signature: true,
+        },
+    );
+    harness
+        .bridge
+        .server_fetch(
+            &scope_of(FIRST_ID),
+            FIRST_ID,
+            "GET",
+            "/api/a b?q=it's \"x\"&r=%3F",
+            &[],
+            None,
+        )
+        .await
+        .unwrap();
+
+    let sent = harness.http.sent().remove(0);
+    let wire = "/api/a%20b?q=it%27s%20%22x%22&r=%3F";
+    assert_eq!(sent.url, format!("https://board.example.test{wire}"));
+    let reparsed = url::Url::parse(&sent.url).unwrap();
+    assert_eq!(&reparsed[url::Position::BeforePath..], wire);
+
+    let stored = harness.secrets.peek(&key_service(), FIRST_ID).unwrap();
+    let signer = RequestSigner::from_pkcs8_der(&stored).unwrap();
+    let canonical = canonical_string(
+        "GET",
+        wire,
+        sent.header("x-board-ts").unwrap().parse().unwrap(),
+        sent.header("x-board-nonce").unwrap(),
+        None,
+    )
+    .unwrap();
+    let public = VerifyingKey::from_public_key_der(&signer.public_key_der().unwrap()).unwrap();
+    let signature = URL_SAFE_NO_PAD
+        .decode(sent.header("x-board-sig").unwrap())
+        .unwrap();
+    public
+        .verify(
+            canonical.as_bytes(),
+            &Signature::from_slice(&signature).unwrap(),
+        )
+        .unwrap();
+}
+
+#[derive(Default)]
+struct KeyReadDenied {
+    inner: MemorySecrets,
+}
+
+impl SecretStore for KeyReadDenied {
+    fn get(&self, service: &str, account: &str) -> Result<Option<Vec<u8>>, PortError> {
+        if service == key_service() {
+            return Err(PortError("denied".to_owned()));
+        }
+        self.inner.get(service, account)
+    }
+    fn set(&self, service: &str, account: &str, secret: &[u8]) -> Result<(), PortError> {
+        self.inner.set(service, account, secret)
+    }
+    fn delete(&self, service: &str, account: &str) -> Result<(), PortError> {
+        self.inner.delete(service, account)
+    }
+    fn accounts(&self, service: &str) -> Result<Vec<String>, PortError> {
+        self.inner.accounts(service)
+    }
+}
+
+#[tokio::test]
+async fn client_app_052_a_denied_key_read_never_replaces_the_stored_key() {
+    let http = FakeHttp::answering([]);
+    let secrets = Arc::new(KeyReadDenied::default());
+    let paired = RequestSigner::generate().to_pkcs8_der().unwrap();
+    secrets.inner.put(&key_service(), FIRST_ID, &paired);
+    let bridge = Bridge::new(
+        http.clone(),
+        Arc::clone(&secrets),
+        FakeConfirm::answering(true),
+        FakeClock,
+        Servers::open(listed()),
+        client_info(),
+    );
+    bridge.record_handshake(
+        id(FIRST_ID),
+        Handshake {
+            request_signature: true,
+        },
+    );
+
+    let refused = bridge
+        .server_fetch(&scope_of(FIRST_ID), FIRST_ID, "GET", "/api/me", &[], None)
+        .await;
+
+    assert!(matches!(refused, Err(BridgeError::Native(_))));
+    assert!(http.sent().is_empty());
+    assert_eq!(
+        secrets.inner.peek(&key_service(), FIRST_ID).as_deref(),
+        Some(paired.as_slice())
+    );
+}
+
 struct DeniedSecrets;
 
 impl SecretStore for DeniedSecrets {
