@@ -102,6 +102,7 @@ export interface ApiStub {
   streamCount(): number;
   endStreams(): void;
   refuseToken(): void;
+  revocations(): number;
   stop(): Promise<void>;
 }
 
@@ -128,6 +129,7 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
   const commands: string[] = [];
   let noteSequence = 0;
   let tokenRefused = false;
+  let revocations = 0;
   let granted = true;
   const held = new Set<string>();
   const forbidden = new Set<string>();
@@ -579,6 +581,11 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
       schedules.delete(body.id as string);
       return {};
     },
+    'revoke-token': () => {
+      tokenRefused = true;
+      revocations += 1;
+      return {};
+    },
     'get-legacy-dirs': () => ({ document: legacy.document, tasks: legacy.uses }),
     'convert-legacy-dirs': (body) => {
       const incoming = body.directories as { id: string; path: string; repo: string | null }[];
@@ -891,6 +898,7 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
     endStreams: () => {
       for (const response of streams) response.end();
     },
+    revocations: () => revocations,
     refuseToken: () => {
       tokenRefused = true;
       for (const response of streams) response.end();

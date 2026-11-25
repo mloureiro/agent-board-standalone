@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>agent-board.default.listen</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/var/tester/.local/bin/board</string>
+		<string>--profile</string>
+		<string>default</string>
+		<string>internal</string>
+		<string>listen</string>
+	</array>
+	<key>KeepAlive</key>
+	<true/>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>ThrottleInterval</key>
+	<integer>10</integer>
+	<key>ExitTimeOut</key>
+	<integer>130</integer>
+	<key>AbandonProcessGroup</key>
+	<true/>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/var/tester/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>StandardOutPath</key>
+	<string>/var/tester/.local/state/agent-board/profiles/default/logs/launchd.listen.log</string>
+	<key>StandardErrorPath</key>
+	<string>/var/tester/.local/state/agent-board/profiles/default/logs/launchd.listen.log</string>
+</dict>
+</plist>

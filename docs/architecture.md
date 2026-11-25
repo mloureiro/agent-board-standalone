@@ -377,6 +377,15 @@ A second `board setup` under another profile installs beside the first (cli-051)
 directory overrides under its own root and installs no launchd units, so it never collides with a CLI install
 (server-app-007).
 
+### Install and doctor
+
+`board setup` renders the worker units for the selected profile from the contract's unit recipe: systemd user units
+(`agent-board-<profile>-dispatch.service` and `.timer`, `-listen.service`, `-watch.service`) on Linux and launchd agents
+(`agent-board.<profile>.dispatch`, `.listen`, `.watch`) on macOS. `board uninstall` revokes the machine token before it
+removes the units. `board doctor` checks one profile and reports each check under an id of the contract's
+`DOCTOR_CHECK_IDS`. Two ids keep an old file name: `web.json` reports `server.json` and `config.json` reports
+`config.yaml`. The contract is frozen, so the CLI maps its checks to those ids instead of renaming them.
+
 ### User commands
 
 `board answer`, `dismiss`, `reply`, `send`, `stop`, `take-back`, `rerun`, `close`, `reopen`, `fork`,

@@ -1,0 +1,18 @@
+[Unit]
+Description=agent-board work listen: dispatch as soon as the board says tasks changed
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Environment="PATH=/srv/tester/.local/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="AGENT_BOARD_CONFIG_DIR=/srv/board work/config"
+Environment="AGENT_BOARD_STATE_DIR=/srv/board work/state"
+Environment="AGENT_BOARD_RUN_DIR=/srv/board work/run"
+ExecStart=/usr/local/bin/node /opt/board/dist/board --profile work internal listen
+Restart=always
+RestartSec=10
+KillMode=mixed
+TimeoutStopSec=130
+
+[Install]
+WantedBy=default.target

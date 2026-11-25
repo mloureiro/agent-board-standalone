@@ -1,0 +1,15 @@
+[Unit]
+Description=agent-board default listen: dispatch as soon as the board says tasks changed
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Environment="PATH=/srv/tester/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/srv/tester/.local/bin/board --profile default internal listen
+Restart=always
+RestartSec=10
+KillMode=mixed
+TimeoutStopSec=130
+
+[Install]
+WantedBy=default.target

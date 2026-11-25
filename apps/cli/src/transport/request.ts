@@ -73,7 +73,7 @@ export function transportFailure(deps: HttpDeps, error: unknown): CliError {
   }
   const cause = error instanceof Error && error.cause instanceof Error ? error.cause.message : '';
   return new CliError(
-    `cannot reach the server at ${deps.baseUrl}${cause === '' ? '' : `: ${cause}`}`,
+    `could not reach the server at ${deps.baseUrl}${cause === '' ? '' : `: ${cause}`}`,
   );
 }
 

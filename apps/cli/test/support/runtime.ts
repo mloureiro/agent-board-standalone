@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import type { Prompter } from '../../src/input/prompter.js';
 import type { ExecOptions, ExecResult, InteractiveOptions, Runtime } from '../../src/runtime.js';
 
 export interface Captured {
@@ -25,6 +26,7 @@ export interface TestRuntime {
   readonly rt: Runtime;
   readonly spawnCalls: SpawnCall[];
   readonly captured: Captured;
+  readonly asked: string[];
   readonly execCalls: ExecCall[];
   readonly root: string;
   path(...segments: string[]): string;
@@ -44,6 +46,12 @@ export interface TestRuntimeOptions {
   readonly cwd?: string;
   readonly stdin?: string;
   readonly answers?: readonly string[];
+  readonly prompts?: {
+    readonly text?: readonly (string | null)[];
+    readonly secret?: readonly (string | null)[];
+    readonly confirm?: readonly (boolean | null)[];
+  };
+  readonly self?: readonly string[];
   readonly tty?: boolean;
   readonly interrupt?: AbortSignal;
   readonly spawn?: (
@@ -70,6 +78,29 @@ export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
           AGENT_BOARD_RUN_DIR: path.join(root, 'run'),
         };
   const pending = [...(options.answers ?? [])];
+  const queued = {
+    text: [...(options.prompts?.text ?? [])],
+    secret: [...(options.prompts?.secret ?? [])],
+    confirm: [...(options.prompts?.confirm ?? [])],
+  };
+  const asked: string[] = [];
+  const prompter: Prompter | null =
+    options.prompts === undefined
+      ? null
+      : {
+          text: (message) => {
+            asked.push(message);
+            return Promise.resolve(queued.text.shift() ?? null);
+          },
+          secret: (message) => {
+            asked.push(message);
+            return Promise.resolve(queued.secret.shift() ?? null);
+          },
+          confirm: (message) => {
+            asked.push(message);
+            return Promise.resolve(queued.confirm.shift() ?? null);
+          },
+        };
   const rt: Runtime = {
     env: { ...dirEnv, ...options.env },
     interrupt: options.interrupt ?? new AbortController().signal,
@@ -97,6 +128,9 @@ export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
     platform: options.platform ?? 'linux',
     homedir: path.join(root, 'home'),
     hostname: 'test-host',
+    uid: 501,
+    self: options.self ?? ['/opt/board/bin/board'],
+    prompts: prompter,
     exec: (file, args, execOptions) => {
       execCalls.push({ file, args, options: execOptions });
       const handler = options.exec;
@@ -106,6 +140,7 @@ export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
   };
   return {
     rt,
+    asked,
     captured,
     execCalls,
     spawnCalls,
