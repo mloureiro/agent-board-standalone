@@ -5,13 +5,14 @@ use crate::fetches::Fetches;
 use crate::keychain::{Background, Keychain};
 use crate::removals::Removals;
 use crate::state::{AppState, CONTRACT};
-use crate::tab_registry::TabRegistry;
+use crate::tab_registry::{TabQueue, TabRegistry};
 use crate::{handover, legacy, menu, windows};
 use agent_board_client_core::bridge::Bridge;
 use agent_board_client_core::files::DirStore;
 use agent_board_client_core::handover::EarlyLinks;
 use agent_board_client_core::handshake::ClientInfo;
 use agent_board_client_core::http::ReqwestHttp;
+use agent_board_client_core::keybindings;
 use agent_board_client_core::opening::{LaunchWindow, launch_plan};
 use agent_board_client_core::orphans::sweep;
 use agent_board_client_core::servers::Servers;
@@ -82,6 +83,7 @@ pub fn run() {
     let app = tauri::Builder::default()
         .manage(EarlyLinks::holding())
         .manage(TabRegistry::default())
+        .manage(TabQueue::start())
         .invoke_handler(tauri::generate_handler![
             page::server_fetch,
             page::server_fetch_cancel,
@@ -106,6 +108,12 @@ pub fn run() {
             tabs::tab_select,
             tabs::tab_close,
             tabs::tab_cycle,
+            tabs::tab_split,
+            tabs::tab_move,
+            tabs::pane_close,
+            tabs::pane_focus,
+            tabs::split_resize,
+            tabs::tab_focused,
             tabs::tab_navigate,
             tabs::tab_title,
         ])
@@ -113,7 +121,10 @@ pub fn run() {
         .setup(|app| {
             let state = Arc::new(build_state(app)?);
             app.manage(Arc::clone(&state));
-            menu::install(app.handle())?;
+            let settings = DirStore::new(app.path().app_config_dir()?);
+            let keys = keybindings::read(&settings);
+            menu::install(app.handle(), &keys)
+                .or_else(|_| menu::install(app.handle(), &keybindings::Keybindings::defaults()))?;
             launch(app.handle(), &state)?;
             handover::release_early(app.handle());
             Ok(())

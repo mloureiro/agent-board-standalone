@@ -86,8 +86,19 @@ function watchCycleKey({ target, report }: RoutingOptions): () => void {
   return () => target.removeEventListener('keydown', onKey, true);
 }
 
+function watchFocus({ target, report }: RoutingOptions): () => void {
+  const onFocus = (): void => send(report, 'tab_focused', {});
+  target.addEventListener('focus', onFocus);
+  return () => target.removeEventListener('focus', onFocus);
+}
+
 export function installRouting(options: RoutingOptions): () => void {
-  const stops = [watchHistory(options), watchTitle(options), watchCycleKey(options)];
+  const stops = [
+    watchHistory(options),
+    watchTitle(options),
+    watchCycleKey(options),
+    watchFocus(options),
+  ];
   return () => {
     for (const stop of stops) stop();
   };
