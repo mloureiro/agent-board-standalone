@@ -67,6 +67,10 @@ export function analyse(rows: readonly CatalogueRow[], scan: ScanResult, plan: T
       summary.manual++;
       if (!/^manual:\s*\S/.test(row.test)) failures.push(`${row.id}: manual row needs a reason`);
     }
+    if (kind === 'inactive' && found.length > 0) {
+      expected.set(row.id, found.join(', '));
+      continue;
+    }
     if (kind !== 'e2e' && kind !== 'part') {
       expected.set(row.id, NOT_APPLICABLE);
       continue;

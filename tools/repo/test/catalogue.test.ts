@@ -324,6 +324,13 @@ describe('rules', () => {
     });
   });
 
+  it('writes the found tests of a parity row that has no plan', () => {
+    const result = analyse(rows, scan({ 'P-02': ['packages/contract/test/routes.test.ts'] }), plan);
+    expect(result.failures).toEqual([]);
+    expect(result.expected.get('P-02')).toBe('packages/contract/test/routes.test.ts');
+    expect(result.summary.active).toBe(2);
+  });
+
   it('reports a Test ids cell that differs from what fill writes', () => {
     const result = analyse(rows, scan({}), plan);
     const failures = columnFailures(rows, result.expected);
