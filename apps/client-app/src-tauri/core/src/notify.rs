@@ -1,7 +1,7 @@
 use crate::ids::ServerId;
 use crate::log::LogEvent;
 use crate::page_input::{InputError, clean_title, task_id};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 pub const DEDUPE_SECS: u64 = 60;
 pub const EXPIRED_BANNER: &str =
@@ -158,30 +158,9 @@ pub struct Banner {
     pub text: Option<&'static str>,
 }
 
-#[derive(Default)]
-pub struct Expiry {
-    expired: HashSet<ServerId>,
-}
-
-impl Expiry {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn is_expired(&self, server: ServerId) -> bool {
-        self.expired.contains(&server)
-    }
-
-    pub fn mark_expired(&mut self, server: ServerId) -> Option<Banner> {
-        self.expired.insert(server).then_some(Banner {
-            server,
-            text: Some(EXPIRED_BANNER),
-        })
-    }
-
-    pub fn sign_in_succeeded(&mut self, server: ServerId) -> Option<Banner> {
-        self.expired
-            .remove(&server)
-            .then_some(Banner { server, text: None })
+pub fn expiry_banner(server: ServerId, expired: bool) -> Banner {
+    Banner {
+        server,
+        text: expired.then_some(EXPIRED_BANNER),
     }
 }

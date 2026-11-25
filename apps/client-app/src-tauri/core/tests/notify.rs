@@ -4,13 +4,14 @@ use agent_board_client_core::attention::{AttentionPoller, MAX_IDS_PER_POLL, POLL
 use agent_board_client_core::ids::ServerId;
 use agent_board_client_core::log::LogEvent;
 use agent_board_client_core::notify::{
-    Banner, Click, DEDUPE_SECS, Decision, EXPIRED_BANNER, Expiry, FocusState, NotifyPolicy,
-    NotifyRequest, Permission, Reason, Target, route_click,
+    Banner, Click, DEDUPE_SECS, Decision, EXPIRED_BANNER, FocusState, NotifyPolicy, NotifyRequest,
+    Permission, Reason, Target, expiry_banner, route_click,
 };
 use agent_board_client_core::page_input::{InputError, TITLE_MAX_CHARS};
 use agent_board_client_core::throttle::{BEAT_SECS, Change, SILENCE_SECS, State, Throttle};
+use agent_board_client_core::tokens::token_service;
 use agent_board_client_core::zoom::{Effect, LADDER, Zoom};
-use common::{FIRST_ID, SECOND_ID, id};
+use common::{Canned, FIRST_ID, SECOND_ID, harness, id, scope_of, servers_file, token};
 
 const T0: u64 = 1_000;
 
@@ -221,28 +222,48 @@ fn client_app_042_a_click_for_a_server_without_a_window_is_ignored() {
     assert_eq!(route_click("not-a-server", None, |_| true), Click::Ignore);
 }
 
-#[test]
-fn client_app_043_expired_state_is_shown_and_cleared_by_signing_in() {
+#[tokio::test]
+async fn client_app_043_expired_state_is_shown_and_cleared_by_signing_in() {
     let server = id(FIRST_ID);
-    let mut expiry = Expiry::new();
-    assert!(!expiry.is_expired(server));
+    let harness = harness(
+        [Ok(Canned::json(
+            401,
+            r#"{"error":{"code":"unauthorized","message":"x"}}"#,
+        ))],
+        servers_file(&[
+            (FIRST_ID, "Alpha", "https://board.example.test/"),
+            (SECOND_ID, "Beta", "http://localhost:4000/"),
+        ]),
+        true,
+    );
+    harness
+        .secrets
+        .put(&token_service(), FIRST_ID, token().as_bytes());
     assert_eq!(
-        expiry.mark_expired(server),
-        Some(Banner {
+        expiry_banner(server, harness.bridge.is_expired(server)),
+        Banner { server, text: None }
+    );
+    harness
+        .bridge
+        .server_fetch(&scope_of(FIRST_ID), FIRST_ID, "GET", "/api/me", &[], None)
+        .await
+        .unwrap();
+    assert_eq!(
+        expiry_banner(server, harness.bridge.is_expired(server)),
+        Banner {
             server,
             text: Some(EXPIRED_BANNER)
-        })
+        }
     );
-    assert!(expiry.is_expired(server));
-    assert_eq!(expiry.mark_expired(server), None);
-    assert!(!expiry.is_expired(id(SECOND_ID)));
-
+    let second = id(SECOND_ID);
     assert_eq!(
-        expiry.sign_in_succeeded(server),
-        Some(Banner { server, text: None })
+        expiry_banner(second, harness.bridge.is_expired(second)),
+        Banner {
+            server: second,
+            text: None
+        }
     );
-    assert!(!expiry.is_expired(server));
-    assert_eq!(expiry.sign_in_succeeded(server), None);
+    assert_eq!(expiry_banner(server, false), Banner { server, text: None });
 
     let mut policy = NotifyPolicy::new();
     let task = request(FIRST_ID, Some("t1"), "Review the plan");
