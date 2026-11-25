@@ -131,57 +131,14 @@
       },
       "accessibility of the sign-in page › [web-080] the sign-in page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme"
     ],
-    "browser/board.spec.ts": [
-      {
-        "title": "board › [web-028] a task created through the contract appears without a reload",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "board › [web-028] with the event stream blocked a change still appears by polling",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "board › [web-028] a failed refresh keeps the stale cards and shows a warning",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "board › [web-029] dragging moves a card from Backlog to Todo and the order persists after a reload",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "board › [web-029] cards reorder within Backlog and the order persists after a reload",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "board › [web-029] dropping a card on Running or Waiting is refused",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "board › [web-032] a banner names a machine whose CLI is no longer accepted",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "board with a running card › [web-035] a running card shows context usage as a thin line",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "board › [web-029] a touch drag moves a card between columns on a phone @phone",
-        "projects": ["chromium-phone", "webkit-phone"]
-      }
-    ],
+    "browser/board.spec.ts": "*",
     "browser/client-app-bridge.spec.ts": "*",
     "browser/connection.spec.ts": "*",
     "browser/handover.spec.ts": [
       "handover from the server app to the client app › [client-app-013] a handed-over URL already in the list opens that server and adds nothing",
       "handover from the server app to the client app › [client-app-013] a handed-over URL not in the list adds the server and opens it through the handshake"
     ],
-    "browser/migrate.spec.ts": [
-      "the migrated board in the browser › [migrate-003] the owner passphrase unlocks the migrated board and every task opens",
-      {
-        "title": "the migrated rows in Postgres › [migrate-003] sealed values and blind indexes are byte-identical to the export file @chromium",
-        "projects": ["chromium-desktop"]
-      }
-    ],
+    "browser/migrate.spec.ts": "*",
     "browser/new-task.spec.ts": "*",
     "browser/parity.spec.ts": [
       "redirect sign-in › [P-05] SAML redirect sign-in finishes in the tab that started it",
