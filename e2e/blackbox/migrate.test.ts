@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { mkdirSync } from 'node:fs';
 
 import { bindings } from '@agent-board/sealing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -16,6 +17,7 @@ import {
   type MigratedBoard,
   type MigratedOptions,
 } from '../src/steps/migration.js';
+import { directoryIdOf } from '../src/steps/worker.js';
 
 const OPTIONS: MigratedOptions = {
   parts: ['api', 'cli', 'migrate'],
@@ -139,32 +141,28 @@ describe('a worker after the migration', () => {
       const init = await machine.init();
       expect(init.code, outputOf(init)).toBe(0);
 
-      const directories = await user.ok('client.directories.list', { machine: machine.name });
-      const [directory] = directories.directories;
-      expect(directory, 'the conversion left the machine no directory').toBeDefined();
+      const workdir = machine.tmp.path('work', 'main');
+      mkdirSync(workdir, { recursive: true });
+      const added = await machine.cli(['dirs', 'add', workdir]);
+      expect(added.code, outputOf(added)).toBe(0);
+      const directoryId = await directoryIdOf(user, key, machine.name, workdir);
 
       const id = `t-${randomUUID().replaceAll('-', '').slice(0, 12)}`;
       await user.ok('client.tasks.create', {
         id,
         title: await key.seal(bindings.title({ task: id }), 'worker after migration'),
         input: await key.seal(
-          bindings.input({
-            origin: { task: id },
-            creator: 'user',
-            directoryId: directory?.id ?? null,
-          }),
+          bindings.input({ origin: { task: id }, creator: 'user', directoryId }),
           '#stub: done',
         ),
         when: 'now',
         priority: 'urgent',
-        ...(directory === undefined
-          ? {}
-          : { place: { machine: machine.name, directoryId: directory.id } }),
+        place: { machine: machine.name, directoryId },
       });
 
       const done = await waitFor(
         async () => {
-          await machine.cli(['dispatch']);
+          await machine.cli(['internal', 'dispatch'], { timeoutMs: 60_000 });
           const detail = await user.ok('client.tasks.get', { id });
           return detail.task.status === 'done' ? detail.task : null;
         },

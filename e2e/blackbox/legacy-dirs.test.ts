@@ -1,3 +1,5 @@
+import { mkdirSync } from 'node:fs';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { unlockedKey, type UnlockedKey } from '../src/fixtures/keys.js';
@@ -222,11 +224,19 @@ describe('the CLI converts legacy directories', () => {
     const counts = reportedCounts(outputOf(result));
 
     expect((await machine.ok('machine.version', {})).legacyDirs).toBe(false);
+    expect(counts.matched + counts.unmatched).toBe(before.tasks.length);
     const afterTasks = (await user.ok('client.tasks.list', {})).tasks;
-    const mine = new Set(before.tasks.map((use) => use.id));
-    const converted = afterTasks.filter((task) => mine.has(task.id));
-    expect(counts.matched).toBe(converted.filter((task) => task.directoryId !== null).length);
-    expect(counts.unmatched).toBe(converted.filter((task) => task.directoryId === null).length);
+    const taskUses = new Set(
+      before.tasks.filter((use) => use.kind === 'task').map((use) => use.id),
+    );
+    const scheduleUses = before.tasks.length - taskUses.size;
+    const converted = afterTasks.filter((task) => taskUses.has(task.id));
+    const matchedTasks = converted.filter((task) => task.directoryId !== null).length;
+    const unmatchedTasks = converted.filter((task) => task.directoryId === null).length;
+    expect(matchedTasks).toBeLessThanOrEqual(counts.matched);
+    expect(matchedTasks).toBeGreaterThanOrEqual(counts.matched - scheduleUses);
+    expect(unmatchedTasks).toBeLessThanOrEqual(counts.unmatched);
+    expect(unmatchedTasks).toBeGreaterThanOrEqual(counts.unmatched - scheduleUses);
     expect(counts.matched).toBeGreaterThan(0);
   });
 
@@ -262,7 +272,7 @@ describe('the CLI converts legacy directories', () => {
       expect((await machine.ok('machine.version', {})).legacyDirs).toBe(true);
 
       proxy.hide(false);
-      listener.current = machine.start(['listen']);
+      listener.current = machine.start(['internal', 'listen']);
       await waitFor(async () => !(await machine.ok('machine.version', {})).legacyDirs, {
         label: 'the listener to convert the legacy directories',
         timeoutMs: 60_000,
@@ -287,7 +297,9 @@ describe('the CLI converts legacy directories', () => {
       expect((await machine.ok('machine.version', {})).legacyDirs).toBe(true);
 
       proxy.hide(false);
-      const added = await machine.cli(['dirs', 'add', machine.tmp.path('work', 'new-dir')]);
+      const workdir = machine.tmp.path('work', 'new-dir');
+      mkdirSync(workdir, { recursive: true });
+      const added = await machine.cli(['dirs', 'add', workdir]);
       expect(added.code, outputOf(added)).toBe(0);
       expect(outputOf(added)).toMatch(/matched/i);
       expect((await machine.ok('machine.version', {})).legacyDirs).toBe(false);

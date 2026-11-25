@@ -228,12 +228,12 @@ test.describe('restarting the server app on the same root', () => {
       const seen = machines.find((machine) => machine.name === 'app-worker')?.lastSeenAt;
       return seen !== undefined && seen !== null && Date.parse(seen) >= since ? seen : null;
     };
-    const worker = layout.startCli(['listen']);
+    const worker = layout.startCli(['internal', 'listen']);
     await waitFor(() => lastSeen(0), { label: 'the worker to connect', timeoutMs: 60_000 });
     await worker.stop();
     await layout.restartApi();
     const restartedAt = Date.now();
-    const reconnected = layout.startCli(['listen']);
+    const reconnected = layout.startCli(['internal', 'listen']);
     try {
       await waitFor(() => lastSeen(restartedAt), {
         label: 'the worker to reconnect after the restart',
