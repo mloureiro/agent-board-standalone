@@ -1,0 +1,24 @@
+{
+  "testResults": [
+    {
+      "name": "/work/e2e/browser/sample.spec.ts",
+      "assertionResults": [
+        {
+          "ancestorTitles": ["[sample]"],
+          "title": "[sample] passes",
+          "status": "passed"
+        },
+        {
+          "ancestorTitles": ["[sample]"],
+          "title": "[sample] fails",
+          "status": "failed"
+        },
+        {
+          "ancestorTitles": ["[sample]", "nested"],
+          "title": "[sample] skips",
+          "status": "skipped"
+        }
+      ]
+    }
+  ]
+}

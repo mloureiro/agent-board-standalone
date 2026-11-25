@@ -1,0 +1,69 @@
+{
+  "config": { "rootDir": "/work/e2e/browser" },
+  "suites": [
+    {
+      "title": "sample.spec.ts",
+      "file": "sample.spec.ts",
+      "suites": [
+        {
+          "title": "[sample]",
+          "file": "sample.spec.ts",
+          "specs": [
+            {
+              "title": "[sample] passes",
+              "file": "sample.spec.ts",
+              "tests": [
+                {
+                  "projectName": "chromium-desktop",
+                  "status": "expected",
+                  "results": [{ "status": "passed" }]
+                }
+              ]
+            },
+            {
+              "title": "[sample] fails",
+              "file": "sample.spec.ts",
+              "tests": [
+                {
+                  "projectName": "chromium-desktop",
+                  "status": "unexpected",
+                  "results": [{ "status": "failed" }]
+                }
+              ]
+            },
+            {
+              "title": "[sample] times out",
+              "file": "sample.spec.ts",
+              "tests": [
+                {
+                  "projectName": "webkit-desktop",
+                  "status": "unexpected",
+                  "results": [{ "status": "timedOut" }]
+                }
+              ]
+            }
+          ],
+          "suites": [
+            {
+              "title": "nested",
+              "file": "sample.spec.ts",
+              "specs": [
+                {
+                  "title": "[sample] skips",
+                  "file": "sample.spec.ts",
+                  "tests": [
+                    {
+                      "projectName": "chromium-desktop",
+                      "status": "skipped",
+                      "results": [{ "status": "skipped" }]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
