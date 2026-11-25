@@ -246,9 +246,9 @@ fn server_app_026_a_stable_healthy_run_resets_the_restart_count() {
 #[test]
 fn server_app_026_the_api_stable_time_is_counted_from_a_healthy_probe_not_from_the_spawn() {
     let rig = Rig::new();
-    rig.write("api", "startup_delay_ms=250\ncrash_after_ms=100");
+    rig.write("api", "startup_delay_ms=800\ncrash_after_ms=100");
     let mut durations = fast();
-    durations.stable_reset = ms(200);
+    durations.stable_reset = ms(500);
     let supervisor = rig.start(rig.plan(false, durations));
 
     assert!(eventually(20, || supervisor.status().gave_up.api));
