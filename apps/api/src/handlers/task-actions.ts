@@ -48,8 +48,8 @@ import {
   type TaskRow,
   type Vocabulary,
 } from '../modules/tasks/index.js';
-import { announceTaskChange } from './announce.js';
 import { contractOf } from './request-contract.js';
+import { taskWriter } from './task-writer.js';
 
 const dateOf = (value: string | null | undefined): Date | null | undefined =>
   value == null ? (value as null | undefined) : new Date(value);
@@ -59,14 +59,7 @@ export const createTaskActionHandlers =
   (context) => {
     const { database } = context.services;
 
-    const write = async <T>(
-      owner: string,
-      work: (tx: ScopedDatabase) => Promise<T>,
-    ): Promise<T> => {
-      const result = await database.withOwner(owner, work);
-      await announceTaskChange();
-      return result;
-    };
+    const write = taskWriter(context.services);
 
     const wireOne = async (tx: ScopedDatabase, request: FastifyRequest, row: TaskRow) => {
       const [wire] = await presentWireTasks(tx, [row]);

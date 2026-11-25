@@ -2,6 +2,7 @@ import type { HandlerSet } from '../http/handler.js';
 import { ApiError } from '../errors.js';
 import { addSchedule, draftOfRepeating, isRepeating } from '../modules/scheduling/index.js';
 import { contractOf } from './request-contract.js';
+import { taskWriter } from './task-writer.js';
 import {
   claimTask,
   createTask,
@@ -30,6 +31,7 @@ export const createTaskHandlers =
   ({ services, config }) => {
     const { database } = services;
     const { scheduling } = config;
+    const write = taskWriter(services);
     return {
       'machine.list-tasks': ({ input, principal, request }) =>
         database.withOwner(principal.owner, async (tx) => ({
@@ -51,7 +53,7 @@ export const createTaskHandlers =
         }),
 
       'machine.add-task': ({ input, principal }) =>
-        database.withOwner(principal.owner, async (tx) => {
+        write(principal.owner, async (tx) => {
           const { notBefore, ...draft } = input;
           const { task, created } = await createTask(tx, {
             ...draft,
@@ -62,7 +64,7 @@ export const createTaskHandlers =
         }),
 
       'machine.update-task': ({ input, principal }) =>
-        database.withOwner(principal.owner, async (tx) => {
+        write(principal.owner, async (tx) => {
           const { id, run, notBefore, ...patch } = input;
           const row = await updateTask(
             tx,
@@ -77,7 +79,7 @@ export const createTaskHandlers =
       'machine.claim-task': ({ input, principal }) => {
         if (input.machine !== principal.machineId)
           throw new ApiError('forbidden', 'a machine claims only for itself');
-        return database.withOwner(principal.owner, async (tx) => {
+        return write(principal.owner, async (tx) => {
           const [wire] = await presentWireTasks(tx, [
             await claimTask(tx, input.id, input.machine, { scheduling }),
           ]);
@@ -102,13 +104,13 @@ export const createTaskHandlers =
         if (isRepeating(when)) {
           if (!scheduling)
             throw new ApiError('not-enabled', 'scheduling is switched off on this server');
-          return database.withOwner(principal.owner, async (tx) => {
+          return write(principal.owner, async (tx) => {
             const added = await addSchedule(tx, draftOfRepeating(input, when));
             const [ui] = added.task === null ? [] : await presentUiTasks(tx, [added.task]);
             return { task: ui ?? null };
           });
         }
-        return database.withOwner(principal.owner, async (tx) => {
+        return write(principal.owner, async (tx) => {
           const { task } = await createTask(tx, {
             ...fields,
             ...(lane === undefined ? {} : { lane }),
@@ -128,7 +130,7 @@ export const createTaskHandlers =
       },
 
       'client.tasks.move': ({ input, principal }) =>
-        database.withOwner(principal.owner, async (tx) => {
+        write(principal.owner, async (tx) => {
           const row = await moveTask(tx, input, principal.owner, { scheduling });
           const [ui] = await presentUiTasks(tx, [row]);
           return ui!;

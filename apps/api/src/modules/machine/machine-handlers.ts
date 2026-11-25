@@ -8,6 +8,7 @@ import {
 } from '@agent-board/contract';
 
 import type { HandlerTable } from '../../http/handler.js';
+import { announceChange, announceRevoked, announceTaskChange } from '../events/index.js';
 import { featuresServed } from '../../http/version.js';
 import {
   ackFeedRequests,
@@ -65,6 +66,8 @@ export const machineHandlers = (): HandlerTable => ({
     await context.services.database.withOwner(principal.owner, (tx) =>
       revokeMachine(tx, principal.machineId),
     );
+    await announceRevoked(context.services.events, principal.owner, principal.machineId);
+    await announceChange(context.services.events, principal.owner);
     return {};
   },
 
@@ -75,6 +78,7 @@ export const machineHandlers = (): HandlerTable => ({
         index: input.index,
       }),
     );
+    await announceChange(context.services.events, principal.owner);
     return {};
   },
 
@@ -85,6 +89,7 @@ export const machineHandlers = (): HandlerTable => ({
         index: input.index,
       }),
     );
+    await announceChange(context.services.events, principal.owner);
     return {};
   },
 
@@ -95,6 +100,7 @@ export const machineHandlers = (): HandlerTable => ({
         index: input.index,
       }),
     );
+    await announceChange(context.services.events, principal.owner);
     return {};
   },
 
@@ -102,6 +108,7 @@ export const machineHandlers = (): HandlerTable => ({
     await context.services.database.withOwner(principal.owner, (tx) =>
       ackFeedRequests(tx, principal.machineId, input.requests),
     );
+    await announceChange(context.services.events, principal.owner);
     return {};
   },
 
@@ -126,6 +133,7 @@ export const machineHandlers = (): HandlerTable => ({
     await context.services.database.withOwner(principal.owner, (tx) =>
       saveDocument(tx, 'agents', input),
     );
+    await announceChange(context.services.events, principal.owner);
     return {};
   },
 
@@ -137,8 +145,13 @@ export const machineHandlers = (): HandlerTable => ({
       };
     }),
 
-  'machine.apply-title-rule': ({ input, principal, context }) =>
-    context.services.database.withOwner(principal.owner, (tx) => applyTitleRule(tx, input)),
+  'machine.apply-title-rule': async ({ input, principal, context }) => {
+    const applied = await context.services.database.withOwner(principal.owner, (tx) =>
+      applyTitleRule(tx, input),
+    );
+    await announceTaskChange(context.services.events, principal.owner);
+    return applied;
+  },
 
   'machine.transcript': async ({ input, principal, context }) => {
     await context.services.database.withOwner(principal.owner, (tx) =>

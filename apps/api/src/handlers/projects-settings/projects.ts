@@ -6,6 +6,7 @@ import { directory, project, schedule, task } from '../../db/schema/index.js';
 import { ApiError } from '../../errors.js';
 import type { HandlerTable } from '../../http/handler.js';
 import type { ScopedDatabase } from '../../modules/database/index.js';
+import { announceChange } from '../../modules/events/index.js';
 import { isForeignKeyViolation } from './database-errors.js';
 
 type ProjectRow = typeof project.$inferSelect;
@@ -54,7 +55,16 @@ const countIn = async (tx: ScopedDatabase, projectId: string) => {
 };
 
 export const projectHandlers = (context: ServerContext): HandlerTable => {
-  const { database } = context.services;
+  const { database, events } = context.services;
+  const write = async <T>(
+    owner: string,
+    projectId: string,
+    work: (tx: ScopedDatabase) => Promise<T>,
+  ): Promise<T> => {
+    const result = await database.withOwner(owner, work);
+    await announceChange(events, owner, projectId);
+    return result;
+  };
 
   return {
     'client.projects.list': ({ principal }) =>
@@ -68,7 +78,7 @@ export const projectHandlers = (context: ServerContext): HandlerTable => {
       })),
 
     'client.projects.create': ({ input, principal }) =>
-      database.withOwner(principal.owner, async (tx) => {
+      write(principal.owner, input.id, async (tx) => {
         const [top] = await tx.select({ top: max(project.position) }).from(project);
         const position = input.position ?? Math.min((top?.top ?? -1) + 1, MAX_PROJECT_POSITION);
         const created = await tx
@@ -81,7 +91,7 @@ export const projectHandlers = (context: ServerContext): HandlerTable => {
       }),
 
     'client.projects.update': ({ input, principal }) =>
-      database.withOwner(principal.owner, async (tx) => {
+      write(principal.owner, input.id, async (tx) => {
         await load(tx, input.id);
         await tx
           .update(project)
@@ -96,7 +106,7 @@ export const projectHandlers = (context: ServerContext): HandlerTable => {
       }),
 
     'client.projects.archive': ({ input, principal }) =>
-      database.withOwner(principal.owner, async (tx) => {
+      write(principal.owner, input.id, async (tx) => {
         const target = await load(tx, input.id);
         if (target.isDefault)
           throw new ApiError('forbidden', 'the default project cannot be archived');
@@ -108,7 +118,7 @@ export const projectHandlers = (context: ServerContext): HandlerTable => {
       }),
 
     'client.projects.unarchive': ({ input, principal }) =>
-      database.withOwner(principal.owner, async (tx) => {
+      write(principal.owner, input.id, async (tx) => {
         await load(tx, input.id);
         await tx
           .update(project)
@@ -118,7 +128,7 @@ export const projectHandlers = (context: ServerContext): HandlerTable => {
       }),
 
     'client.projects.delete': ({ input, principal }) =>
-      database.withOwner(principal.owner, async (tx) => {
+      write(principal.owner, input.id, async (tx) => {
         const target = await load(tx, input.id);
         if (target.isDefault)
           throw new ApiError('forbidden', 'the default project cannot be deleted');

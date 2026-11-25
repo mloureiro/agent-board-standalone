@@ -3,12 +3,13 @@ import { and, eq } from 'drizzle-orm';
 import type { ServerContext } from '../../context.js';
 import { document } from '../../db/schema/index.js';
 import { ApiError } from '../../errors.js';
+import { announceChange } from '../../modules/events/index.js';
 import type { HandlerTable } from '../../http/handler.js';
 
 const SETTINGS = 'settings';
 
 export const settingsHandlers = (context: ServerContext): HandlerTable => {
-  const { database } = context.services;
+  const { database, events } = context.services;
 
   return {
     'client.settings.get': ({ principal }) =>
@@ -27,8 +28,8 @@ export const settingsHandlers = (context: ServerContext): HandlerTable => {
         };
       }),
 
-    'client.settings.set': ({ input, principal }) =>
-      database.withOwner(principal.owner, async (tx) => {
+    'client.settings.set': async ({ input, principal }) => {
+      await database.withOwner(principal.owner, async (tx) => {
         const saved =
           input.expectedVersion === 0
             ? await tx
@@ -49,7 +50,9 @@ export const settingsHandlers = (context: ServerContext): HandlerTable => {
                 .returning({ version: document.version });
         if (saved.length === 0)
           throw new ApiError('version-conflict', 'the settings changed since you loaded them');
-        return {};
-      }),
+      });
+      await announceChange(events, principal.owner);
+      return {};
+    },
   };
 };

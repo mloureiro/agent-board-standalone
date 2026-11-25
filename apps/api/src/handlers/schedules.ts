@@ -1,4 +1,5 @@
 import type { ScopedDatabase } from '../modules/database/index.js';
+import { announceTaskChange } from '../modules/events/index.js';
 import type { HandlerSet } from '../http/handler.js';
 import {
   addSchedule,
@@ -13,12 +14,13 @@ import {
 import { presentWireTasks } from '../modules/tasks/index.js';
 
 export const scheduleHandlers: HandlerSet = (context) => {
-  const { database } = context.services;
+  const { database, events } = context.services;
   const write = async <T>(
     owner: string,
     work: (tx: ScopedDatabase) => Promise<{ projectId: string; result: T }>,
   ): Promise<T> => {
-    const { result } = await database.withOwner(owner, work);
+    const { projectId, result } = await database.withOwner(owner, work);
+    await announceTaskChange(events, owner, projectId);
     return result;
   };
   const paused = (tx: ScopedDatabase, input: { id: string; paused: boolean }) =>

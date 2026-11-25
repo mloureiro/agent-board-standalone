@@ -20,6 +20,7 @@ import {
 import * as schema from '../db/schema/index.js';
 import { ApiError } from '../errors.js';
 import type { HandlerSet } from '../http/handler.js';
+import { announceChange } from '../modules/events/index.js';
 import { DEFAULT_SESSION_DAYS } from '../modules/sign-in/index.js';
 import type { ServerContext } from '../context.js';
 
@@ -86,6 +87,8 @@ export const signInHandlers: HandlerSet = (context) => ({
     const credential = await readCredential(request, signIn.scheme);
     if (credential !== null && credential.kind !== 'machine' && request.principal !== null)
       await endSession(sessionDepsOf(context), request.principal.owner, credential.hash);
+    if (request.principal !== null)
+      await announceChange(context.services.events, request.principal.owner);
     reply.header('set-cookie', clearedSessionCookie(signIn.scheme));
     return {};
   },

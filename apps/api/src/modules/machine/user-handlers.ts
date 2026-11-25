@@ -1,4 +1,9 @@
+import type { WireTask } from '@agent-board/contract';
+
+import { contractOf } from '../../handlers/request-contract.js';
 import type { ScopedDatabase } from '../database/index.js';
+import { announceTaskChange } from '../events/index.js';
+import { TASK_VOCABULARY, requireKnown } from '../tasks/index.js';
 import type { RouteCall } from '../../http/handler.js';
 import type { HandlerTable } from '../../http/handler.js';
 import { eventOutput, listEvents, listRuns } from './transcripts.js';
@@ -19,31 +24,45 @@ const guarded = <T>(
     return work(tx, { owner: call.principal.owner, viaMachineId: call.principal.machineId });
   });
 
+const commanded = async (
+  call: Pick<RouteCall<'machine.answer'>, 'principal' | 'context' | 'request'>,
+  target: CommandTarget,
+  work: (tx: ScopedDatabase, actor: UserActor) => Promise<WireTask>,
+): Promise<WireTask> => {
+  const task = await guarded(call, target, async (tx, actor) => {
+    const wire = await work(tx, actor);
+    requireKnown(TASK_VOCABULARY, contractOf(call.request), [wire]);
+    return wire;
+  });
+  await announceTaskChange(call.context.services.events, call.principal.owner);
+  return task;
+};
+
 export const userHandlers = (actions: UserActions): HandlerTable => ({
   'machine.answer': (call) =>
-    guarded(call, { task: call.input.id }, (tx, actor) => actions.answer(tx, actor, call.input)),
+    commanded(call, { task: call.input.id }, (tx, actor) => actions.answer(tx, actor, call.input)),
   'machine.dismiss-question': (call) =>
-    guarded(call, { task: call.input.id }, (tx, actor) =>
+    commanded(call, { task: call.input.id }, (tx, actor) =>
       actions['dismiss-question'](tx, actor, call.input),
     ),
   'machine.reply': (call) =>
-    guarded(call, { task: call.input.id }, (tx, actor) => actions.reply(tx, actor, call.input)),
+    commanded(call, { task: call.input.id }, (tx, actor) => actions.reply(tx, actor, call.input)),
   'machine.send': (call) =>
-    guarded(call, { task: call.input.id }, (tx, actor) => actions.send(tx, actor, call.input)),
+    commanded(call, { task: call.input.id }, (tx, actor) => actions.send(tx, actor, call.input)),
   'machine.stop': (call) =>
-    guarded(call, { task: call.input.id }, (tx, actor) => actions.stop(tx, actor, call.input)),
+    commanded(call, { task: call.input.id }, (tx, actor) => actions.stop(tx, actor, call.input)),
   'machine.take-back': (call) =>
-    guarded(call, { task: call.input.id }, (tx, actor) =>
+    commanded(call, { task: call.input.id }, (tx, actor) =>
       actions['take-back'](tx, actor, call.input),
     ),
   'machine.rerun': (call) =>
-    guarded(call, { task: call.input.id }, (tx, actor) => actions.rerun(tx, actor, call.input)),
+    commanded(call, { task: call.input.id }, (tx, actor) => actions.rerun(tx, actor, call.input)),
   'machine.set-closed': (call) =>
-    guarded(call, { task: call.input.id }, (tx, actor) =>
+    commanded(call, { task: call.input.id }, (tx, actor) =>
       actions['set-closed'](tx, actor, call.input),
     ),
   'machine.fork': (call) =>
-    guarded(call, { task: call.input.parentId }, (tx, actor) =>
+    commanded(call, { task: call.input.parentId }, (tx, actor) =>
       actions.fork(tx, actor, call.input),
     ),
 

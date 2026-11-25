@@ -1,4 +1,5 @@
 import type { HandlerTable } from '../../http/handler.js';
+import { announceChange, announceRevoked } from '../events/index.js';
 import { ApiError } from '../../errors.js';
 import { isoOrNull } from './machine-handlers.js';
 import {
@@ -53,16 +54,22 @@ export const clientHandlers = (): HandlerTable => ({
 
   'client.machines.advertised-cli': ({ context }) => ({ version: context.config.build.cli }),
 
-  'client.machines.issue': ({ input, principal, context }) =>
-    context.services.database.withOwner(principal.owner, async (tx) => ({
-      token: await issueMachineToken(tx, input.name),
-    })),
+  'client.machines.issue': async ({ input, principal, context }) => {
+    const token = await context.services.database.withOwner(principal.owner, (tx) =>
+      issueMachineToken(tx, input.name),
+    );
+    await announceRevoked(context.services.events, principal.owner, input.name);
+    await announceChange(context.services.events, principal.owner);
+    return { token };
+  },
 
   'client.machines.revoke': async ({ input, principal, context }) => {
     const found = await context.services.database.withOwner(principal.owner, (tx) =>
       revokeMachine(tx, input.name),
     );
     if (!found) throw new ApiError('not-found', `no machine ${input.name}`);
+    await announceRevoked(context.services.events, principal.owner, input.name);
+    await announceChange(context.services.events, principal.owner);
     return {};
   },
 
@@ -70,6 +77,7 @@ export const clientHandlers = (): HandlerTable => ({
     await context.services.database.withOwner(principal.owner, (tx) =>
       setGrant(tx, input.name, input.grant),
     );
+    await announceChange(context.services.events, principal.owner);
     return {};
   },
 
@@ -94,6 +102,7 @@ export const clientHandlers = (): HandlerTable => ({
     await context.services.database.withOwner(principal.owner, (tx) =>
       requestFeed(tx, input.machine, input),
     );
+    await announceChange(context.services.events, principal.owner);
     return {};
   },
 
@@ -121,6 +130,7 @@ export const clientHandlers = (): HandlerTable => ({
     await context.services.database.withOwner(principal.owner, (tx) =>
       saveDocument(tx, 'links', input),
     );
+    await announceChange(context.services.events, principal.owner);
     return {};
   },
 
@@ -133,6 +143,7 @@ export const clientHandlers = (): HandlerTable => ({
     await context.services.database.withOwner(principal.owner, (tx) =>
       saveDocument(tx, 'titles', input),
     );
+    await announceChange(context.services.events, principal.owner);
     return {};
   },
 

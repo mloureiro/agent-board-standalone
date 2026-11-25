@@ -3,10 +3,11 @@ import { and, count, eq } from 'drizzle-orm';
 import type { ServerContext } from '../../context.js';
 import { directory, machine, project, schedule, task } from '../../db/schema/index.js';
 import { ApiError } from '../../errors.js';
+import { announceTaskChange } from '../../modules/events/index.js';
 import type { HandlerTable } from '../../http/handler.js';
 
 export const directoryHandlers = (context: ServerContext): HandlerTable => {
-  const { database } = context.services;
+  const { database, events } = context.services;
 
   return {
     'client.directories.list': ({ input, principal }) =>
@@ -45,8 +46,8 @@ export const directoryHandlers = (context: ServerContext): HandlerTable => {
         };
       }),
 
-    'client.directories.move': ({ input, principal }) =>
-      database.withOwner(principal.owner, async (tx) => {
+    'client.directories.move': async ({ input, principal }) => {
+      const moved = await database.withOwner(principal.owner, async (tx) => {
         const [moving] = await tx.select().from(directory).where(eq(directory.id, input.id));
         if (moving === undefined) throw new ApiError('not-found', 'no such directory');
         const [destination] = await tx
@@ -54,7 +55,7 @@ export const directoryHandlers = (context: ServerContext): HandlerTable => {
           .from(project)
           .where(eq(project.id, input.projectId));
         if (destination === undefined) throw new ApiError('not-found', 'no such project');
-        if (moving.projectId === input.projectId) return {};
+        if (moving.projectId === input.projectId) return false;
 
         const [tasks] = await tx
           .select({ total: count() })
@@ -85,7 +86,10 @@ export const directoryHandlers = (context: ServerContext): HandlerTable => {
           .update(schedule)
           .set({ projectId: input.projectId })
           .where(eq(schedule.directoryId, moving.id));
-        return {};
-      }),
+        return true;
+      });
+      if (moved) await announceTaskChange(events, principal.owner);
+      return {};
+    },
   };
 };

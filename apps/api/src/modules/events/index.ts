@@ -10,6 +10,7 @@ export {
   type EventMessage,
 } from './bus.js';
 export { DEFAULT_TIMINGS, eventsHandlers } from './handlers.js';
+export { announceChange, announceRevoked, announceTaskChange } from './announce.js';
 export { createMemoryEvents } from './memory.js';
 export { openEvents } from './open.js';
 export { createPostgresEvents } from '../database/notify.js';
