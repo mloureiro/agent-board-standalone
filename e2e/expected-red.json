@@ -49,8 +49,10 @@
       "request signature bound at sign-in on a login server › [api-120] a user revokes a bound key on a login server and it gets 401"
     ],
     "blackbox/task-commands.test.ts": [
-      "task commands › [cli-018] a run posts %i questions with board ask",
-      "task commands › [cli-018] a run is refused %i questions",
+      "task commands › [cli-018] a run posts 1 questions with board ask",
+      "task commands › [cli-018] a run posts 4 questions with board ask",
+      "task commands › [cli-018] a run is refused 0 questions",
+      "task commands › [cli-018] a run is refused 5 questions",
       "task commands › [cli-018] a second ask while a question is open answers 409 and prints do not ask again",
       "task commands › [cli-024] board add proposes a follow-up in Backlog in the parent project and allowed directory",
       "task commands › [cli-024] board add --project puts the follow-up in that project and one of its allowed directories"
