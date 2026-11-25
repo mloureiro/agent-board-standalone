@@ -66,6 +66,9 @@ fn client_app_032_dropped_schemes_and_blank_new_windows_go_nowhere() {
         "ftp://example.test/x",
         "https://",
         "not a url",
+        "-a",
+        "--args https://example.test/",
+        "-https://example.test/",
         "",
         "https://example.test/\u{7}",
     ] {

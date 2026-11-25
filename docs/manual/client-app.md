@@ -165,4 +165,5 @@ Expected: the key never leaves the Keychain except as its public half, a failed 
 revoking the device returns the page to `needs-pairing`.
 
 If macOS asks to allow access to a Keychain item after you rebuilt or updated the app, answer Allow. Answering Deny
-makes the app treat the item as absent: sign in or pair again.
+leaves the item in place and unused: a denied session token shows sign-in, and a denied signing key makes every
+request to that server fail until you relaunch the app and answer Allow. A denied key is never replaced.
