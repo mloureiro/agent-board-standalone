@@ -26,9 +26,12 @@ const BUILT = [
   'CMD-17',
   'CMD-18',
   'CMD-19',
+  'CMD-20',
   'CMD-21',
   'CMD-22',
+  'CMD-23',
   'CMD-24',
+  'CMD-25',
   'CMD-26',
 ] as const;
 
