@@ -168,7 +168,7 @@ async function execute(directive: Directive, state: RunState): Promise<'continue
       const file = path.join(dir, 'questions.json');
       try {
         writeFileSync(file, JSON.stringify(directive.questions));
-        await runBoardAsTool(['ask', file]);
+        await runBoardAsTool(['ask', process.env.AGENT_BOARD_TASK ?? '', '--file', file]);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
