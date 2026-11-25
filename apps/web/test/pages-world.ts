@@ -5,6 +5,7 @@ import {
   getClientLinksRoute,
   getClientSettingsRoute,
   getClientTitleRulesRoute,
+  importClientAccountRoute,
   issueClientMachineRoute,
   listClientFeedsRoute,
   listClientMachinesRoute,
@@ -97,6 +98,7 @@ export class PagesWorld extends TaskWorld {
   readonly exportRows: Record<string, Record<string, unknown>[]> = {};
   readonly exportPages = new Map<string, string[]>();
   readonly taskLists: string[] = [];
+  readonly imports: { table: string; rows: unknown[]; keyId: string }[] = [];
   deleted: string | null = null;
   keySetup: KeySetup | null = null;
   readonly owner = 'owner';
@@ -385,6 +387,11 @@ export class PagesWorld extends TaskWorld {
         case removeClientPasskeyRoute.path:
           this.passkeys = this.passkeys.filter((passkey) => passkey.id !== body?.id);
           return json(200, {});
+        case importClientAccountRoute.path: {
+          const rows = (body?.rows as unknown[]) ?? [];
+          this.imports.push({ table: String(body?.table), rows, keyId: String(body?.keyId) });
+          return json(200, { inserted: rows.length, existing: 0, invalid: 0, orphaned: 0 });
+        }
         case deleteClientAccountRoute.path:
           if (body?.username !== this.owner) {
             return json(403, { error: { code: 'forbidden', message: 'Wrong username.' } });
