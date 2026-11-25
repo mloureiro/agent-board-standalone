@@ -1,3 +1,4 @@
+import { sessionCookieName } from '@agent-board/contract';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import {
@@ -38,7 +39,7 @@ const SESSION_DAYS = 30;
 
 describe('no-login mode', () => {
   const harness = useBoard({
-    parts: ['api', 'postgres'],
+    parts: ['api'],
     features: [],
     auth: 'no-login',
     env: { NO_LOGIN_USER: NO_LOGIN_OWNER },
@@ -50,6 +51,15 @@ describe('no-login mode', () => {
     expect(me.username).toBe(NO_LOGIN_OWNER);
     const listed = await call(server, 'client.tasks.list', {});
     expect(listed.ok).toBe(true);
+  });
+});
+
+describe('no-login mode with the database inspected', () => {
+  const harness = useBoard({
+    parts: ['api', 'postgres'],
+    features: [],
+    auth: 'no-login',
+    env: { NO_LOGIN_USER: NO_LOGIN_OWNER },
   });
 
   it('[api-029] the user row does not exist after reads only and exists after one committed write', async () => {
@@ -94,7 +104,7 @@ describe('login mode', () => {
     });
     board = opened.board;
     reason = opened.reason;
-  });
+  }, 120_000);
 
   afterAll(async () => {
     await board?.stop();
@@ -170,7 +180,7 @@ describe('login mode', () => {
       const first = await finishHandoff(live(), started);
       expect(first.result.ok).toBe(true);
       expect(first.result.body).toMatchObject({ status: 'signed-in' });
-      expect(first.jar.get('board-session')).toMatch(SESSION_TOKEN_PATTERN);
+      expect(first.jar.get(sessionCookieName('http'))).toMatch(SESSION_TOKEN_PATTERN);
       const me = await call(live(), 'client.me', {}, cookieSession(first.jar));
       expect(me.body?.username).toBe(approver.username);
 
@@ -179,9 +189,23 @@ describe('login mode', () => {
       expect(second.setCookies).toEqual([]);
     });
 
+    it('[api-039] a flow approved at 9 minutes still finishes', async () => {
+      const approver = await signedInUser(live());
+      const started = await startHandoff(live());
+      setClockOffset(live(), HANDOFF_EXPIRY_SECONDS - 60);
+      const approved = await approver.call('auth.handoff.approve', { flow: started.flow });
+      expect(approved.ok).toBe(true);
+      const finished = await finishHandoff(live(), started);
+      expect(finished.result.ok).toBe(true);
+      expect(finished.result.body).toMatchObject({ status: 'signed-in' });
+    });
+
     it('[api-039] an unapproved flow is refused after 10 minutes', async () => {
+      const approver = await signedInUser(live());
       const started = await startHandoff(live());
       setClockOffset(live(), HANDOFF_EXPIRY_SECONDS + 1);
+      const approved = await approver.call('auth.handoff.approve', { flow: started.flow });
+      expect(approved.ok).toBe(false);
       const finished = await finishHandoff(live(), started);
       expect(finished.result.ok).toBe(false);
       expect(finished.setCookies).toEqual([]);
