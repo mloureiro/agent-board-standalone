@@ -1,20 +1,26 @@
 import { Button, Group, Modal, Stack, Textarea } from '@mantine/core';
 import { useState, type ReactNode } from 'react';
 
+import { useDraft } from '../../drafts/index.js';
+
 export interface ProposalStart {
+  readonly id: string;
   readonly title: string;
   readonly text: string;
 }
 
 function StartForm(props: {
+  readonly id: string;
   readonly initial: string;
   readonly onStart: (text: string) => void;
 }): ReactNode {
-  const [text, setText] = useState(props.initial);
+  const [draft, setDraft] = useDraft(`proposal:${props.id}`, props.initial);
+  const [text, setText] = useState(draft === '' ? props.initial : draft);
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
+        setDraft('');
         props.onStart(text);
       }}
     >
@@ -24,7 +30,10 @@ function StartForm(props: {
           autosize
           minRows={5}
           value={text}
-          onChange={(event) => setText(event.currentTarget.value)}
+          onChange={(event) => {
+            setText(event.currentTarget.value);
+            setDraft(event.currentTarget.value === props.initial ? '' : event.currentTarget.value);
+          }}
           data-autofocus
         />
         <Group justify="flex-end">
@@ -51,7 +60,9 @@ export function ProposalStartDialog(props: {
       size="lg"
       centered
     >
-      {proposal === null ? null : <StartForm initial={proposal.text} onStart={props.onStart} />}
+      {proposal === null ? null : (
+        <StartForm id={proposal.id} initial={proposal.text} onStart={props.onStart} />
+      )}
     </Modal>
   );
 }
