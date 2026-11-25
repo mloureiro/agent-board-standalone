@@ -7,6 +7,7 @@
     "allow-tab-navigate",
     "allow-tab-title",
     "allow-tab-cycle",
+    "allow-tab-focused",
     "allow-page-heartbeat"
   ]
 }

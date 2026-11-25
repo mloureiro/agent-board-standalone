@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { installRouting } from '../src/bridge/routing.js';
-import type { PaneView, TabbarBackend } from '../src/native/tabbar/backend.js';
+import type { LayoutView, PaneView, TabbarBackend } from '../src/native/tabbar/backend.js';
 import { mountTabbar } from '../src/native/tabbar/page.js';
 
 const TABS: PaneView = {
@@ -17,20 +17,29 @@ const TABS: PaneView = {
 interface Fake {
   readonly backend: TabbarBackend;
   readonly calls: string[];
-  push(view: PaneView): void;
+  push(view: PaneView | LayoutView): void;
 }
 
-function fakeBackend(initial: PaneView = TABS): Fake {
+const layoutOf = (view: PaneView | LayoutView): LayoutView =>
+  'panes' in view ? view : { panes: [view], focused: 0, split: [] };
+
+function fakeBackend(initial: PaneView | LayoutView = TABS): Fake {
   const calls: string[] = [];
-  let handler: ((view: PaneView) => void) | undefined;
+  let handler: ((view: LayoutView) => void) | undefined;
   return {
     calls,
-    push: (view) => handler?.(view),
+    push: (view) => handler?.(layoutOf(view)),
     backend: {
-      snapshot: async () => initial,
+      snapshot: async () => layoutOf(initial),
       select: async (tab) => void calls.push(`select ${tab}`),
       close: async (tab) => void calls.push(`close ${tab}`),
       cycle: async (direction) => void calls.push(`cycle ${direction}`),
+      split: async () => void calls.push('split'),
+      move: async (tab, pane) => void calls.push(`move ${tab} ${pane}`),
+      closePane: async (pane) => void calls.push(`close pane ${pane}`),
+      focusPane: async (pane) => void calls.push(`focus pane ${pane}`),
+      resize: async (divider, ratio, commit) =>
+        void calls.push(`resize ${divider} ${ratio.toFixed(2)} ${commit}`),
       onChanged: async (next) => {
         handler = next;
       },
@@ -52,7 +61,7 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-async function mounted(initial?: PaneView): Promise<Fake> {
+async function mounted(initial?: PaneView | LayoutView): Promise<Fake> {
   const fake = fakeBackend(initial);
   await mountTabbar(root, fake.backend);
   return fake;
@@ -292,5 +301,178 @@ describe('tab routing from the page', () => {
     document.title = 'Agent Board';
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(titles()).toHaveLength(2);
+  });
+});
+
+describe('split view', () => {
+  const SPLIT: LayoutView = {
+    panes: [
+      {
+        selected: 1,
+        tabs: [
+          { id: 0, label: 'Board', home: true },
+          { id: 1, label: 'Backlog', home: false },
+        ],
+      },
+      {
+        selected: 3,
+        tabs: [
+          { id: 2, label: 'Closed', home: false },
+          { id: 3, label: 'Fix the login redirect', home: false },
+        ],
+      },
+      { selected: 4, tabs: [{ id: 4, label: 'Settings', home: false }] },
+    ],
+    focused: 1,
+    split: [0.3, 0.6],
+  };
+
+  const panes = (): HTMLElement[] => [...root.querySelectorAll<HTMLElement>('.pane')];
+  const dividers = (): HTMLElement[] => [...root.querySelectorAll<HTMLElement>('.divider')];
+
+  function stubBar(width = 1000): void {
+    const bar = root.querySelector<HTMLElement>('.bar');
+    if (!bar) throw new Error('no bar');
+    bar.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width, height: 36, right: width, bottom: 36, x: 0, y: 0 }) as DOMRect;
+  }
+
+  const pointer = (type: string, target: Element, clientX: number): void => {
+    target.dispatchEvent(new MouseEvent(type, { clientX, bubbles: true, cancelable: true }));
+  };
+
+  it('[client-app-029] each pane has its own tab bar and the divider resizes the panes', async () => {
+    const fake = await mounted(SPLIT);
+    stubBar();
+
+    expect(panes()).toHaveLength(3);
+    expect(panes().map((pane) => pane.getAttribute('aria-label'))).toEqual([
+      'Pane 1 tabs',
+      'Pane 2 tabs',
+      'Pane 3 tabs',
+    ]);
+    expect(panes().map((pane) => pane.style.width)).toEqual([
+      `${0.3 * 100}%`,
+      `${(0.6 - 0.3) * 100}%`,
+      `${(1 - 0.6) * 100}%`,
+    ]);
+    expect(
+      panes().map((pane) =>
+        [...pane.querySelectorAll<HTMLElement>('.tab')].map((tab) => tab.dataset.id),
+      ),
+    ).toEqual([['0', '1'], ['2', '3'], ['4']]);
+    expect(panes().map((pane) => pane.hasAttribute('data-focused'))).toEqual([false, true, false]);
+    expect(root.querySelector('.pane:first-child .home-slot [data-home]')).not.toBeNull();
+    expect(root.querySelectorAll('[data-home]')).toHaveLength(1);
+    expect(root.querySelectorAll('.tab[data-selected]')).toHaveLength(3);
+
+    expect(dividers()).toHaveLength(2);
+    expect(dividers().map((divider) => divider.style.left)).toEqual(['30%', '60%']);
+
+    const first = dividers()[0] as HTMLElement;
+    pointer('pointerdown', first, 300);
+    pointer('pointermove', first, 400);
+    pointer('pointermove', first, 450);
+    pointer('pointerup', first, 450);
+    pointer('pointermove', first, 700);
+    expect(fake.calls).toEqual([
+      'resize 0 0.40 false',
+      'resize 0 0.45 false',
+      'resize 0 0.45 true',
+    ]);
+
+    fake.push({ ...SPLIT, split: [0.45, 0.6] });
+    expect(dividers()[0]).toBe(first);
+    expect(first.style.left).toBe('45%');
+    expect(panes()[0]?.style.width).toBe(`${0.45 * 100}%`);
+  });
+
+  it('[client-app-029] a divider moves with the arrow keys and clicking a pane focuses it', async () => {
+    const { calls } = await mounted(SPLIT);
+    const second = dividers()[1] as HTMLElement;
+    const left = press(second, 'ArrowLeft');
+    press(second, 'ArrowRight');
+    expect(left.defaultPrevented).toBe(true);
+    expect(calls).toEqual(['resize 1 0.58 true', 'resize 1 0.62 true']);
+
+    calls.length = 0;
+    const third = panes()[2] as HTMLElement;
+    third.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    selectButton(3).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    (panes()[1] as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(calls).toEqual(['focus pane 2', 'select 3']);
+  });
+
+  it('[client-app-029] arrows move within a pane and pane buttons split, close and focus', async () => {
+    const { calls } = await mounted(SPLIT);
+    selectButton(2).focus();
+    press(document.activeElement as Element, 'ArrowRight');
+    expect(document.activeElement).toBe(selectButton(3));
+    press(document.activeElement as Element, 'ArrowRight');
+    expect(document.activeElement).toBe(selectButton(3));
+    press(document.activeElement as Element, 'Home');
+    expect(document.activeElement).toBe(selectButton(2));
+
+    const buttons = (index: number, name: string): HTMLElement => {
+      const found = panes()[index]?.querySelector<HTMLElement>(name);
+      if (!found) throw new Error(`no ${name} in pane ${index}`);
+      return found;
+    };
+    expect(panes()[0]?.querySelector('.pane-close')).toBeNull();
+    buttons(2, '.pane-close').click();
+    buttons(1, '.pane-split').click();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(calls).toEqual(['close pane 2', 'focus pane 1', 'split']);
+    expect(buttons(1, '.pane-close').getAttribute('aria-label')).toBe('Close pane 2');
+  });
+
+  it('[client-app-029] dropping a tab on another pane moves it there', async () => {
+    const { calls } = await mounted(SPLIT);
+    const drag = (target: Element, type: string): void => {
+      target.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }));
+    };
+    const tab = root.querySelector<HTMLElement>('.tab[data-id="1"]') as HTMLElement;
+    expect(tab.draggable).toBe(true);
+    expect(root.querySelector<HTMLElement>('.tab[data-id="0"]')?.draggable).toBe(false);
+
+    drag(tab, 'dragstart');
+    const over = new Event('dragover', { bubbles: true, cancelable: true });
+    (panes()[2] as HTMLElement).dispatchEvent(over);
+    expect(over.defaultPrevented).toBe(true);
+    drag(panes()[0] as HTMLElement, 'drop');
+    expect(calls).toEqual([]);
+    drag(tab, 'dragstart');
+    drag(panes()[2] as HTMLElement, 'drop');
+    drag(panes()[2] as HTMLElement, 'drop');
+    expect(calls).toEqual(['move 1 2']);
+
+    const idle = new Event('dragover', { bubbles: true, cancelable: true });
+    (panes()[2] as HTMLElement).dispatchEvent(idle);
+    expect(idle.defaultPrevented).toBe(false);
+  });
+
+  it('[client-app-029] a window with one pane shows no divider and the pane list shrinks when a pane closes', async () => {
+    const fake = await mounted(SPLIT);
+    fake.push({ panes: [SPLIT.panes[0] as PaneView], focused: 0, split: [] });
+    expect(panes()).toHaveLength(1);
+    expect(dividers()).toHaveLength(0);
+    expect(panes()[0]?.getAttribute('aria-label')).toBe('Tabs');
+    expect(panes()[0]?.style.width).toBe('100%');
+    expect(root.querySelector('.bar')?.hasAttribute('data-split')).toBe(false);
+  });
+});
+
+describe('tab focus report', () => {
+  it('[client-app-029] a tab webview tells the shell when it takes focus', () => {
+    const report = vi.fn<(command: string, args: Record<string, unknown>) => Promise<unknown>>(
+      async () => undefined,
+    );
+    const stop = installRouting({ target: window, label: 'tab-6ba7-4', report });
+    window.dispatchEvent(new Event('focus'));
+    stop();
+    window.dispatchEvent(new Event('focus'));
+    const focused = report.mock.calls.filter(([command]) => command === 'tab_focused');
+    expect(focused).toEqual([['tab_focused', {}]]);
   });
 });

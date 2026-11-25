@@ -2,7 +2,7 @@ use crate::ids::ServerId;
 use crate::log::LogEvent;
 use crate::orphans::tab_file_name;
 use crate::ports::{FileStore, PortError};
-use crate::tabs::Tabs;
+use crate::tabs::{PaneSpec, Tabs};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -11,8 +11,8 @@ pub const VERSION: u64 = 1;
 #[derive(Serialize)]
 struct FileOut<'a> {
     v: u64,
-    panes: [PaneOut<'a>; 1],
-    split: [f64; 0],
+    panes: Vec<PaneOut<'a>>,
+    split: &'a [f64],
     focused: usize,
 }
 
@@ -27,6 +27,10 @@ struct FileIn {
     v: u64,
     #[serde(default)]
     panes: Vec<PaneIn>,
+    #[serde(default)]
+    split: Value,
+    #[serde(default)]
+    focused: Value,
 }
 
 #[derive(Deserialize)]
@@ -46,17 +50,29 @@ pub struct Restored {
 }
 
 pub fn encode(tabs: &Tabs) -> Vec<u8> {
-    let (paths, selected) = tabs.saved();
+    let saved = tabs.saved();
     let file = FileOut {
         v: VERSION,
-        panes: [PaneOut {
-            tabs: paths,
-            selected,
-        }],
-        split: [],
-        focused: 0,
+        panes: saved
+            .panes
+            .into_iter()
+            .map(|pane| PaneOut {
+                tabs: pane.paths,
+                selected: pane.selected,
+            })
+            .collect(),
+        split: saved.split,
+        focused: saved.focused,
     };
     serde_json::to_vec_pretty(&file).unwrap_or_default()
+}
+
+fn edges(value: &Value) -> Option<Vec<f64>> {
+    value
+        .as_array()?
+        .iter()
+        .map(Value::as_f64)
+        .collect::<Option<Vec<f64>>>()
 }
 
 pub fn decode(bytes: &[u8]) -> Result<Tabs, Unreadable> {
@@ -64,14 +80,25 @@ pub fn decode(bytes: &[u8]) -> Result<Tabs, Unreadable> {
     if file.v != VERSION {
         return Err(Unreadable);
     }
-    let Some(pane) = file.panes.first() else {
-        return Ok(Tabs::new());
-    };
-    let paths = pane
-        .tabs
+    let specs: Vec<PaneSpec<'_>> = file
+        .panes
         .iter()
-        .map(|entry| entry.as_str().unwrap_or_default());
-    Ok(Tabs::restore(paths, pane.selected))
+        .map(|pane| PaneSpec {
+            paths: pane
+                .tabs
+                .iter()
+                .map(|entry| entry.as_str().unwrap_or_default())
+                .collect(),
+            selected: pane.selected,
+        })
+        .collect();
+    let split = edges(&file.split);
+    let focused = file
+        .focused
+        .as_u64()
+        .and_then(|index| usize::try_from(index).ok())
+        .unwrap_or(0);
+    Ok(Tabs::restore_panes(&specs, split.as_deref(), focused))
 }
 
 pub fn read(files: &impl FileStore, server: ServerId) -> Restored {

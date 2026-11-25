@@ -1,5 +1,5 @@
 use crate::state::AppState;
-use crate::tab_registry::{Step, TabRegistry};
+use crate::tab_registry::{Step, TabQueue, TabRegistry};
 use crate::windows::{self, BRIDGE_SCRIPT, TABBAR_PREFIX, server_window_label, tab_label};
 use crate::{alerts, links, webkit};
 use agent_board_client_core::ids::ServerId;
@@ -7,7 +7,7 @@ use agent_board_client_core::layout::{self, Bounds};
 use agent_board_client_core::navigation::{Navigation, classify};
 use agent_board_client_core::orphans::tab_file_name;
 use agent_board_client_core::ports::FileStore;
-use agent_board_client_core::tabs::{Effect, HOME, TabId, Tabs};
+use agent_board_client_core::tabs::{Effect, HOME, LayoutView, TabId, Tabs};
 use std::sync::Arc;
 use tauri::EventTarget;
 use tauri::utils::config::BackgroundThrottlingPolicy;
@@ -32,17 +32,35 @@ pub fn window_size(window: &Window) -> tauri::Result<LogicalSize<f64>> {
         .to_logical::<f64>(window.scale_factor()?))
 }
 
-pub fn relayout(window: &Window) {
+fn page_bounds(view: &LayoutView, tab: TabId, size: LogicalSize<f64>) -> Bounds {
+    let pane = view.pane_of(tab).unwrap_or(0);
+    layout::pane_page(size.width, size.height, &view.split, pane)
+}
+
+fn place(window: &Window, view: &LayoutView) {
     let Ok(size) = window_size(window) else {
         return;
     };
     for webview in window.webviews() {
-        let bounds = if webview.label().starts_with(TABBAR_PREFIX) {
+        let label = webview.label();
+        let bounds = if label.starts_with(TABBAR_PREFIX) {
             layout::tab_bar(size.width, size.height)
+        } else if let Some((_, tab)) = windows::tab_of_label(label) {
+            page_bounds(view, tab, size)
         } else {
-            layout::page(size.width, size.height)
+            continue;
         };
         let _ = webview.set_bounds(bounds_rect(bounds));
+    }
+}
+
+pub fn relayout(window: &Window) {
+    let Some(server) = windows::server_of_window_label(window.label()) else {
+        return;
+    };
+    let registry = window.app_handle().state::<TabRegistry>();
+    if let Some(view) = registry.view(server) {
+        place(window, &view);
     }
 }
 
@@ -80,9 +98,10 @@ fn create_page(
     tab: TabId,
     path: &str,
     origin: &Url,
+    view: &LayoutView,
 ) -> tauri::Result<Webview> {
     let size = window_size(window)?;
-    let bounds = layout::page(size.width, size.height);
+    let bounds = page_bounds(view, tab, size);
     let webview = window.add_child(
         page_builder(app, server, tab, path, origin),
         LogicalPosition::new(bounds.x, bounds.y),
@@ -100,7 +119,10 @@ pub fn create_hidden_home(app: &AppHandle, server: ServerId, origin: &Url) {
     if app.get_webview(&tab_label(server, HOME)).is_some() {
         return;
     }
-    if let Ok(home) = create_page(app, &window, server, HOME, "/", origin) {
+    let Some(view) = app.state::<TabRegistry>().view(server) else {
+        return;
+    };
+    if let Ok(home) = create_page(app, &window, server, HOME, "/", origin, &view) {
         let _ = home.hide();
     }
 }
@@ -113,7 +135,7 @@ fn apply(app: &AppHandle, server: ServerId, step: Step) {
         match effect {
             Effect::CreateWebview { tab, path } => {
                 if app.get_webview(&tab_label(server, tab)).is_none() {
-                    let _ = create_page(app, &window, server, tab, &path, &step.origin);
+                    let _ = create_page(app, &window, server, tab, &path, &step.origin, &step.view);
                 }
             }
             Effect::Navigate { tab, path } => {
@@ -153,6 +175,7 @@ fn apply(app: &AppHandle, server: ServerId, step: Step) {
                 let state = app.state::<Arc<AppState>>();
                 let _ = state.tab_files.write(&tab_file_name(server), &step.file);
             }
+            Effect::Layout => place(&window, &step.view),
             Effect::LimitReached => {}
         }
     }
@@ -171,6 +194,7 @@ pub fn dispatch(
     server: ServerId,
     change: impl FnOnce(&mut Tabs) -> Vec<Effect> + Send + 'static,
 ) {
-    let app = app.clone();
-    tauri::async_runtime::spawn_blocking(move || run(&app, server, change));
+    let handle = app.clone();
+    app.state::<TabQueue>()
+        .submit(move || run(&handle, server, change));
 }

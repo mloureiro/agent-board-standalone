@@ -1,8 +1,10 @@
 use crate::alerts;
 use crate::server_tabs::dispatch;
 use crate::windows::{LIST_LABEL, focused_server};
+use agent_board_client_core::keybindings::Keybindings;
 use agent_board_client_core::shortcuts::{
-    Action, MENU_CLOSE_TAB, MENU_NEXT_TAB, MENU_PREVIOUS_TAB, from_menu_id, menu_select_id,
+    Action, MENU_CLOSE_PANE, MENU_CLOSE_TAB, MENU_FOCUS_NEXT_PANE, MENU_MOVE_TAB, MENU_NEXT_TAB,
+    MENU_PREVIOUS_TAB, MENU_SPLIT_TAB, from_menu_id, menu_select_id,
 };
 use agent_board_client_core::zoom::{
     self, MENU_ZOOM_IN, MENU_ZOOM_IN_SHIFTED, MENU_ZOOM_OUT, MENU_ZOOM_RESET,
@@ -10,7 +12,7 @@ use agent_board_client_core::zoom::{
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Manager};
 
-pub fn install(app: &AppHandle) -> tauri::Result<()> {
+pub fn install(app: &AppHandle, keys: &Keybindings) -> tauri::Result<()> {
     let application = Submenu::with_items(
         app,
         "Agent Board",
@@ -32,7 +34,7 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
             MENU_CLOSE_TAB,
             "Close Tab",
             true,
-            Some("CmdOrCtrl+W"),
+            keys.accelerator(MENU_CLOSE_TAB),
         )?],
     )?;
     let edit = Submenu::with_items(
@@ -55,7 +57,7 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
         true,
         &[&PredefinedMenuItem::minimize(app, None)?],
     )?;
-    let tabs = tabs_menu(app)?;
+    let tabs = tabs_menu(app, keys)?;
     let view = view_menu(app)?;
     app.set_menu(Menu::with_items(
         app,
@@ -90,32 +92,24 @@ fn view_menu(app: &AppHandle) -> tauri::Result<Submenu<tauri::Wry>> {
     )
 }
 
-fn tabs_menu(app: &AppHandle) -> tauri::Result<Submenu<tauri::Wry>> {
+fn tabs_menu(app: &AppHandle, keys: &Keybindings) -> tauri::Result<Submenu<tauri::Wry>> {
     let tabs = Submenu::new(app, "Tabs", true)?;
-    tabs.append(&MenuItem::with_id(
-        app,
-        MENU_NEXT_TAB,
-        "Next Tab",
-        true,
-        Some("Ctrl+Tab"),
-    )?)?;
-    tabs.append(&MenuItem::with_id(
-        app,
-        MENU_PREVIOUS_TAB,
-        "Previous Tab",
-        true,
-        Some("Ctrl+Shift+Tab"),
-    )?)?;
+    let item =
+        |id: &str, title: &str| MenuItem::with_id(app, id, title, true, keys.accelerator(id));
+    tabs.append(&item(MENU_NEXT_TAB, "Next Tab")?)?;
+    tabs.append(&item(MENU_PREVIOUS_TAB, "Previous Tab")?)?;
     tabs.append(&PredefinedMenuItem::separator(app)?)?;
     for position in 1..=9 {
-        tabs.append(&MenuItem::with_id(
-            app,
-            menu_select_id(position),
-            format!("Select Tab {position}"),
-            true,
-            Some(format!("CmdOrCtrl+{position}")),
+        tabs.append(&item(
+            &menu_select_id(position),
+            &format!("Select Tab {position}"),
         )?)?;
     }
+    tabs.append(&PredefinedMenuItem::separator(app)?)?;
+    tabs.append(&item(MENU_SPLIT_TAB, "Split Tab")?)?;
+    tabs.append(&item(MENU_MOVE_TAB, "Move Tab to Next Pane")?)?;
+    tabs.append(&item(MENU_FOCUS_NEXT_PANE, "Focus Next Pane")?)?;
+    tabs.append(&item(MENU_CLOSE_PANE, "Close Pane")?)?;
     Ok(tabs)
 }
 

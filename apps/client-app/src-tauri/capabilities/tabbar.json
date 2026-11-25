@@ -8,6 +8,11 @@
     "allow-tab-select",
     "allow-tab-close",
     "allow-tab-cycle",
+    "allow-tab-split",
+    "allow-tab-move",
+    "allow-pane-close",
+    "allow-pane-focus",
+    "allow-split-resize",
     "allow-tabbar-banner",
     "core:event:allow-listen",
     "core:event:allow-unlisten"

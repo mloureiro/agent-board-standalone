@@ -18,6 +18,7 @@
   --close-size: 20px;
   --accent-width: 2px;
   --fade-width: 24px;
+  --divider-hit: 9px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -45,24 +46,30 @@ body {
 }
 
 .strip {
+  position: relative;
+}
+
+.bar {
+  position: relative;
   display: flex;
-  align-items: center;
   height: var(--bar-height);
   border-bottom: 1px solid var(--border);
   background: var(--surface);
 }
 
-.bar {
+.pane {
   display: flex;
-  flex: 1 1 0;
+  flex: none;
   min-width: 0;
   height: 100%;
 }
 
 .banner {
-  flex: 0 1 auto;
+  position: absolute;
+  top: 50%;
+  right: calc(var(--space-2) + 2 * var(--close-size) + var(--space-2));
+  z-index: 3;
   max-width: 45%;
-  margin: 0 var(--space-2);
   padding: var(--space-1) var(--space-2);
   overflow: hidden;
   border: 1px solid var(--warning);
@@ -71,10 +78,78 @@ body {
   color: var(--text);
   text-overflow: ellipsis;
   white-space: nowrap;
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 .banner[hidden] {
   display: none;
+}
+
+.pane-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  padding: 0 var(--space-1);
+}
+
+.pane-action {
+  display: grid;
+  place-items: center;
+  width: var(--close-size);
+  height: var(--close-size);
+  padding: 0;
+  border: 0;
+  border-radius: var(--space-1);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: default;
+}
+
+.pane-action:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.pane-action:focus-visible,
+.divider:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.bar[data-split] .pane:not([data-focused]) .tab[data-selected] {
+  border-top-color: var(--text-muted);
+}
+
+.divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: var(--divider-hit);
+  margin-left: calc(var(--divider-hit) / -2);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.divider::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: var(--border);
+}
+
+.divider:hover::after,
+.divider[data-dragging]::after {
+  width: var(--accent-width);
+  margin-left: -1px;
+  background: var(--accent);
 }
 
 .home-slot {

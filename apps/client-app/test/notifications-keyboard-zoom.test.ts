@@ -165,10 +165,15 @@ describe('expired banner in the tab bar', () => {
     return {
       push: (text) => handler?.(text),
       backend: {
-        snapshot: async () => VIEW,
+        snapshot: async () => ({ panes: [VIEW], focused: 0, split: [] }),
         select: async () => undefined,
         close: async () => undefined,
         cycle: async () => undefined,
+        split: async () => undefined,
+        move: async () => undefined,
+        closePane: async () => undefined,
+        focusPane: async () => undefined,
+        resize: async () => undefined,
         onChanged: async () => undefined,
         banner: async () => initial,
         onBanner: async (next) => {

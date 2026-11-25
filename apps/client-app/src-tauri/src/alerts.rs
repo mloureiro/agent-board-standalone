@@ -66,7 +66,7 @@ fn focus_state(app: &AppHandle) -> FocusState {
     let key_window_server = focused_server(app);
     let home_selected = key_window_server
         .and_then(|server| app.state::<TabRegistry>().view(server))
-        .is_some_and(|view| view.selected == HOME);
+        .is_some_and(|view| view.panes.iter().any(|pane| pane.selected == HOME));
     FocusState {
         key_window_server,
         home_selected,

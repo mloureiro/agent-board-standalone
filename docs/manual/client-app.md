@@ -55,6 +55,33 @@ home board); each opens in its own tab.
 Expected: every menu item and shortcut acts on the front server window's tabs, home never closes, and a page
 can never take the tab to another website.
 
+## 029: split view and keybindings
+
+Run this with a throwaway server and a copy of the settings, never with files you care about. Open at least four
+pages in the server window first (Backlog, Schedules, Closed and a task).
+
+1. Select a page tab and choose Tabs › Split Tab (Cmd-Backslash). The tab moves into a new pane on the right, each pane has
+   its own tab bar, and home stays in the left pane. With home selected, Split Tab does nothing.
+2. Drag the divider between the two tab bars. Both panes resize while you drag, neither goes below a tenth of the
+   window width, and the page areas follow the bar. Focus the divider with Tab and nudge it with the arrow keys.
+3. Click a page in the right pane, then one in the left pane. The tab bar marks the pane you clicked as the active
+   one (its selected tab keeps the accent, the other pane's is muted), and Cmd-W and Ctrl-Tab act on that pane.
+4. Drag a tab from one tab bar onto the other. It moves, becomes selected there, and the pane it left selects a
+   neighbour. Tabs › Move Tab to Next Pane does the same from the keyboard.
+5. Open tabs until the limit: the 21st page does not open, counting both panes. Opening a page that is already open
+   in the other pane selects it there.
+6. Click the x of a right pane's bar (or Tabs › Close Pane). Its tabs join the pane on the left, and a pane whose
+   last tab closes disappears.
+7. Quit and open the server again. Both panes, their tabs, selections, the divider position and the active pane
+   come back, and only each pane's selected tab loads at first.
+8. Quit, then in the app's config folder create `settings.json` containing
+   `{"v":1,"keybindings":{"tab-next":"CmdOrCtrl+Alt+N","split-tab":"CmdOrCtrl+Shift+D","close-pane":"nonsense"}}`.
+   Open the app: Tabs › Next Tab and Split Tab show the new keys, Close Pane keeps its default, and a file that is
+   not valid JSON leaves every default in place. An entry such as `"tab-previous":"CmdOrCtrl+Q"` is ignored.
+
+Expected: panes behave as separate tab bars over one shared tab limit, the layout survives a restart, and a
+keybinding changed in `settings.json` takes effect at the next launch while invalid entries fall back to the default.
+
 ## 022: two tabs share the sign-in
 
 Use a server that needs a sign-in (a login server), or a signature-on server that needs pairing.
