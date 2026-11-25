@@ -10,7 +10,12 @@ import type { Runtime } from '../runtime.js';
 import type { Session } from '../transport/session.js';
 import { findProgram } from '../units/layout.js';
 import type { OpenTask } from '../commands/tasks/open.js';
-import { GH_MAX_BYTES, PR_LOOKUP_TIMEOUT_MS, PR_REFRESH_INTERVAL_MS } from './limits.js';
+import {
+  GH_MAX_BYTES,
+  PR_LOOKUP_TIMEOUT_MS,
+  PR_REFRESH_BUDGET_MS,
+  PR_REFRESH_INTERVAL_MS,
+} from './limits.js';
 
 const GH_STATES: Readonly<Record<string, PrState>> = {
   OPEN: 'open',
@@ -64,6 +69,7 @@ export interface PrRefreshDeps {
   readonly now: Date;
   readonly dryRun: boolean;
   readonly log: (line: string) => void;
+  readonly budgetMs?: number;
 }
 
 export async function refreshPrStatesIfDue(
@@ -77,7 +83,12 @@ export async function refreshPrStatesIfDue(
   if (last !== null && deps.now.getTime() - last.getTime() < PR_REFRESH_INTERVAL_MS) return 0;
   if (!deps.dryRun) markPrRefresh(deps.stateDir, deps.now);
   const states = new Map<string, PrState>();
+  const deadline = Date.now() + (deps.budgetMs ?? PR_REFRESH_BUDGET_MS);
   for (const url of urls) {
+    if (Date.now() >= deadline) {
+      deps.log('WARN PR lookups stopped: the time budget of the refresh is spent');
+      break;
+    }
     try {
       const state = await lookup(deps.rt, url);
       if (state === undefined) deps.log(`WARN no state for ${url}`);
