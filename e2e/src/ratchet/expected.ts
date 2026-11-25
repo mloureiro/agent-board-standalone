@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-import { titleOf, type TestKey } from './results.ts';
+import { TITLE_SEPARATOR, titleOf, type TestKey } from './results.ts';
 
 export interface ScopedEntry {
   readonly title: string;
@@ -75,4 +75,42 @@ export function isListed(expected: ExpectedRed, key: TestKey): boolean {
   if (listed === undefined) return false;
   if (listed === '*') return true;
   return listed.some((entry) => entryMatches(entry, key));
+}
+
+export const LISTED_SKIP_REASON =
+  'listed red: skipped until it is removed from e2e/expected-red.json';
+
+export function skipsListed(env: NodeJS.ProcessEnv): boolean {
+  return env.E2E_LISTED !== 'run';
+}
+
+export function wholeFiles(expected: ExpectedRed, prefix: string): string[] {
+  return Object.entries(expected.files)
+    .filter(([file, listed]) => listed === '*' && file.startsWith(prefix))
+    .map(([file]) => file.slice(prefix.length));
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function playwrightGrepInvert(
+  expected: ExpectedRed,
+  prefix: string,
+  project: string,
+): RegExp[] {
+  const patterns: RegExp[] = [];
+  for (const [file, listed] of Object.entries(expected.files)) {
+    if (listed === '*' || !file.startsWith(prefix)) continue;
+    const relative = escapeRegExp(file.slice(prefix.length));
+    for (const entry of listed) {
+      if (typeof entry !== 'string' && !entry.projects.includes(project)) continue;
+      const title = (typeof entry === 'string' ? entry : entry.title)
+        .split(TITLE_SEPARATOR)
+        .map(escapeRegExp)
+        .join(`(?: |${escapeRegExp(TITLE_SEPARATOR)})`);
+      patterns.push(new RegExp(`(?:^| )${relative} ${title}(?:$| @)`));
+    }
+  }
+  return patterns;
 }
