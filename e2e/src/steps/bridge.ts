@@ -171,6 +171,9 @@ export async function approveOpenedLink(approver: BrowserContext, host: BridgeHo
   const page = await approver.newPage();
   await page.goto(host.externalOpens[host.externalOpens.length - 1] ?? '');
   await page.getByRole('button', { name: UNLOCK_NAMES.approve }).click();
+  await expect(page.getByRole('status').filter({ hasText: /^approved/i })).toBeVisible({
+    timeout: 15_000,
+  });
   return page;
 }
 
