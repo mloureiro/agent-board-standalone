@@ -1,4 +1,17 @@
 {
   "extends": "../tsconfig.base.json",
-  "include": ["src", "test"]
+  "compilerOptions": {
+    "types": ["node"],
+    "erasableSyntaxOnly": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "src",
+    "test",
+    "browser",
+    "blackbox",
+    "vitest.config.ts",
+    "vitest.blackbox.config.ts",
+    "playwright.config.ts"
+  ]
 }
