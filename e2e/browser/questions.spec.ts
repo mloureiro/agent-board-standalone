@@ -1,11 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { useBoard } from '../src/harness/playwright.js';
+import { column } from '../src/steps/board.js';
 import {
   COLOUR_QUESTION,
   NAMES,
   SCOPE_QUESTION,
-  STATUS_LABELS,
   askPrompt,
   expectStdinContaining,
   newTask,
@@ -43,7 +43,7 @@ async function expectQuestionClosed(w: TaskWorld, id: string): Promise<void> {
 }
 
 function todoCards(page: Page) {
-  return page.getByRole('region', { name: STATUS_LABELS.todo }).getByRole('link');
+  return column(page, 'todo').getByRole('article');
 }
 
 test.describe('questions with a running worker', () => {
@@ -169,7 +169,7 @@ test.describe('reply with resume without a worker', () => {
     await waitForStatus(w, target.id, 'todo');
 
     await openBoard(page, w);
-    await expect(todoCards(page).first()).toHaveAccessibleName(new RegExp(target.title));
+    await expect(todoCards(page).first()).toContainText(target.title);
     await expect(todoCards(page).filter({ hasText: first.title })).toHaveCount(1);
     await expect(todoCards(page).filter({ hasText: second.title })).toHaveCount(1);
   });
