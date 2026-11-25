@@ -7,7 +7,7 @@ pub struct ServerEntry {
     pub name: String,
     pub url: String,
     #[serde(default)]
-    pub signed: bool,
+    pub notifications: bool,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -45,7 +45,7 @@ impl ServerList {
             id,
             name,
             url,
-            signed: false,
+            notifications: false,
         };
         self.servers.push(entry.clone());
         Ok(entry)
@@ -67,9 +67,13 @@ impl ServerList {
         Some(self.servers.remove(index))
     }
 
-    pub fn mark_signed(&mut self, id: &str) {
-        if let Some(entry) = self.servers.iter_mut().find(|entry| entry.id == id) {
-            entry.signed = true;
+    pub fn set_notifications(&mut self, id: &str, enabled: bool) -> bool {
+        match self.servers.iter_mut().find(|entry| entry.id == id) {
+            Some(entry) => {
+                entry.notifications = enabled;
+                true
+            }
+            None => false,
         }
     }
 }

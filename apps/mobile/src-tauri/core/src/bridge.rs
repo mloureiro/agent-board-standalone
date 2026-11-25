@@ -1,4 +1,5 @@
 use crate::address::AddressProblem;
+use crate::attention::parse_attention;
 use crate::links::external_link;
 use crate::paths::{PathRefusal, normalise_path};
 use crate::ports::{Confirm, Env, Http, HttpRequest, HttpResponse, KeyStore, Store};
@@ -166,6 +167,35 @@ impl<H: Http, K: KeyStore, C: Confirm, E: Env, S: Store> Bridge<H, K, C, E, S> {
         Ok(true)
     }
 
+    pub fn set_notifications(&self, server_id: &str, enabled: bool) -> Result<(), BridgeError> {
+        let mut list = self.list.lock().unwrap();
+        if !list.set_notifications(server_id, enabled) {
+            return Err(BridgeError::UnknownServer);
+        }
+        self.persist(&list)
+    }
+
+    pub fn notifying_servers(&self) -> Vec<ServerEntry> {
+        let list = self.list.lock().unwrap();
+        list.servers
+            .iter()
+            .filter(|entry| entry.notifications)
+            .cloned()
+            .collect()
+    }
+
+    pub async fn attention(&self, server_id: &str) -> Result<Vec<String>, BridgeError> {
+        let response = self
+            .server_fetch(server_id, "GET", "/api/client/attention", &[], None)
+            .await?;
+        let status = response.status;
+        let body = collect(response).await?;
+        if status >= 400 {
+            return Err(BridgeError::Rejected(status));
+        }
+        parse_attention(&body).map_err(BridgeError::Native)
+    }
+
     pub fn open_link(&self, url: &str) -> Result<String, BridgeError> {
         external_link(url).ok_or(BridgeError::Link)
     }
@@ -194,7 +224,7 @@ impl<H: Http, K: KeyStore, C: Confirm, E: Env, S: Store> Bridge<H, K, C, E, S> {
         if let Some(token) = self.keys.token(server_id) {
             out.push(("authorization".into(), format!("Bearer {token}")));
         }
-        if entry.signed {
+        if signs(&path) {
             out.extend(
                 signing_headers(
                     &self.keys,
@@ -294,9 +324,6 @@ impl<H: Http, K: KeyStore, C: Confirm, E: Env, S: Store> Bridge<H, K, C, E, S> {
                 self.keys
                     .set_token(server_id, &token)
                     .map_err(BridgeError::Native)?;
-                if signed {
-                    self.mark_signed(server_id)?;
-                }
                 Ok(())
             }
             ("pending", _) => Err(BridgeError::Pending),
@@ -315,31 +342,43 @@ impl<H: Http, K: KeyStore, C: Confirm, E: Env, S: Store> Bridge<H, K, C, E, S> {
         if status >= 400 {
             return Err(BridgeError::Rejected(status));
         }
-        self.mark_signed(server_id)
+        Ok(())
     }
 
     pub async fn sign_out(&self, server_id: &str) -> Result<(), BridgeError> {
-        let entry = self.entry(server_id)?;
-        if let Some(token) = self.keys.token(server_id) {
+        if self.keys.token(server_id).is_some() {
+            let json = ("content-type".to_string(), "application/json".to_string());
             let _ = self
-                .post_json(
-                    &entry,
-                    "/api/auth/logout",
-                    serde_json::json!({}),
-                    Some(&token),
-                )
+                .server_fetch(server_id, "POST", "/api/auth/logout", &[json], Some("{}"))
                 .await;
         }
         self.keys
             .delete_token(server_id)
             .map_err(BridgeError::Native)
     }
+}
 
-    fn mark_signed(&self, server_id: &str) -> Result<(), BridgeError> {
-        let mut list = self.list.lock().unwrap();
-        list.mark_signed(server_id);
-        self.persist(&list)
-    }
+const PUBLIC_ROUTES: &[&str] = &[
+    "/healthz",
+    "/api/version",
+    "/api/pair",
+    "/api/auth/config",
+    "/api/auth/oidc/start",
+    "/api/auth/oidc/finish",
+    "/api/auth/saml/start",
+    "/api/auth/saml/finish",
+    "/api/auth/saml/acs",
+    "/api/auth/passkey/login-options",
+    "/api/auth/passkey/login",
+    "/api/auth/passkey/signup-options",
+    "/api/auth/passkey/signup",
+    "/api/auth/handoff/start",
+    "/api/auth/handoff/finish",
+];
+
+fn signs(path: &str) -> bool {
+    let route = path.split('?').next().unwrap_or(path).to_ascii_lowercase();
+    !PUBLIC_ROUTES.contains(&route.trim_end_matches('/'))
 }
 
 async fn collect(response: HttpResponse) -> Result<Vec<u8>, BridgeError> {

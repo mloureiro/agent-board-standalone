@@ -30,6 +30,7 @@ export interface AgentBoardBridge {
     readonly title: string;
   }): Promise<void>;
   openLink(url: string): Promise<void>;
+  setNotifications?(serverId: string, enabled: boolean): Promise<void>;
   reportTab(tab: { readonly path: string; readonly title: string }): Promise<void>;
   listServers(): Promise<BridgeServerEntry[]>;
   addServer(input: {

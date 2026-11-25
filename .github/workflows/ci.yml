@@ -68,6 +68,22 @@ jobs:
       - run: pnpm --filter @agent-board/mobile lint:rust
       - run: pnpm --filter @agent-board/mobile test:rust
 
+  mobile-phone:
+    name: mobile (phone)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @agent-board/web... run build
+      - run: pnpm --filter @agent-board/mobile exec playwright install --with-deps chromium
+      - run: pnpm --filter @agent-board/mobile run bundle
+      - run: pnpm --filter @agent-board/mobile run phone
+
   sealing-runtimes:
     runs-on: ubuntu-latest
     steps:

@@ -13,6 +13,8 @@ export default tseslint.config(
       '**/src-tauri/gen/**',
       'wiki/**',
       '.claude/worktrees/**',
+      'apps/mobile/src-tauri/**/*.js',
+      'apps/mobile/dist-web/**',
     ],
   },
   js.configs.recommended,
