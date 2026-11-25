@@ -14,6 +14,7 @@ import {
   addServer,
   cardOf,
   chooseOption,
+  closeServerList,
   seedAccount,
   serverEntryAt,
   unlockAll,
@@ -44,6 +45,7 @@ const UI = {
 
 const EVENT_QUIET_MS = 1_500;
 const SCHEDULE_EVERY_MS = 3_600_000;
+const PHONE_VIEWPORT = { width: 390, height: 844 } as const;
 
 const suffix = (): string => randomBytes(3).toString('hex');
 const escaped = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -343,6 +345,7 @@ test.describe('projects in the browser client', () => {
 
   test('[web-082] the sidebar is a drawer on a phone @phone', async ({ page }) => {
     const { alpha, bravo } = await seedProjects();
+    await page.setViewportSize(PHONE_VIEWPORT);
     await openBoard(page, harness.board.url);
     const nav = page.getByRole('navigation', { name: UI.nav });
     await expect(nav).toBeHidden();
@@ -502,7 +505,7 @@ test.describe('projects of several servers in the sidebar', () => {
     const entryA = await serverEntryAt(page, pair.a.url);
     await addServer(page, { name: 'Projects B', url: pair.b.url });
     await unlockAll(page, DEFAULT_PASSPHRASE);
-    await page.keyboard.press('Escape');
+    await closeServerList(page);
     const nav = await projectsNav(page);
     const groupA = nav.getByRole('group', { name: entryA.name });
     const groupB = nav.getByRole('group', { name: 'Projects B' });
