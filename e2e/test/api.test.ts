@@ -84,6 +84,17 @@ describe('startApi', () => {
     expect(starts).toHaveLength(2);
   });
 
+  it('starts again with restart() after stop()', async () => {
+    const tmp = setup();
+    const api: ApiHandle = await start(tmp);
+    await api.stop();
+    await api.restart();
+    expect(await (await fetch(`${api.url}/healthz`)).json()).toEqual({ status: 'ok' });
+    await api.stop();
+    const listening = readFileSync(api.logPath, 'utf8').match(/"listening"/g) ?? [];
+    expect(listening).toHaveLength(2);
+  });
+
   it('stops the child on stop()', async () => {
     const api = await start(setup());
     await api.stop();

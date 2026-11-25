@@ -116,12 +116,14 @@ export async function startApi(options: ApiOptions): Promise<ApiHandle> {
   const port = options.port ?? (await freePort());
   const env = apiEnv(options, port);
   const logPath = options.tmp.path('api.log');
-  const log = createWriteStream(logPath, { flags: 'a' });
+  let log = createWriteStream(logPath, { flags: 'a' });
   const readyTimeoutMs = options.readyTimeoutMs ?? READY_TIMEOUT_MS;
   const locked = options.database.kind === 'postgres';
 
   const boot = (): Promise<Spawned> => {
-    const work = () => spawnUntilReady(env, log, logPath, readyTimeoutMs);
+    if (log.writableEnded) log = createWriteStream(logPath, { flags: 'a' });
+    const current = log;
+    const work = () => spawnUntilReady(env, current, logPath, readyTimeoutMs);
     return locked ? withStartLock(work) : work();
   };
 
