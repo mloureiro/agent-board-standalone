@@ -3,9 +3,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from 'react';
 
 import { callRoute } from '../auth/api.js';
+import { removeStoredKeys } from '../keys/stored-keys.js';
 import { useServers, CLIENT_TOKEN_NAME } from '../servers/index.js';
+import { removeSigningKey } from '../signing/index.js';
 import { serverNamespace } from '../storage/index.js';
-import { isUnauthorized } from './api-error.js';
+import { isKeyUnknown, isUnauthorized } from './api-error.js';
 import type { SessionChannel } from './channel.js';
 
 export interface SessionValue {
@@ -27,7 +29,7 @@ export function SessionProvider(props: {
 }): ReactNode {
   const { channel, children } = props;
   const servers = useServers();
-  const { recheck, active, transportContext, clientOf } = servers;
+  const { recheck, active, transportContext, clientOf, reportKeyUnknown } = servers;
   const queryClient = useQueryClient();
 
   const reset = useCallback(
@@ -61,6 +63,7 @@ export function SessionProvider(props: {
       }
       queryClient.clear();
       serverNamespace(serverId).local.clear();
+      await Promise.all([removeStoredKeys(serverId), removeSigningKey(serverId)]);
       channel?.post({ serverId, event: 'signed-out' });
       recheck(serverId);
     },
@@ -79,13 +82,9 @@ export function SessionProvider(props: {
   useEffect(() => {
     if (activeId === null) return undefined;
     const watch = (event: { type: string; action?: { type: string; error?: unknown } }): void => {
-      if (
-        event.type === 'updated' &&
-        event.action?.type === 'error' &&
-        isUnauthorized(event.action.error)
-      ) {
-        recheck(activeId);
-      }
+      if (event.type !== 'updated' || event.action?.type !== 'error') return;
+      if (isKeyUnknown(event.action.error)) reportKeyUnknown(activeId);
+      else if (isUnauthorized(event.action.error)) recheck(activeId);
     };
     const stopQueries = queryClient.getQueryCache().subscribe(watch);
     const stopMutations = queryClient.getMutationCache().subscribe(watch);
@@ -93,7 +92,7 @@ export function SessionProvider(props: {
       stopQueries();
       stopMutations();
     };
-  }, [queryClient, activeId, recheck]);
+  }, [queryClient, activeId, recheck, reportKeyUnknown]);
 
   const value = useMemo<SessionValue>(() => ({ signedIn, signOut }), [signedIn, signOut]);
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

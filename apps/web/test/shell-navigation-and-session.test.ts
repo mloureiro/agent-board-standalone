@@ -1,10 +1,13 @@
 import { MantineProvider } from '@mantine/core';
-import { MutationObserver, QueryObserver } from '@tanstack/react-query';
+import { MutationObserver, QueryClientProvider, QueryObserver } from '@tanstack/react-query';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { createElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createQueryClient } from '../src/app/index.js';
+import { KeysProvider, useKeys } from '../src/keys/index.js';
+import { DATA_KEYS_NAME } from '../src/keys/stored-keys.js';
+import { ServersProvider } from '../src/servers/index.js';
 import { ToastProvider, Toasts, createToastHub, pageTitle } from '../src/components/index.js';
 import { serverNamespace } from '../src/storage/index.js';
 import {
@@ -14,7 +17,8 @@ import {
   nativeBridge,
   otherServer,
 } from './fake-board.js';
-import { renderApp, testEnvironment } from './render.js';
+import { GOLDEN, KeyBoard, TEST_KDF } from './key-board.js';
+import { alreadyUnlocked, renderApp, testEnvironment, upCheck } from './render.js';
 import { media } from './setup.js';
 
 describe('header and navigation', () => {
@@ -280,5 +284,80 @@ describe('write feedback', () => {
     await run(client, async () => 'saved');
     await waitFor(() => expect(reads).toHaveBeenCalledTimes(2));
     stop();
+  });
+});
+
+describe('Lock', () => {
+  const HOME = { id: 'srv-1', name: 'Local', url: 'http://localhost/' };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("[web-004] Lock clears this server's stored keys, drafts and open dialogs and asks for the passphrase", async () => {
+    const board = new KeyBoard();
+    vi.stubGlobal('fetch', board.fetch);
+    const { user } = renderApp({
+      check: 'real',
+      inspectKeys: 'real',
+      kdf: TEST_KDF,
+      registry: fixedRegistry([HOME]),
+    });
+    await user.type(await screen.findByLabelText('Passphrase'), GOLDEN.passphrase);
+    await user.click(screen.getByRole('button', { name: 'Unlock' }));
+    await user.click(await screen.findByRole('button', { name: 'New task' }));
+    expect(await screen.findByRole('dialog', { name: 'New task' })).toBeInTheDocument();
+
+    serverNamespace('srv-1').local.set('draft:new', 'typed but not sent');
+    serverNamespace('srv-2').local.set('draft:new', 'another server');
+    expect(await serverNamespace('srv-1').secrets.get(DATA_KEYS_NAME)).toBeDefined();
+
+    await act(async () => screen.getByRole('button', { name: 'Lock', hidden: true }).click());
+    expect(await screen.findByLabelText('Passphrase')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Lock' })).toBeNull();
+    expect(await serverNamespace('srv-1').secrets.get(DATA_KEYS_NAME)).toBeUndefined();
+    expect(serverNamespace('srv-1').local.get('draft:new')).toBeNull();
+    expect(serverNamespace('srv-2').local.get('draft:new')).toBe('another server');
+  });
+
+  it('[web-004] Lock empties the query cache and the pending writes', async () => {
+    const client = createQueryClient({ onError: () => undefined });
+    client.setQueryData(['tasks', 'srv-1'], ['decrypted title']);
+    const pending = new MutationObserver(client, {
+      mutationFn: () => new Promise<never>(() => undefined),
+    });
+    void pending.mutate();
+    expect(client.getQueryCache().getAll()).toHaveLength(1);
+    expect(client.getMutationCache().getAll()).toHaveLength(1);
+
+    const Probe = () => {
+      const { lock } = useKeys();
+      return createElement('button', { onClick: () => void lock() }, 'Lock now');
+    };
+    render(
+      createElement(
+        MantineProvider,
+        { env: 'test' },
+        createElement(
+          QueryClientProvider,
+          { client },
+          createElement(ServersProvider, {
+            registry: fixedRegistry([HOME]),
+            context: { pageOrigin: 'http://localhost', bridge: null },
+            check: upCheck,
+            children: createElement(KeysProvider, {
+              inspect: alreadyUnlocked,
+              children: createElement(Probe),
+            }),
+          }),
+        ),
+      ),
+    );
+    await screen.findByRole('button', { name: 'Lock now' });
+    await act(async () => void (await new Promise((resolve) => setTimeout(resolve, 20))));
+    await act(async () => screen.getByRole('button', { name: 'Lock now' }).click());
+    await waitFor(() => expect(client.getQueryCache().getAll()).toHaveLength(0));
+    expect(client.getMutationCache().getAll()).toHaveLength(0);
   });
 });

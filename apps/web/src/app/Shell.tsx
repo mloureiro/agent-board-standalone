@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import { Outlet, useLocation } from 'react-router';
 
 import { SignInPage } from '../auth/index.js';
+import { KeyGate, useKeys } from '../keys/index.js';
+import { PairingPanel } from '../pairing/index.js';
 import {
   AppHeader,
   ConnectionBanners,
@@ -23,18 +25,22 @@ function Content(): ReactNode {
   if (active !== null && view?.state === 'signed-out') {
     return <SignInPage server={active} signedOut={hasAnswered(active.id)} />;
   }
+  if (active !== null && view?.state === 'needs-pairing') return <PairingPanel server={active} />;
   const panel = view === null ? null : panelFor(view);
   if (panel !== null) return <ServerStatePanel content={panel} />;
   return (
     <ErrorBoundaryPanel onReload={environment.reload} resetKey={location.pathname}>
-      <Outlet />
+      <KeyGate>
+        <Outlet />
+      </KeyGate>
     </ErrorBoundaryPanel>
   );
 }
 
 export function Shell(): ReactNode {
+  const { epoch } = useKeys();
   return (
-    <NewTaskProvider>
+    <NewTaskProvider key={epoch}>
       <AppHeader />
       <ConnectionBanners />
       <Box component="main" p="md">

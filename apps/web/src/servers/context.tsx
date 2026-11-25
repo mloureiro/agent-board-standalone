@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -33,6 +34,7 @@ export interface ServersValue {
   connectionOf(serverId: string): ConnectionView;
   transportOf(serverId: string): Transport | null;
   reportKeyUnknown(serverId: string): void;
+  markPaired(serverId: string): void;
   addServer(input: { name: string; address: string }): Promise<AddResult>;
   renameServer(serverId: string, name: string): Promise<void>;
   removeServer(serverId: string): Promise<boolean>;
@@ -110,6 +112,7 @@ export function ServersProvider(props: ServersProviderProps): ReactNode {
   const [unknownKeys, setUnknownKeys] = useState<Record<string, true>>({});
   const [answered, setAnswered] = useState<Record<string, true>>({});
   const [nonces, setNonces] = useState<Record<string, number>>({});
+  const signing = useRef<Record<string, boolean>>({});
 
   const check = useMemo<ConnectionCheck>(
     () =>
@@ -127,11 +130,13 @@ export function ServersProvider(props: ServersProviderProps): ReactNode {
 
   const transports = useMemo(() => {
     const built: Record<string, Transport> = {};
-    for (const server of servers ?? []) built[server.id] = transportFor(server, context);
+    for (const server of servers ?? [])
+      built[server.id] = transportFor(server, context, () => signing.current[server.id] === true);
     return built;
   }, [servers, context]);
 
   const onResult = useCallback((serverId: string, result: ConnectionState) => {
+    signing.current[serverId] = 'server' in result && result.server.requestSignature;
     setResults((previous) => ({ ...previous, [serverId]: result }));
     if (result.state === 'up') setAnswered((previous) => ({ ...previous, [serverId]: true }));
     if (result.state === 'signed-out') serverNamespace(serverId).local.clear();
@@ -170,6 +175,12 @@ export function ServersProvider(props: ServersProviderProps): ReactNode {
       transportOf: (serverId) => transports[serverId] ?? null,
       reportKeyUnknown: (serverId) =>
         setUnknownKeys((previous) => ({ ...previous, [serverId]: true })),
+      markPaired: (serverId) => {
+        setUnknownKeys((previous) =>
+          Object.fromEntries(Object.entries(previous).filter(([id]) => id !== serverId)),
+        );
+        onWake(serverId);
+      },
       addServer: async (input) => {
         const added = await registry.add(input);
         if (added.ok) await refresh();

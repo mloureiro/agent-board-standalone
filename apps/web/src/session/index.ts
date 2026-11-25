@@ -1,4 +1,4 @@
-export { ApiError, isUnauthorized, readApiError } from './api-error.js';
+export { ApiError, isKeyUnknown, isUnauthorized, readApiError } from './api-error.js';
 export { CHANNEL_NAME, createBroadcastSessionChannel } from './channel.js';
 export type { SessionChannel, SessionEvent, SessionMessage } from './channel.js';
 export { EnvironmentProvider, defaultEnvironment, useEnvironment } from './environment.js';

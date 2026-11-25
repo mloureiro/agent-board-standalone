@@ -24,7 +24,7 @@ export {
   createNativeRegistry,
 } from './registry.js';
 export type { AddResult, ServerEntry, ServerRegistry } from './registry.js';
-export { CLIENT_TOKEN_NAME, SIGNING_KEY_NAME, hasBoundKey, transportFor } from './transport-for.js';
+export { CLIENT_TOKEN_NAME, hasBoundKey, transportFor } from './transport-for.js';
 export type { TransportContext } from './transport-for.js';
 export { parseServerVersion } from './version-document.js';
 export type { ServerVersion } from './version-document.js';

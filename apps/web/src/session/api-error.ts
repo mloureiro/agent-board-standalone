@@ -15,6 +15,9 @@ export class ApiError extends Error {
 export const isUnauthorized = (error: unknown): boolean =>
   error instanceof ApiError && error.status === 401;
 
+export const isKeyUnknown = (error: unknown): boolean =>
+  isUnauthorized(error) && (error as ApiError).code === 'key-unknown';
+
 export const readApiError = async (response: Response): Promise<ApiError> => {
   const parsed = errorBody.safeParse(await response.json().catch(() => null));
   return parsed.success

@@ -15,11 +15,6 @@ export const panelFor = (view: ConnectionView): PanelContent | null => {
       return { title: 'Client too old', text: view.message };
     case 'too-new':
       return { title: 'Server too old', text: view.message };
-    case 'needs-pairing':
-      return {
-        title: 'Pairing needed',
-        text: 'This server only accepts paired devices. Pair this device to continue.',
-      };
     default:
       return null;
   }

@@ -27,7 +27,7 @@ export const CONFIG_ALL = {
   saml: { label: 'Corporate SAML' },
 };
 
-const json = (status: number, body: unknown): Response =>
+export const json = (status: number, body: unknown): Response =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
 export class FakeBoard {
@@ -65,10 +65,25 @@ export class FakeBoard {
     const headers = Object.fromEntries(new Headers(init?.headers).entries());
     const body = typeof init?.body === 'string' ? (JSON.parse(init.body) as unknown) : null;
     this.calls.push({ method, path: url.pathname, headers, body });
+    this.current = {
+      pathWithQuery: `${url.pathname}${url.search}`,
+      raw: typeof init?.body === 'string' ? init.body : '',
+      headers,
+    };
     return this.answer(method, url.pathname, body as Record<string, unknown> | null);
   });
 
-  private answer(method: string, path: string, body: Record<string, unknown> | null): Response {
+  protected current: { pathWithQuery: string; raw: string; headers: Record<string, string> } = {
+    pathWithQuery: '',
+    raw: '',
+    headers: {},
+  };
+
+  protected answer(
+    method: string,
+    path: string,
+    body: Record<string, unknown> | null,
+  ): Response | Promise<Response> {
     switch (`${method} ${path}`) {
       case 'GET /api/auth/config':
         return json(200, this.config);

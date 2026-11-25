@@ -5,6 +5,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import type { ServerClient } from '../transport/client.js';
 import { callRoute } from './api.js';
 import { messageOf } from './messages.js';
+import { signingKeyIf } from './sign-in-key.js';
 import { createPasskey, webAuthnAvailable } from './webauthn.js';
 
 export const SIGN_UP_NAME_HINT =
@@ -12,9 +13,11 @@ export const SIGN_UP_NAME_HINT =
 
 export function SignUpForm(props: {
   readonly client: ServerClient;
+  readonly serverId: string;
+  readonly requestSignature: boolean;
   readonly onSignedIn: () => void;
 }): ReactNode {
-  const { client, onSignedIn } = props;
+  const { client, serverId, requestSignature, onSignedIn } = props;
   const [name, setName] = useState('');
   const [token, setToken] = useState('');
   const [busy, setBusy] = useState(false);
@@ -31,11 +34,14 @@ export function SignUpForm(props: {
         signupToken: token,
       });
       const response = await createPasskey(started.options);
+      const key = await signingKeyIf(requestSignature, client, serverId);
       await callRoute(client, authPasskeySignupRoute, {
         flow: started.flow,
         response,
         name,
+        ...(key === null ? {} : { publicKey: key.publicKey }),
       });
+      await key?.commit();
       onSignedIn();
     } catch (failure) {
       setError(messageOf(failure));

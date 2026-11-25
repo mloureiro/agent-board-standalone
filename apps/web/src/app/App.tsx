@@ -1,3 +1,4 @@
+import type { KdfParams } from '@agent-board/sealing';
 import { MantineProvider } from '@mantine/core';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useMemo, type ComponentType, type ReactNode } from 'react';
@@ -6,6 +7,7 @@ import { BrowserRouter, Route, Routes } from 'react-router';
 import { ApprovePage, OIDC_RETURN_PATH, ReturnPage, SAML_RETURN_PATH } from '../auth/index.js';
 import { currentBridge } from '../bridge/index.js';
 import { ToastProvider, useToastHub } from '../components/index.js';
+import { KeysProvider, type KeyInspector } from '../keys/index.js';
 import {
   BacklogPage,
   BoardPage,
@@ -43,6 +45,8 @@ export interface AppProps {
   readonly router?: ComponentType<{ children?: ReactNode }>;
   readonly sessionChannel?: SessionChannel | null;
   readonly environment?: BrowserEnvironment;
+  readonly inspectKeys?: KeyInspector;
+  readonly kdf?: KdfParams;
 }
 
 export function App(props: AppProps): ReactNode {
@@ -92,31 +96,36 @@ export function App(props: AppProps): ReactNode {
         >
           <SessionProvider channel={channel}>
             <EnvironmentProvider value={props.environment ?? defaultEnvironment}>
-              <ToastProvider hub={toastHub}>
-                <Router>
-                  <Routes>
-                    <Route element={<AuthLayout />}>
-                      <Route path="approve" element={<ApprovePage />} />
-                      <Route
-                        path={OIDC_RETURN_PATH.slice(1)}
-                        element={<ReturnPage kind="oidc" />}
-                      />
-                      <Route
-                        path={SAML_RETURN_PATH.slice(1)}
-                        element={<ReturnPage kind="saml" />}
-                      />
-                    </Route>
-                    <Route element={<Shell />}>
-                      <Route index element={<BoardPage />} />
-                      <Route path="backlog" element={<BacklogPage />} />
-                      <Route path="schedules" element={<SchedulesPage />} />
-                      <Route path="closed" element={<ClosedPage />} />
-                      <Route path="settings" element={<SettingsPage />} />
-                      <Route path="*" element={<NotFoundPage />} />
-                    </Route>
-                  </Routes>
-                </Router>
-              </ToastProvider>
+              <KeysProvider
+                {...(props.inspectKeys === undefined ? {} : { inspect: props.inspectKeys })}
+                {...(props.kdf === undefined ? {} : { kdf: props.kdf })}
+              >
+                <ToastProvider hub={toastHub}>
+                  <Router>
+                    <Routes>
+                      <Route element={<AuthLayout />}>
+                        <Route path="approve" element={<ApprovePage />} />
+                        <Route
+                          path={OIDC_RETURN_PATH.slice(1)}
+                          element={<ReturnPage kind="oidc" />}
+                        />
+                        <Route
+                          path={SAML_RETURN_PATH.slice(1)}
+                          element={<ReturnPage kind="saml" />}
+                        />
+                      </Route>
+                      <Route element={<Shell />}>
+                        <Route index element={<BoardPage />} />
+                        <Route path="backlog" element={<BacklogPage />} />
+                        <Route path="schedules" element={<SchedulesPage />} />
+                        <Route path="closed" element={<ClosedPage />} />
+                        <Route path="settings" element={<SettingsPage />} />
+                        <Route path="*" element={<NotFoundPage />} />
+                      </Route>
+                    </Routes>
+                  </Router>
+                </ToastProvider>
+              </KeysProvider>
             </EnvironmentProvider>
           </SessionProvider>
         </ServersProvider>
