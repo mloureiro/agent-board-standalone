@@ -27,7 +27,13 @@ export {
   type SessionKind,
   type SessionMethod,
 } from './sessions.js';
-export { asWrite, ensureUser, provisioningDatabase } from './users.js';
+export {
+  NAME_OWNED_MESSAGE,
+  admitUser,
+  asWrite,
+  ensureUser,
+  provisioningDatabase,
+} from './users.js';
 export {
   FLOW_TTL_MS,
   codeHash,
@@ -40,3 +46,15 @@ export {
   verifierMatches,
   type StartedFlow,
 } from './flows.js';
+export {
+  DEFAULT_PASSKEY_NAME,
+  SIGNUP_NAME_RULE,
+  loginOptionsFor,
+  passkeyLabelOf,
+  registrationOptionsFor,
+  signupNameOf,
+  signupTokenMatches,
+  verifyAuthentication,
+  verifyRegistration,
+  type VerifiedPasskey,
+} from './passkeys.js';

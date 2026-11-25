@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import type { FastifyReply } from 'fastify';
 
 import {
   clearedSessionCookie,
@@ -35,6 +36,21 @@ export const sessionDepsOf = (context: ServerContext): SessionDeps => ({
       ? context.config.signIn.sessionDays
       : DEFAULT_SESSION_DAYS,
 });
+
+export const startCookieSession = async (
+  context: ServerContext,
+  reply: FastifyReply,
+  scheme: 'http' | 'https',
+  owner: string,
+  method: SessionMethod,
+): Promise<void> => {
+  const deps = sessionDepsOf(context);
+  const issued = await issueSession(deps, owner, 'cookie', method);
+  reply.header(
+    'set-cookie',
+    sessionCookie(scheme, issued.token, deps.sessionDays * (DAY_MS / 1000)),
+  );
+};
 
 const handoffData = (data: Record<string, unknown>): { code: string; method: SessionMethod } => ({
   code: String(data.code),
@@ -125,19 +141,12 @@ export const signInHandlers: HandlerSet = (context) => ({
     if (flow.owner === null) return { status: 'pending' };
     const taken = await takeFlow(context, input.flow, 'handoff');
     if (taken === null || taken.owner === null) throw new ApiError('forbidden', SIGN_IN_FAILED);
-    const deps = sessionDepsOf(context);
-    const client = input.tokenKind === 'client';
-    const issued = await issueSession(
-      deps,
-      taken.owner,
-      client ? 'client' : 'cookie',
-      handoffData(taken.data).method,
-    );
-    if (client) return { status: 'signed-in', token: issued.token };
-    reply.header(
-      'set-cookie',
-      sessionCookie(signIn.scheme, issued.token, deps.sessionDays * (DAY_MS / 1000)),
-    );
+    const method = handoffData(taken.data).method;
+    if (input.tokenKind === 'client') {
+      const issued = await issueSession(sessionDepsOf(context), taken.owner, 'client', method);
+      return { status: 'signed-in', token: issued.token };
+    }
+    await startCookieSession(context, reply, signIn.scheme, taken.owner, method);
     return { status: 'signed-in' };
   },
 });
