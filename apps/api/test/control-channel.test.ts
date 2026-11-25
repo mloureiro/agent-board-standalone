@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, rmSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { request } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -93,6 +93,29 @@ describe('control channel', () => {
     expect(statSync(socket).mode & 0o777).toBe(0o600);
     await started.close();
     expect(existsSync(socket)).toBe(false);
+  });
+
+  it('[api-111] refuses to start over a file at CONTROL_SOCKET that is not a socket and leaves it in place', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'ab-ctl-'));
+    const socket = join(dir, 'c.sock');
+    writeFileSync(socket, 'keep me');
+    try {
+      await expect(
+        startServer(
+          {
+            NO_LOGIN_USER: 'owner',
+            DATABASE_URL: `pglite://${join(dir, 'db')}`,
+            PORT: '0',
+            REQUEST_SIGNATURE: 'on',
+            CONTROL_SOCKET: socket,
+          },
+          { write: () => undefined },
+        ),
+      ).rejects.toThrow(/not a socket/);
+      expect(readFileSync(socket, 'utf8')).toBe('keep me');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('[api-111] status answers running, then held while held', async () => {

@@ -1,4 +1,4 @@
-import { chmodSync, rmSync } from 'node:fs';
+import { chmodSync, lstatSync, rmSync } from 'node:fs';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 
 import { codeHash, FLOW_TTL_MS, newFlowId, newPairingCode } from '../../auth/index.js';
@@ -98,20 +98,39 @@ const handle = async (
   }
 };
 
+const OWNER_ONLY_UMASK = 0o177;
+
+const removeStaleSocket = (path: string): void => {
+  let found;
+  try {
+    found = lstatSync(path);
+  } catch {
+    return;
+  }
+  if (!found.isSocket())
+    throw new Error(`CONTROL_SOCKET ${path} exists and is not a socket: refusing to replace it`);
+  rmSync(path, { force: true });
+};
+
 export const startControlSocket = async (
   path: string,
   target: ControlTarget,
 ): Promise<ControlSocket> => {
-  rmSync(path, { force: true });
+  removeStaleSocket(path);
   const server = createServer((request, response) => {
     void handle(target, request, response);
   });
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
-    server.listen(path, () => {
-      server.off('error', reject);
-      resolve();
-    });
+    const umask = process.umask(OWNER_ONLY_UMASK);
+    try {
+      server.listen(path, () => {
+        server.off('error', reject);
+        resolve();
+      });
+    } finally {
+      process.umask(umask);
+    }
   });
   chmodSync(path, 0o600);
   return {
