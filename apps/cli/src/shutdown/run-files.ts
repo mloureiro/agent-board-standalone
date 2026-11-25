@@ -1,5 +1,13 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import path from 'node:path';
 
 export interface ProcessOps {
@@ -53,6 +61,8 @@ export interface RunFiles {
   tasksWith(kind: RunFileKind): string[];
   pidOf(task: string, kind: 'pid' | 'pgid'): RunFile | null;
   requestShutdown(task: string, deadline: Date): void;
+  shutdownDeadline(task: string): Date | null;
+  writeId(task: string, kind: 'pid' | 'pgid', id: number): void;
   clear(task: string): void;
 }
 
@@ -78,6 +88,18 @@ export function createRunFiles(dir: string): RunFiles {
     },
     requestShutdown(task, deadline) {
       writeFileSync(file(task, 'shutdown'), deadline.toISOString(), { mode: 0o600 });
+    },
+    shutdownDeadline(task) {
+      try {
+        const at = new Date(readFileSync(file(task, 'shutdown'), 'utf8').trim());
+        return Number.isNaN(at.getTime()) ? null : at;
+      } catch {
+        return null;
+      }
+    },
+    writeId(task, kind, id) {
+      mkdirSync(dir, { recursive: true, mode: 0o700 });
+      writeFileSync(file(task, kind), String(id), { mode: 0o600 });
     },
     clear(task) {
       for (const kind of SUFFIXES) rmSync(file(task, kind), { force: true });

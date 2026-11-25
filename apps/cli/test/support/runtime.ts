@@ -3,7 +3,13 @@ import os from 'node:os';
 import path from 'node:path';
 
 import type { Prompter } from '../../src/input/prompter.js';
-import type { ExecOptions, ExecResult, InteractiveOptions, Runtime } from '../../src/runtime.js';
+import type {
+  DetachedOptions,
+  ExecOptions,
+  ExecResult,
+  InteractiveOptions,
+  Runtime,
+} from '../../src/runtime.js';
 
 export interface Captured {
   stdout: string;
@@ -22,9 +28,16 @@ export interface SpawnCall {
   readonly options: InteractiveOptions;
 }
 
+export interface DetachedCall {
+  readonly file: string;
+  readonly args: readonly string[];
+  readonly options: DetachedOptions;
+}
+
 export interface TestRuntime {
   readonly rt: Runtime;
   readonly spawnCalls: SpawnCall[];
+  readonly detachedCalls: DetachedCall[];
   readonly captured: Captured;
   readonly asked: string[];
   readonly execCalls: ExecCall[];
@@ -60,6 +73,11 @@ export interface TestRuntimeOptions {
     args: readonly string[],
     options: InteractiveOptions,
   ) => number | Promise<number>;
+  readonly spawnDetached?: (
+    file: string,
+    args: readonly string[],
+    options: DetachedOptions,
+  ) => number | null;
 }
 
 export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
@@ -67,6 +85,7 @@ export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
   const captured: Captured = { stdout: '', stderr: '' };
   const execCalls: ExecCall[] = [];
   const spawnCalls: SpawnCall[] = [];
+  const detachedCalls: DetachedCall[] = [];
   const dirEnv =
     options.overrideDirs === false
       ? {
@@ -115,6 +134,10 @@ export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
       spawnCalls.push({ file, args, options: spawnOptions });
       return Promise.resolve(options.spawn?.(file, args, spawnOptions) ?? 0);
     },
+    spawnDetached: (file, args, detachedOptions) => {
+      detachedCalls.push({ file, args, options: detachedOptions });
+      return options.spawnDetached?.(file, args, detachedOptions) ?? 4242;
+    },
     io: {
       stdout: (text) => {
         captured.stdout += text;
@@ -146,6 +169,7 @@ export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
     captured,
     execCalls,
     spawnCalls,
+    detachedCalls,
     root,
     path: (...segments) => path.join(root, ...segments),
     dispose: () => {

@@ -14,6 +14,13 @@ import type { ServerInfo } from './server-info.js';
 
 export type Verdict = 'compatible' | 'client-too-old' | 'server-too-old';
 
+export class ClientTooOldError extends CliError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ClientTooOldError';
+  }
+}
+
 export const UPGRADE_HINT = 'Upgrade the CLI with `board self-update`.';
 
 function sides(server: ServerInfo) {
@@ -51,7 +58,7 @@ export function verdictOf(server: ServerInfo): { verdict: Verdict; message: stri
 
 export function assertCompatible(server: ServerInfo): void {
   const { verdict, message } = verdictOf(server);
-  if (verdict === 'client-too-old') throw new CliError(`${message} ${UPGRADE_HINT}`);
+  if (verdict === 'client-too-old') throw new ClientTooOldError(`${message} ${UPGRADE_HINT}`);
   if (verdict === 'server-too-old') throw new CliError(message);
 }
 
