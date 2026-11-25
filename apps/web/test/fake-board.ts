@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 import type { AgentBoardBridge } from '../src/bridge/types.js';
 import type { SessionChannel, SessionMessage } from '../src/session/index.js';
 import type { ConnectionCheck, ServerEntry } from '../src/servers/index.js';
-import { serverVersion } from './render.js';
+import { serverVersion } from './versions.js';
 
 export type FakeSession = 'none' | 'expired' | 'valid' | 'not-required';
 

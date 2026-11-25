@@ -13,7 +13,7 @@ import { bindings, deriveKeys, seal, type Keys } from '@agent-board/sealing';
 
 import type { ConnectionCheck } from '../src/servers/index.js';
 import { FakeBoard, json } from './fake-board.js';
-import { serverVersion } from './render.js';
+import { serverVersion } from './versions.js';
 
 export const FROZEN_NOW = Date.parse('2026-11-25T12:00:00.000Z');
 export const frozenClock = (): number => FROZEN_NOW;
