@@ -5,7 +5,6 @@ import {
   DAY_MS,
   finishOidc,
   isAccepted,
-  issueSession,
   keepUpkeep,
   newOidcChecks,
   readFlow,
@@ -21,7 +20,7 @@ import type { ServerContext } from '../context.js';
 import { ApiError } from '../errors.js';
 import type { HandlerSet } from '../http/handler.js';
 import type { LoginConfig } from '../modules/sign-in/index.js';
-import { sessionDepsOf } from './sign-in.js';
+import { issueBoundSession, sessionDepsOf } from './sign-in.js';
 
 const SIGN_IN_FAILED = 'sign-in failed';
 const SAML_REFUSED = 'The identity provider refused this sign-in.';
@@ -81,7 +80,13 @@ export const redirectSignInHandlers: HandlerSet = (context) => ({
     });
     await claimUsername(deps.database, identity.username, 'oidc');
     const sessionDeps = sessionDepsOf(context);
-    const issued = await issueSession(sessionDeps, identity.username, 'cookie', 'oidc');
+    const issued = await issueBoundSession(
+      context,
+      identity.username,
+      'cookie',
+      'oidc',
+      input.publicKey,
+    );
     if (identity.upkeep !== null)
       await keepUpkeep(deps.database, deps.clock, identity.username, issued.token, identity.upkeep);
     reply.header(
@@ -115,7 +120,7 @@ export const redirectSignInHandlers: HandlerSet = (context) => ({
     const username = String(taken.data.username);
     await claimUsername(context.services.database, username, 'saml');
     const sessionDeps = sessionDepsOf(context);
-    const issued = await issueSession(sessionDeps, username, 'cookie', 'saml');
+    const issued = await issueBoundSession(context, username, 'cookie', 'saml', input.publicKey);
     reply.header(
       'set-cookie',
       sessionCookie(signIn.scheme, issued.token, sessionDeps.sessionDays * (DAY_MS / 1000)),

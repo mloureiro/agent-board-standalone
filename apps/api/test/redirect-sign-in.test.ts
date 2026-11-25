@@ -20,8 +20,10 @@ import * as schema from '../src/db/schema/index.js';
 import { openPgliteDatabase, type Database } from '../src/modules/database/index.js';
 import { loadConfig, type Env } from '../src/modules/index.js';
 import { createServer } from '../src/server.js';
+import { createMemoryEvents } from '../src/modules/events/index.js';
 import { createOpenStreams } from '../src/streams.js';
 import { CONTRACT_HEADERS, JSON_HEADERS } from './helpers.js';
+import { newSigner } from './signing.js';
 import { startFakeOidc, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, type FakeOidc } from './fakes/oidc.js';
 import { startFakeSaml, type FakeSaml } from './fakes/saml.js';
 
@@ -79,6 +81,7 @@ const world = async (extra: Env = {}): Promise<World> => {
         createIdentityRecheck(database, clock, config.signIn),
       ),
       streams: createOpenStreams(),
+      events: createMemoryEvents(),
     },
     { clock },
   );
@@ -251,7 +254,7 @@ describe('OIDC', () => {
     await w.board.database.withOwner('ada', (tx) => ensureUser(tx, 'ada', 'passkey'));
     const answer = await finishOidc(w, await oidcReturn(w));
     expect(answer.statusCode).toBe(403);
-    expect(answer.json().error.message).toContain('another sign-in method');
+    expect(answer.json().error.message).toContain('different sign-in method');
     expect(answer.cookies).toEqual([]);
   });
 
@@ -481,5 +484,54 @@ describe('identity re-check', () => {
     });
     expect(out.statusCode).toBe(200);
     expect(await upkeepRow(w, hash)).toBeNull();
+  });
+});
+
+describe('request-signature keys on redirect sign-in', () => {
+  const boundKeys = async (w: World, owner: string) =>
+    w.board.database.withOwner(owner, (tx) => tx.select().from(schema.clientKey));
+
+  it('[api-120] an OIDC finish carrying a public key binds it to the new session', async () => {
+    const w = await world({ REQUEST_SIGNATURE: 'on' });
+    const signer = await newSigner();
+    const answer = await finishOidc(w, {
+      ...(await oidcReturn(w)),
+      publicKey: signer.publicKey,
+    });
+    expect(answer.statusCode).toBe(200);
+    expect(await boundKeys(w, 'ada')).toMatchObject([{ keyId: signer.keyId, kind: 'session' }]);
+  });
+
+  it('[api-120] a SAML finish carrying a public key binds it to the new session', async () => {
+    const w = await world({ REQUEST_SIGNATURE: 'on' });
+    const signer = await newSigner();
+    const { back } = await samlSignedIn(w);
+    const answer = await post(w.board.app, '/api/auth/saml/finish', {
+      flow: back.searchParams.get('flow') ?? '',
+      verifier: VERIFIER,
+      publicKey: signer.publicKey,
+    });
+    expect(answer.statusCode).toBe(200);
+    expect(await boundKeys(w, 'grace@example.test')).toMatchObject([
+      { keyId: signer.keyId, kind: 'session' },
+    ]);
+  });
+
+  it('[api-120] a public key is ignored while request signatures are off', async () => {
+    const w = await world();
+    const signer = await newSigner();
+    const answer = await finishOidc(w, {
+      ...(await oidcReturn(w)),
+      publicKey: signer.publicKey,
+    });
+    expect(answer.statusCode).toBe(200);
+    expect(await boundKeys(w, 'ada')).toEqual([]);
+  });
+
+  it('[api-038] a user created without a sign-in method is claimed by the first provider', async () => {
+    const w = await world();
+    await w.board.database.withOwner('ada', (tx) => ensureUser(tx, 'ada', null));
+    expect((await finishOidc(w, await oidcReturn(w))).statusCode).toBe(200);
+    expect(await userRow(w.board, 'ada')).toEqual({ username: 'ada', source: 'oidc' });
   });
 });

@@ -1,6 +1,5 @@
-import { ApiError } from '../errors.js';
 import type { Database } from '../modules/database/index.js';
-import { ensureUser } from './users.js';
+import { admitUser } from './users.js';
 import type { SessionMethod } from './sessions.js';
 
 const MAX_USERNAME_LENGTH = 128;
@@ -18,8 +17,5 @@ export const claimUsername = async (
   username: string,
   method: SessionMethod,
 ): Promise<void> => {
-  await database.withOwner(username, (tx) => ensureUser(tx, username, method));
-  const user = await database.withSystem((system) => system.lookupUser(username));
-  if (user === null || user.source !== method)
-    throw new ApiError('forbidden', 'this name belongs to another sign-in method');
+  await database.withOwner(username, (tx) => admitUser(tx, username, method));
 };

@@ -177,14 +177,7 @@ export const signInHandlers: HandlerSet = (context) => ({
       );
       return { status: 'signed-in', token: issued.token };
     }
-    await startCookieSession(
-      context,
-      reply,
-      signIn.scheme,
-      taken.owner,
-      method,
-      input.publicKey,
-    );
+    await startCookieSession(context, reply, signIn.scheme, taken.owner, method, input.publicKey);
     return { status: 'signed-in' };
   },
 });
