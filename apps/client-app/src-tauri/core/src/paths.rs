@@ -108,3 +108,11 @@ pub fn normalise(path: &str) -> Result<String, Refusal> {
     }
     Ok(path.to_owned())
 }
+
+const WIRE_BASE: &str = "http://wire.invalid";
+
+pub fn wire_form(path: &str) -> String {
+    url::Url::parse(&format!("{WIRE_BASE}{path}"))
+        .map(|url| url[url::Position::BeforePath..].to_owned())
+        .unwrap_or_else(|_| path.to_owned())
+}

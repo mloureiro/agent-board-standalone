@@ -1,21 +1,33 @@
 use crate::headers::Header;
 use crate::ids::ServerId;
+use futures_util::Stream;
 use std::future::Future;
+use std::pin::Pin;
+use std::time::Duration;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct PortError(pub String);
+
+pub type ByteStream = Pin<Box<dyn Stream<Item = Result<Vec<u8>, PortError>> + Send>>;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Limits {
+    pub connect: Duration,
+    pub total: Duration,
+}
 
 pub struct HttpRequest {
     pub method: String,
     pub url: String,
     pub headers: Vec<Header>,
     pub body: Vec<u8>,
+    pub limits: Option<Limits>,
 }
 
 pub struct HttpResponse {
     pub status: u16,
     pub headers: Vec<Header>,
-    pub body: Vec<u8>,
+    pub body: ByteStream,
 }
 
 pub trait Http: Send + Sync {
