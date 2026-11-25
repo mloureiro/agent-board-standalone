@@ -17,7 +17,6 @@
       "self-update --server › [cli-059] refuses a server whose key id differs and leaves the config unchanged",
       "self-update --server › [cli-059] refuses a server that does not know the token and leaves the config unchanged",
       "self-update --server › [cli-059] warns when other machines are active",
-      "enrolment refusals › [server-app-048] a wrong token, a foreign data key and an unreachable board are refused with distinct reasons and store nothing",
       "worker check in board doctor › [server-app-056] reports ok after a dispatch tick",
       "worker check in board doctor › [server-app-056] reports refused with the 401 reason once the token is re-issued",
       "worker check in board doctor › [server-app-056] reports refused naming the wrong machine for another machine’s token",
