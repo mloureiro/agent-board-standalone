@@ -3,8 +3,7 @@
     "blackbox/events-projects.test.ts": [
       "board events › [cli-023] board events streams the changes made on the board",
       "board projects › [cli-039] board projects lists the server's projects",
-      "board projects › [cli-039] a default project set on the host receives board schedule without --project",
-      "board projects › [cli-039] the host default project does not override the parent's project for an in-run board add"
+      "board projects › [cli-039] a default project set on the host receives board schedule without --project"
     ],
     "blackbox/legacy-dirs.test.ts": "*",
     "blackbox/matrix-refusal.test.ts": "*",
