@@ -83,3 +83,33 @@ export async function unlock(page: Page): Promise<void> {
   await page.getByLabel(/passphrase/i).fill(PASSPHRASE);
   await page.getByRole('button', { name: /^unlock$/i }).click();
 }
+
+export async function serveOther(
+  context: BrowserContext,
+  origin: string,
+  world: PhoneWorld,
+): Promise<void> {
+  const open = {
+    'access-control-allow-origin': '*',
+    'access-control-allow-headers': '*',
+    'access-control-allow-methods': '*',
+  };
+  await context.route(`${origin}/**`, async (route: Route) => {
+    const request = route.request();
+    if (request.method() === 'OPTIONS') {
+      await route.fulfill({ status: 204, headers: open });
+      return;
+    }
+    const body = request.postData();
+    const answer = await world.fetch(request.url(), {
+      method: request.method(),
+      headers: request.headers(),
+      ...(body === null ? {} : { body }),
+    });
+    await route.fulfill({
+      status: answer.status,
+      headers: { ...Object.fromEntries(answer.headers.entries()), ...open },
+      body: Buffer.from(await answer.arrayBuffer()),
+    });
+  });
+}

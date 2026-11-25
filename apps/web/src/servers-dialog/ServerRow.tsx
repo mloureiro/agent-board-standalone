@@ -10,6 +10,8 @@ import {
   type ServerEntry,
 } from '../servers/index.js';
 
+const FOCUSABLE = 'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
 const STOP_ESCAPE = { 'data-mantine-stop-propagation': 'true' } as const;
 
 export interface RowNotice {
@@ -118,7 +120,13 @@ export function ServerRow(props: {
       style={{ listStyle: 'none' }}
       onBlur={(event) => {
         const next = event.relatedTarget as Node | null;
-        if (armed && next !== null && !row.current?.contains(next)) setArmed(false);
+        if (
+          armed &&
+          next instanceof Element &&
+          !row.current?.contains(next) &&
+          next.matches(FOCUSABLE)
+        )
+          setArmed(false);
       }}
     >
       <Stack gap={2} style={{ minWidth: 0, flex: '1 1 12rem' }}>

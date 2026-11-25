@@ -15,7 +15,9 @@ export default defineConfig({
     timeout: 30_000,
   },
   projects: [
-    { name: 'chromium-phone', use: { ...devices['Pixel 7'] } },
-    { name: 'webkit-phone', use: { ...devices['iPhone 14'] } },
+    { name: 'chromium-phone', use: { ...devices['Pixel 7'] }, grepInvert: /@desktop/ },
+    { name: 'webkit-phone', use: { ...devices['iPhone 14'] }, grepInvert: /@desktop/ },
+    { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'] }, grep: /@desktop/ },
+    { name: 'webkit-desktop', use: { ...devices['Desktop Safari'] }, grep: /@desktop/ },
   ],
 });
