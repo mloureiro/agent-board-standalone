@@ -3,7 +3,7 @@ import { writeFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
-import { killStubTree } from '../src/harness/run.js';
+import { killStubTree, stubTreePids } from '../src/harness/run.js';
 import { createTmp } from '../src/harness/tmp.js';
 
 function sleeper() {
@@ -36,6 +36,16 @@ describe('killStubTree', () => {
       second.child.kill('SIGKILL');
       tmp.remove();
     }
+  });
+
+  it('never targets pid 0 or 1, the test process or its parent', () => {
+    const log = [
+      JSON.stringify({ pid: 0, ppid: 1 }),
+      JSON.stringify({ pid: -5, ppid: 1.5 }),
+      JSON.stringify({ pid: process.pid, ppid: process.ppid }),
+      JSON.stringify({ pid: 424242, ppid: process.pid }),
+    ].join('\n');
+    expect(stubTreePids(log)).toEqual([424242]);
   });
 
   it('does nothing when the log does not exist', () => {

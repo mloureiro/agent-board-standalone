@@ -81,10 +81,9 @@ export async function runProcess(
   }
 }
 
-export function killStubTree(logPath: string): void {
-  if (!existsSync(logPath)) return;
+export function stubTreePids(log: string): number[] {
   const targets = new Set<number>();
-  for (const line of readFileSync(logPath, 'utf8').split('\n')) {
+  for (const line of log.split('\n')) {
     let entry: unknown;
     try {
       entry = JSON.parse(line);
@@ -98,7 +97,13 @@ export function killStubTree(logPath: string): void {
     }
   }
   targets.delete(process.pid);
-  for (const target of targets) {
+  targets.delete(process.ppid);
+  return [...targets];
+}
+
+export function killStubTree(logPath: string): void {
+  if (!existsSync(logPath)) return;
+  for (const target of stubTreePids(readFileSync(logPath, 'utf8'))) {
     try {
       process.kill(target, 'SIGKILL');
     } catch {
