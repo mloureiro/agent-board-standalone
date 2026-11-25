@@ -151,6 +151,7 @@ test.describe('new task form', () => {
     await card(page, title).getByRole('link', { name: title }).click();
     for (const shown of [
       title,
+      projectName,
       values.prompt,
       values.label,
       values.lane,
@@ -167,6 +168,12 @@ test.describe('new task form', () => {
     expect(valuesOf(json, 'model')).toContain('opus');
     expect(valuesOf(json, 'effort')).toContain('high');
     expect(valuesOf(json, 'autoDone')).toContain(true);
+    expect([projectId, projectName].some((project) => shown.stdout.includes(project))).toBe(true);
+    expect(
+      [task.directoryId as string, worker.directory].some((directory) =>
+        shown.stdout.includes(directory),
+      ),
+    ).toBe(true);
     for (const text of [
       title,
       values.prompt,
@@ -317,10 +324,12 @@ test.describe('drafts', () => {
     const entries = await draftEntries(page, text);
     expect(entries.length).toBeGreaterThan(0);
     for (const entry of entries) {
+      expect(entry.key).toMatch(/^ab:[^:]+:/);
       expect(entry.key).toContain(account.key.keyId);
       expect(
-        entry.key.includes(account.user.username) ||
-          entry.key.includes(encodeURIComponent(account.user.username)),
+        [account.user.username, encodeURIComponent(account.user.username), account.user.owner].some(
+          (user) => entry.key.includes(user),
+        ),
       ).toBe(true);
     }
 
