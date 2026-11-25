@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>agent-board.default.dispatch</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/bin/lockf</string>
+		<string>-s</string>
+		<string>-t</string>
+		<string>0</string>
+		<string>/Users/tester/.local/state/agent-board/profiles/default/run/dispatch.lock</string>
+		<string>/Users/tester/.local/bin/board</string>
+		<string>--profile</string>
+		<string>default</string>
+		<string>internal</string>
+		<string>dispatch</string>
+	</array>
+	<key>StartInterval</key>
+	<integer>120</integer>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>AbandonProcessGroup</key>
+	<true/>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/Users/tester/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>StandardOutPath</key>
+	<string>/Users/tester/.local/state/agent-board/profiles/default/logs/launchd.dispatch.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/tester/.local/state/agent-board/profiles/default/logs/launchd.dispatch.log</string>
+</dict>
+</plist>

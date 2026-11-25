@@ -47,3 +47,19 @@ export async function writeKeychain(
   });
   if (result.code !== 0) throw new CliError(`security exited ${result.code} writing the Keychain`);
 }
+
+export async function deleteKeychain(
+  rt: Pick<Runtime, 'platform' | 'exec'>,
+  profile: string,
+  account: KeychainAccount,
+): Promise<void> {
+  assertMacos(rt);
+  const result = await rt.exec(
+    SECURITY,
+    ['delete-generic-password', '-s', keychainService(profile), '-a', account],
+    { timeoutMs: TIMEOUT_MS, maxBytes: MAX_BYTES },
+  );
+  if (result.code !== 0 && result.code !== ITEM_NOT_FOUND) {
+    throw new CliError(`security exited ${result.code} deleting from the Keychain`);
+  }
+}

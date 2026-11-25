@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>agent-board.work.dispatch</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/bin/lockf</string>
+		<string>-s</string>
+		<string>-t</string>
+		<string>0</string>
+		<string>/Volumes/data/board/run/dispatch.lock</string>
+		<string>/opt/homebrew/bin/node</string>
+		<string>/opt/board/dist/board</string>
+		<string>--profile</string>
+		<string>work</string>
+		<string>internal</string>
+		<string>dispatch</string>
+	</array>
+	<key>StartInterval</key>
+	<integer>120</integer>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>AbandonProcessGroup</key>
+	<true/>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/Users/tester/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+		<key>AGENT_BOARD_CONFIG_DIR</key>
+		<string>/Volumes/data/board/config</string>
+		<key>AGENT_BOARD_STATE_DIR</key>
+		<string>/Volumes/data/board/state</string>
+		<key>AGENT_BOARD_RUN_DIR</key>
+		<string>/Volumes/data/board/run</string>
+		<key>XDG_STATE_HOME</key>
+		<string>/Volumes/data/state</string>
+	</dict>
+	<key>StandardOutPath</key>
+	<string>/Volumes/data/board/state/logs/launchd.dispatch.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Volumes/data/board/state/logs/launchd.dispatch.log</string>
+</dict>
+</plist>

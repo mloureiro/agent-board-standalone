@@ -17,7 +17,7 @@ import { agentProblem, type AgentDefinition } from './definition.js';
 export type SharedAgents = Record<string, AgentDefinition>;
 
 const APPLIED_FILE = 'shared-agents.json';
-const ASIDE_DIR = 'agents.aside';
+export const ASIDE_DIR = 'agents.aside';
 
 export function localAgents(configDir: string): SharedAgents {
   const agents = configObject(readConfigDocument(configDir)).agents;
@@ -64,7 +64,7 @@ export async function writeBoardAgents(
   }
 }
 
-function appliedVersion(dirs: ProfileDirs): number {
+export function appliedVersion(dirs: ProfileDirs): number {
   const file = path.join(dirs.state, APPLIED_FILE);
   if (!existsSync(file)) return 0;
   try {

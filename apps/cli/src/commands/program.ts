@@ -10,7 +10,9 @@ import { registerFeeds } from './feeds/index.js';
 import { registerPlugins } from './plugins/index.js';
 import { registerProjects } from './projects/index.js';
 import { registerSchedule } from './schedule/index.js';
+import { registerDoctor } from './setup/doctor.js';
 import { registerInit } from './setup/init.js';
+import { registerUnitCommands } from './setup/units.js';
 import { registerTaskCommands } from './tasks/index.js';
 import { registerUserCommands } from './user/index.js';
 import { cliVersionLine, registerVersion } from './setup/version.js';
@@ -49,6 +51,8 @@ export function buildProgram(rt: Runtime): Command {
 
   registerVersion(program, withContext);
   registerInit(program, withContext);
+  registerDoctor(program, withContext);
+  registerUnitCommands(program, withContext);
   registerTaskCommands(program, withContext);
   registerUserCommands(program, withContext);
   registerSchedule(program, withContext);
@@ -61,10 +65,18 @@ export function buildProgram(rt: Runtime): Command {
   return program;
 }
 
+export function expandVersionServer(argv: readonly string[]): string[] {
+  const asksVersion = argv.includes('--version') || argv.includes('-V');
+  if (!asksVersion || !argv.includes('--server')) return [...argv];
+  const rest = argv.filter((arg) => !['--version', '-V', '--server'].includes(arg));
+  const onlyGlobals = rest.every((arg, at) => arg === '--profile' || rest[at - 1] === '--profile');
+  return onlyGlobals ? [...rest, 'version'] : [...argv];
+}
+
 export async function runCli(argv: readonly string[], rt: Runtime): Promise<number> {
   const program = buildProgram(rt);
   try {
-    await program.parseAsync([...argv], { from: 'user' });
+    await program.parseAsync(expandVersionServer(argv), { from: 'user' });
     return EXIT.ok;
   } catch (error) {
     if (error instanceof CommanderError) {

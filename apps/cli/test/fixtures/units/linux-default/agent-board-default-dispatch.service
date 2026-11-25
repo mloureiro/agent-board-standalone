@@ -1,0 +1,9 @@
+[Unit]
+Description=agent-board default dispatch: one tick
+
+[Service]
+Type=oneshot
+Environment="PATH=/home/tester/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/usr/bin/flock -n -E 75 /home/tester/.local/state/agent-board/profiles/default/run/dispatch.lock /home/tester/.local/bin/board --profile default internal dispatch
+SuccessExitStatus=75
+TimeoutStartSec=120
