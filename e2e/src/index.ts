@@ -1,1 +1,11 @@
 export { PART_NAME, PART_VERSION } from './version.js';
+export * from './harness/api.js';
+export * from './harness/board.js';
+export * from './harness/cli.js';
+export * from './harness/clock.js';
+export * from './harness/database.js';
+export * from './harness/paths.js';
+export * from './harness/ports.js';
+export * from './harness/run.js';
+export * from './harness/skip.js';
+export * from './harness/tmp.js';

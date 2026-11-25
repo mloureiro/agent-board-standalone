@@ -7,10 +7,20 @@
   "main": "./src/index.ts",
   "scripts": {
     "test": "vitest run",
+    "e2e:browser": "playwright test",
+    "e2e:blackbox": "vitest run -c vitest.blackbox.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@agent-board/contract": "workspace:^1.0.0",
     "@agent-board/sealing": "workspace:^1.0.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.65.1",
+    "@types/pg": "^8.23.1",
+    "@xmldom/xmldom": "^0.9.12",
+    "pg": "^8.23.1",
+    "xml-crypto": "^6.4.0"
   }
 }
