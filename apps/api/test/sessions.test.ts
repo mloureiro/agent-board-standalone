@@ -233,7 +233,6 @@ describe('sessions', () => {
         ?.expiresAt.getTime() ?? 0;
     const start = board.clock.now().getTime();
     const useResponse = () => board.app.inject({ url: '/api/client/me', headers: cookieOf(token) });
-    const use = async () => (await useResponse()).statusCode;
 
     expect(await expiryOf()).toBe(start + 7 * DAY_MS);
 
@@ -251,7 +250,7 @@ describe('sessions', () => {
     expect(await expiryOf()).toBe(start + SESSION_SLIDE_MS + 7 * DAY_MS);
 
     board.clock.set(new Date(start + SESSION_SLIDE_MS + 7 * DAY_MS + 1));
-    const expired = await board.app.inject({ url: '/api/client/me', headers: cookieOf(token) });
+    const expired = await useResponse();
     expect(expired.statusCode).toBe(401);
     expect(expired.json().error.message).toMatch(/expired/);
     expect(expired.headers['set-cookie']).toBeUndefined();
