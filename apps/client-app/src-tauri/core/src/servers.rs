@@ -28,6 +28,7 @@ struct Document<'a> {
 pub enum ServerError {
     Address(AddressProblem),
     BlankName,
+    InvalidName,
     Unknown,
     Write(PortError),
 }
@@ -52,10 +53,14 @@ fn parse_list(contents: &[u8]) -> Vec<ServerEntry> {
         .unwrap_or_default()
 }
 
-fn trimmed_name(name: &str) -> Result<String, ServerError> {
+pub const NAME_MAX_CHARS: usize = 100;
+
+pub fn trimmed_name(name: &str) -> Result<String, ServerError> {
     let name = name.trim();
     if name.is_empty() {
         Err(ServerError::BlankName)
+    } else if name.chars().count() > NAME_MAX_CHARS || name.chars().any(char::is_control) {
+        Err(ServerError::InvalidName)
     } else {
         Ok(name.to_owned())
     }

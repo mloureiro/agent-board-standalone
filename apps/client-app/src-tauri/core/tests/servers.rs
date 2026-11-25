@@ -424,3 +424,36 @@ fn client_app_051_all_servers_scope_is_the_open_windows() {
         assert!(harness.bridge.list_servers(&scope).is_empty());
     }
 }
+
+#[test]
+fn client_app_002_page_names_are_capped_and_refuse_control_characters() {
+    let harness = harness([], servers_file(&[ALPHA]), true);
+    let scope = scope_of(FIRST_ID);
+    for name in ["line\nbreak", "tab\there", "nul\0byte", &"x".repeat(101)] {
+        assert_eq!(
+            harness
+                .bridge
+                .page_add_server(&scope, name, "https://ok.example.test"),
+            Err(BridgeError::InvalidName),
+            "{name:?}"
+        );
+        assert_eq!(
+            harness
+                .bridge
+                .rename_server(&scope, FIRST_ID, name, |_| Ok(()))
+                .map(|_| ()),
+            Err(BridgeError::InvalidName),
+            "{name:?}"
+        );
+    }
+    assert!(harness.confirm.asked().is_empty());
+    assert_eq!(harness.bridge.servers().list().len(), 1);
+    let longest = "x".repeat(100);
+    assert!(
+        harness
+            .bridge
+            .page_add_server(&scope, &longest, "https://ok.example.test")
+            .unwrap()
+            .is_some()
+    );
+}

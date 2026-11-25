@@ -64,10 +64,9 @@ fn client_app_002_bundle_id_matches_the_contract() {
     assert_eq!(BUNDLE_ID, text(&contract, "bundleId"));
 
     let conf = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../tauri.conf.json");
-    if let Ok(contents) = std::fs::read_to_string(conf) {
-        let conf: Value = serde_json::from_str(&contents).unwrap();
-        assert_eq!(text(&conf, "identifier"), BUNDLE_ID);
-    }
+    let contents = std::fs::read_to_string(conf).unwrap();
+    let conf: Value = serde_json::from_str(&contents).unwrap();
+    assert_eq!(text(&conf, "identifier"), BUNDLE_ID);
 }
 
 #[test]
