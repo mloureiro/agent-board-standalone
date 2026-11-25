@@ -32,7 +32,7 @@ export function ApprovePage(): ReactNode {
       }),
     enabled: signedIn && client !== null && flow !== null && params.get('flow') !== null,
   });
-  const shownCode = described.data?.code ?? code;
+  const shownCode = params.get('flow') === null ? code : (described.data?.code ?? null);
 
   if (active === null || view === null || view.state === 'checking') {
     return <Text p="md">Checking the server.</Text>;
@@ -86,15 +86,24 @@ export function ApprovePage(): ReactNode {
           <Text>
             Another browser asks to sign in to {active.name}. Approve only if it shows this code.
           </Text>
-          <Code fz="xl" fw={700}>
-            {shownCode}
-          </Code>
+          {shownCode === null ? null : (
+            <Code fz="xl" fw={700}>
+              {shownCode}
+            </Code>
+          )}
+          {described.isError ? (
+            <Alert color="red" role="alert">
+              {messageOf(described.error)}
+            </Alert>
+          ) : null}
           {failure === null ? null : (
             <Alert color="red" role="alert">
               {failure}
             </Alert>
           )}
-          <Button onClick={() => void approve()}>Approve</Button>
+          <Button disabled={shownCode === null} onClick={() => void approve()}>
+            Approve
+          </Button>
         </>
       )}
     </Stack>

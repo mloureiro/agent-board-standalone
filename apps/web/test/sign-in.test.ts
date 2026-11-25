@@ -271,6 +271,12 @@ describe('approval page', () => {
     expect(screen.queryByRole('button', HANDOFF)).toBeNull();
   });
 
+  it('[web-017] a signed-in user sees the code the server holds for the flow, not the one in the link', async () => {
+    open(board('valid'), { path: '/approve?code=EVIL-0000&flow=flow-1' });
+    expect(await screen.findByText('ABCD-2345')).toBeInTheDocument();
+    expect(screen.queryByText('EVIL-0000')).toBeNull();
+  });
+
   it('[web-017] a link with only the code approves by that code', async () => {
     const fake = board('valid');
     const { user } = open(fake, { path: '/approve?code=ABCD-2345' });
@@ -417,6 +423,14 @@ describe('redirect sign-in', () => {
     open(board(), { path: '/auth/saml?error=identity%20provider%20refused' });
     expect(await screen.findByRole('alert')).toHaveTextContent('identity provider refused');
     expect(screen.getByRole('button', HANDOFF)).toBeInTheDocument();
+  });
+
+  it('[web-015] a remembered page that is not a path on this client is ignored', async () => {
+    pending('oidc', '//evil.example/');
+    const fake = board();
+    open(fake, { path: '/auth/callback?code=c1&state=state-1' });
+    expect(await screen.findByRole('alert')).toHaveTextContent(/not started in this tab/);
+    expect(fake.callsTo('/api/auth/oidc/finish')).toHaveLength(0);
   });
 
   it('[web-014] a return in a tab that did not start the sign-in is refused', async () => {

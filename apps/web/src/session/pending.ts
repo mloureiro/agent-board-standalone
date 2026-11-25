@@ -16,7 +16,8 @@ const isPending = (value: unknown): value is PendingSignIn => {
     (entry.kind === 'oidc' || entry.kind === 'saml') &&
     typeof entry.serverId === 'string' &&
     typeof entry.verifier === 'string' &&
-    typeof entry.returnTo === 'string'
+    typeof entry.returnTo === 'string' &&
+    /^\/(?![/\\])/.test(entry.returnTo)
   );
 };
 
