@@ -222,11 +222,13 @@ describe('bridge', () => {
     const tab = await json('capabilities', 'tab.json');
     expect(tab.webviews).toEqual(['tab-*']);
     expect([...(tab.permissions as string[])].sort()).toEqual(
-      ['tab_navigate', 'tab_title', 'tab_cycle'].map(permission).sort(),
+      ['tab_navigate', 'tab_title', 'tab_cycle', 'page_heartbeat'].map(permission).sort(),
     );
     const tabbar = await json('capabilities', 'tabbar.json');
     expect(tabbar.webviews).toEqual(['tabbar-*']);
     expect(tabbar.permissions).not.toContain(permission('server_fetch'));
+    expect(tabbar.permissions).toContain(permission('tabbar_banner'));
+    expect(tabbar.permissions).not.toContain(permission('page_heartbeat'));
     expect(tabbar.permissions).not.toContain(permission('tab_navigate'));
     const everyGranted = new Set<string>();
     for (const name of ['page', 'list', 'tabbar', 'tab']) {

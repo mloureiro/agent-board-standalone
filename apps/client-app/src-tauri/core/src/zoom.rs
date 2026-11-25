@@ -6,6 +6,27 @@ pub const LADDER: [u16; 17] = [
 ];
 const DEFAULT_INDEX: usize = 7;
 
+pub const MENU_ZOOM_IN: &str = "zoom-in";
+pub const MENU_ZOOM_IN_SHIFTED: &str = "zoom-in-shifted";
+pub const MENU_ZOOM_OUT: &str = "zoom-out";
+pub const MENU_ZOOM_RESET: &str = "zoom-reset";
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Step {
+    In,
+    Out,
+    Reset,
+}
+
+pub fn from_menu_id(id: &str) -> Option<Step> {
+    match id {
+        MENU_ZOOM_IN | MENU_ZOOM_IN_SHIFTED => Some(Step::In),
+        MENU_ZOOM_OUT => Some(Step::Out),
+        MENU_ZOOM_RESET => Some(Step::Reset),
+        _ => None,
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Effect {
     Zoom { server: ServerId, factor: f64 },
@@ -41,6 +62,14 @@ impl Zoom {
 
     pub fn reset(&mut self, server: ServerId) -> Option<Effect> {
         (self.index(server) != DEFAULT_INDEX).then(|| self.set(server, DEFAULT_INDEX))
+    }
+
+    pub fn apply(&mut self, server: ServerId, step: Step) -> Option<Effect> {
+        match step {
+            Step::In => self.zoom_in(server),
+            Step::Out => self.zoom_out(server),
+            Step::Reset => self.reset(server),
+        }
     }
 
     pub fn forget(&mut self, server: ServerId) {

@@ -1,7 +1,7 @@
-use crate::links;
 use crate::state::AppState;
 use crate::tab_registry::{Step, TabRegistry};
 use crate::windows::{self, BRIDGE_SCRIPT, TABBAR_PREFIX, server_window_label, tab_label};
+use crate::{alerts, links, webkit};
 use agent_board_client_core::ids::ServerId;
 use agent_board_client_core::layout::{self, Bounds};
 use agent_board_client_core::navigation::{Navigation, classify};
@@ -83,11 +83,14 @@ fn create_page(
 ) -> tauri::Result<Webview> {
     let size = window_size(window)?;
     let bounds = layout::page(size.width, size.height);
-    window.add_child(
+    let webview = window.add_child(
         page_builder(app, server, tab, path, origin),
         LogicalPosition::new(bounds.x, bounds.y),
         LogicalSize::new(bounds.width, bounds.height),
-    )
+    )?;
+    webkit::disable_backspace_navigation(&webview);
+    alerts::apply_zoom(app, server, &webview);
+    Ok(webview)
 }
 
 pub fn create_hidden_home(app: &AppHandle, server: ServerId, origin: &Url) {

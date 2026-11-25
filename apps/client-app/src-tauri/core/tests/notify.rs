@@ -11,7 +11,10 @@ use agent_board_client_core::page_input::{InputError, TITLE_MAX_CHARS};
 use agent_board_client_core::throttle::{BEAT_SECS, Change, SILENCE_SECS, State, Throttle};
 use agent_board_client_core::tokens::token_service;
 use agent_board_client_core::watch::{Tick, Watch};
-use agent_board_client_core::zoom::{Effect, LADDER, Zoom};
+use agent_board_client_core::zoom::{
+    Effect, LADDER, MENU_ZOOM_IN, MENU_ZOOM_IN_SHIFTED, MENU_ZOOM_OUT, MENU_ZOOM_RESET, Step, Zoom,
+    from_menu_id,
+};
 use common::{Canned, FIRST_ID, SECOND_ID, harness, id, scope_of, servers_file, token};
 
 const T0: u64 = 1_000;
@@ -624,4 +627,31 @@ async fn client_app_050_an_unauthorised_attention_poll_marks_the_server_expired(
             .is_err()
     );
     assert!(harness.bridge.is_expired(server));
+}
+
+#[test]
+fn client_app_045_zoom_menu_items_step_the_key_servers_ladder() {
+    assert_eq!(from_menu_id(MENU_ZOOM_IN), Some(Step::In));
+    assert_eq!(from_menu_id(MENU_ZOOM_IN_SHIFTED), Some(Step::In));
+    assert_eq!(from_menu_id(MENU_ZOOM_OUT), Some(Step::Out));
+    assert_eq!(from_menu_id(MENU_ZOOM_RESET), Some(Step::Reset));
+    assert_eq!(from_menu_id("close-tab"), None);
+
+    let server = id(FIRST_ID);
+    let mut zoom = Zoom::new();
+    assert_eq!(
+        zoom.apply(server, Step::In),
+        Some(Effect::Zoom {
+            server,
+            factor: 1.1
+        })
+    );
+    assert_eq!(
+        zoom.apply(server, Step::Out),
+        Some(Effect::Zoom {
+            server,
+            factor: 1.0
+        })
+    );
+    assert_eq!(zoom.apply(server, Step::Reset), None);
 }

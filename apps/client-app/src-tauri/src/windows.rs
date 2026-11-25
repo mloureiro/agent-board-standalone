@@ -1,7 +1,7 @@
-use crate::links;
 use crate::server_tabs;
 use crate::state::AppState;
 use crate::tab_registry::TabRegistry;
+use crate::{alerts, links, webkit};
 use agent_board_client_core::bridge::Scope;
 use agent_board_client_core::ids::ServerId;
 use agent_board_client_core::layout;
@@ -114,7 +114,7 @@ pub fn show_all_servers(app: &AppHandle) -> tauri::Result<()> {
         .on_navigation(links::guard(app_origin()))
         .on_new_window(links::on_new_window(app_origin(), |_| {}))
         .build()
-        .map(|_| ())
+        .map(|window| webkit::disable_backspace_navigation(window.as_ref()))
 }
 
 pub fn focus_server_window(app: &AppHandle, server: ServerId) -> tauri::Result<()> {
@@ -159,7 +159,10 @@ pub fn create_server_window(app: &AppHandle, entry: &ServerEntry) -> tauri::Resu
     window.on_window_event(move |event| match event {
         WindowEvent::CloseRequested { api, .. } => api.prevent_close(),
         WindowEvent::Resized(_) => server_tabs::relayout(&resized),
-        WindowEvent::Destroyed => handle.state::<TabRegistry>().remove(server),
+        WindowEvent::Destroyed => {
+            handle.state::<TabRegistry>().remove(server);
+            alerts::forget(&handle, server);
+        }
         _ => {}
     });
 

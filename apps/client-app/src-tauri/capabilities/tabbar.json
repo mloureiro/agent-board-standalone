@@ -8,6 +8,7 @@
     "allow-tab-select",
     "allow-tab-close",
     "allow-tab-cycle",
+    "allow-tabbar-banner",
     "core:event:allow-listen",
     "core:event:allow-unlisten"
   ]

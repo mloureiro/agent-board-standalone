@@ -1,12 +1,12 @@
 use crate::clock::SystemClock;
-use crate::commands::{list, page, tabs};
+use crate::commands::{list, page, tabs, watch};
 use crate::confirm::NativeConfirm;
 use crate::fetches::Fetches;
 use crate::keychain::{Background, Keychain};
 use crate::removals::Removals;
 use crate::state::{AppState, CONTRACT};
 use crate::tab_registry::TabRegistry;
-use crate::{handover, legacy, menu, windows};
+use crate::{alerts, handover, legacy, menu, windows};
 use agent_board_client_core::bridge::Bridge;
 use agent_board_client_core::files::DirStore;
 use agent_board_client_core::handover::EarlyLinks;
@@ -108,11 +108,14 @@ pub fn run() {
             tabs::tab_cycle,
             tabs::tab_navigate,
             tabs::tab_title,
+            watch::page_heartbeat,
+            watch::tabbar_banner,
         ])
         .on_menu_event(|app, event| menu::handle(app, event.id().as_ref()))
         .setup(|app| {
             let state = Arc::new(build_state(app)?);
             app.manage(Arc::clone(&state));
+            alerts::install(app.handle(), &state);
             menu::install(app.handle())?;
             launch(app.handle(), &state)?;
             handover::release_early(app.handle());

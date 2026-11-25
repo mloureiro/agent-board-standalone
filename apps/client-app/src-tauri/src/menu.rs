@@ -1,7 +1,11 @@
+use crate::alerts;
 use crate::server_tabs::dispatch;
 use crate::windows::{LIST_LABEL, focused_server};
 use agent_board_client_core::shortcuts::{
     Action, MENU_CLOSE_TAB, MENU_NEXT_TAB, MENU_PREVIOUS_TAB, from_menu_id, menu_select_id,
+};
+use agent_board_client_core::zoom::{
+    self, MENU_ZOOM_IN, MENU_ZOOM_IN_SHIFTED, MENU_ZOOM_OUT, MENU_ZOOM_RESET,
 };
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Manager};
@@ -52,11 +56,38 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
         &[&PredefinedMenuItem::minimize(app, None)?],
     )?;
     let tabs = tabs_menu(app)?;
+    let view = view_menu(app)?;
     app.set_menu(Menu::with_items(
         app,
-        &[&application, &file, &edit, &tabs, &window],
+        &[&application, &file, &edit, &view, &tabs, &window],
     )?)?;
     Ok(())
+}
+
+fn view_menu(app: &AppHandle) -> tauri::Result<Submenu<tauri::Wry>> {
+    Submenu::with_items(
+        app,
+        "View",
+        true,
+        &[
+            &MenuItem::with_id(app, MENU_ZOOM_IN, "Zoom In", true, Some("CmdOrCtrl+="))?,
+            &MenuItem::with_id(
+                app,
+                MENU_ZOOM_IN_SHIFTED,
+                "Zoom In",
+                true,
+                Some("CmdOrCtrl+Shift+="),
+            )?,
+            &MenuItem::with_id(app, MENU_ZOOM_OUT, "Zoom Out", true, Some("CmdOrCtrl+-"))?,
+            &MenuItem::with_id(
+                app,
+                MENU_ZOOM_RESET,
+                "Actual Size",
+                true,
+                Some("CmdOrCtrl+0"),
+            )?,
+        ],
+    )
 }
 
 fn tabs_menu(app: &AppHandle) -> tauri::Result<Submenu<tauri::Wry>> {
@@ -89,6 +120,10 @@ fn tabs_menu(app: &AppHandle) -> tauri::Result<Submenu<tauri::Wry>> {
 }
 
 pub fn handle(app: &AppHandle, id: &str) {
+    if let Some(step) = zoom::from_menu_id(id) {
+        alerts::zoom(app, step);
+        return;
+    }
     let Some(action) = from_menu_id(id) else {
         return;
     };
