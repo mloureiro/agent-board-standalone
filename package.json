@@ -9,12 +9,12 @@
     "node": ">=24"
   },
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint . && pnpm -r --if-present run lint:rust",
     "release:tags": "node tools/repo/src/release-tags.ts",
     "catalogue:check": "node tools/repo/src/catalogue.ts --check",
     "catalogue:fill": "node tools/repo/src/catalogue.ts --fill",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --check . && pnpm -r --if-present run format:check:rust",
     "typecheck": "pnpm -r --workspace-concurrency=4 run typecheck",
     "test": "pnpm -r --workspace-concurrency=4 run test"
   },

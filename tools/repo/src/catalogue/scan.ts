@@ -122,12 +122,52 @@ export function scanSource(file: string, source: string): TitleInfo[] {
   return titles;
 }
 
+const RUST_FILE = /\.rs$/;
+const NATIVE_ROOT = /(?:^|\/)src-tauri(?:\/|$)/;
+const NATIVE_BUILD_OUTPUT = new Set(['target', 'gen']);
+const RUST_TEST_FN =
+  /^[ \t]*#\[(?:test|tokio::test)(?:\([^)]*\))?\][ \t]*\n(?:[ \t]*#\[[^\n]*\][ \t]*\n)*[ \t]*(?:pub[ \t]+)?(?:async[ \t]+)?fn[ \t]+(\w+)/gm;
+const RUST_LINE_COMMENT = /^[ \t]*\/\/.*$/gm;
+
+export function scanRustSource(
+  file: string,
+  source: string,
+  parts: readonly string[],
+): TitleInfo[] {
+  const titles: TitleInfo[] = [];
+  const code = source.replace(RUST_LINE_COMMENT, '');
+  for (const match of code.matchAll(RUST_TEST_FN)) {
+    const name = match[1] as string;
+    const ids = parts.flatMap((part) => {
+      const prefix = `${part.replaceAll('-', '_')}_`;
+      const number = name.startsWith(prefix) ? /^(\d{3})_/.exec(name.slice(prefix.length)) : null;
+      return number ? [`${part}-${number[1]}`] : [];
+    });
+    titles.push({ file, title: name, ids, isTest: true });
+  }
+  return titles;
+}
+
+function cataloguePartNames(root: string): string[] {
+  try {
+    return readdirSync(join(root, 'requirements/catalogue'))
+      .filter((name) => name.endsWith('.md'))
+      .map((name) => name.slice(0, -'.md'.length));
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    return [];
+  }
+}
+
 function walk(root: string, directory: string, files: string[]): void {
   for (const entry of readdirSync(join(root, directory), { withFileTypes: true })) {
     if (SKIPPED.has(entry.name)) continue;
     const path = `${directory}/${entry.name}`;
-    if (entry.isDirectory()) walk(root, path, files);
-    else if (TEST_FILE.test(entry.name)) files.push(path);
+    if (entry.isDirectory()) {
+      if (NATIVE_BUILD_OUTPUT.has(entry.name) && NATIVE_ROOT.test(directory)) continue;
+      walk(root, path, files);
+    } else if (TEST_FILE.test(entry.name) || (RUST_FILE.test(entry.name) && NATIVE_ROOT.test(path)))
+      files.push(path);
   }
 }
 
@@ -141,7 +181,11 @@ export function scanRepository(root: string): ScanResult {
     }
   }
   files.sort();
-  const titles = files.flatMap((file) => scanSource(file, readFileSync(join(root, file), 'utf8')));
+  const parts = cataloguePartNames(root);
+  const titles = files.flatMap((file) => {
+    const source = readFileSync(join(root, file), 'utf8');
+    return RUST_FILE.test(file) ? scanRustSource(file, source, parts) : scanSource(file, source);
+  });
   const ids = new Map<string, string[]>();
   for (const title of titles) {
     for (const id of title.ids) {
