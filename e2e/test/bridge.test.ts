@@ -1,7 +1,8 @@
 import path from 'node:path';
 import vm from 'node:vm';
 
-import { TOKEN_PATTERN, routes } from '@agent-board/contract';
+import type { BrowserContext } from '@playwright/test';
+import { TOKEN_PATTERN, buildHandover, routes } from '@agent-board/contract';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createBridgeHost, refusedBridgePath, type BridgeHost } from '../src/fakes/bridge/host.js';
@@ -196,6 +197,80 @@ describe('bridge host', () => {
     for (const value of pageValues()) {
       expect(value).not.toContain(host.signerFor(serverId)?.publicKey);
     }
+  });
+});
+
+describe('window scope', () => {
+  const link = (url: string): string => buildHandover(url);
+  const A = 'http://localhost:4101';
+  const B = 'http://localhost:4102';
+
+  function stubContext(reloads: string[]): BrowserContext {
+    const page = (name: string): { reload(): Promise<void> } => ({
+      reload: async () => {
+        reloads.push(name);
+      },
+    });
+    return {
+      exposeBinding: async () => undefined,
+      addInitScript: async () => undefined,
+      pages: () => [page('one'), page('two')],
+    } as unknown as BrowserContext;
+  }
+
+  const listed = async (host: BridgeHost): Promise<string[]> =>
+    ((await host.handle('servers.list', {})) as { url: string }[]).map((entry) => entry.url);
+
+  it('lists every server by default', async () => {
+    const host = createBridgeHost({
+      servers: [
+        { name: 'a', url: A },
+        { name: 'b', url: B },
+      ],
+    });
+    expect(await listed(host)).toEqual([A, B]);
+    await host.deliverHandover(link(`${B}/`));
+    expect(await listed(host)).toEqual([A, B]);
+  });
+
+  it('lists only the scoped server and moves the scope to the opened one, reloading the pages', async () => {
+    const reloads: string[] = [];
+    const host = createBridgeHost({
+      scope: 'window',
+      servers: [
+        { name: 'a', url: A },
+        { name: 'b', url: B },
+      ],
+    });
+    await host.attach(stubContext(reloads));
+    expect(await listed(host)).toEqual([A]);
+
+    await host.deliverHandover(link(`${B}/`));
+    expect(await listed(host)).toEqual([B]);
+    expect(host.servers()).toHaveLength(2);
+    expect(reloads).toEqual(['one', 'two']);
+  });
+
+  it('adds an unknown handed-over server, scopes to it and names it host and port', async () => {
+    const reloads: string[] = [];
+    const host = createBridgeHost({ scope: 'window' });
+    await host.attach(stubContext(reloads));
+    expect(await listed(host)).toEqual([]);
+
+    await host.deliverHandover(link(`${A}/`));
+    expect(host.servers().map((entry) => entry.name)).toEqual(['localhost:4101']);
+    expect(await listed(host)).toEqual([A]);
+    expect(host.scopedServerId()).toBe(host.servers()[0]?.id);
+    expect(reloads).toHaveLength(2);
+  });
+
+  it('keeps the scope and reloads nothing for a link that is not a handover', async () => {
+    const reloads: string[] = [];
+    const host = createBridgeHost({ scope: 'window', servers: [{ name: 'a', url: A }] });
+    await host.attach(stubContext(reloads));
+    await host.deliverHandover('https://example.test/');
+    expect(await listed(host)).toEqual([A]);
+    expect(reloads).toEqual([]);
   });
 });
 

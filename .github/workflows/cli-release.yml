@@ -1,0 +1,47 @@
+name: CLI release
+
+on:
+  push:
+    tags:
+      - 'cli-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  binaries:
+    name: build and publish the CLI binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: oven-sh/setup-bun@v2
+      - run: pnpm install --frozen-lockfile --filter "@agent-board/cli..."
+      - env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#cli-v}"
+          manifest="$(node -p "require('./apps/cli/package.json').version")"
+          if [ "$version" != "$manifest" ]; then
+            echo "tag $TAG does not match apps/cli/package.json version $manifest" >&2
+            exit 1
+          fi
+      - run: node apps/cli/scripts/compile.ts --all
+      - run: node apps/cli/scripts/smoke.ts apps/cli/dist/release/board-linux-x64
+      - working-directory: apps/cli/dist/release
+        run: sha256sum board-linux-x64 board-linux-arm64 board-darwin-arm64 > SHA256SUMS
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" \
+            apps/cli/dist/release/board-linux-x64 \
+            apps/cli/dist/release/board-linux-arm64 \
+            apps/cli/dist/release/board-darwin-arm64 \
+            apps/cli/dist/release/SHA256SUMS \
+            --title "$TAG" \
+            --notes "CLI release $TAG. Install with apps/cli/scripts/install.sh or run board self-update."

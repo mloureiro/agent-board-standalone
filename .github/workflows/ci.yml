@@ -83,6 +83,42 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @agent-board/api exec vitest run test/bun-executable.test.ts
 
+  mobile-phone:
+    name: mobile (phone)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @agent-board/web... run build
+      - run: pnpm --filter @agent-board/mobile exec playwright install --with-deps chromium
+      - run: pnpm --filter @agent-board/mobile run bundle
+      - run: pnpm --filter @agent-board/mobile run phone
+
+  client-app-macos:
+    name: client-app (macOS)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/client-app/src-tauri
+      - run: pnpm install --frozen-lockfile --filter "@agent-board/client-app..."
+      - run: pnpm --filter "@agent-board/client-app..." --if-present run build
+      - run: pnpm --filter @agent-board/client-app shell:check
+
   sealing-runtimes:
     runs-on: ubuntu-latest
     steps:
@@ -261,6 +297,31 @@ jobs:
       - run: pnpm --filter "@agent-board/${{ matrix.package }}..." --if-present run build
       - run: pnpm --filter "@agent-board/${{ matrix.package }}" run typecheck
       - run: pnpm --filter "@agent-board/${{ matrix.package }}" test
+
+  binary-smoke:
+    name: binary smoke (${{ matrix.target }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x64
+            runner: ubuntu-latest
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+          - target: darwin-arm64
+            runner: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: oven-sh/setup-bun@v2
+      - run: pnpm install --frozen-lockfile --filter "@agent-board/cli..."
+      - run: node apps/cli/scripts/compile.ts --target ${{ matrix.target }}
+      - run: node apps/cli/scripts/smoke.ts apps/cli/dist/release/board-${{ matrix.target }}
 
   public-hygiene:
     name: public hygiene

@@ -65,14 +65,21 @@ export async function requestHeaders(
   return headers;
 }
 
+export class TransportError extends CliError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TransportError';
+  }
+}
+
 export function transportFailure(deps: HttpDeps, error: unknown): CliError {
   if (error instanceof Error && error.name === 'TimeoutError') {
-    return new CliError(
+    return new TransportError(
       `the server at ${deps.baseUrl} did not answer within ${REQUEST_TIMEOUT_MS / 1000} s`,
     );
   }
   const cause = error instanceof Error && error.cause instanceof Error ? error.cause.message : '';
-  return new CliError(
+  return new TransportError(
     `could not reach the server at ${deps.baseUrl}${cause === '' ? '' : `: ${cause}`}`,
   );
 }

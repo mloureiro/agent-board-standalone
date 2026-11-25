@@ -1,3 +1,4 @@
+import type { Command } from 'commander';
 import { describe, expect, it } from 'vitest';
 
 import { buildProgram, runCli } from '../src/commands/program.js';
@@ -38,6 +39,18 @@ const BUILT = [
   'CMD-29',
   'CMD-30',
   'CMD-31',
+  'CMD-32',
+  'CMD-33',
+  'CMD-34',
+  'CMD-35',
+  'CMD-36',
+  'CMD-37',
+  'CMD-39',
+  'CMD-40',
+  'CMD-41',
+  'CMD-42',
+  'CMD-44',
+  'CMD-45',
 ] as const;
 
 const DROPPED = ['CMD-38'] as const;
@@ -51,9 +64,13 @@ const program = buildProgram(test_.rt);
 function commandFor(id: string) {
   const entry = census.commands.find((command) => command.id === id);
   if (entry === undefined) throw new Error(`${id} is not in the census`);
-  return entry.name === 'board'
-    ? program
-    : program.commands.find((command) => command.name() === entry.name);
+  if (entry.name === 'board') return program;
+  return entry.name
+    .split(/\s+/)
+    .reduce<Command | undefined>(
+      (parent, word) => parent?.commands.find((command) => command.name() === word),
+      program,
+    );
 }
 
 describe('the census of cli-review section 1', () => {

@@ -25,6 +25,7 @@ export interface FeedState {
   readonly paused: boolean;
   readonly last: FeedRun | null;
   readonly items: Readonly<Record<string, string>>;
+  readonly runRequestedAt?: string;
 }
 
 const EMPTY: FeedState = { paused: false, last: null, items: {} };
@@ -42,6 +43,7 @@ export function readFeedState(dirs: ProfileDirs, name: string): FeedState {
       paused: raw.paused === true,
       last: isRecord(raw.last) ? (raw.last as unknown as FeedRun) : null,
       items: isRecord(raw.items) ? (raw.items as Record<string, string>) : {},
+      ...(typeof raw.runRequestedAt === 'string' ? { runRequestedAt: raw.runRequestedAt } : {}),
     };
   } catch {
     return EMPTY;

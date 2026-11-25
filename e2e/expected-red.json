@@ -7,17 +7,6 @@
       "board projects › [cli-039] the host default project does not override the parent's project for an in-run board add"
     ],
     "blackbox/legacy-dirs.test.ts": "*",
-    "blackbox/machine-lifecycle.test.ts": [
-      "self-update --server › [cli-059] moves the machine to the other server after checking owner, key id and token",
-      "self-update --server › [cli-059] refuses a server whose owner differs and leaves the config unchanged",
-      "self-update --server › [cli-059] refuses a server whose key id differs and leaves the config unchanged",
-      "self-update --server › [cli-059] refuses a server that does not know the token and leaves the config unchanged",
-      "self-update --server › [cli-059] warns when other machines are active",
-      "worker check in board doctor › [server-app-056] reports ok after a dispatch tick",
-      "worker check in board doctor › [server-app-056] reports refused with the 401 reason once the token is re-issued",
-      "worker check in board doctor › [server-app-056] reports refused naming the wrong machine for another machine’s token",
-      "worker check with the API stopped › [server-app-056] reports error when the API is stopped"
-    ],
     "blackbox/matrix-refusal.test.ts": "*",
     "blackbox/migrate.test.ts": "*",
     "blackbox/schedules.test.ts": [
@@ -42,8 +31,6 @@
     "blackbox/task-commands.test.ts": [
       "task commands › [cli-018] a run posts 1 questions with board ask",
       "task commands › [cli-018] a run posts 4 questions with board ask",
-      "task commands › [cli-018] a run is refused 0 questions",
-      "task commands › [cli-018] a run is refused 5 questions",
       "task commands › [cli-018] a second ask while a question is open answers 409 and prints do not ask again",
       "task commands › [cli-024] board add proposes a follow-up in Backlog in the parent project and allowed directory",
       "task commands › [cli-024] board add --project puts the follow-up in that project and one of its allowed directories"
@@ -106,41 +93,119 @@
       "user commands with a worker › [cli-034] board transcript with a run id prints its events without tool output",
       "user commands without a worker › [cli-029] board reply --resume sends the task back to the top of Todo"
     ],
-    "blackbox/worker.test.ts": "*",
+    "blackbox/worker.test.ts": [
+      "worker runs › [cli-075] a pause and an inbox message sent while running reach the stub stdin",
+      "worker runs › [cli-077] transcript events are uploaded about every 15 s and at the end @slow",
+      "worker runs › [cli-077] stored transcript events are sealing envelopes",
+      "worker runs › [cli-077] a run of 20001 events stores at most 20,000",
+      "worker runs › [cli-077] a run whose events pass 32 MB stores fewer events than it emitted",
+      "worker runs › [cli-078] the context usage the server holds is the main agent only",
+      "stop › [cli-074] a stop interrupts, closes stdin and kills the process only 30 s later @slow"
+    ],
     "browser/accessibility.spec.ts": [
       "accessibility of the primary pages › [web-080] the unlock page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
       "accessibility of the primary pages › [web-080] the board page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
-      "accessibility of the primary pages › [web-080] the board page is operable by keyboard alone with a visible focus indicator @chromium",
+      {
+        "title": "accessibility of the primary pages › [web-080] the board page is operable by keyboard alone with a visible focus indicator @chromium",
+        "projects": ["chromium-desktop"]
+      },
       "accessibility of the primary pages › [web-080] the new task page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
-      "accessibility of the primary pages › [web-080] the new task page is operable by keyboard alone with a visible focus indicator @chromium",
+      {
+        "title": "accessibility of the primary pages › [web-080] the new task page is operable by keyboard alone with a visible focus indicator @chromium",
+        "projects": ["chromium-desktop"]
+      },
       "accessibility of the primary pages › [web-080] the task page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
-      "accessibility of the primary pages › [web-080] the task page is operable by keyboard alone with a visible focus indicator @chromium",
+      {
+        "title": "accessibility of the primary pages › [web-080] the task page is operable by keyboard alone with a visible focus indicator @chromium",
+        "projects": ["chromium-desktop"]
+      },
       "accessibility of the primary pages › [web-080] the schedules page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
-      "accessibility of the primary pages › [web-080] the schedules page is operable by keyboard alone with a visible focus indicator @chromium",
+      {
+        "title": "accessibility of the primary pages › [web-080] the schedules page is operable by keyboard alone with a visible focus indicator @chromium",
+        "projects": ["chromium-desktop"]
+      },
       "accessibility of the primary pages › [web-080] the settings page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
-      "accessibility of the primary pages › [web-080] the settings page is operable by keyboard alone with a visible focus indicator @chromium",
+      {
+        "title": "accessibility of the primary pages › [web-080] the settings page is operable by keyboard alone with a visible focus indicator @chromium",
+        "projects": ["chromium-desktop"]
+      },
       "accessibility of the sign-in page › [web-080] the sign-in page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme"
     ],
-    "browser/board.spec.ts": "*",
+    "browser/board.spec.ts": [
+      {
+        "title": "board › [web-028] a task created through the contract appears without a reload",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "board › [web-028] with the event stream blocked a change still appears by polling",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "board › [web-028] a failed refresh keeps the stale cards and shows a warning",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "board › [web-029] dragging moves a card from Backlog to Todo and the order persists after a reload",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "board › [web-029] cards reorder within Backlog and the order persists after a reload",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "board › [web-029] dropping a card on Running or Waiting is refused",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "board › [web-032] a banner names a machine whose CLI is no longer accepted",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "board with a running card › [web-035] a running card shows context usage as a thin line",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
+      {
+        "title": "board › [web-029] a touch drag moves a card between columns on a phone @phone",
+        "projects": ["chromium-phone", "webkit-phone"]
+      }
+    ],
     "browser/client-app-bridge.spec.ts": "*",
     "browser/connection.spec.ts": "*",
     "browser/handover.spec.ts": [
       "handover from the server app to the client app › [client-app-013] a handed-over URL already in the list opens that server and adds nothing",
       "handover from the server app to the client app › [client-app-013] a handed-over URL not in the list adds the server and opens it through the handshake"
     ],
-    "browser/migrate.spec.ts": "*",
+    "browser/migrate.spec.ts": [
+      "the migrated board in the browser › [migrate-003] the owner passphrase unlocks the migrated board and every task opens",
+      {
+        "title": "the migrated rows in Postgres › [migrate-003] sealed values and blind indexes are byte-identical to the export file @chromium",
+        "projects": ["chromium-desktop"]
+      }
+    ],
     "browser/new-task.spec.ts": "*",
     "browser/parity.spec.ts": [
       "redirect sign-in › [P-05] SAML redirect sign-in finishes in the tab that started it",
       "open client sessions › [P-10] after sign-out elsewhere the event stream ends, the reconnect gets 401 and the client shows sign-in",
       "hand-off finish from another origin › [P-11] a hand-off finish with a wrong verifier leaves the flow usable and the right verifier completes it",
-      "hand-off from WebKit › [P-03] a WebKit client completes hand-off sign-in through a second browser context that approves @webkit",
-      "reply drafting in WebKit › [P-18] [web-058] a status change while typing keeps focus, caret and text, and Backspace outside a field does not navigate @webkit"
+      {
+        "title": "hand-off from WebKit › [P-03] a WebKit client completes hand-off sign-in through a second browser context that approves @webkit",
+        "projects": ["webkit-desktop"]
+      },
+      {
+        "title": "reply drafting in WebKit › [P-18] [web-058] a status change while typing keeps focus, caret and text, and Backspace outside a field does not navigate @webkit",
+        "projects": ["webkit-desktop"]
+      }
     ],
     "browser/projects.spec.ts": [
-      "project filter on the task, schedule and event queries › [api-104] client.events with a project raises changed only for that project's changes",
+      {
+        "title": "project filter on the task, schedule and event queries › [api-104] client.events with a project raises changed only for that project's changes",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
       "projects in the browser client › [web-082] the sidebar is a drawer on a phone @phone",
-      "projects of several servers in the sidebar › [web-082] the sidebar lists the projects of each open server and navigates by project"
+      {
+        "title": "projects of several servers in the sidebar › [web-082] the sidebar lists the projects of each open server and navigates by project",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      }
     ],
     "browser/proposals.spec.ts": "*",
     "browser/questions.spec.ts": "*",
@@ -167,9 +232,18 @@
     ],
     "browser/servers.spec.ts": "*",
     "browser/settings.spec.ts": [
-      "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] a task newly in Needs me fires a notification while the page is unfocused",
-      "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] the on and off setting is read back from the server in a new context",
-      "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] a context without the permission grant does not fire",
+      {
+        "title": "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] a task newly in Needs me fires a notification while the page is unfocused",
+        "projects": ["chromium-desktop"]
+      },
+      {
+        "title": "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] the on and off setting is read back from the server in a new context",
+        "projects": ["chromium-desktop"]
+      },
+      {
+        "title": "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] a context without the permission grant does not fire",
+        "projects": ["chromium-desktop"]
+      },
       "[web-075] Settings › Account › [web-075] deleting the account signs out and the user cannot sign back in to the old data",
       "[web-075] Settings › Account › [web-075] importing the exported file into a fresh account restores its tasks"
     ],

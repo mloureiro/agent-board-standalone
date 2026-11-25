@@ -102,7 +102,7 @@ function isDef(value: unknown): value is WatchDef {
 
 export class WatchStore {
   readonly watchesDir: string;
-  private readonly eventsDir: string;
+  readonly eventsDir: string;
 
   constructor(stateDir: string) {
     this.watchesDir = path.join(stateDir, 'watches');
@@ -171,6 +171,26 @@ export class WatchStore {
         rmSync(mine, { force: true });
       },
     };
+  }
+
+  tasks(): string[] {
+    if (!existsSync(this.watchesDir) && !existsSync(this.eventsDir)) return [];
+    const names = new Set<string>();
+    for (const root of [this.watchesDir, this.eventsDir]) {
+      if (!existsSync(root)) continue;
+      for (const entry of readdirSync(root)) names.add(entry);
+    }
+    return [...names].sort();
+  }
+
+  removeEvents(task: string, ids?: readonly string[]): void {
+    const directory = path.join(this.eventsDir, task);
+    if (!existsSync(directory)) return;
+    for (const entry of readdirSync(directory)) {
+      const id = entry.replace(/\.json$/, '');
+      if (ids === undefined || ids.includes(id))
+        rmSync(path.join(directory, entry), { force: true });
+    }
   }
 
   dropTask(task: string): number {

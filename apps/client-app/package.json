@@ -6,13 +6,25 @@
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
+    "build": "tsx scripts/assemble-frontend.ts",
+    "bundle": "tauri build -- --package agent-board-client",
     "test": "vitest run && pnpm run test:rust",
     "typecheck": "tsc --noEmit && cargo check --manifest-path src-tauri/Cargo.toml --locked",
     "format:check:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml --all --check",
     "lint:rust": "cargo clippy --manifest-path src-tauri/Cargo.toml --locked --all-targets -- -D warnings",
-    "test:rust": "pnpm --filter @agent-board/contract run build && cargo test --manifest-path src-tauri/Cargo.toml --locked"
+    "test:rust": "pnpm --filter @agent-board/contract run build && cargo test --manifest-path src-tauri/Cargo.toml --locked",
+    "shell:check": "cargo clippy --manifest-path src-tauri/Cargo.toml --locked -p agent-board-client --all-targets -- -D warnings && cargo test --manifest-path src-tauri/Cargo.toml --locked -p agent-board-client"
   },
   "dependencies": {
     "@agent-board/web": "workspace:^0.0.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/api": "~2.12.5",
+    "@tauri-apps/cli": "2.12.6",
+    "fake-indexeddb": "^6.2.8",
+    "jsdom": "^31.0.1",
+    "tsx": "^4.23.15",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
   }
 }
