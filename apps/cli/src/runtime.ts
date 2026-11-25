@@ -52,7 +52,7 @@ function execFileText(
         reject(error);
       },
     );
-    if (options.stdin !== undefined) child.stdin?.end(options.stdin);
+    child.stdin?.end(options.stdin);
   });
 }
 

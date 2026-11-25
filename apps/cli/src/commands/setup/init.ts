@@ -20,6 +20,7 @@ import {
   ensureDir,
   renderEnvFile,
   renderProfileConfig,
+  setCredentialStore,
   writeAtomic,
   writeSecretFile,
   writeServerFile,
@@ -134,6 +135,7 @@ function refuseExisting(ctx: Context, options: InitOptions): void {
 }
 
 export async function runInit(ctx: Context, options: InitOptions): Promise<void> {
+  if (ctx.inRun) throw new CliError('`board init` cannot run inside a board run');
   const url = normalizeServerUrl(options.url);
   refuseExisting(ctx, options);
   const token = validateToken(readSecretFromFile(options.tokenFile, 'token'));
@@ -173,7 +175,9 @@ export async function runInit(ctx: Context, options: InitOptions): Promise<void>
     );
   }
   const configFile = path.join(dirs.config, CONFIG_FILE);
-  if (!existsSync(configFile)) {
+  if (existsSync(configFile)) {
+    setCredentialStore(dirs.config, options.keychain === true ? 'keychain' : 'file');
+  } else {
     writeAtomic(
       configFile,
       renderProfileConfig({

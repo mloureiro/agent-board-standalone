@@ -305,6 +305,31 @@ describe('board init', () => {
     );
     expect(test.execCalls).toHaveLength(2);
   });
+
+  it('switches the credential store on --force and keeps the rest of config.yaml', async () => {
+    const server = await board();
+    const test = runtime({ platform: 'darwin', exec: () => ({ code: 0, stdout: '' }) });
+    const files = secrets(test, server);
+    expect(await runCli(initArgs(server.url, files), test.rt)).toBe(0);
+    const configFile = test.path('config', 'config.yaml');
+    writeFileSync(configFile, '# edited\nmachine: kept\n');
+
+    expect(await runCli(initArgs(server.url, files, ['--force', '--keychain']), test.rt)).toBe(0);
+    expect(readFileSync(configFile, 'utf8')).toBe(
+      '# edited\nmachine: kept\ncredentials: keychain\n',
+    );
+
+    expect(await runCli(initArgs(server.url, files, ['--force']), test.rt)).toBe(0);
+    expect(readFileSync(configFile, 'utf8')).toBe('# edited\nmachine: kept\n');
+  });
+
+  it('refuses inside a run and writes nothing', async () => {
+    const server = await board();
+    const test = runtime({ env: { AGENT_BOARD_TASK: 'tsk_00000001' } });
+    expect(await runCli(initArgs(server.url, secrets(test, server)), test.rt)).toBe(1);
+    expect(test.captured.stderr).toMatch(/inside a board run/);
+    expect(existsSync(test.path('config'))).toBe(false);
+  });
 });
 
 describe('profiles', () => {

@@ -10,7 +10,7 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 
-import { parse, stringify } from 'yaml';
+import { parse, parseDocument, stringify } from 'yaml';
 
 import { CliError } from '../errors.js';
 
@@ -105,6 +105,15 @@ export function readProfileConfig(dir: string): ProfileConfig {
 
 export function renderProfileConfig(config: ProfileConfig): string {
   return stringify(config);
+}
+
+export function setCredentialStore(dir: string, store: CredentialStore): void {
+  const file = path.join(dir, CONFIG_FILE);
+  if ((readProfileConfig(dir).credentials ?? 'file') === store) return;
+  const document = parseDocument(readFileSync(file, 'utf8'));
+  if (store === 'file') document.delete('credentials');
+  else document.set('credentials', store);
+  writeAtomic(file, document.toString(), 0o644);
 }
 
 export function parseEnvFile(text: string): Record<string, string> {
