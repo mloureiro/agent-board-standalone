@@ -3,6 +3,7 @@ import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
 
+import { LockButton } from '../keys/index.js';
 import { ColorSchemeMenu } from './ColorSchemeMenu.js';
 import { NewTaskButton } from './new-task.js';
 import { SignOutButton } from './SignOutButton.js';
@@ -73,6 +74,7 @@ export function AppHeader(): ReactNode {
       )}
       <Group gap="xs" wrap="nowrap">
         <NewTaskButton />
+        <LockButton />
         <SignOutButton />
         <ColorSchemeMenu />
       </Group>

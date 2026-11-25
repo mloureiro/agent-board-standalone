@@ -3,9 +3,11 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 
+import { deriveKeys, type KdfParams } from '@agent-board/sealing';
 import { vi } from 'vitest';
 
 import { App } from '../src/app/index.js';
+import type { KeyInspector } from '../src/keys/index.js';
 import type { BrowserEnvironment, SessionChannel } from '../src/session/index.js';
 import {
   createBrowserRegistry,
@@ -43,12 +45,19 @@ export const checkReturning =
 
 export interface RenderOptions {
   readonly path?: string;
-  readonly check?: ConnectionCheck;
+  readonly check?: ConnectionCheck | 'real';
   readonly registry?: ServerRegistry;
   readonly context?: TransportContext;
   readonly sessionChannel?: SessionChannel | null;
   readonly environment?: BrowserEnvironment;
+  readonly inspectKeys?: KeyInspector | 'real';
+  readonly kdf?: KdfParams;
 }
+
+export const alreadyUnlocked: KeyInspector = async () => ({
+  status: 'unlocked',
+  keys: await deriveKeys(new Uint8Array(32), 'owner'),
+});
 
 export const testEnvironment = () => ({
   assign: vi.fn<(url: string) => void>(),
@@ -69,9 +78,13 @@ export function renderApp(options: RenderOptions = {}) {
       router={Router}
       registry={registry}
       context={context}
-      check={options.check ?? upCheck}
+      {...(options.check === 'real' ? {} : { check: options.check ?? upCheck })}
       sessionChannel={options.sessionChannel === undefined ? null : options.sessionChannel}
       {...(options.environment === undefined ? {} : { environment: options.environment })}
+      {...(options.inspectKeys === 'real'
+        ? {}
+        : { inspectKeys: options.inspectKeys ?? alreadyUnlocked })}
+      {...(options.kdf === undefined ? {} : { kdf: options.kdf })}
       mantineEnv="test"
     />,
   );

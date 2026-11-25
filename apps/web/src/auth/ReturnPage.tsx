@@ -9,6 +9,7 @@ import { clearPending, readPending, type PendingSignIn } from '../session/pendin
 import { useSession } from '../session/SessionProvider.js';
 import { callRoute } from './api.js';
 import { messageOf } from './messages.js';
+import { signingKeyForSignIn } from './sign-in-key.js';
 
 export const OIDC_RETURN_PATH = '/auth/callback';
 export const SAML_RETURN_PATH = '/auth/saml';
@@ -39,18 +40,25 @@ export function ReturnPage({ kind }: { readonly kind: PendingSignIn['kind'] }): 
     };
     if (providerError !== null) return back(providerError);
     if (pending === null || client === null) return back(NOT_STARTED_HERE);
-    const finish =
-      kind === 'oidc'
-        ? callRoute(client, authOidcFinishRoute, {
-            code: params.get('code') ?? '',
-            state: params.get('state') ?? '',
-            verifier: pending.verifier,
-            ...(params.get('iss') === null ? {} : { iss: params.get('iss') as string }),
-          })
-        : callRoute(client, authSamlFinishRoute, {
-            flow: params.get('flow') ?? '',
-            verifier: pending.verifier,
-          });
+    const finish = signingKeyForSignIn(client, pending.serverId).then(async (key) => {
+      const publicKey = key === null ? {} : { publicKey: key.publicKey };
+      if (kind === 'oidc') {
+        await callRoute(client, authOidcFinishRoute, {
+          code: params.get('code') ?? '',
+          state: params.get('state') ?? '',
+          verifier: pending.verifier,
+          ...(params.get('iss') === null ? {} : { iss: params.get('iss') as string }),
+          ...publicKey,
+        });
+      } else {
+        await callRoute(client, authSamlFinishRoute, {
+          flow: params.get('flow') ?? '',
+          verifier: pending.verifier,
+          ...publicKey,
+        });
+      }
+      await key?.commit();
+    });
     finish.then(
       () => {
         clearPending();

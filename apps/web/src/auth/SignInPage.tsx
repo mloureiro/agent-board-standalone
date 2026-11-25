@@ -20,6 +20,7 @@ import { useSession } from '../session/SessionProvider.js';
 import { callRoute } from './api.js';
 import { HandoffWaiting, type HandoffChannel, type StartedHandoff } from './HandoffWaiting.js';
 import { messageOf } from './messages.js';
+import { signingKeyIf } from './sign-in-key.js';
 import { SignUpForm } from './SignUpForm.js';
 import { getPasskey, webAuthnAvailable } from './webauthn.js';
 
@@ -56,6 +57,8 @@ export function SignInPage(props: SignInPageProps): ReactNode {
 
   const client = servers.clientOf(server.id);
   const bridge = servers.transportContext.bridge;
+  const view = servers.connectionOf(server.id);
+  const requestSignature = 'server' in view && view.server.requestSignature;
   const kind = servers.transportOf(server.id)?.kind ?? 'same-origin';
 
   const channel = useMemo<HandoffChannel | null>(() => {
@@ -118,7 +121,13 @@ export function SignInPage(props: SignInPageProps): ReactNode {
       if (client === null) return;
       const started = await callRoute(client, authPasskeyLoginOptionsRoute, {});
       const response = await getPasskey(started.options);
-      await callRoute(client, authPasskeyLoginRoute, { flow: started.flow, response });
+      const key = await signingKeyIf(requestSignature, client, server.id);
+      await callRoute(client, authPasskeyLoginRoute, {
+        flow: started.flow,
+        response,
+        ...(key === null ? {} : { publicKey: key.publicKey }),
+      });
+      await key?.commit();
       session.signedIn(server.id);
     });
 
@@ -169,6 +178,7 @@ export function SignInPage(props: SignInPageProps): ReactNode {
           server={server}
           channel={channel}
           handoff={handoff}
+          requestSignature={requestSignature}
           onSignedIn={() => session.signedIn(server.id)}
           onFailed={(message) => {
             setHandoff(null);
@@ -178,7 +188,12 @@ export function SignInPage(props: SignInPageProps): ReactNode {
       ) : null}
       {offered?.signup === true && offered.passkeys && sameOrigin && client !== null ? (
         signingUp ? (
-          <SignUpForm client={client} onSignedIn={() => session.signedIn(server.id)} />
+          <SignUpForm
+            client={client}
+            serverId={server.id}
+            requestSignature={requestSignature}
+            onSignedIn={() => session.signedIn(server.id)}
+          />
         ) : (
           <Button variant="subtle" onClick={() => setSigningUp(true)}>
             Create account
