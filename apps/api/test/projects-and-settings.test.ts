@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { emptyCredentialStore } from '../src/auth/index.js';
 import * as schema from '../src/db/schema/index.js';
 import { HANDLER_SETS } from '../src/handlers/index.js';
+import { claimTask } from '../src/modules/tasks/index.js';
 import { loadConfig } from '../src/modules/index.js';
 import { createServer } from '../src/server.js';
 import { createMemoryEvents } from '../src/modules/events/index.js';
@@ -371,6 +372,34 @@ describe.each(TARGETS)('projects, directories, keys and settings on $name', (tar
         }
         const kept = await opened.database.withOwner(OWNER, (tx) => tx.select().from(schema.task));
         expect(kept.find((row) => row.id === taskId)?.projectId).toBe(id);
+      });
+
+      it('[api-105] a claim racing a deletion never leaves a running task behind a deleted project', async () => {
+        await opened.database.withOwner(OWNER, (tx) =>
+          tx
+            .insert(schema.machine)
+            .values({ id: 'racer', tokenHash: randomUUID().replaceAll('-', '').repeat(2) })
+            .onConflictDoNothing(),
+        );
+        for (let round = 0; round < 8; round += 1) {
+          const id = await makeProject(alice);
+          const taskId = `t-${randomUUID()}`;
+          await opened.database.withOwner(OWNER, (tx) =>
+            tx.insert(schema.task).values({ ...taskValues(id, taskId), status: 'todo' }),
+          );
+          const [claim, deletion] = await Promise.allSettled([
+            opened.database.withOwner(OWNER, (tx) => claimTask(tx, taskId, 'racer')),
+            call(alice, 'projects/delete', { id, then: 'delete' }),
+          ]);
+          const claimed = claim.status === 'fulfilled';
+          const deleted = deletion.status === 'fulfilled' && deletion.value.status === 200;
+          expect(claimed && deleted).toBe(false);
+          const rows = await opened.database.withOwner(OWNER, (tx) =>
+            tx.select().from(schema.task),
+          );
+          const survivor = rows.find((row) => row.id === taskId);
+          expect(claimed ? survivor?.status : survivor).toBe(claimed ? 'running' : undefined);
+        }
       });
 
       it('[api-103] a task directory outside the task project is refused when the transaction commits', async () => {

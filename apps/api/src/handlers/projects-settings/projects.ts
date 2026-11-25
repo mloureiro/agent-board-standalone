@@ -42,6 +42,7 @@ const countIn = async (tx: ScopedDatabase, projectId: string) => {
       .where(eq(table.projectId, projectId));
     return row?.total ?? 0;
   };
+  await tx.select({ id: task.id }).from(task).where(eq(task.projectId, projectId)).for('update');
   const [running] = await tx
     .select({ total: count() })
     .from(task)
