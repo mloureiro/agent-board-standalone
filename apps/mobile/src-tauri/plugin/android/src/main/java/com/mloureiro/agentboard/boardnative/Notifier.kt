@@ -47,6 +47,13 @@ object Notifier {
             .setContentTitle(text)
             .setContentIntent(tap)
             .setAutoCancel(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setPublicVersion(
+                NotificationCompat.Builder(context, ATTENTION_CHANNEL)
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setContentTitle("A task needs you")
+                    .build(),
+            )
             .build()
         context.getSystemService(NotificationManager::class.java).notify(id, notification)
     }

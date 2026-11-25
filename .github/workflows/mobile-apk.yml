@@ -61,14 +61,16 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('apps/mobile/src-tauri/plugin/android/**', 'apps/mobile/src-tauri/tauri.conf.json') }}
           restore-keys: gradle-${{ runner.os }}-
       - run: pnpm install --frozen-lockfile
+      - if: startsWith(github.ref, 'refs/tags/mobile-v')
+        run: pnpm --filter @agent-board/mobile run release:check "${GITHUB_REF_NAME#mobile-v}"
       - run: pnpm --filter @agent-board/web... run build
       - run: pnpm --filter @agent-board/mobile run bundle
       - run: pnpm --filter @agent-board/mobile exec tauri android init --ci
       - run: pnpm --filter @agent-board/mobile exec tauri android build --apk --target "${ANDROID_TARGET}" --ci
       - name: Align and sign
         env:
-          KEYSTORE_B64: ${{ secrets.MOBILE_KEYSTORE_B64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.MOBILE_KEYSTORE_PASSWORD }}
+          KEYSTORE_B64: ${{ startsWith(github.ref, 'refs/tags/mobile-v') && secrets.MOBILE_KEYSTORE_B64 || '' }}
+          KEYSTORE_PASSWORD: ${{ startsWith(github.ref, 'refs/tags/mobile-v') && secrets.MOBILE_KEYSTORE_PASSWORD || '' }}
         run: bash apps/mobile/scripts/sign-apk.sh
       - uses: actions/upload-artifact@v4
         with:

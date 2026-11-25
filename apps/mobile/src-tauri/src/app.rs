@@ -5,7 +5,7 @@ use agent_board_bridge_core::links::{Navigation, navigation};
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_opener::OpenerExt;
 
-const APP_HOSTS: &[&str] = &["tauri.localhost", "localhost"];
+const APP_HOSTS: &[&str] = &["tauri.localhost"];
 
 const SHIM: &str = include_str!("../shim.js");
 

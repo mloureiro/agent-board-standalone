@@ -27,7 +27,7 @@ else
 fi
 
 "${tools}/zipalign" -f -p 4 "${unsigned}" "${out}/aligned.apk"
-"${tools}/apksigner" sign --ks "${keystore}" --ks-key-alias "${alias_name}" \
-  --ks-pass "pass:${password}" --out "${out}/agent-board-mobile.apk" "${out}/aligned.apk"
+SIGNING_PASSWORD="${password}" "${tools}/apksigner" sign --ks "${keystore}" --ks-key-alias "${alias_name}" \
+  --ks-pass "env:SIGNING_PASSWORD" --out "${out}/agent-board-mobile.apk" "${out}/aligned.apk"
 "${tools}/apksigner" verify --print-certs "${out}/agent-board-mobile.apk"
 rm -f "${out}/aligned.apk" "${out}/aligned.apk.idsig"

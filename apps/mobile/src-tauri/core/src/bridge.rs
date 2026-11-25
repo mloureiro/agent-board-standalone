@@ -346,15 +346,10 @@ impl<H: Http, K: KeyStore, C: Confirm, E: Env, S: Store> Bridge<H, K, C, E, S> {
     }
 
     pub async fn sign_out(&self, server_id: &str) -> Result<(), BridgeError> {
-        let entry = self.entry(server_id)?;
-        if let Some(token) = self.keys.token(server_id) {
+        if self.keys.token(server_id).is_some() {
+            let json = ("content-type".to_string(), "application/json".to_string());
             let _ = self
-                .post_json(
-                    &entry,
-                    "/api/auth/logout",
-                    serde_json::json!({}),
-                    Some(&token),
-                )
+                .server_fetch(server_id, "POST", "/api/auth/logout", &[json], Some("{}"))
                 .await;
         }
         self.keys
@@ -363,8 +358,27 @@ impl<H: Http, K: KeyStore, C: Confirm, E: Env, S: Store> Bridge<H, K, C, E, S> {
     }
 }
 
+const PUBLIC_ROUTES: &[&str] = &[
+    "/healthz",
+    "/api/version",
+    "/api/pair",
+    "/api/auth/config",
+    "/api/auth/oidc/start",
+    "/api/auth/oidc/finish",
+    "/api/auth/saml/start",
+    "/api/auth/saml/finish",
+    "/api/auth/saml/acs",
+    "/api/auth/passkey/login-options",
+    "/api/auth/passkey/login",
+    "/api/auth/passkey/signup-options",
+    "/api/auth/passkey/signup",
+    "/api/auth/handoff/start",
+    "/api/auth/handoff/finish",
+];
+
 fn signs(path: &str) -> bool {
-    path.starts_with("/api/client/") || path.starts_with("/api/auth/logout")
+    let route = path.split('?').next().unwrap_or(path).to_ascii_lowercase();
+    !PUBLIC_ROUTES.contains(&route.trim_end_matches('/'))
 }
 
 async fn collect(response: HttpResponse) -> Result<Vec<u8>, BridgeError> {

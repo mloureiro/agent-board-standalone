@@ -524,3 +524,25 @@ async fn a_rejected_attention_poll_is_an_error_and_notification_settings_persist
     bridge.set_notifications(&id, false).unwrap();
     assert!(bridge.notifying_servers().is_empty());
 }
+
+#[tokio::test]
+async fn sign_out_is_signed_and_other_client_auth_routes_too() {
+    let (bridge, http, keys, _) = setup(true);
+    let id = add(&bridge);
+    keys.set_token(&id, "abc_t").unwrap();
+    bridge.sign_out(&id).await.unwrap();
+    bridge
+        .server_fetch(&id, "POST", "/api/auth/handoff/approve", &[], Some("{}"))
+        .await
+        .unwrap();
+    bridge
+        .server_fetch(&id, "POST", "/api/auth/handoff/start", &[], Some("{}"))
+        .await
+        .unwrap();
+    let seen = http.seen.lock().unwrap();
+    assert!(seen[0].1.ends_with("/api/auth/logout"));
+    assert!(header(&seen[0].2, "x-board-sig").is_some());
+    assert!(header(&seen[0].2, "content-digest").is_some());
+    assert!(header(&seen[1].2, "x-board-sig").is_some());
+    assert_eq!(header(&seen[2].2, "x-board-sig"), None);
+}

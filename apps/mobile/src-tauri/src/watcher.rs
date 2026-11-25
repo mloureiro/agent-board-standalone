@@ -23,7 +23,10 @@ pub fn start(app: AppHandle) {
                 state.forget(&gone);
             }
             for entry in &servers {
-                let Ok(ids) = bridge.attention(&entry.id).await else {
+                let polled =
+                    tokio::time::timeout(Duration::from_secs(20), bridge.attention(&entry.id))
+                        .await;
+                let Ok(Ok(ids)) = polled else {
                     continue;
                 };
                 for task in state.update(&entry.id, ids) {

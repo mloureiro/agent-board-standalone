@@ -54,6 +54,7 @@ class Keystore(context: Context) {
         if (store.containsAlias(signAlias(serverId))) store.deleteEntry(signAlias(serverId))
     }
 
+    @Synchronized
     private fun ensureSigningKey(serverId: String) {
         if (store.containsAlias(signAlias(serverId))) return
         val generator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_EC, ANDROID_KEYSTORE)
@@ -66,6 +67,7 @@ class Keystore(context: Context) {
         generator.generateKeyPair()
     }
 
+    @Synchronized
     private fun wrapKey(): SecretKey {
         (store.getKey(WRAP_ALIAS, null) as? SecretKey)?.let { return it }
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
