@@ -195,14 +195,23 @@ const CHECKS: Record<(typeof TOP_KEYS)[number], Check> = {
   feeds: feedsProblem,
 };
 
+const isTopKey = (key: string): key is (typeof TOP_KEYS)[number] =>
+  (TOP_KEYS as readonly string[]).includes(key);
+
 export function configProblem(config: unknown): string | null {
   if (config === null || config === undefined) return null;
   if (!isRecord(config)) return 'the config must be a YAML mapping';
   for (const [key, value] of Object.entries(config)) {
-    if (!(TOP_KEYS as readonly string[]).includes(key))
-      return unknownKey('the config', key, TOP_KEYS);
-    const problem = CHECKS[key as (typeof TOP_KEYS)[number]](value);
+    if (!isTopKey(key)) continue;
+    const problem = CHECKS[key](value);
     if (problem !== null) return problem;
   }
   return null;
+}
+
+export function unknownTopKeys(config: unknown): string[] {
+  if (!isRecord(config)) return [];
+  return Object.keys(config)
+    .filter((key) => !isTopKey(key))
+    .map((key) => `${unknownKey('the config', key, TOP_KEYS)}; it is kept and ignored`);
 }

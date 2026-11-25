@@ -20,6 +20,24 @@ export interface AgentSource {
   readonly origin: string;
 }
 
+const TOO_LARGE = `the agent document is larger than ${MAX_AGENT_BYTES / 1024} KB`;
+
+async function boundedBody(response: Response): Promise<Uint8Array> {
+  if (Number(response.headers.get('content-length') ?? 0) > MAX_AGENT_BYTES) {
+    await response.body?.cancel();
+    throw new UsageError(TOO_LARGE);
+  }
+  if (response.body === null) return new Uint8Array();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for await (const chunk of response.body) {
+    total += chunk.length;
+    if (total > MAX_AGENT_BYTES) throw new UsageError(TOO_LARGE);
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
 async function fetchUrl(rt: Runtime, given: string): Promise<{ text: string; url: URL }> {
   const [location = '', pin] = given.split('#sha256=');
   let url = new URL(location);
@@ -40,10 +58,7 @@ async function fetchUrl(rt: Runtime, given: string): Promise<{ text: string; url
       continue;
     }
     if (!response.ok) throw new UsageError(`${url.host} answered ${response.status}`);
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    if (bytes.length > MAX_AGENT_BYTES) {
-      throw new UsageError(`the agent document is larger than ${MAX_AGENT_BYTES / 1024} KB`);
-    }
+    const bytes = await boundedBody(response);
     if (pin !== undefined) {
       const digest = createHash('sha256').update(bytes).digest('hex');
       if (digest !== pin.toLowerCase()) {

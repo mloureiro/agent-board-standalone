@@ -83,6 +83,16 @@ describe('board config', () => {
     expect(readFileSync(cli.test.path('config', 'config.yaml'), 'utf8')).toBe(before);
   });
 
+  it('[cli-040] keeps an unknown top-level key, warns about it and still writes', async () => {
+    const { cli } = await rig();
+    const file = cli.test.path('config', 'config.yaml');
+    writeFileSync(file, `${readFileSync(file, 'utf8')}defaltCwd: /old\n`);
+    expect(await cli.run('config', 'set', 'maxRunHours', '2')).toBe(0);
+    expect(cli.stderr()).toContain('warning: the config has no key "defaltCwd"');
+    expect(cli.stderr()).toContain('did you mean "defaultCwd"?');
+    expect(configOf(cli)).toMatchObject({ maxRunHours: 2, defaltCwd: '/old' });
+  });
+
   it('[cli-040] refuses the keys below dirs and the ones other commands own', async () => {
     const { cli } = await rig();
     for (const key of ['dirs', 'dirs.0.path', 'project', 'feeds', 'credentials']) {
@@ -136,7 +146,7 @@ describe('board config', () => {
       tty: true,
       env: { VISUAL: 'vi' },
       spawn: (_file, args) => {
-        writeFileSync(args.at(-1) ?? '', 'machine: test-machine\nnope: 1\n');
+        writeFileSync(args.at(-1) ?? '', 'machine: test-machine\nmaxRunHours: -1\n');
         return 0;
       },
     });

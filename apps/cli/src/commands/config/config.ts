@@ -12,7 +12,7 @@ import {
   readConfigObject,
   writeConfigDocument,
 } from '../../config/file.js';
-import { LANE_KEYS, TOP_KEYS, USAGE_LIMIT_KEYS } from '../../config/schema.js';
+import { LANE_KEYS, TOP_KEYS, USAGE_LIMIT_KEYS, unknownTopKeys } from '../../config/schema.js';
 import { CliError, UsageError } from '../../errors.js';
 import { isRecord, nearest } from '../../domain/values.js';
 import { plain } from '../../domain/rules.js';
@@ -86,6 +86,10 @@ function nestedKeys(head: string): readonly string[] | null {
   return null;
 }
 
+function warnUnknown(ctx: Context, config: unknown): void {
+  for (const line of unknownTopKeys(config)) ctx.err(`warning: ${plain(line)}`);
+}
+
 function parseValue(text: string): unknown {
   try {
     return JSON.parse(text) as unknown;
@@ -133,6 +137,7 @@ async function runEdit(ctx: Context): Promise<void> {
       throw new CliError('the edited config is not valid YAML; the config is unchanged');
     }
     writeConfigDocument(ctx.dirs.config, document);
+    warnUnknown(ctx, document.toJS());
     ctx.out('config saved');
   } finally {
     rmSync(folder, { recursive: true, force: true });
@@ -149,6 +154,7 @@ export async function runConfig(
   if (verb === 'show') {
     if (rest.length > 0) throw new UsageError('board config show takes no arguments');
     const config = readConfigObject(ctx.dirs.config);
+    warnUnknown(ctx, config);
     ctx.out(
       options.json === true
         ? JSON.stringify(config, null, 2)
@@ -189,6 +195,7 @@ export async function runConfig(
       return;
     }
     writeConfigDocument(ctx.dirs.config, document);
+    warnUnknown(ctx, document.toJS());
     ctx.out(`set ${key}`);
     return;
   }
