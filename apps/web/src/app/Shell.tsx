@@ -1,26 +1,46 @@
 import { Box } from '@mantine/core';
 import type { ReactNode } from 'react';
-import { Outlet } from 'react-router';
+import { Outlet, useLocation } from 'react-router';
 
+import { SignInPage } from '../auth/index.js';
 import {
   AppHeader,
   ConnectionBanners,
+  ErrorBoundaryPanel,
   NewTaskProvider,
   ServerStatePanel,
+  Toasts,
   panelFor,
 } from '../components/index.js';
 import { useServers } from '../servers/index.js';
+import { useEnvironment } from '../session/index.js';
+
+function Content(): ReactNode {
+  const { active, connectionOf, hasAnswered } = useServers();
+  const environment = useEnvironment();
+  const location = useLocation();
+  const view = active === null ? null : connectionOf(active.id);
+  if (active !== null && view?.state === 'signed-out') {
+    return <SignInPage server={active} signedOut={hasAnswered(active.id)} />;
+  }
+  const panel = view === null ? null : panelFor(view);
+  if (panel !== null) return <ServerStatePanel content={panel} />;
+  return (
+    <ErrorBoundaryPanel onReload={environment.reload} resetKey={location.pathname}>
+      <Outlet />
+    </ErrorBoundaryPanel>
+  );
+}
 
 export function Shell(): ReactNode {
-  const { active, connectionOf } = useServers();
-  const panel = active === null ? null : panelFor(connectionOf(active.id));
   return (
     <NewTaskProvider>
       <AppHeader />
       <ConnectionBanners />
       <Box component="main" p="md">
-        {panel === null ? <Outlet /> : <ServerStatePanel content={panel} />}
+        <Content />
       </Box>
+      <Toasts />
     </NewTaskProvider>
   );
 }

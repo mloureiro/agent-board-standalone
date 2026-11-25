@@ -3,7 +3,10 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 
+import { vi } from 'vitest';
+
 import { App } from '../src/app/index.js';
+import type { BrowserEnvironment, SessionChannel } from '../src/session/index.js';
 import {
   createBrowserRegistry,
   parseServerVersion,
@@ -43,7 +46,15 @@ export interface RenderOptions {
   readonly check?: ConnectionCheck;
   readonly registry?: ServerRegistry;
   readonly context?: TransportContext;
+  readonly sessionChannel?: SessionChannel | null;
+  readonly environment?: BrowserEnvironment;
 }
+
+export const testEnvironment = () => ({
+  assign: vi.fn<(url: string) => void>(),
+  openWindow: vi.fn<(url: string) => void>(),
+  reload: vi.fn<() => void>(),
+});
 
 export function renderApp(options: RenderOptions = {}) {
   const path = options.path ?? '/';
@@ -59,6 +70,8 @@ export function renderApp(options: RenderOptions = {}) {
       registry={registry}
       context={context}
       check={options.check ?? upCheck}
+      sessionChannel={options.sessionChannel === undefined ? null : options.sessionChannel}
+      {...(options.environment === undefined ? {} : { environment: options.environment })}
       mantineEnv="test"
     />,
   );

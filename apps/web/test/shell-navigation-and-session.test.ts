@@ -1,9 +1,21 @@
-import { screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { MantineProvider } from '@mantine/core';
+import { MutationObserver, QueryObserver } from '@tanstack/react-query';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { createElement } from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { pageTitle } from '../src/components/index.js';
+import { createQueryClient } from '../src/app/index.js';
+import { ToastProvider, Toasts, createToastHub, pageTitle } from '../src/components/index.js';
+import { serverNamespace } from '../src/storage/index.js';
+import {
+  FakeBoard,
+  MemoryChannel,
+  fixedRegistry,
+  nativeBridge,
+  otherServer,
+} from './fake-board.js';
+import { renderApp, testEnvironment } from './render.js';
 import { media } from './setup.js';
-import { renderApp } from './render.js';
 
 describe('header and navigation', () => {
   it('[web-001] the header links Board, Schedules, Closed and Settings and offers the project switcher', async () => {
@@ -129,5 +141,144 @@ describe('page titles', () => {
     renderApp({ path: '/nowhere' });
     expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
     expect(document.title).toBe('Page not found · Agent Board');
+  });
+});
+
+const HOME = { id: 'srv-1', name: 'Local', url: 'http://localhost/' };
+
+describe('sign-out and other tabs', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const signedIn = (session: 'valid' | 'not-required' = 'valid') => {
+    const fake = new FakeBoard({ session });
+    const tabs = new MemoryChannel();
+    vi.stubGlobal('fetch', fake.fetch);
+    const view = renderApp({
+      check: fake.check,
+      registry: fixedRegistry([HOME]),
+      sessionChannel: tabs.channel,
+      environment: testEnvironment(),
+    });
+    return { fake, tabs, ...view };
+  };
+
+  it('[web-005] signing out locks the page, shows Signed out and tells the other tabs', async () => {
+    const { fake, tabs, user } = signedIn();
+    localStorage.setItem('ab:srv-1:draft:new', 'unsent text');
+    await user.click(await screen.findByRole('button', { name: 'Sign out' }));
+    expect(await screen.findByRole('heading', { name: 'Signed out' })).toBeInTheDocument();
+    expect(fake.callsTo('/api/auth/logout')).toHaveLength(1);
+    expect(tabs.posted).toEqual([{ serverId: 'srv-1', event: 'signed-out' }]);
+    expect(localStorage.getItem('ab:srv-1:draft:new')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Sign out' })).toBeNull();
+  });
+
+  it('[web-005] a server without login shows no sign-out', async () => {
+    signedIn('not-required');
+    expect(await screen.findByRole('heading', { name: 'Board' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sign out' })).toBeNull();
+  });
+
+  it('[web-005] signing out of another server drops its client token', async () => {
+    const fake = new FakeBoard({ session: 'valid' });
+    vi.stubGlobal('fetch', fake.fetch);
+    await serverNamespace('server-b').secrets.put('client-token', fake.token);
+    const { user } = renderApp({
+      check: fake.check,
+      registry: fixedRegistry([otherServer]),
+      sessionChannel: null,
+    });
+    await user.click(await screen.findByRole('button', { name: 'Sign out' }));
+    await screen.findByRole('heading', { name: 'Signed out' });
+    expect(await serverNamespace('server-b').secrets.get('client-token')).toBeUndefined();
+  });
+
+  it('[web-005] in a wrapper signing out goes through the bridge', async () => {
+    const fake = new FakeBoard({ session: 'valid' });
+    const bridge = nativeBridge(fake);
+    vi.stubGlobal('fetch', fake.fetch);
+    const { user } = renderApp({
+      check: fake.check,
+      registry: fixedRegistry([otherServer]),
+      context: { pageOrigin: 'tauri://localhost', bridge },
+      sessionChannel: null,
+    });
+    await user.click(await screen.findByRole('button', { name: 'Sign out' }));
+    await screen.findByRole('heading', { name: 'Signed out' });
+    expect(bridge.signedOut).toEqual(['server-b']);
+    expect(fake.callsTo('/api/auth/logout')).toHaveLength(0);
+  });
+
+  it('[web-008] a sign-out in another tab resets this tab to the sign-in page', async () => {
+    const { fake, tabs } = signedIn();
+    await screen.findByRole('button', { name: 'Sign out' });
+    fake.session = 'none';
+    act(() => tabs.receive({ serverId: 'srv-1', event: 'signed-out' }));
+    expect(await screen.findByRole('heading', { name: 'Signed out' })).toBeInTheDocument();
+  });
+
+  it('[web-008] a sign-in in another tab resets this tab to the board', async () => {
+    const fake = new FakeBoard({ session: 'none' });
+    const tabs = new MemoryChannel();
+    vi.stubGlobal('fetch', fake.fetch);
+    renderApp({
+      check: fake.check,
+      registry: fixedRegistry([HOME]),
+      sessionChannel: tabs.channel,
+    });
+    expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument();
+    fake.session = 'valid';
+    act(() => tabs.receive({ serverId: 'srv-1', event: 'signed-in' }));
+    expect(await screen.findByRole('heading', { name: 'Board' })).toBeInTheDocument();
+  });
+
+  it('[web-008] signing in here tells the other tabs', async () => {
+    const fake = new FakeBoard({ session: 'none' });
+    const tabs = new MemoryChannel();
+    vi.stubGlobal('fetch', fake.fetch);
+    const spy = vi.spyOn(window, 'setInterval');
+    const { user } = renderApp({
+      check: fake.check,
+      registry: fixedRegistry([HOME]),
+      sessionChannel: tabs.channel,
+    });
+    await user.click(await screen.findByRole('button', { name: 'Sign in with your browser' }));
+    await screen.findByText('ABCD-2345');
+    fake.approve();
+    const poll = spy.mock.calls.findLast((call) => call[1] === 2000)?.[0] as () => void;
+    await act(async () => poll());
+    await screen.findByRole('heading', { name: 'Board' });
+    expect(tabs.posted).toEqual([{ serverId: 'srv-1', event: 'signed-in' }]);
+    spy.mockRestore();
+  });
+});
+
+describe('write feedback', () => {
+  const run = (client: ReturnType<typeof createQueryClient>, mutationFn: () => Promise<unknown>) =>
+    new MutationObserver(client, { mutationFn }).mutate().catch(() => undefined);
+
+  it('[web-009] a failed write shows an error toast', async () => {
+    const hub = createToastHub();
+    const client = createQueryClient({ onError: (error) => hub.push(String(error)) });
+    render(
+      createElement(
+        MantineProvider,
+        { env: 'test' },
+        createElement(ToastProvider, { hub, children: createElement(Toasts) }),
+      ),
+    );
+    await run(client, () => Promise.reject(new Error('The task was not saved.')));
+    expect(await screen.findByRole('alert')).toHaveTextContent('The task was not saved.');
+  });
+
+  it('[web-009] a successful write refreshes every active view', async () => {
+    const client = createQueryClient({ onError: () => undefined });
+    const reads = vi.fn(async () => 'fresh');
+    const observer = new QueryObserver(client, { queryKey: ['board'], queryFn: reads });
+    const stop = observer.subscribe(() => undefined);
+    await waitFor(() => expect(reads).toHaveBeenCalledTimes(1));
+    await run(client, async () => 'saved');
+    await waitFor(() => expect(reads).toHaveBeenCalledTimes(2));
+    stop();
   });
 });
