@@ -4,6 +4,7 @@ import { TASK_STATUSES } from '@agent-board/contract';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { fixedClock } from '../src/clock.js';
 import { directory, machine, note, schedule, task } from '../src/db/schema/index.js';
 import type { ScopedDatabase } from '../src/modules/database/index.js';
 import {
@@ -168,6 +169,21 @@ describe.each(TARGETS)('task lifecycle on $name', (target) => {
       );
       expect(await refusal(board.use((tx) => claimTask(tx, pinned.id, 'm2')))).toBe('conflict');
       expect((await board.use((tx) => claimTask(tx, pinned.id, 'm1'))).status).toBe('running');
+    });
+
+    it('[api-057] a claim reads due time and stamps its run from the supplied clock', async () => {
+      const board = await newBoard();
+      const dueAt = new Date('2031-01-01T00:00:00.000Z');
+      const { task: delayed } = await board.add({ notBefore: dueAt });
+      const before = fixedClock(new Date(dueAt.getTime() - 1_000));
+      expect(
+        await refusal(board.use((tx) => claimTask(tx, delayed.id, 'm1', { clock: before }))),
+      ).toBe('conflict');
+      const after = fixedClock(new Date(dueAt.getTime() + 1_000));
+      const claimed = await board.use((tx) => claimTask(tx, delayed.id, 'm1', { clock: after }));
+      expect(claimed.status).toBe('running');
+      expect(claimed.runStartedAt).toEqual(after.now());
+      expect(claimed.updatedAt).toEqual(after.now());
     });
 
     it('[api-057] a task placed in a directory belongs to the directory machine', async () => {

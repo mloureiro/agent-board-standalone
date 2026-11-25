@@ -6,6 +6,7 @@ import type {
   TaskStatus,
 } from '@agent-board/contract';
 
+import type { Clock } from '../../clock.js';
 import type { note, task } from '../../db/schema/index.js';
 
 export type TaskRow = typeof task.$inferSelect;
@@ -100,4 +101,5 @@ export interface TaskListOptions {
 
 export interface TaskOptions {
   scheduling?: boolean | undefined;
+  clock?: Clock | undefined;
 }

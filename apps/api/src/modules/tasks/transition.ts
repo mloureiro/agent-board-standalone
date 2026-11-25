@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import type { TaskStatus } from '@agent-board/contract';
 import { and, eq } from 'drizzle-orm';
 
+import { systemClock } from '../../clock.js';
 import { note, task } from '../../db/schema/index.js';
 import { ApiError } from '../../errors.js';
 import type { ScopedDatabase } from '../database/index.js';
@@ -60,7 +61,7 @@ export const transitionTask = async (
     throw new ApiError('forbidden', 'an agent proposed this task; only the user starts it');
   if (current.proposed && to === 'todo' && change.start === undefined)
     throw new ApiError('forbidden', 'an agent proposed this task; start it first');
-  const now = new Date();
+  const now = (options.clock ?? systemClock).now();
   const values: TaskValues = { status: to, updatedAt: now };
   if (moved) values.movedBy = change.by;
   if (to !== 'needs-me') values.openQuestionNoteId = null;

@@ -28,7 +28,7 @@ const dateOf = (value: string | null | undefined): Date | null | undefined =>
 
 export const createTaskHandlers =
   (vocabulary: Vocabulary): HandlerSet =>
-  ({ services, config }) => {
+  ({ services, config, clock }) => {
     const { database } = services;
     const { scheduling } = config;
     const write = taskWriter(services);
@@ -70,7 +70,7 @@ export const createTaskHandlers =
             tx,
             id,
             { ...patch, notBefore: dateOf(notBefore) },
-            { machine: principal.machineId, run, scheduling },
+            { machine: principal.machineId, run, scheduling, clock },
           );
           const [wire] = await presentWireTasks(tx, [row]);
           return wire!;
@@ -81,7 +81,7 @@ export const createTaskHandlers =
           throw new ApiError('forbidden', 'a machine claims only for itself');
         return write(principal.owner, async (tx) => {
           const [wire] = await presentWireTasks(tx, [
-            await claimTask(tx, input.id, input.machine, { scheduling }),
+            await claimTask(tx, input.id, input.machine, { scheduling, clock }),
           ]);
           return wire!;
         });
@@ -131,7 +131,7 @@ export const createTaskHandlers =
 
       'client.tasks.move': ({ input, principal }) =>
         write(principal.owner, async (tx) => {
-          const row = await moveTask(tx, input, principal.owner, { scheduling });
+          const row = await moveTask(tx, input, principal.owner, { scheduling, clock });
           const [ui] = await presentUiTasks(tx, [row]);
           return ui!;
         }),
