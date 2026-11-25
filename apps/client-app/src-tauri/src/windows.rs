@@ -121,6 +121,14 @@ pub fn show_all_servers(app: &AppHandle) -> tauri::Result<()> {
         .map(|window| webkit::disable_backspace_navigation(window.as_ref()))
 }
 
+pub fn reload_all_servers(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window(ALL_SERVERS_LABEL)
+        && let Err(error) = window.reload()
+    {
+        eprintln!("all-servers reload failed: {error}");
+    }
+}
+
 pub fn focus_server_window(app: &AppHandle, server: ServerId) -> tauri::Result<()> {
     let Some(window) = app.get_window(&server_window_label(server)) else {
         return Ok(());
@@ -166,6 +174,7 @@ pub fn create_server_window(app: &AppHandle, entry: &ServerEntry) -> tauri::Resu
         WindowEvent::Destroyed => {
             handle.state::<TabRegistry>().remove(server);
             alerts::forget(&handle, server);
+            reload_all_servers(&handle);
         }
         _ => {}
     });
@@ -174,6 +183,7 @@ pub fn create_server_window(app: &AppHandle, entry: &ServerEntry) -> tauri::Resu
     if !home_selected {
         server_tabs::create_hidden_home(app, server, &origin);
     }
+    reload_all_servers(app);
     Ok(())
 }
 
