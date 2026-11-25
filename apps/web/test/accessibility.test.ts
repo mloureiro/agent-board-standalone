@@ -6,7 +6,7 @@ import { screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KeyInspector } from '../src/keys/index.js';
-import { frozenClock } from './board-world.js';
+import { frozenClock, hours, isoAt } from './board-world.js';
 import { CONFIG_ALL, FakeBoard } from './fake-board.js';
 import { openTab } from './page-helpers.js';
 import { PagesWorld } from './pages-world.js';
@@ -67,6 +67,15 @@ beforeEach(async () => {
   world.machines = [{ name: 'laptop', clientStatus: 'current' }];
   world.usageTexts.set('laptop', JSON.stringify({ sessions: 3 }));
   world.passkeys = [{ id: 'cred-1', name: 'Laptop key' }];
+  world.devices = [
+    {
+      keyId: '0000000000000001',
+      label: 'Work phone',
+      kind: 'paired',
+      createdAt: isoAt(-hours(24)),
+      lastUsedAt: null,
+    },
+  ];
   world.feedMachines = [
     {
       name: 'laptop',
@@ -160,23 +169,23 @@ describe('axe checks on every page', () => {
     expect(await violations()).toEqual([]);
   }, 30_000);
 
-  const SECTIONS = [
-    'Machines',
-    'Feeds',
-    'Agents',
-    'Links',
-    'Titles',
-    'Notifications',
-    'Account',
-    'Encryption',
-    'Devices',
-    'Versions',
+  const SECTIONS: readonly [string, () => Promise<HTMLElement>][] = [
+    ['Machines', () => screen.findByText('laptop')],
+    ['Feeds', () => screen.findByText('issues')],
+    ['Agents', () => screen.findByText('reviewer')],
+    ['Links', () => screen.findByDisplayValue('A-(\\d+)')],
+    ['Titles', () => screen.findByDisplayValue('^bug')],
+    ['Notifications', () => screen.findByRole('checkbox', { name: 'Notifications' })],
+    ['Account', () => screen.findByRole('button', { name: 'Delete account' })],
+    ['Encryption', () => screen.findByLabelText('Current passphrase')],
+    ['Devices', () => screen.findByText('Work phone')],
+    ['Versions', () => screen.findByRole('table', { name: 'Versions' })],
   ];
-  for (const section of SECTIONS) {
+  for (const [section, content] of SECTIONS) {
     it(`[web-080] Settings › ${section} has no violations`, async () => {
       const { user } = render('/settings');
       await openTab(user, section);
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      await content();
       expect(await violations()).toEqual([]);
     }, 30_000);
   }

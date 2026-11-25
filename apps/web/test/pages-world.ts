@@ -7,6 +7,7 @@ import {
   getClientTitleRulesRoute,
   importClientAccountRoute,
   issueClientMachineRoute,
+  listClientDevicesRoute,
   listClientFeedsRoute,
   listClientMachinesRoute,
   listClientPasskeysRoute,
@@ -26,6 +27,7 @@ import {
   sharedClientAgentsRoute,
   summaryClientAccountRoute,
   updateClientScheduleRoute,
+  type UiDevice,
   type WireSchedule,
 } from '@agent-board/contract';
 import { bindings, createKeySetup, open, seal, type KeySetup } from '@agent-board/sealing';
@@ -95,6 +97,7 @@ export class PagesWorld extends TaskWorld {
   feedMachines: { name: string; text: string; requests: string[] }[] = [];
   readonly feedRequests: Record<string, unknown>[] = [];
   passkeys: WorldPasskey[] = [];
+  devices: UiDevice[] = [];
   readonly exportRows: Record<string, Record<string, unknown>[]> = {};
   readonly exportPages = new Map<string, string[]>();
   readonly taskLists: string[] = [];
@@ -270,6 +273,8 @@ export class PagesWorld extends TaskWorld {
             },
           });
         }
+        case listClientDevicesRoute.path:
+          return json(200, { devices: this.devices });
         case listClientPasskeysRoute.path:
           return json(200, {
             passkeys: this.passkeys.map((passkey) => ({
