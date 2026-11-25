@@ -9,15 +9,15 @@ Read the whole walk before starting. No step changes the old board, and every st
 stop and start over. Placeholders in angle brackets stand for values on your machine. Never paste real paths, host names,
 tokens or owner names into an issue, a commit or a pull request, and never commit anything the tool writes.
 
-| Placeholder                 | Meaning                                                                                  |
-| --------------------------- | ---------------------------------------------------------------------------------------- |
-| `<old-data>`                | the old board's PGlite data folder                                                       |
-| `<copy>`                    | a backup copy of `<old-data>` that you made in step 3                                    |
-| `<new-data>`                | the server app's PGlite data folder (the one its settings show)                          |
-| `<scratch>`                 | a copy of `<new-data>` that you make in step 6                                           |
-| `<api-exe>`                 | the API executable that ships inside the server app                                      |
-| `<owner>`                   | the owner name that `inspect` and `export --dry-run` report                              |
-| `<migrate>`                 | `agent-board-migrate`, or `node apps/migrate/dist/main.js` from a checkout after `pnpm --filter @agent-board/migrate build` |
+| Placeholder  | Meaning                                                                                                                     |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `<old-data>` | the old board's PGlite data folder                                                                                          |
+| `<copy>`     | a backup copy of `<old-data>` that you made in step 3                                                                       |
+| `<new-data>` | the server app's PGlite data folder (the one its settings show)                                                             |
+| `<scratch>`  | a copy of `<new-data>` that you make in step 6                                                                              |
+| `<api-exe>`  | the API executable that ships inside the server app                                                                         |
+| `<owner>`    | the owner name that `inspect` and `export --dry-run` report                                                                 |
+| `<migrate>`  | `agent-board-migrate`, or `node apps/migrate/dist/main.js` from a checkout after `pnpm --filter @agent-board/migrate build` |
 
 ## Before you start
 
@@ -113,12 +113,12 @@ Expected output, in order: the plan, `owner check: ok, "<owner>" is the NO_LOGIN
 Count check expectations: for each table the target's per-owner count equals the export's. Source `dirs` documents
 count against target `legacy_dirs` rows, and the other machine documents count against target machine documents.
 
-| Exit code | Meaning                                                                          | What to do                                                      |
-| --------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| 0         | done                                                                             | continue                                                        |
-| 1         | the import failed; it is one transaction, so no board rows were written          | read the API's message, fix it, run again                       |
-| 2         | refused: unreadable source, owner differs, target folder held, owner exists      | fix what the message names                                      |
-| 3         | the import committed but a count differs                                         | delete the scratch copy (see Recovery), find the difference, rerun  |
+| Exit code | Meaning                                                                     | What to do                                                         |
+| --------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 0         | done                                                                        | continue                                                           |
+| 1         | the import failed; it is one transaction, so no board rows were written     | read the API's message, fix it, run again                          |
+| 2         | refused: unreadable source, owner differs, target folder held, owner exists | fix what the message names                                         |
+| 3         | the import committed but a count differs                                    | delete the scratch copy (see Recovery), find the difference, rerun |
 
 ## 9. Run into the real data folder
 
