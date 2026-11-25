@@ -93,18 +93,15 @@ export function ServersDialog(props: {
             </Stack>
           )}
           <Group justify="flex-end">
-            <Button
-              onClick={() => {
-                setNotices([]);
-                setAdding(true);
-              }}
-            >
-              Add server
-            </Button>
+            <Button onClick={() => setAdding(true)}>Add server</Button>
           </Group>
         </Stack>
       </Modal>
-      <AddServerDialog opened={props.opened && adding} onClose={() => setAdding(false)} />
+      <AddServerDialog
+        opened={props.opened && adding}
+        onClose={() => setAdding(false)}
+        onAdded={() => setNotices([])}
+      />
     </>
   );
 }

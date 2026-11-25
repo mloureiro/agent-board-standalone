@@ -139,6 +139,24 @@ describe('adding a server', () => {
     await waitFor(() => expect(within(dialog).getByLabelText('Name')).toHaveFocus());
   });
 
+  it('[web-089] a successful add clears the notices left by earlier actions', async () => {
+    const { registry } = await withSecond();
+    const { user } = renderApp({ registry });
+    await openServers(user);
+    const row = rowOf('Second');
+    await user.click(within(row).getByRole('button', { name: 'Actions Second' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove' }));
+    await user.click(await within(row).findByRole('button', { name: /confirm/i }));
+    await screen.findByText('Removed Second.');
+
+    const dialog = await openAdd(user);
+    await user.type(within(dialog).getByLabelText('Name'), 'Third');
+    await user.type(within(dialog).getByLabelText('Address'), 'https://third.example');
+    await user.click(within(dialog).getByRole('button', { name: 'Add' }));
+
+    await waitFor(() => expect(screen.queryByText('Removed Second.')).toBeNull());
+  });
+
   it('[web-090] cancelling while the add is pending drops its late result and leaves a reopened form alone', async () => {
     const inner = createBrowserRegistry({ pageOrigin: PAGE_ORIGIN });
     let release: () => void = () => undefined;

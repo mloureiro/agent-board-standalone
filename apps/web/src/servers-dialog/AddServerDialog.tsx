@@ -16,8 +16,9 @@ type Notice = { readonly tone: 'problem' | 'result'; readonly text: string };
 export function AddServerDialog(props: {
   readonly opened: boolean;
   readonly onClose: () => void;
+  readonly onAdded: () => void;
 }): ReactNode {
-  const { opened, onClose } = props;
+  const { opened, onClose, onAdded } = props;
   const { addServer, transportContext } = useServers();
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -63,6 +64,7 @@ export function AddServerDialog(props: {
           setName('');
           setAddress('');
           setNotice(null);
+          onAdded();
           onClose();
           return;
         }
