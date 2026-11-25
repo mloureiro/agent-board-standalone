@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
 
 import { LockButton } from '../keys/index.js';
+import { ProjectFilterSelect, ProjectsNav, useProjects } from '../projects/index.js';
 import { ColorSchemeMenu } from './ColorSchemeMenu.js';
 import { NewTaskButton } from './new-task.js';
 import { SignOutButton } from './SignOutButton.js';
@@ -41,38 +42,40 @@ function NavLinks({ phone, onNavigate }: { phone: boolean; onNavigate?: () => vo
   ));
 }
 
-function ProjectSwitcher(): ReactNode {
-  return (
-    <Button variant="default" disabled>
-      Projects
-    </Button>
-  );
-}
-
 export function AppHeader(): ReactNode {
   const phone = usePhone();
+  const projects = useProjects();
   const [menuOpen, { open, close }] = useDisclosure(false);
   return (
-    <Group component="header" justify="space-between" wrap="nowrap" px="md" py="xs">
-      {phone ? (
-        <>
-          <Button variant="default" onClick={open}>
-            Menu
-          </Button>
-          <Drawer opened={menuOpen} onClose={close} title="Menu">
-            <Stack component="nav" aria-label="Main">
-              <NavLinks phone onNavigate={close} />
-              <ProjectSwitcher />
-            </Stack>
-          </Drawer>
-        </>
-      ) : (
-        <Group component="nav" aria-label="Main" gap="md">
-          <NavLinks phone={false} />
-          <ProjectSwitcher />
-        </Group>
-      )}
-      <Group gap="xs" wrap="nowrap">
+    <Group component="header" justify="space-between" wrap="wrap" gap="xs" px="md" py="xs">
+      <Group gap="xs" wrap="wrap">
+        {phone ? (
+          <>
+            <Button variant="default" onClick={open}>
+              Menu
+            </Button>
+            {projects === null ? null : (
+              <Button variant="default" onClick={open}>
+                Projects
+              </Button>
+            )}
+            <Drawer opened={menuOpen} onClose={close} title="Menu">
+              <Stack>
+                <Stack component="nav" aria-label="Main">
+                  <NavLinks phone onNavigate={close} />
+                </Stack>
+                <ProjectsNav onNavigate={close} />
+              </Stack>
+            </Drawer>
+          </>
+        ) : (
+          <Group component="nav" aria-label="Main" gap="md">
+            <NavLinks phone={false} />
+          </Group>
+        )}
+        <ProjectFilterSelect />
+      </Group>
+      <Group gap="xs" wrap="wrap">
         <NewTaskButton />
         <LockButton />
         <SignOutButton />

@@ -6,6 +6,7 @@ import { Link } from 'react-router';
 
 import { usePageTitle } from '../../components/index.js';
 import { usePage } from '../../pages/index.js';
+import { useProjectFilter } from '../../projects/project-filter.js';
 import { useNow } from '../board/clock.js';
 import { decryptCard, type BoardCard } from '../board/card-model.js';
 import { agoText, parseTime } from '../board/format.js';
@@ -20,14 +21,20 @@ export function ClosedPage(): ReactNode {
   usePageTitle('Closed');
 
   const page = usePage();
+  const { projectId } = useProjectFilter();
   const now = useNow();
   const closed = useQuery({
-    queryKey: [...(page?.base ?? []), 'closed'],
+    queryKey: [...(page?.base ?? []), 'closed', projectId ?? 'all'],
     enabled: page !== null,
     refetchInterval: CLOSED_POLL_MS,
     queryFn: async (): Promise<BoardCard[]> => {
       if (page === null) return [];
-      const answer = await page.call(listClientTasksRoute, { closed: 'true' });
+      const answer = await page.call(listClientTasksRoute, {
+        closed: 'true',
+        ...(projectId === null || !page.features.includes('projects')
+          ? {}
+          : { project: projectId }),
+      });
       const cards = await Promise.all(answer.tasks.map((task) => decryptCard(page.keys, task)));
       return cards.sort(newestFirst);
     },

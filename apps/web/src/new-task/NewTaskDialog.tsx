@@ -16,9 +16,10 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 're
 
 import { useDraft, useLastDirectoryStore } from '../drafts/index.js';
 import { useRecentIcons } from '../pages/index.js';
+import { useProjectFilter } from '../projects/project-filter.js';
 import { newTaskId } from '../routes/task/compose.js';
 import { IconPicker } from './IconPicker.js';
-import { useNewTaskOptions, type NewTaskOptions } from './new-task-data.js';
+import { useNewTaskOptions, type NewTaskOptions, type ProjectOption } from './new-task-data.js';
 import {
   buildCreate,
   formProblems,
@@ -31,6 +32,22 @@ import { WhenFields } from './WhenFields.js';
 
 const DRAFT_NAME = 'new';
 const PHONE_QUERY = '(max-width: 48em)';
+
+function chosenProject(
+  projects: readonly ProjectOption[],
+  picked: string,
+  filtered: string | null,
+): string {
+  const known = (id: string | null): id is string =>
+    id !== null && id !== '' && projects.some((project) => project.id === id);
+  if (known(picked)) return picked;
+  if (known(filtered)) return filtered;
+  return projects.find((project) => project.isDefault)?.id ?? '';
+}
+
+const sentProject = (projects: readonly ProjectOption[], projectId: string): string =>
+  projects.find((project) => project.isDefault)?.id === projectId ? '' : projectId;
+
 const titled = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
 
 function Fields(props: {
@@ -44,19 +61,31 @@ function Fields(props: {
   const [submitting, setSubmitting] = useState(false);
   const form = useMemo(() => restoreForm(raw), [raw]);
   const remembered = useMemo(() => lastDirectory?.read() ?? null, [lastDirectory]);
+  const { projectId: filtered } = useProjectFilter();
   const listsKnown = options.directories !== undefined && options.machines !== undefined;
+  const projectId = chosenProject(options.projects, form.projectId, filtered);
+  const directories = (options.directories ?? []).filter(
+    (directory) => projectId === '' || directory.projectId === projectId,
+  );
   const place = resolvePlace({
+    form,
+    remembered,
+    directories: directories.map((directory) => directory.id),
+    machines: options.machines ?? [],
+    directoriesKnown: listsKnown,
+  });
+  const staleRemembered = resolvePlace({
     form,
     remembered,
     directories: (options.directories ?? []).map((directory) => directory.id),
     machines: options.machines ?? [],
-  });
+  }).staleRemembered;
   const problems = formProblems(form);
   const canCreate = form.prompt.trim() !== '' && Object.keys(problems).length === 0 && !submitting;
 
   useEffect(() => {
-    if (listsKnown && place.staleRemembered) lastDirectory?.clear();
-  }, [listsKnown, place.staleRemembered, lastDirectory]);
+    if (listsKnown && staleRemembered) lastDirectory?.clear();
+  }, [listsKnown, staleRemembered, lastDirectory]);
 
   const change = (next: Partial<NewTaskForm>): void => {
     const merged = { ...form, ...next };
@@ -70,7 +99,11 @@ function Fields(props: {
     try {
       const request = await buildCreate(
         options.keys,
-        { ...form, directoryId: place.directoryId },
+        {
+          ...form,
+          projectId: sentProject(options.projects, projectId),
+          directoryId: place.directoryId,
+        },
         { id: newTaskId(), machine: place.machine },
       );
       await options.create(request);
@@ -86,7 +119,6 @@ function Fields(props: {
     setSubmitting(false);
   };
 
-  const directories = options.directories ?? [];
   const machines = options.machines ?? [];
   const noMachine = options.directoriesEnabled && machines.length === 0 && listsKnown;
 
@@ -123,12 +155,14 @@ function Fields(props: {
           {options.projects.length > 0 ? (
             <NativeSelect
               label="Project"
-              value={form.projectId}
-              data={[
-                { value: '', label: 'Default project' },
-                ...options.projects.map((project) => ({ value: project.id, label: project.label })),
-              ]}
-              onChange={(event) => change({ projectId: event.currentTarget.value })}
+              value={projectId}
+              data={options.projects.map((project) => ({
+                value: project.id,
+                label: project.label,
+              }))}
+              onChange={(event) =>
+                change({ projectId: event.currentTarget.value, directoryId: null })
+              }
             />
           ) : null}
           {options.directoriesEnabled ? (

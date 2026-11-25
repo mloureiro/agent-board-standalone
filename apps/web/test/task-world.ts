@@ -101,7 +101,7 @@ export class TaskWorld extends BoardWorld {
   readonly threads = new Map<string, unknown[]>();
   readonly runs = new Map<string, { id: string; machine: string; startedAt: string }[]>();
   readonly events = new Map<string, StoredEvent[]>();
-  directories: { id: string; path: string }[] = [];
+  directories: { id: string; path: string; projectId?: string }[] = [];
   readonly requests: string[] = [];
   readonly priorities: Record<string, unknown>[] = [];
   readonly projectChanges: Record<string, unknown>[] = [];
@@ -270,7 +270,7 @@ export class TaskWorld extends BoardWorld {
             id: directory.id,
             path: await seal(keys, bindings.directoryPath(directory.id), directory.path),
             repo: null,
-            projectId: PROJECT_HOME,
+            projectId: directory.projectId ?? PROJECT_HOME,
           })),
         ),
       });

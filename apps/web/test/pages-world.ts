@@ -246,7 +246,12 @@ export class PagesWorld extends TaskWorld {
         case listClientTasksRoute.path: {
           this.taskLists.push(this.current.pathWithQuery);
           const closed = query.get('closed') === 'true';
-          return json(200, { tasks: this.tasks.filter((task) => task.closed === closed) });
+          const project = query.get('project');
+          return json(200, {
+            tasks: this.tasks.filter(
+              (task) => task.closed === closed && (project === null || task.projectId === project),
+            ),
+          });
         }
         case listClientMachinesRoute.path:
           return this.machineList();

@@ -36,13 +36,8 @@ import { useKeys } from '../../keys/index.js';
 import { ApiError } from '../../session/index.js';
 import { useServers } from '../../servers/index.js';
 import type { ServerClient } from '../../transport/client.js';
-import {
-  POLL_MS,
-  boardKey,
-  featuresOf,
-  fetchProjectNames,
-  useEventStream,
-} from '../board/board-data.js';
+import { POLL_MS, boardKey, featuresOf, useEventStream } from '../board/board-data.js';
+import { fetchProjectNames } from '../../projects/fetch-projects.js';
 import { attempt, sealPromptAsUser } from '../board/card-model.js';
 import { skillsOf, type Skill } from './catalog-model.js';
 import { newTaskId, sealAnswers, sealNote } from './compose.js';

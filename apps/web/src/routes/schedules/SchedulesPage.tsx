@@ -1,8 +1,8 @@
-import { Alert, Badge, Button, Group, Paper, Select, Stack, Text, Title } from '@mantine/core';
+import { Alert, Badge, Button, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { useState, type ReactNode } from 'react';
 
 import { usePageTitle } from '../../components/index.js';
-import { useProjectChoices } from '../../pages/index.js';
+import { useProjectFilter } from '../../projects/project-filter.js';
 import { notOffered } from '../../servers/index.js';
 import { useNow } from '../board/clock.js';
 import { inText, parseTime } from '../board/format.js';
@@ -11,7 +11,6 @@ import { ScheduleEditDialog } from './ScheduleEditDialog.js';
 import { useSchedules } from './schedule-data.js';
 import { repeatText, type ScheduleView } from './schedule-model.js';
 
-export const ALL_PROJECTS = 'all';
 export const NO_SCHEDULES = 'There are no schedules.';
 export const SCHEDULES_UNAVAILABLE = notOffered('schedules');
 
@@ -57,30 +56,15 @@ function ScheduleRow(props: {
 
 export function SchedulesPage(): ReactNode {
   usePageTitle('Schedules');
-  const [project, setProject] = useState(ALL_PROJECTS);
   const [editing, setEditing] = useState<ScheduleView | null>(null);
   const [deleting, setDeleting] = useState<ScheduleView | null>(null);
-  const projects = useProjectChoices();
-  const data = useSchedules(project === ALL_PROJECTS ? null : project);
+  const { projectId } = useProjectFilter();
+  const data = useSchedules(projectId);
   const now = useNow();
 
   return (
     <Stack>
-      <Group justify="space-between">
-        <Title order={1}>Schedules</Title>
-        {projects === null ? null : (
-          <Select
-            label="Project"
-            allowDeselect={false}
-            value={project}
-            onChange={(value) => setProject(value ?? ALL_PROJECTS)}
-            data={[
-              { value: ALL_PROJECTS, label: 'All projects' },
-              ...projects.map((entry) => ({ value: entry.id, label: entry.name })),
-            ]}
-          />
-        )}
-      </Group>
+      <Title order={1}>Schedules</Title>
       {data !== null && !data.offered ? <Text c="dimmed">{SCHEDULES_UNAVAILABLE}</Text> : null}
       {data?.failed === true ? (
         <Alert color="red" role="alert">
