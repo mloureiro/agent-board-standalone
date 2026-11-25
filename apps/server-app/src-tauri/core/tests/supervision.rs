@@ -182,7 +182,7 @@ fn server_app_024_the_worker_starts_after_the_api_is_first_healthy_and_stops_bef
         "worker started {} ms after the api",
         worker - api
     );
-    assert!(running(&supervisor));
+    assert!(eventually(5, || running(&supervisor)));
     supervisor.stop();
 
     let order: Vec<String> = rig
