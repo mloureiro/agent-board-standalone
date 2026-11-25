@@ -7,57 +7,14 @@ import { SETTING_KEYS } from '../src/commands/tasks/settings.js';
 import { readCensus } from './support/census.js';
 import { testRuntime } from './support/runtime.js';
 
-const BUILT = [
-  'CMD-01',
-  'CMD-02',
-  'CMD-03',
-  'CMD-04',
-  'CMD-05',
-  'CMD-06',
-  'CMD-07',
-  'CMD-08',
-  'CMD-09',
-  'CMD-10',
-  'CMD-11',
-  'CMD-12',
-  'CMD-13',
-  'CMD-14',
-  'CMD-15',
-  'CMD-16',
-  'CMD-17',
-  'CMD-18',
-  'CMD-19',
-  'CMD-20',
-  'CMD-21',
-  'CMD-22',
-  'CMD-23',
-  'CMD-24',
-  'CMD-25',
-  'CMD-26',
-  'CMD-27',
-  'CMD-28',
-  'CMD-29',
-  'CMD-30',
-  'CMD-31',
-  'CMD-32',
-  'CMD-33',
-  'CMD-34',
-  'CMD-35',
-  'CMD-36',
-  'CMD-37',
-  'CMD-39',
-  'CMD-40',
-  'CMD-41',
-  'CMD-42',
-  'CMD-44',
-  'CMD-45',
-] as const;
-
 const DROPPED = ['CMD-38'] as const;
 
 const BUILT_IN_FLAGS = new Set(['--help']);
 
 const census = readCensus();
+const BUILT = census.commands
+  .map((command) => command.id)
+  .filter((id) => !(DROPPED as readonly string[]).includes(id));
 const test_ = testRuntime();
 const program = buildProgram(test_.rt);
 
@@ -77,7 +34,10 @@ describe('the census of cli-review section 1', () => {
   it('[cli-012] reads the whole census table', () => {
     expect(census.commands.length).toBeGreaterThanOrEqual(45);
     expect(census.options.length).toBeGreaterThan(150);
-    for (const id of [...BUILT, ...DROPPED]) {
+    expect(census.commands).toHaveLength(45);
+    expect(BUILT).toHaveLength(44);
+    expect(BUILT).toContain('CMD-43');
+    for (const id of DROPPED) {
       expect(census.commands.map((command) => command.id)).toContain(id);
     }
   });
