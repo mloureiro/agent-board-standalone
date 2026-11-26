@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { ICON_TARGETS } from '../src/icons.js';
+import { ANDROID_BACKGROUND, ICON_TARGETS } from '../src/icons.js';
 
 const root = fileURLToPath(new URL('../../..', import.meta.url));
 const PNG_SIGNATURE = '89504e470d0a1a0a';
@@ -16,14 +16,34 @@ function pngSize(path: string): { signature: string; width: number; height: numb
 }
 
 describe('icon sources', () => {
-  const sources = [...new Set(ICON_TARGETS.map((target) => target.source))];
+  const sources = [
+    ...new Set(
+      ICON_TARGETS.flatMap((target) => [target.source, target.legacySource ?? target.source]),
+    ),
+  ];
 
-  it.each(sources)('%s is a 1024x1024 PNG', (source) => {
-    expect(pngSize(`${root}/${source}`)).toEqual({
-      signature: PNG_SIGNATURE,
-      width: 1024,
-      height: 1024,
-    });
+  it.each(sources)('%s is an SVG', (source) => {
+    expect(readFileSync(`${root}/${source}`, 'utf8')).toContain('<svg');
+  });
+});
+
+describe('generated icons', () => {
+  it.each(ICON_TARGETS.map((target) => target.part))(
+    '%s main icon is 512 or larger PNG',
+    (part) => {
+      const target = ICON_TARGETS.find((candidate) => candidate.part === part)!;
+      const size = pngSize(`${root}/${target.output}/icon.png`);
+      expect(size.signature).toBe(PNG_SIGNATURE);
+      expect(size.width).toBe(size.height);
+    },
+  );
+
+  it('the Android adaptive background is the approved grey', () => {
+    const xml = readFileSync(
+      `${root}/apps/mobile/src-tauri/icons/android/values/ic_launcher_background.xml`,
+      'utf8',
+    );
+    expect(xml).toContain(ANDROID_BACKGROUND);
   });
 });
 

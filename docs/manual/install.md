@@ -60,8 +60,6 @@ Unzip with `ditto -x -k <zip> .`. The apps are ad-hoc signed: remove the quarant
 every rebuild (choose Always Allow). The CLI for another host is inside the server app at
 `<app>/Contents/Resources/cli/board`.
 
-The icons in these builds are placeholders until the owner's icon files are in `assets/icons/` (see section 10).
-
 ## 2. Install the server app
 
 1. Quit the old local server from its tray and stop it starting at login (its README says how). Keep its data.
@@ -195,24 +193,23 @@ Keychain, login item and launchd run only on the default root.
 
 Only after the walk has passed:
 
-1. Owner's icons: put them in `assets/icons/` (section 10) and merge.
-2. Keys: run the two scripts of section 4.5, set the two secrets, commit and merge `apps/cli/update-key.pub`.
-3. Tags: push the `*-v1.0.0` tags of every part (each part's CHANGELOG lists its release steps). A CLI release stays a
+1. Keys: run the two scripts of section 4.5, set the two secrets, commit and merge `apps/cli/update-key.pub`.
+2. Tags: push the `*-v1.0.0` tags of every part (each part's CHANGELOG lists its release steps). A CLI release stays a
    draft until you sign it: `pnpm --filter @agent-board/cli release:sign cli-v1.0.0`.
-4. Install the tagged builds over the walked ones the same way as section 1. The data, the passkeys and the worker
+3. Install the tagged builds over the walked ones the same way as section 1. The data, the passkeys and the worker
    stay.
-5. Remove the old local server and the old `Agent Board` client when you no longer need them.
+4. Remove the old local server and the old `Agent Board` client when you no longer need them.
 
 ## 10. Icons
 
-The owner's icons replace two files: `assets/icons/client-app.png` (client app and Android) and
-`assets/icons/server-app.png` (server app), each a 1024×1024 PNG. Then, from `<repo>`:
+The approved icons are the SVG files in `assets/icons/`. To change one, edit the SVG and run, from `<repo>`:
 
 ```bash
 pnpm icons
 ```
 
-Commit the regenerated icon files of the three apps, merge, and build again.
+It needs `rsvg-convert` and `magick` (`brew install librsvg imagemagick`). Commit the regenerated files of the apps and
+`apps/web/public`.
 
 ## If something goes wrong
 

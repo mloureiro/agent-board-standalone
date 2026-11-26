@@ -12,11 +12,13 @@ use agent_board_server_core::handover::SystemRunner;
 use agent_board_server_core::menu::{BADGE, ItemId, Menu, TITLE};
 use agent_board_server_core::opener::SystemOpener;
 use agent_board_server_core::signals;
+use tauri::image::Image;
 use tauri::menu::{MenuBuilder, MenuItem, MenuItemBuilder};
 use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Manager, RunEvent, Wry};
 
 const TRAY_ID: &str = "main";
+const TRAY_ICON: &[u8] = include_bytes!("../icons/tray@2x.png");
 const SEPARATED: [ItemId; 5] = [
     ItemId::ApiStatus,
     ItemId::RestartServer,
@@ -183,7 +185,9 @@ pub fn run(running: Running) {
                         clicked(app, &console, id);
                     }
                 });
-            if let Some(icon) = app.default_window_icon() {
+            if let Ok(icon) = Image::from_bytes(TRAY_ICON) {
+                tray = tray.icon(icon).icon_as_template(true);
+            } else if let Some(icon) = app.default_window_icon() {
                 tray = tray.icon(icon.clone());
             }
             tray.build(app)?;
