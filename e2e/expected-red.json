@@ -39,37 +39,27 @@
       "accessibility of the primary pages › [web-080] the board page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
       {
         "title": "accessibility of the primary pages › [web-080] the board page is operable by keyboard alone with a visible focus indicator @chromium",
-        "projects": [
-          "chromium-desktop"
-        ]
+        "projects": ["chromium-desktop"]
       },
       "accessibility of the primary pages › [web-080] the new task page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
       {
         "title": "accessibility of the primary pages › [web-080] the new task page is operable by keyboard alone with a visible focus indicator @chromium",
-        "projects": [
-          "chromium-desktop"
-        ]
+        "projects": ["chromium-desktop"]
       },
       "accessibility of the primary pages › [web-080] the task page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
       {
         "title": "accessibility of the primary pages › [web-080] the task page is operable by keyboard alone with a visible focus indicator @chromium",
-        "projects": [
-          "chromium-desktop"
-        ]
+        "projects": ["chromium-desktop"]
       },
       "accessibility of the primary pages › [web-080] the schedules page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
       {
         "title": "accessibility of the primary pages › [web-080] the schedules page is operable by keyboard alone with a visible focus indicator @chromium",
-        "projects": [
-          "chromium-desktop"
-        ]
+        "projects": ["chromium-desktop"]
       },
       "accessibility of the primary pages › [web-080] the settings page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
       {
         "title": "accessibility of the primary pages › [web-080] the settings page is operable by keyboard alone with a visible focus indicator @chromium",
-        "projects": [
-          "chromium-desktop"
-        ]
+        "projects": ["chromium-desktop"]
       },
       "accessibility of the sign-in page › [web-080] the sign-in page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme"
     ],
@@ -98,32 +88,22 @@
       "hand-off finish from another origin › [P-11] a hand-off finish with a wrong verifier leaves the flow usable and the right verifier completes it",
       {
         "title": "hand-off from WebKit › [P-03] a WebKit client completes hand-off sign-in through a second browser context that approves @webkit",
-        "projects": [
-          "webkit-desktop"
-        ]
+        "projects": ["webkit-desktop"]
       },
       {
         "title": "reply drafting in WebKit › [P-18] [web-058] a status change while typing keeps focus, caret and text, and Backspace outside a field does not navigate @webkit",
-        "projects": [
-          "webkit-desktop"
-        ]
+        "projects": ["webkit-desktop"]
       }
     ],
     "browser/projects.spec.ts": [
       {
         "title": "project filter on the task, schedule and event queries › [api-104] client.events with a project raises changed only for that project's changes",
-        "projects": [
-          "chromium-desktop",
-          "webkit-desktop"
-        ]
+        "projects": ["chromium-desktop", "webkit-desktop"]
       },
       "projects in the browser client › [web-082] the sidebar is a drawer on a phone @phone",
       {
         "title": "projects of several servers in the sidebar › [web-082] the sidebar lists the projects of each open server and navigates by project",
-        "projects": [
-          "chromium-desktop",
-          "webkit-desktop"
-        ]
+        "projects": ["chromium-desktop", "webkit-desktop"]
       }
     ],
     "browser/proposals.spec.ts": "*",
@@ -145,21 +125,15 @@
     "browser/settings.spec.ts": [
       {
         "title": "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] a task newly in Needs me fires a notification while the page is unfocused",
-        "projects": [
-          "chromium-desktop"
-        ]
+        "projects": ["chromium-desktop"]
       },
       {
         "title": "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] the on and off setting is read back from the server in a new context",
-        "projects": [
-          "chromium-desktop"
-        ]
+        "projects": ["chromium-desktop"]
       },
       {
         "title": "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] a context without the permission grant does not fire",
-        "projects": [
-          "chromium-desktop"
-        ]
+        "projects": ["chromium-desktop"]
       },
       "[web-075] Settings › Account › [web-075] deleting the account signs out and the user cannot sign back in to the old data",
       "[web-075] Settings › Account › [web-075] importing the exported file into a fresh account restores its tasks"
