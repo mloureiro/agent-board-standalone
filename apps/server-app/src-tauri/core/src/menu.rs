@@ -26,6 +26,7 @@ pub enum ItemId {
     OpenSettings,
     ConnectWorker,
     PairDevice,
+    SetUp,
     Quit,
 }
 
@@ -55,6 +56,7 @@ pub struct Inputs<'a> {
     pub backup: &'a BackupView,
     pub versions: &'a Versions,
     pub request_signature: bool,
+    pub remote: bool,
     pub busy: &'a [Busy],
 }
 
@@ -140,8 +142,9 @@ impl Menu {
             item(
                 ItemId::PairDevice,
                 "Pair a device\u{2026}",
-                api_running && inputs.request_signature && idle,
+                api_running && inputs.request_signature && !inputs.remote && idle,
             ),
+            item(ItemId::SetUp, "Set up\u{2026}", true),
             item(ItemId::Quit, "Quit", true),
         ];
         let failing = failing_text(status);

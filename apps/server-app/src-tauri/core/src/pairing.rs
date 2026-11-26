@@ -6,6 +6,7 @@ use crate::control::ControlClient;
 use crate::timestamp;
 
 pub const VALIDITY: Duration = Duration::from_secs(10 * 60);
+pub const REMOTE_ON: &str = "pairing codes work only while remote access is off: with remote access on, a device signs in through the browser hand-off";
 pub const SIGNATURE_OFF: &str = "pairing needs the request signature: set requestSignature to true in settings.json and reopen the app";
 
 #[derive(Debug, Clone, PartialEq, Eq)]

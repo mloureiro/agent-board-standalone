@@ -82,6 +82,7 @@ fn action_of(id: ItemId) -> Option<Action> {
         | ItemId::LastBackup
         | ItemId::Versions
         | ItemId::ConnectWorker
+        | ItemId::SetUp
         | ItemId::Quit => None,
     }
 }
@@ -97,6 +98,7 @@ fn clicked(app: &AppHandle, console: &Arc<Console>, id: ItemId) {
                 windows::show_connect(app);
             }
         }
+        ItemId::SetUp => windows::show_setup(app),
         other => {
             let Some(action) = action_of(other) else {
                 return;
@@ -137,6 +139,11 @@ pub fn run(running: Running) {
             windows::enrol_set,
             windows::enrol_connect,
             windows::pair_state,
+            windows::setup_state,
+            windows::setup_remote,
+            windows::setup_first_passkey,
+            windows::setup_first_passkey_done,
+            windows::setup_connect_worker,
             windows::close_self
         ])
         .setup(move |app| {
@@ -182,6 +189,7 @@ pub fn run(running: Running) {
             tray.build(app)?;
             running.app_log.info("tray ready");
 
+            let first_run = running.first_run;
             app.manage(Items(items));
             app.manage(Arc::clone(&console));
             app.manage(windows::PairShown::default());
@@ -195,6 +203,9 @@ pub fn run(running: Running) {
                 }
             });
             watch_signals(app.handle().clone());
+            if first_run {
+                windows::show_setup(app.handle());
+            }
             Ok(())
         })
         .build(tauri::generate_context!());

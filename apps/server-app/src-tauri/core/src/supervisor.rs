@@ -43,7 +43,7 @@ impl StartGate {
 
 enum Message {
     Stop,
-    RestartApi,
+    RestartApi(Option<Box<ChildSpec>>),
 }
 
 #[derive(Default)]
@@ -69,7 +69,7 @@ impl Handle {
     }
 
     pub fn restart_server(&self) {
-        let _ = self.commands.send(Message::RestartApi);
+        let _ = self.commands.send(Message::RestartApi(None));
     }
 }
 
@@ -113,7 +113,13 @@ impl Supervisor {
     }
 
     pub fn restart_server(&self) {
-        let _ = self.commands.send(Message::RestartApi);
+        let _ = self.commands.send(Message::RestartApi(None));
+    }
+
+    pub fn restart_server_with(&self, spec: ChildSpec) {
+        let _ = self
+            .commands
+            .send(Message::RestartApi(Some(Box::new(spec))));
     }
 
     pub fn set_hold(&self, held: bool) {
@@ -256,7 +262,7 @@ impl Loop {
         loop {
             match self.inbox.recv_timeout(self.durations.tick) {
                 Ok(Message::Stop) | Err(RecvTimeoutError::Disconnected) => break,
-                Ok(Message::RestartApi) => self.restart_api(),
+                Ok(Message::RestartApi(spec)) => self.restart_api(spec),
                 Err(RecvTimeoutError::Timeout) => {}
             }
             self.advance();
@@ -292,10 +298,13 @@ impl Loop {
         }
     }
 
-    fn restart_api(&mut self) {
+    fn restart_api(&mut self, spec: Option<Box<ChildSpec>>) {
         let Ok(api) = self.api.as_mut() else { return };
         self.log.info("restart-server requested");
         stop_node(api, &self.durations, &self.run_dir, &self.log);
+        if let Some(spec) = spec {
+            api.spec = *spec;
+        }
         api.crashes = 0;
         api.phase = Phase::Pending;
     }

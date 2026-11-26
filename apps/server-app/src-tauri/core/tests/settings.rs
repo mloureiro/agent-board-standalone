@@ -202,21 +202,77 @@ fn server_app_068_the_process_knows_its_login_name() {
 }
 
 #[test]
-fn server_app_089_remote_hosts_need_the_request_signature() {
-    let message = refused(r#"{"remoteHosts":["board.example.net"]}"#);
-    assert!(message.contains("requestSignature"), "{message}");
-    let message = refused(r#"{"remoteHosts":["board.example.net"],"requestSignature":false}"#);
-    assert!(message.contains("requestSignature"), "{message}");
+fn server_app_089_remote_hosts_need_the_public_url() {
+    for text in [
+        r#"{"remoteHosts":["board.example.net"]}"#,
+        r#"{"remoteHosts":["board.example.net"],"requestSignature":true}"#,
+    ] {
+        assert_eq!(refused(text), "settings.json: remoteHosts needs publicUrl");
+    }
 
     let settings = parse(
-        r#"{"remoteHosts":["Board.Example.NET","mac.tail1234.ts.net"],"requestSignature":true}"#,
+        r#"{"publicUrl":"https://board.example.net","remoteHosts":["Board.Example.NET","mac.tail1234.ts.net"]}"#,
     )
     .unwrap();
     assert_eq!(
         settings.remote_hosts,
         ["board.example.net", "mac.tail1234.ts.net"]
     );
-    assert!(settings.request_signature);
+}
+
+#[test]
+fn server_app_089_the_public_url_turns_remote_access_on_and_forces_the_request_signature() {
+    let off = parse("{}").unwrap();
+    assert!(!off.remote());
+    assert_eq!(off.public_url, None);
+
+    for text in [
+        r#"{"publicUrl":"https://board.example.net"}"#,
+        r#"{"publicUrl":"https://board.example.net","requestSignature":false}"#,
+    ] {
+        let on = parse(text).unwrap();
+        assert!(on.remote());
+        assert!(on.request_signature, "{text}");
+    }
+}
+
+#[test]
+fn server_app_089_the_public_url_is_a_bare_https_origin_stored_lower_cased_without_a_slash() {
+    for (given, stored) in [
+        ("https://board.example.net", "https://board.example.net"),
+        ("https://board.example.net/", "https://board.example.net"),
+        ("https://Mac.Tail1234.TS.net", "https://mac.tail1234.ts.net"),
+        (
+            "https://board.example.net:443/",
+            "https://board.example.net",
+        ),
+    ] {
+        assert_eq!(
+            parse(&format!(r#"{{"publicUrl":"{given}"}}"#))
+                .unwrap()
+                .public_url
+                .as_deref(),
+            Some(stored),
+            "{given}"
+        );
+    }
+
+    for bad in [
+        "http://board.example.net",
+        "https://board.example.net/board",
+        "https://board.example.net:8443",
+        "https://board.example.net/?a=1",
+        "https://board.example.net/#top",
+        "https://user:secret@board.example.net",
+        "https://192.168.1.10",
+        "https://[::1]",
+        "https://-bad.example.net",
+        "board.example.net",
+        "",
+    ] {
+        let message = refused(&format!(r#"{{"publicUrl":"{bad}"}}"#));
+        assert!(message.contains("publicUrl"), "{bad}: {message}");
+    }
 }
 
 #[test]
@@ -241,7 +297,7 @@ fn server_app_089_at_most_eight_bare_host_names_are_accepted() {
             .map(|index| format!("\"h{index}.example.net\""))
             .collect();
         format!(
-            r#"{{"requestSignature":true,"remoteHosts":[{}]}}"#,
+            r#"{{"publicUrl":"https://board.example.net","remoteHosts":[{}]}}"#,
             names.join(",")
         )
     };
@@ -258,8 +314,19 @@ fn server_app_089_at_most_eight_bare_host_names_are_accepted() {
         "*.example.net",
     ] {
         let message = refused(&format!(
-            r#"{{"requestSignature":true,"remoteHosts":["{bad}"]}}"#
+            r#"{{"publicUrl":"https://board.example.net","remoteHosts":["{bad}"]}}"#
         ));
         assert!(message.contains("remoteHosts"), "{bad}: {message}");
     }
+}
+
+#[test]
+fn server_app_089_creating_the_file_reports_a_first_run_once_and_never_writes_a_public_url() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::new(dir.path());
+
+    assert!(Settings::create_if_missing(&paths, "Ines").unwrap());
+    let on_disk = fs::read_to_string(paths.settings_file()).unwrap();
+    assert!(!on_disk.contains("publicUrl"), "{on_disk}");
+    assert!(!Settings::create_if_missing(&paths, "Ines").unwrap());
 }

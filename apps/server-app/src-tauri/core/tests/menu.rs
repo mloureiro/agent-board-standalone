@@ -41,11 +41,16 @@ fn versions() -> Versions {
 }
 
 fn build(status: &Status, request_signature: bool, busy: &[Busy]) -> Menu {
+    build_remote(status, request_signature, false, busy)
+}
+
+fn build_remote(status: &Status, request_signature: bool, remote: bool, busy: &[Busy]) -> Menu {
     Menu::build(&Inputs {
         status,
         backup: &BackupView::default(),
         versions: &versions(),
         request_signature,
+        remote,
         busy,
     })
 }
@@ -79,6 +84,7 @@ fn server_app_011_the_items_come_in_the_catalogue_order_with_pairing_after_conne
             ItemId::OpenSettings,
             ItemId::ConnectWorker,
             ItemId::PairDevice,
+            ItemId::SetUp,
             ItemId::Quit,
         ]
     );
@@ -106,6 +112,7 @@ fn server_app_011_the_items_come_in_the_catalogue_order_with_pairing_after_conne
             "Open settings file",
             "Connect worker\u{2026}",
             "Pair a device\u{2026}",
+            "Set up\u{2026}",
             "Quit",
         ]
     );
@@ -124,6 +131,7 @@ fn server_app_012_open_board_connect_and_backup_follow_the_api_and_worker_items_
             ItemId::RestartServer,
             ItemId::OpenLogs,
             ItemId::OpenSettings,
+            ItemId::SetUp,
             ItemId::Quit
         ]
     );
@@ -138,6 +146,7 @@ fn server_app_012_open_board_connect_and_backup_follow_the_api_and_worker_items_
             ItemId::OpenSettings,
             ItemId::ConnectWorker,
             ItemId::PairDevice,
+            ItemId::SetUp,
             ItemId::Quit
         ]
     );
@@ -155,6 +164,7 @@ fn server_app_012_open_board_connect_and_backup_follow_the_api_and_worker_items_
             ItemId::OpenSettings,
             ItemId::ConnectWorker,
             ItemId::PairDevice,
+            ItemId::SetUp,
             ItemId::Quit
         ]
     );
@@ -172,6 +182,7 @@ fn server_app_012_open_board_connect_and_backup_follow_the_api_and_worker_items_
             ItemId::CheckWorker,
             ItemId::OpenLogs,
             ItemId::OpenSettings,
+            ItemId::SetUp,
             ItemId::Quit
         ]
     );
@@ -183,7 +194,12 @@ fn server_app_013_every_busy_kind_leaves_only_open_board_connect_and_quit_enable
         let menu = build(&running(), true, &[busy]);
         assert_eq!(
             enabled(&menu),
-            [ItemId::OpenBoard, ItemId::ConnectWorker, ItemId::Quit],
+            [
+                ItemId::OpenBoard,
+                ItemId::ConnectWorker,
+                ItemId::SetUp,
+                ItemId::Quit
+            ],
             "{busy:?}"
         );
         assert_eq!(menu.busy, [busy]);
@@ -198,8 +214,38 @@ fn server_app_013_the_busy_lock_does_not_enable_what_the_api_state_disables() {
     );
     assert_eq!(
         enabled(&build(&api_down, true, &[Busy::Recovery])),
-        [ItemId::Quit]
+        [ItemId::SetUp, ItemId::Quit]
     );
+}
+
+#[test]
+fn server_app_090_pairing_is_off_while_remote_access_is_on() {
+    let menu = build_remote(&running(), true, true, &[]);
+    assert!(!menu.item(ItemId::PairDevice).enabled);
+    assert_eq!(menu.item(ItemId::PairDevice).label, "Pair a device\u{2026}");
+    assert!(
+        build_remote(&running(), true, false, &[])
+            .item(ItemId::PairDevice)
+            .enabled
+    );
+}
+
+#[test]
+fn server_app_089_set_up_stays_enabled_whatever_the_api_and_the_busy_lock() {
+    let api_down = status(
+        Row::new(RowState::Failed, "Blocked: no space"),
+        Row::new(RowState::Off, NOT_CONNECTED),
+    );
+    for menu in [
+        build(&api_down, false, &[]),
+        build(&running(), false, &[Busy::Backup]),
+        build_remote(&running(), true, true, &[]),
+    ] {
+        let item = menu.item(ItemId::SetUp);
+        assert!(item.enabled);
+        assert_eq!(item.label, "Set up\u{2026}");
+        assert_eq!(item.id.key(), "set-up");
+    }
 }
 
 #[test]
@@ -323,6 +369,7 @@ fn server_app_011_the_status_rows_and_the_last_backup_row_read_from_the_state() 
             backup: &backup,
             versions: &versions(),
             request_signature: false,
+            remote: false,
             busy: &[],
         })
     };

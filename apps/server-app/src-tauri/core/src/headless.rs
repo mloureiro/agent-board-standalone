@@ -12,6 +12,7 @@ use crate::backup_desk::BackupView;
 use crate::console::{Console, Event};
 use crate::handover::{CommandRunner, SystemRunner};
 use crate::opener::{Opener, SystemOpener};
+use crate::settings::{Settings, SettingsError};
 use crate::signals;
 use crate::status::Status;
 
@@ -22,8 +23,13 @@ pub fn emit(out: &mut impl Write, event: &Value) {
     let _ = out.flush();
 }
 
-pub fn state(running: &Running, status: &Status, backup: &BackupView) -> Value {
-    let settings = match &running.settings {
+pub fn state(
+    running: &Running,
+    settings: &Result<Settings, SettingsError>,
+    status: &Status,
+    backup: &BackupView,
+) -> Value {
+    let settings = match settings {
         Ok(settings) => json!({
             "status": "loaded",
             "userName": settings.user_name,
@@ -33,6 +39,7 @@ pub fn state(running: &Running, status: &Status, backup: &BackupView) -> Value {
             "startAtLogin": settings.start_at_login,
             "remoteHosts": settings.remote_hosts,
             "requestSignature": settings.request_signature,
+            "publicUrl": settings.public_url,
         }),
         Err(error) => json!({ "status": "refused", "message": error.to_string() }),
     };
@@ -117,7 +124,12 @@ pub fn serve_with(
             Input::Status => {
                 emit(
                     out,
-                    &state(running, &console.status(), &console.backup_view()),
+                    &state(
+                        running,
+                        &console.settings(),
+                        &console.status(),
+                        &console.backup_view(),
+                    ),
                 );
                 continue;
             }
@@ -133,7 +145,12 @@ pub fn serve_with(
             "" => {}
             "state" => emit(
                 out,
-                &state(running, &console.status(), &console.backup_view()),
+                &state(
+                    running,
+                    &console.settings(),
+                    &console.status(),
+                    &console.backup_view(),
+                ),
             ),
             "menu" => emit(out, &console.menu().to_json()),
             "quit" => break,
@@ -152,7 +169,10 @@ pub fn serve_with(
         .try_iter()
         .any(|received| matches!(received, Input::Status));
     if changed {
-        emit(out, &state(running, &last, &console.backup_view()));
+        emit(
+            out,
+            &state(running, &console.settings(), &last, &console.backup_view()),
+        );
     }
     running.app_log.info("quit");
     emit(out, &json!({ "type": "quit" }));

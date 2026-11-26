@@ -99,7 +99,7 @@ fn server_app_014_the_targets_the_contract_rejects_are_never_handed_over() {
 #[test]
 fn server_app_014_open_board_runs_open_with_the_bundle_id_and_the_link() {
     let runner = Scripted::new(vec![Ok(0)]);
-    let opened = open_board("http://127.0.0.1:4785/", &runner);
+    let opened = open_board("http://127.0.0.1:4785/", "http://127.0.0.1:4785/", &runner);
 
     let link = "agentboard://open?v=1&url=http%3A%2F%2F127.0.0.1%3A4785%2F";
     let expected = vec![
@@ -123,7 +123,7 @@ fn server_app_014_open_board_runs_open_with_the_bundle_id_and_the_link() {
 fn server_app_014_a_failing_handover_falls_back_to_the_default_browser() {
     for first in [Ok(1), Ok(-1), Err(io::Error::other("no such app"))] {
         let runner = Scripted::new(vec![first, Ok(0)]);
-        let opened = open_board("http://localhost:4785/", &runner);
+        let opened = open_board("http://localhost:4785/", "http://localhost:4785/", &runner);
 
         let calls = runner.calls();
         assert_eq!(calls.len(), 2);
@@ -136,9 +136,23 @@ fn server_app_014_a_failing_handover_falls_back_to_the_default_browser() {
 }
 
 #[test]
+fn server_app_089_with_remote_access_the_browser_fallback_opens_the_public_address() {
+    let runner = Scripted::new(vec![Ok(1), Ok(0)]);
+    let opened = open_board(
+        "http://127.0.0.1:4785/",
+        "https://board.example.net/",
+        &runner,
+    );
+    let calls = runner.calls();
+    assert!(calls[0][2].contains("127.0.0.1"));
+    assert_eq!(calls[1], ["https://board.example.net/"]);
+    assert_eq!(opened.failure, None);
+}
+
+#[test]
 fn server_app_014_a_fallback_that_fails_too_reports_the_failure() {
     let runner = Scripted::new(vec![Ok(1), Ok(3)]);
-    let opened = open_board("http://127.0.0.1:4785/", &runner);
+    let opened = open_board("http://127.0.0.1:4785/", "http://127.0.0.1:4785/", &runner);
     assert_eq!(opened.failure.as_deref(), Some("open exited with 3"));
     assert!(!opened.in_client_app);
 }
@@ -153,7 +167,7 @@ fn server_app_014_an_address_that_is_not_loopback_or_carries_credentials_runs_no
         "not a url",
     ] {
         let runner = Scripted::new(vec![]);
-        let opened = open_board(target, &runner);
+        let opened = open_board(target, target, &runner);
         assert!(runner.calls().is_empty(), "{target}");
         assert!(opened.commands.is_empty());
         assert!(opened.failure.unwrap().contains("cannot be handed over"));

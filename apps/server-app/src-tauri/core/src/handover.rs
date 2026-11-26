@@ -108,7 +108,7 @@ fn displayed(args: &[String]) -> Vec<String> {
         .collect()
 }
 
-pub fn open_board(target: &str, runner: &dyn CommandRunner) -> Opened {
+pub fn open_board(target: &str, browser: &str, runner: &dyn CommandRunner) -> Opened {
     let link = match build_link(target) {
         Ok(link) => link,
         Err(problem) => {
@@ -131,7 +131,7 @@ pub fn open_board(target: &str, runner: &dyn CommandRunner) -> Opened {
             failure: None,
         };
     }
-    let browser = vec![target.to_string()];
+    let browser = vec![browser.to_string()];
     commands.push(displayed(&browser));
     let failure = match runner.run(&browser) {
         Ok(0) => None,
