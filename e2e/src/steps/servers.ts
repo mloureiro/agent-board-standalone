@@ -121,8 +121,10 @@ export async function openServerList(page: Page): Promise<void> {
 }
 
 export async function closeServerList(page: Page): Promise<void> {
-  if (await page.getByRole('dialog', { name: SERVER_UI.list }).isVisible()) {
+  const dialog = page.getByRole('dialog', { name: SERVER_UI.list });
+  if (await dialog.isVisible()) {
     await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
   }
 }
 
