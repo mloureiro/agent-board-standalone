@@ -18,7 +18,11 @@
     ],
     "browser/board.spec.ts": [
       "board › [web-029] a touch drag moves a card between columns on a phone @phone",
-      "board with a running card › [web-035] a running card shows context usage as a thin line"
+      "board with a running card › [web-035] a running card shows context usage as a thin line",
+      {
+        "title": "board › [web-029] cards reorder within Backlog and the order persists after a reload",
+        "projects": ["webkit-desktop"]
+      }
     ],
     "browser/new-task.spec.ts": [
       "new task form › [web-061] the form takes prompt, project, icon, directory, title, labels, priority, model, effort, lane, agent and auto-done",
@@ -34,10 +38,6 @@
         "projects": ["chromium-desktop"]
       },
       {
-        "title": "hand-off from WebKit › [P-03] a WebKit client completes hand-off sign-in through a second browser context that approves @webkit",
-        "projects": ["webkit-desktop"]
-      },
-      {
         "title": "reply drafting in WebKit › [P-18] [web-058] a status change while typing keeps focus, caret and text, and Backspace outside a field does not navigate @webkit",
         "projects": ["webkit-desktop"]
       }
@@ -45,26 +45,22 @@
     "browser/proposals.spec.ts": [
       "proposals › [api-056] an agent-created task is a Backlog proposal that no machine claims"
     ],
-    "browser/questions.spec.ts": "*",
-    "browser/responsive.spec.ts": [
-      "phone viewport journeys on a no-login board › [web-049] the pinned panel stays visible and its send button works with the keyboard open @phone",
-      "phone viewport journeys on a no-login board › [web-098] the board journey completes at the phone viewport @phone",
-      "phone viewport journeys on a no-login board › [web-098] the project filter journey completes at the phone viewport @phone",
-      "phone viewport journeys on a no-login board › [web-098] the task page journey completes at the phone viewport @phone",
-      "phone viewport journeys on a no-login board › [web-098] the reply journey completes at the phone viewport @phone",
-      "phone viewport journeys on a no-login board › [web-098] the answer a question journey completes at the phone viewport @phone",
-      "phone viewport journeys on a no-login board › [web-098] the new task journey completes at the phone viewport @phone",
+    "browser/questions.spec.ts": [
       {
-        "title": "phone viewport journeys on a no-login board › [web-098] the schedules journey completes at the phone viewport @phone",
-        "projects": ["chromium-desktop", "webkit-desktop", "chromium-phone", "webkit-phone"]
-      },
-      "phone viewport journeys on a no-login board › [web-098] the settings journey completes at the phone viewport @phone",
-      {
-        "title": "phone viewport sign-in on a login board › [web-098] the sign in journey completes at the phone viewport @phone",
-        "projects": ["chromium-desktop", "webkit-desktop"]
+        "title": "questions with a running worker › [web-055] mod+Enter submits the answer",
+        "projects": ["chromium-desktop"]
       }
     ],
-    "browser/sealing-at-rest.spec.ts": "*",
+    "browser/responsive.spec.ts": [
+      {
+        "title": "phone viewport journeys on a no-login board › [web-098] the project filter journey completes at the phone viewport @phone",
+        "projects": ["webkit-desktop"]
+      }
+    ],
+    "browser/sealing-at-rest.spec.ts": [
+      "[api-053] Sealing at rest in Postgres › [api-053] no text, jsonb or array column holds a plaintext title, prompt, note or directory path @chromium",
+      "[api-053] Sealing at rest in Postgres › [api-053] the sealed columns hold envelopes @chromium"
+    ],
     "browser/sign-in.spec.ts": [
       {
         "title": "sign-in page › [web-014] SAML returns to the client return page and lands signed in, in the same tab",
@@ -75,7 +71,14 @@
         "projects": ["webkit-desktop"]
       }
     ],
-    "browser/task-page.spec.ts": "*",
-    "browser/transcript.spec.ts": "*"
+    "browser/task-page.spec.ts": [
+      "task page on a running worker › [web-048] the / skill list opened from the reply box is fully visible and not behind the panel",
+      "task page on a running worker › [web-050] on a running task Stop & send interrupts the run and delivers the message",
+      "task page on a running worker › [web-058] the reply box keeps focus, caret and text when the run status changes"
+    ],
+    "browser/transcript.spec.ts": [
+      "transcript drawer and context bar › [web-059] the drawer lists every run of a task and shows thinking",
+      "transcript drawer and context bar › [web-060] the context bar shows percentage used, the window and the auto-compact marker"
+    ]
   }
 }
