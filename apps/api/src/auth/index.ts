@@ -40,6 +40,7 @@ export {
   newFlowId,
   newPairingCode,
   readFlow,
+  readHandoffFlow,
   startFlow,
   takeFlow,
   approveFlow,

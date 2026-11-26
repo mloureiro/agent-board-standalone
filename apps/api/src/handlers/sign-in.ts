@@ -12,6 +12,7 @@ import {
   parseSigningKey,
   readCredential,
   readFlow,
+  readHandoffFlow,
   sessionCookie,
   startFlow,
   takeFlow,
@@ -126,14 +127,14 @@ export const signInHandlers: HandlerSet = (context) => ({
   },
 
   'auth.handoff.describe': async ({ input }) => {
-    const flow = await readFlow(context, input.flow, 'handoff');
+    const flow = await readHandoffFlow(context, input.flow);
     if (flow === null)
       throw new ApiError('not-found', 'this sign-in code is unknown or has expired');
     return { code: handoffData(flow.data).code };
   },
 
   'auth.handoff.approve': async ({ input, principal, request }) => {
-    const flow = await readFlow(context, input.flow, 'handoff');
+    const flow = await readHandoffFlow(context, input.flow);
     if (flow === null)
       throw new ApiError('not-found', 'this sign-in code is unknown or has expired');
     if (flow.owner !== null)
@@ -148,7 +149,7 @@ export const signInHandlers: HandlerSet = (context) => ({
             system.lookupSession(credential.hash),
           );
     if (stored === null) throw new ApiError('forbidden', 'sign in to approve this code');
-    const changed = await approveFlow(context, input.flow, principal.owner, {
+    const changed = await approveFlow(context, flow.id, principal.owner, {
       ...flow.data,
       method: stored.method,
     });

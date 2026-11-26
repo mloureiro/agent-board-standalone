@@ -351,6 +351,20 @@ describe('hand-off', () => {
     expect(unknown.statusCode).toBe(404);
   });
 
+  it('[api-039] the pairing code stands for the flow when another browser approves it', async () => {
+    const board = await started(login());
+    const token = await signedIn(board, 'grace', 'client');
+    const { flow, code } = await startHandoff(board);
+    const described = await board.app.inject({
+      url: `/api/auth/handoff/describe?flow=${code}`,
+      headers: bearer(token),
+    });
+    expect(described.json()).toEqual({ code });
+    expect((await approve(board, code.toLowerCase(), bearer(token))).statusCode).toBe(200);
+    expect((await finish(board, flow)).statusCode).toBe(200);
+    expect((await approve(board, 'ZZZZ-ZZZZ', bearer(token))).statusCode).toBe(404);
+  });
+
   it('[api-039] a finish before approval grants no session', async () => {
     const board = await started(login());
     const { flow } = await startHandoff(board);
