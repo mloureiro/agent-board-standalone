@@ -46,7 +46,7 @@ describe('env file', () => {
 });
 
 describe('secret file modes', () => {
-  it.each([0o600, 0o400])('accepts mode %o', (mode) => {
+  it.each([0o600, 0o400])('[cli-006] accepts mode %o', (mode) => {
     const { path: at } = fresh();
     const file = at('secret');
     writeFileSync(file, 'x');
@@ -54,7 +54,7 @@ describe('secret file modes', () => {
     expect(() => assertSecretFile(file, 'the file')).not.toThrow();
   });
 
-  it.each([0o644, 0o640, 0o660, 0o700, 0o604])('refuses mode %o', (mode) => {
+  it.each([0o644, 0o640, 0o660, 0o700, 0o604])('[cli-006] refuses mode %o', (mode) => {
     const { path: at } = fresh();
     const file = at('secret');
     writeFileSync(file, 'x');

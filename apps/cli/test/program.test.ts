@@ -76,7 +76,7 @@ function listing(directory: string): string[] {
 }
 
 describe('exit codes', () => {
-  it('defines the documented codes', () => {
+  it('[cli-001] defines the documented codes', () => {
     expect(EXIT).toEqual({
       ok: 0,
       failure: 1,
@@ -87,7 +87,7 @@ describe('exit codes', () => {
     });
   });
 
-  it('exits 2 on a usage error and writes board: <message>', async () => {
+  it('[cli-001] exits 2 on a usage error and writes board: <message>', async () => {
     const test = runtime();
     expect(await runCli(['nosuch'], test.rt)).toBe(2);
     expect(test.captured.stderr).toMatch(/^board: unknown command 'nosuch'/);
@@ -95,13 +95,13 @@ describe('exit codes', () => {
     expect(await runCli(['init'], test.rt)).toBe(2);
   });
 
-  it('exits 2 for an invalid profile name', async () => {
+  it('[cli-001] exits 2 for an invalid profile name', async () => {
     const test = runtime();
     expect(await runCli(['--profile', 'Bad_Name', 'version'], test.rt)).toBe(2);
     expect(test.captured.stderr).toMatch(/invalid profile name/);
   });
 
-  it('exits 1 with board: <message> for any other failure', async () => {
+  it('[cli-001] exits 1 with board: <message> for any other failure', async () => {
     const test = runtime();
     expect(
       await runCli(
@@ -120,7 +120,7 @@ describe('exit codes', () => {
     expect(test.captured.stderr).toMatch(/^board: token file \/tmp\/none does not exist\n$/);
   });
 
-  it('keeps the code of a reported failure and of a usage error', async () => {
+  it('[cli-001] keeps the code of a reported failure and of a usage error', async () => {
     expect(new ReportedFailure(3).exitCode).toBe(3);
     expect(new UsageError('x').exitCode).toBe(2);
     expect(new CliError('x').exitCode).toBe(1);
@@ -243,7 +243,7 @@ describe('board init', () => {
     expect(await runCli(initArgs('not a url', files), test.rt)).toBe(2);
   });
 
-  it('prints DRY and writes nothing under --dry-run, before or after the command', async () => {
+  it('[cli-002] prints DRY and writes nothing under --dry-run, before or after the command', async () => {
     const server = await board();
     const test = runtime();
     const files = secrets(test, server);

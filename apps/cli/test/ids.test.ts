@@ -79,11 +79,11 @@ describe('outside a run', () => {
 });
 
 describe('inside a run', () => {
-  it('accepts a full id', async () => {
+  it('[cli-009] accepts a full id', async () => {
     expect(await resolveTaskId('abcdef0123456', resolution({ inRun: true }))).toBe('abcdef0123456');
   });
 
-  it('refuses a prefix and a link without asking the server', async () => {
+  it('[cli-009] refuses a prefix and a link without asking the server', async () => {
     const source = resolution({ inRun: true });
     await expect(resolveTaskId('abcd', source)).rejects.toThrow(/full id/);
     await expect(resolveTaskId('http://localhost:8080/t/fedcba98', source)).rejects.toThrow(

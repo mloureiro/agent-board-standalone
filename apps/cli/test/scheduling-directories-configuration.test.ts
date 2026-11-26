@@ -161,7 +161,7 @@ describe('board config', () => {
     expect(configOf(cli)).toEqual({ machine: 'test-machine' });
   });
 
-  it('[cli-040] set refuses inside a run', async () => {
+  it('[cli-040] [cli-009] set refuses inside a run', async () => {
     const { cli } = await rig({ env: { AGENT_BOARD_TASK: 'taskAAAA' } });
     expect(await cli.run('config', 'set', 'maxRunHours', '4')).toBe(2);
     expect(await cli.run('config', 'get', 'machine')).toBe(0);
@@ -391,7 +391,7 @@ describe('board projects', () => {
     expect([...stub.tasks.values()][0]?.projectId).toBe(PROJECT);
   });
 
-  it('[cli-039] default is refused inside a run and needs the projects feature', async () => {
+  it('[cli-039] [cli-009] default is refused inside a run and needs the projects feature', async () => {
     const inRun = await rig({ env: { AGENT_BOARD_TASK: 'taskAAAA' } });
     expect(await inRun.cli.run('projects', 'default', PROJECT)).toBe(2);
     const old = await rig({ board: { features: ['directories'] } });

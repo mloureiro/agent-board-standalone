@@ -48,7 +48,7 @@ describe.each(FIXTURES)('export of $name', (fixture) => {
     await rm(outDirectory, { recursive: true, force: true });
   });
 
-  it('writes a header naming the migrate source and the detected version', () => {
+  it('[migrate-011] writes a header naming the migrate source and the detected version', () => {
     expect(header).toMatchObject({
       format: 'agent-board-export',
       version: 1,
@@ -102,14 +102,14 @@ describe.each(FIXTURES)('export of $name', (fixture) => {
     }
   });
 
-  it('turns each machine dirs document into a legacy_dirs record as stored', () => {
+  it('[migrate-005] turns each machine dirs document into a legacy_dirs record as stored', () => {
     for (const stored of original.machine as SourceRow[]) {
       const legacy = rows('legacy_dirs').find((line) => line.row.machineName === stored.name);
       expect(legacy?.row.document).toBe(stored.dirs);
     }
   });
 
-  it('puts every task and schedule in the default project with legacy directories as stored', () => {
+  it('[migrate-005] puts every task and schedule in the default project with legacy directories as stored', () => {
     const [project] = rows('project');
     expect(project?.row).toMatchObject({ isDefault: true, name: null, icon: null });
     for (const stored of original.task as SourceRow[]) {

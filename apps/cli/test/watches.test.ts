@@ -165,7 +165,7 @@ describe('board watch, watches and unwatch', () => {
     expect(cli.stderr()).toContain('has no open watch');
   });
 
-  it('[cli-020] stores nothing on --dry-run and skips publishing on a server without the watches feature', async () => {
+  it('[cli-020] [cli-005] stores nothing on --dry-run and skips publishing on a server without the watches feature', async () => {
     const { stub, cli } = await running();
     expect(await cli.run('--dry-run', 'watch', 'taskAAAA', '--in', '5m')).toBe(0);
     expect(cli.stdout()).toContain('DRY store watch "timer"');

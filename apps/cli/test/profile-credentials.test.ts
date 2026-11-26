@@ -45,7 +45,7 @@ describe('credentials from the env file', () => {
     });
   });
 
-  it('refuses a file that is not mode 600 or 400', async () => {
+  it('[cli-006] refuses a file that is not mode 600 or 400', async () => {
     env = testRuntime();
     const dirs = dirsOf(env);
     storeEnvFile(dirs, 0o644);
@@ -80,7 +80,7 @@ describe('credentials from the env file', () => {
 describe('credentials command', () => {
   const lines = `AGENT_BOARD_TOKEN=abm_fromcommand\nAGENT_BOARD_DATA_KEY=${DATA_KEY}\n`;
 
-  it('replaces the env file entirely, even when that file is loose', async () => {
+  it('[cli-007] replaces the env file entirely, even when that file is loose', async () => {
     env = testRuntime({
       env: { AGENT_BOARD_CREDENTIALS_COMMAND: '/tmp/creds' },
       exec: () => ({ code: 0, stdout: lines }),
@@ -97,7 +97,7 @@ describe('credentials command', () => {
     });
   });
 
-  it('never merges: a missing line is an error even if the env file has it', async () => {
+  it('[cli-007] never merges: a missing line is an error even if the env file has it', async () => {
     env = testRuntime({
       env: { AGENT_BOARD_CREDENTIALS_COMMAND: '/tmp/creds' },
       exec: () => ({ code: 0, stdout: 'AGENT_BOARD_TOKEN=abm_fromcommand\n' }),
@@ -107,12 +107,12 @@ describe('credentials command', () => {
     await expect(loadCredentials(env.rt, dirs)).rejects.toThrow(/no credentials/);
   });
 
-  it('refuses a relative path', async () => {
+  it('[cli-007] refuses a relative path', async () => {
     env = testRuntime({ env: { AGENT_BOARD_CREDENTIALS_COMMAND: 'creds' } });
     await expect(loadCredentials(env.rt, dirsOf(env))).rejects.toThrow(/absolute path/);
   });
 
-  it('refuses a command that fails', async () => {
+  it('[cli-007] refuses a command that fails', async () => {
     env = testRuntime({
       env: { AGENT_BOARD_CREDENTIALS_COMMAND: '/tmp/creds' },
       exec: () => ({ code: 3, stdout: '' }),

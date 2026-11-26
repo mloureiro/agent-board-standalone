@@ -141,7 +141,7 @@ describe('run with a stand-in API executable', () => {
     ...extra,
   });
 
-  it.each(FIXTURES)('passes the count check on $name', async (fixture) => {
+  it.each(FIXTURES)('[migrate-011] passes the count check on $name', async (fixture) => {
     const target = join(scratch, `ok-${fixture.name}`);
     const output = await run(base(fixture.name, target), envFor());
     expect(output).toContain('owner check: ok, "fixture-owner" is the NO_LOGIN_USER');
@@ -244,7 +244,7 @@ describe('run with a stand-in API executable', () => {
     }
   });
 
-  it('reports an import failure with the API message and removes the temporary export', async () => {
+  it('[migrate-011] reports an import failure with the API message and removes the temporary export', async () => {
     const temporary = await mkdtemp(join(tmpdir(), 'migrate-tmpdir-'));
     process.env.TMPDIR = temporary;
     try {
