@@ -10,6 +10,7 @@ const VERSION_PATH = '/api/version';
 const CORS_ALLOWED_METHODS = 'GET, HEAD, POST, OPTIONS';
 const CORS_MAX_AGE = '600';
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const IDENTITY_PROVIDER_POST_ROUTE = 'auth.saml.acs';
 
 const originsOf = (name: string, port: number): string[] => {
   const host = name.includes(':') ? `[${name}]` : name;
@@ -41,6 +42,7 @@ export const registerOriginChecks = (app: FastifyInstance, context: ServerContex
   const allowed = new Set(context.config.crossOrigin);
   const refuses = (request: FastifyRequest): boolean => {
     if (SAFE_METHODS.has(request.method)) return false;
+    if (request.routeOptions.config.route?.name === IDENTITY_PROVIDER_POST_ROUTE) return false;
     const origin = request.headers.origin?.toLowerCase();
     const crossSite = request.headers['sec-fetch-site'] === 'cross-site';
     if (origin === undefined) return crossSite;

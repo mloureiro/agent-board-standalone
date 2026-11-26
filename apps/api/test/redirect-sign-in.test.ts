@@ -316,6 +316,18 @@ describe('SAML', () => {
     expect(await userRow(w.board, 'grace@example.test')).toMatchObject({ source: 'saml' });
   });
 
+  it('[api-036] the ACS accepts the cross-site form post the identity provider makes', async () => {
+    const w = await world();
+    const { url } = await startSaml(w.board.app);
+    const answer = await w.board.app.inject({
+      method: 'POST',
+      url: '/api/auth/saml/acs',
+      headers: { ...FORM_HEADERS, origin: w.saml.url, 'sec-fetch-site': 'cross-site' },
+      payload: `SAMLResponse=${encodeURIComponent(w.saml.answer(url).SAMLResponse)}`,
+    });
+    expect(returnedTo(answer).searchParams.get('flow')).toBeTruthy();
+  });
+
   it('[api-036] the finish needs the starting browser: wrong verifier refused, flow single use', async () => {
     const w = await world();
     const { back } = await samlSignedIn(w);
