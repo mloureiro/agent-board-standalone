@@ -32,6 +32,7 @@ pub mod recipe;
 pub mod redact;
 pub mod services;
 pub mod settings;
+pub mod setup;
 pub mod signals;
 pub mod spec;
 pub mod status;

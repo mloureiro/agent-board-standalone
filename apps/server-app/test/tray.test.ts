@@ -55,6 +55,7 @@ const ORDER = [
   'open-settings',
   'connect-worker',
   'pair-device',
+  'set-up',
   'quit',
 ];
 
@@ -186,6 +187,7 @@ describe('tray menu, handover and pairing through the headless runner', () => {
       'open-settings': 'Open settings file',
       'connect-worker': 'Connect worker…',
       'pair-device': 'Pair a device…',
+      'set-up': 'Set up…',
       quit: 'Quit',
     });
     expect(menu.badge).toBeNull();
@@ -203,7 +205,13 @@ describe('tray menu, handover and pairing through the headless runner', () => {
       menu.items.filter((item) => item.enabled).map((item) => item.id);
 
     expect(apiRunning(starting)).toBe(false);
-    expect(enabledOf(starting)).toEqual(['restart-server', 'open-logs', 'open-settings', 'quit']);
+    expect(enabledOf(starting)).toEqual([
+      'restart-server',
+      'open-logs',
+      'open-settings',
+      'set-up',
+      'quit',
+    ]);
     const running = await untilMenu(session, apiRunning, 'the API running');
     expect(enabledOf(running)).toEqual([
       'open-board',
@@ -212,6 +220,7 @@ describe('tray menu, handover and pairing through the headless runner', () => {
       'open-logs',
       'open-settings',
       'connect-worker',
+      'set-up',
       'quit',
     ]);
     session.send('quit');
@@ -235,6 +244,7 @@ describe('tray menu, handover and pairing through the headless runner', () => {
     expect(busy.items.filter((item) => item.enabled).map((item) => item.id)).toEqual([
       'open-board',
       'connect-worker',
+      'set-up',
       'quit',
     ]);
     expect(busy.items.find((item) => item.id === 'last-backup')?.label).toBe(
@@ -384,6 +394,20 @@ describe('tray menu, handover and pairing through the headless runner', () => {
 
     expect(answer['ok']).toBe(false);
     expect(answer['message']).toContain('requestSignature');
+    session.send('quit');
+    await session.closed;
+  });
+
+  it('[server-app-090] Pair a device is refused while remote access is on', async () => {
+    writeSettings(root, { port, publicUrl: 'https://board.example.net' });
+    const session = start();
+    const menu = await untilMenu(session, apiRunning, 'the API running');
+    expect(menu.items.find((item) => item.id === 'pair-device')?.enabled).toBe(false);
+
+    const answer = await actionAnswer(session, 'pair-device', 'pair-device');
+
+    expect(answer['ok']).toBe(false);
+    expect(answer['message']).toContain('remote access');
     session.send('quit');
     await session.closed;
   });

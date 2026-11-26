@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Set up</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="setup">
+    <section id="remote">
+      <h2>1. Remote access</h2>
+      <p>
+        Off by default: the board answers on this Mac only and needs no sign-in. Turn it on to reach
+        the board from anywhere through a tunnel. The board then needs sign-in with passkeys
+        everywhere, including this Mac's browser.
+      </p>
+      <p>Start a tunnel to the board's port first; it prints the https address to enter below:</p>
+      <pre class="command" id="tailscale"></pre>
+      <p class="hint">Tailscale Funnel prints an address ending in <code>.ts.net</code>.</p>
+      <pre class="command" id="cloudflared"></pre>
+      <p class="hint">
+        Cloudflare prints a <code>trycloudflare.com</code> address that changes on every start; set
+        up a named tunnel for a lasting address.
+      </p>
+      <label for="public-url">Public https address</label>
+      <div class="field">
+        <input
+          id="public-url"
+          type="url"
+          placeholder="https://board.example.net"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+      </div>
+      <p id="remote-state" class="state" role="status"></p>
+      <div class="buttons">
+        <button type="button" id="remote-off">Turn off</button>
+        <button type="button" id="remote-on">Turn on</button>
+      </div>
+    </section>
+
+    <section id="sign-in">
+      <h2>2. Sign-in and first passkey</h2>
+      <p id="sign-in-local">This board runs without sign-in on this Mac only.</p>
+      <div id="sign-in-remote" hidden>
+        <p>
+          Create your passkey at the public address. The board admits your existing account by name
+          once, with the one-time token below.
+        </p>
+        <div id="passkey-open" hidden>
+          <p>Name to sign up with:</p>
+          <p class="secret" id="passkey-name"></p>
+          <p>One-time token (shown only here):</p>
+          <p class="secret" id="passkey-token"></p>
+          <p class="hint">
+            If no browser opened, go to <span id="passkey-url" class="secret-inline"></span>
+          </p>
+        </div>
+        <div class="buttons">
+          <button type="button" id="passkey-done" hidden>I added my passkey</button>
+          <button type="button" id="passkey-create">Create my first passkey</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="worker">
+      <h2>3. Worker</h2>
+      <p id="worker-state"></p>
+      <div class="buttons">
+        <button type="button" id="connect-worker">Connect worker…</button>
+      </div>
+    </section>
+
+    <section id="phone">
+      <h2>4. Phone</h2>
+      <p id="phone-text"></p>
+    </section>
+
+    <section id="keys">
+      <h2>5. Keys that can wait</h2>
+      <p>
+        Android release keystore: only while finalising step 13 of the install, run from a clone of
+        the repository
+      </p>
+      <pre class="command">sh scripts/keys/android-keystore.sh</pre>
+      <p class="hint">Until then the Android app is built with a throwaway key.</p>
+      <p>CLI update signing key: from a clone of the repository, run</p>
+      <pre class="command">sh scripts/keys/minisign-init.sh</pre>
+      <p class="warning">
+        <strong
+          >Commit and merge <code>apps/cli/update-key.pub</code> before the CLI release build you
+          keep.</strong
+        >
+        A CLI built earlier trusts no key and checks checksums only.
+      </p>
+    </section>
+
+    <p id="message" class="state" role="alert"></p>
+    <div class="buttons">
+      <button type="button" id="close">Close</button>
+    </div>
+    <script src="setup.js"></script>
+  </body>
+</html>

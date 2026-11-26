@@ -33,6 +33,12 @@ fn main() -> ExitCode {
             pending,
             &mut io::stdout(),
         )),
+        Invocation::Setup(command) => exit(app::run_setup(
+            &host,
+            &command,
+            &mut io::stdout(),
+            &mut io::stderr(),
+        )),
         Invocation::Headless => {
             let stdin = io::BufReader::new(io::stdin());
             exit(app::run_headless(&host, stdin, &mut io::stdout()))

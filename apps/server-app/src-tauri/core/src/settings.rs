@@ -4,6 +4,7 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
+use url::{Host, Url};
 
 use crate::paths::{AppPaths, has_parent_component};
 
@@ -41,6 +42,7 @@ pub struct Settings {
     pub worker_path: Vec<PathBuf>,
     pub remote_hosts: Vec<String>,
     pub request_signature: bool,
+    pub public_url: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -61,6 +63,7 @@ struct RawSettings {
     worker_path: Option<RawWorkerPath>,
     remote_hosts: Option<Vec<String>>,
     request_signature: Option<bool>,
+    public_url: Option<String>,
 }
 
 pub fn is_valid_user_name(name: &str) -> bool {
@@ -80,6 +83,26 @@ fn is_valid_host(host: &str) -> bool {
                     .bytes()
                     .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
         })
+}
+
+pub fn public_url(value: &str) -> Result<String, SettingsError> {
+    let refused = || {
+        SettingsError::new(format!(
+            "settings.json: publicUrl must be a bare https address such as https://board.example.net, got {value:?}"
+        ))
+    };
+    let url = Url::parse(value).map_err(|_| refused())?;
+    let bare = url.scheme() == "https"
+        && url.username().is_empty()
+        && url.password().is_none()
+        && url.port().is_none()
+        && url.path() == "/"
+        && url.query().is_none()
+        && url.fragment().is_none();
+    match url.host() {
+        Some(Host::Domain(host)) if bare && is_valid_host(host) => Ok(format!("https://{host}")),
+        _ => Err(refused()),
+    }
 }
 
 fn absolute_dir(
@@ -140,15 +163,23 @@ impl Settings {
     }
 
     pub fn load_or_create(paths: &AppPaths, login_name: &str) -> Result<Settings, SettingsError> {
-        let file = paths.settings_file();
-        if !file.exists() {
-            let defaults = Settings::parse("{}", paths, login_name)?;
-            defaults.create_file(&file)?;
-        }
+        Settings::create_if_missing(paths, login_name)?;
         Settings::load(paths, login_name)
     }
 
-    fn create_file(&self, file: &Path) -> Result<(), SettingsError> {
+    pub fn create_if_missing(paths: &AppPaths, login_name: &str) -> Result<bool, SettingsError> {
+        let file = paths.settings_file();
+        if file.exists() {
+            return Ok(false);
+        }
+        Settings::parse("{}", paths, login_name)?.create_file(&file)
+    }
+
+    pub fn remote(&self) -> bool {
+        self.public_url.is_some()
+    }
+
+    fn create_file(&self, file: &Path) -> Result<bool, SettingsError> {
         let unreadable = |error: io::Error| {
             SettingsError::new(format!(
                 "settings.json cannot be created ({}): {error}",
@@ -171,8 +202,9 @@ impl Settings {
         match OpenOptions::new().write(true).create_new(true).open(file) {
             Ok(mut created) => created
                 .write_all(format!("{text}\n").as_bytes())
+                .map(|()| true)
                 .map_err(unreadable),
-            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => Ok(()),
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => Ok(false),
             Err(error) => Err(unreadable(error)),
         }
     }
@@ -236,12 +268,13 @@ impl Settings {
                 "settings.json: remoteHosts entry {bad:?} is not a bare host name"
             )));
         }
-        let request_signature = raw.request_signature.unwrap_or(false);
-        if !remote_hosts.is_empty() && !request_signature {
+        let public_url = raw.public_url.as_deref().map(public_url).transpose()?;
+        if !remote_hosts.is_empty() && public_url.is_none() {
             return Err(SettingsError::new(
-                "settings.json: remoteHosts needs requestSignature: true",
+                "settings.json: remoteHosts needs publicUrl",
             ));
         }
+        let request_signature = public_url.is_some() || raw.request_signature.unwrap_or(false);
 
         Ok(Settings {
             user_name,
@@ -255,6 +288,7 @@ impl Settings {
                 .map(|host| host.to_ascii_lowercase())
                 .collect(),
             request_signature,
+            public_url,
         })
     }
 }

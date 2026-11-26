@@ -65,3 +65,57 @@ input {
   margin: 0;
   text-align: center;
 }
+
+.setup {
+  padding-bottom: 24px;
+}
+
+.setup section {
+  padding-bottom: 12px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.setup h2 {
+  margin: 16px 0 6px;
+  font-size: 14px;
+}
+
+.setup p {
+  margin: 6px 0;
+}
+
+.command {
+  margin: 6px 0;
+  padding: 6px 8px;
+  font:
+    12px ui-monospace,
+    Menlo,
+    monospace;
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  user-select: all;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.hint {
+  color: GrayText;
+}
+
+.state {
+  min-height: 1.3em;
+}
+
+.secret {
+  font:
+    600 14px ui-monospace,
+    Menlo,
+    monospace;
+  user-select: all;
+  word-break: break-all;
+}
+
+.secret-inline {
+  font-family: ui-monospace, Menlo, monospace;
+  user-select: all;
+}

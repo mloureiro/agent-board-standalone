@@ -12,11 +12,13 @@ pub const WORKER_TOKEN: &str = "worker-token";
 pub const WORKER_DATA_KEY: &str = "worker-data-key";
 pub const PENDING_WORKER_TOKEN: &str = "worker-token.pending";
 pub const PENDING_WORKER_DATA_KEY: &str = "worker-data-key.pending";
-pub const ACCOUNTS: [&str; 4] = [
+pub const SIGNUP_TOKEN: &str = "signup-token";
+pub const ACCOUNTS: [&str; 5] = [
     WORKER_TOKEN,
     WORKER_DATA_KEY,
     PENDING_WORKER_TOKEN,
     PENDING_WORKER_DATA_KEY,
+    SIGNUP_TOKEN,
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]

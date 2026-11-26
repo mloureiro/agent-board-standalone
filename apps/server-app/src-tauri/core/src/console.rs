@@ -14,11 +14,13 @@ use crate::control::ControlClient;
 use crate::enrol::{EnrolError, EnrolForm, FormView};
 use crate::handover::{self, CommandRunner};
 use crate::log_file::AppLog;
-use crate::menu::{Inputs, ItemId, Menu};
+use crate::menu::{Inputs, ItemId, Menu, worker_connected};
 use crate::opener::{self, Opener};
 use crate::pairing;
 use crate::paths::AppPaths;
 use crate::services::Services;
+use crate::settings::{Settings, SettingsError};
+use crate::setup::{SetupPlace, SetupStatus};
 use crate::spec;
 use crate::status::Status;
 use crate::versions::Versions;
@@ -40,8 +42,9 @@ pub struct Console {
     activity: Activity,
     form: Mutex<EnrolForm>,
     versions: Versions,
-    request_signature: bool,
-    board_url: Result<String, String>,
+    settings: RwLock<Result<Settings, SettingsError>>,
+    setup: SetupPlace,
+    resources: PathBuf,
     control_socket: PathBuf,
     paths: AppPaths,
     log: AppLog,
@@ -68,8 +71,13 @@ fn backed_up(outcome: &Outcome) -> Value {
     }
 }
 
-fn board_opened(target: &str, runner: &dyn CommandRunner) -> Value {
-    let opened = handover::open_board(target, runner);
+fn board_opened(settings: &Settings, runner: &dyn CommandRunner) -> Value {
+    let loopback = format!("http://127.0.0.1:{}/", settings.port);
+    let browser = match &settings.public_url {
+        Some(public_url) => crate::setup::sign_up_url(public_url),
+        None => loopback.clone(),
+    };
+    let opened = handover::open_board(&loopback, &browser, runner);
     json!({
         "type": "action",
         "action": "open-board",
@@ -91,13 +99,6 @@ impl Console {
             let events = Arc::clone(&events);
             Arc::new(move || events(Event::Changed))
         });
-        let (request_signature, board_url) = match &running.settings {
-            Ok(settings) => (
-                settings.request_signature,
-                Ok(format!("http://127.0.0.1:{}/", settings.port)),
-            ),
-            Err(error) => (false, Err(error.to_string())),
-        };
         Arc::new(Console {
             last: Mutex::new(services.status()),
             services: RwLock::new(Some(services)),
@@ -108,8 +109,9 @@ impl Console {
             }),
             form: Mutex::new(EnrolForm::new()),
             versions: running.versions.clone(),
-            request_signature,
-            board_url,
+            settings: RwLock::new(running.settings.clone()),
+            setup: running.setup.clone(),
+            resources: running.resources.clone(),
             control_socket: spec::control_socket(&running.paths),
             paths: running.paths.clone(),
             log: running.app_log.clone(),
@@ -130,16 +132,61 @@ impl Console {
         self.desk.lock().unwrap().view()
     }
 
+    pub fn settings(&self) -> Result<Settings, SettingsError> {
+        self.settings.read().unwrap().clone()
+    }
+
+    fn signature_and_remote(&self) -> (bool, bool) {
+        match self.settings.read().unwrap().as_ref() {
+            Ok(settings) => (settings.request_signature, settings.remote()),
+            Err(_) => (false, false),
+        }
+    }
+
     pub fn menu(&self) -> Menu {
         let status = self.status();
         let backup = self.backup_view();
+        let (request_signature, remote) = self.signature_and_remote();
         Menu::build(&Inputs {
             status: &status,
             backup: &backup,
             versions: &self.versions,
-            request_signature: self.request_signature,
+            request_signature,
+            remote,
             busy: &self.activity.active(),
         })
+    }
+
+    pub fn setup(&self) -> &SetupPlace {
+        &self.setup
+    }
+
+    pub fn setup_status(&self) -> Result<SetupStatus, String> {
+        self.setup.status(worker_connected(&self.status()))
+    }
+
+    pub fn open_in_browser(&self, url: &str) -> Result<(), String> {
+        match self.runner.run(&[url.to_string()]) {
+            Ok(0) => Ok(()),
+            Ok(code) => Err(format!("open exited with {code}")),
+            Err(error) => Err(format!("open failed: {error}")),
+        }
+    }
+
+    fn reload(&self) -> Result<Option<crate::spec::ChildSpec>, String> {
+        let current = self.settings.read().unwrap().clone();
+        let Ok(current) = current else {
+            return Ok(None);
+        };
+        let (settings, spec) = self.setup.api_plan(&current, &self.resources)?;
+        if settings != current {
+            self.log.info(&format!(
+                "settings reloaded, remote access {}",
+                if settings.remote() { "on" } else { "off" }
+            ));
+        }
+        *self.settings.write().unwrap() = Ok(settings);
+        Ok(Some(spec))
     }
 
     pub fn paths(&self) -> &AppPaths {
@@ -185,8 +232,10 @@ impl Console {
         {
             return busy.reason().to_string();
         }
+        let (request_signature, remote) = self.signature_and_remote();
         match id {
-            ItemId::PairDevice if !self.request_signature => pairing::SIGNATURE_OFF.to_string(),
+            ItemId::PairDevice if remote => pairing::REMOTE_ON.to_string(),
+            ItemId::PairDevice if !request_signature => pairing::SIGNATURE_OFF.to_string(),
             ItemId::OpenBoard | ItemId::BackUpNow | ItemId::ConnectWorker | ItemId::PairDevice => {
                 "the API is not running".to_string()
             }
@@ -242,9 +291,9 @@ impl Console {
             return Some(self.refuse(name, Busy::Quit.reason()));
         };
         match action {
-            Action::OpenBoard => Some(match &self.board_url {
-                Ok(url) => board_opened(url, self.runner.as_ref()),
-                Err(message) => failed(name, message.clone()),
+            Action::OpenBoard => Some(match self.settings.read().unwrap().as_ref() {
+                Ok(settings) => board_opened(settings, self.runner.as_ref()),
+                Err(error) => failed(name, error.to_string()),
             }),
             Action::BackUpNow => {
                 let held = ticket.take();
@@ -264,10 +313,22 @@ impl Console {
                     Err(message) => Some(failed(name, message)),
                 }
             }
-            Action::RestartServer => {
-                services.supervisor().restart_server();
-                Some(json!({ "type": "action", "action": name, "ok": true }))
-            }
+            Action::RestartServer => match self.reload() {
+                Ok(Some(spec)) => {
+                    services.supervisor().restart_server_with(spec);
+                    (self.events)(Event::Changed);
+                    Some(json!({ "type": "action", "action": name, "ok": true }))
+                }
+                Ok(None) => {
+                    services.supervisor().restart_server();
+                    Some(json!({ "type": "action", "action": name, "ok": true }))
+                }
+                Err(message) => {
+                    self.log
+                        .error(&format!("restart-server refused: {message}"));
+                    Some(failed(name, message))
+                }
+            },
             Action::OpenLogs => Some(opened(
                 name,
                 opener::open_logs_folder(&self.paths, self.opener.as_ref()),

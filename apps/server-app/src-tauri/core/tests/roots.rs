@@ -6,7 +6,7 @@ use std::sync::Mutex;
 
 use agent_board_server_core::credentials::{
     ACCOUNTS, CredentialStore, FileStore, PENDING_WORKER_DATA_KEY, PENDING_WORKER_TOKEN,
-    WORKER_DATA_KEY, WORKER_TOKEN,
+    SIGNUP_TOKEN, WORKER_DATA_KEY, WORKER_TOKEN,
 };
 use agent_board_server_core::lock::{Acquired, InstanceLock, is_held};
 use agent_board_server_core::opener::{Opener, open_logs_folder, open_settings_file};
@@ -91,7 +91,7 @@ fn server_app_054_the_default_root_uses_the_bare_service_name_and_any_other_a_su
 }
 
 #[test]
-fn server_app_054_the_accounts_are_the_worker_token_the_data_key_and_their_pending_pair() {
+fn server_app_054_the_accounts_are_the_worker_pair_its_pending_pair_and_the_sign_up_token() {
     assert_eq!(WORKER_TOKEN, "worker-token");
     assert_eq!(WORKER_DATA_KEY, "worker-data-key");
     assert_eq!(
@@ -100,7 +100,8 @@ fn server_app_054_the_accounts_are_the_worker_token_the_data_key_and_their_pendi
             WORKER_TOKEN,
             WORKER_DATA_KEY,
             PENDING_WORKER_TOKEN,
-            PENDING_WORKER_DATA_KEY
+            PENDING_WORKER_DATA_KEY,
+            SIGNUP_TOKEN
         ]
     );
 }

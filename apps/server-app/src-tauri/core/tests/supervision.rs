@@ -688,7 +688,7 @@ fn server_app_074_the_api_gets_exactly_its_local_configuration() {
     let dir = tempfile::tempdir().unwrap();
     let paths = AppPaths::new(&dir.path().join("root"));
     let settings = settings_in(&paths, r#"{"port": 4999, "userName": "ines"}"#);
-    let spec = spec::api_spec(&settings, &paths, &resources(dir.path())).unwrap();
+    let spec = spec::api_spec(&settings, &paths, &resources(dir.path()), None).unwrap();
 
     let root = paths.root().display();
     let expected = [
@@ -714,27 +714,78 @@ fn server_app_074_the_api_gets_exactly_its_local_configuration() {
     assert_eq!(spec.health_port, Some(4999));
 }
 
+fn env_of(spec: &spec::ChildSpec) -> Vec<(&str, &str)> {
+    spec.env
+        .iter()
+        .map(|(key, value)| (key.as_str(), value.as_str()))
+        .collect()
+}
+
 #[test]
-fn server_app_074_remote_hosts_and_the_request_signature_are_added_when_set() {
+fn server_app_074_the_request_signature_is_added_when_set() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::new(&dir.path().join("root"));
+    let settings = settings_in(&paths, r#"{"requestSignature": true}"#);
+    let spec = spec::api_spec(
+        &settings,
+        &paths,
+        &resources(dir.path()),
+        Some("t".repeat(43).as_str()),
+    )
+    .unwrap();
+    let env = env_of(&spec);
+
+    assert!(env.contains(&("REQUEST_SIGNATURE", "on")));
+    assert!(env.contains(&("AUTH_MODE", "no-login")));
+    assert!(
+        !env.iter()
+            .any(|(key, _)| *key == "SIGNUP_TOKEN" || *key == "CLAIM_USER")
+    );
+}
+
+#[test]
+fn server_app_089_remote_access_runs_the_api_in_login_mode_with_passkeys() {
     let dir = tempfile::tempdir().unwrap();
     let paths = AppPaths::new(&dir.path().join("root"));
     let settings = settings_in(
         &paths,
-        r#"{"remoteHosts": ["board.example.net"], "requestSignature": true}"#,
+        r#"{"userName": "ines", "publicUrl": "https://board.example.net", "remoteHosts": ["mac.tail1234.ts.net"]}"#,
     );
-    let spec = spec::api_spec(&settings, &paths, &resources(dir.path())).unwrap();
-    let value = |name: &str| {
-        spec.env
-            .iter()
-            .find(|(key, _)| key == name)
-            .map(|(_, value)| value.as_str())
-    };
+    let spec = spec::api_spec(&settings, &paths, &resources(dir.path()), None).unwrap();
+    let env = env_of(&spec);
 
-    assert_eq!(
-        value("ALLOWED_HOSTS"),
-        Some("localhost,127.0.0.1,[::1],board.example.net")
+    for expected in [
+        ("AUTH_MODE", "login"),
+        ("PUBLIC_URL", "https://board.example.net"),
+        ("PASSKEYS", "on"),
+        ("REQUEST_SIGNATURE", "on"),
+        (
+            "ALLOWED_HOSTS",
+            "localhost,127.0.0.1,[::1],board.example.net,mac.tail1234.ts.net",
+        ),
+    ] {
+        assert!(env.contains(&expected), "{expected:?} in {env:?}");
+    }
+    for absent in ["NO_LOGIN_USER", "SIGNUP_TOKEN", "CLAIM_USER", "TRUST_PROXY"] {
+        assert!(!env.iter().any(|(key, _)| *key == absent), "{absent}");
+    }
+}
+
+#[test]
+fn server_app_089_the_sign_up_token_and_the_claimed_name_go_only_with_remote_access_and_an_open_step()
+ {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::new(&dir.path().join("root"));
+    let settings = settings_in(
+        &paths,
+        r#"{"userName": "ines", "publicUrl": "https://board.example.net"}"#,
     );
-    assert_eq!(value("REQUEST_SIGNATURE"), Some("on"));
+    let token = "a".repeat(43);
+    let spec = spec::api_spec(&settings, &paths, &resources(dir.path()), Some(&token)).unwrap();
+    let env = env_of(&spec);
+    assert!(env.contains(&("SIGNUP_TOKEN", token.as_str())));
+    assert!(env.contains(&("CLAIM_USER", "ines")));
+    assert!(!format!("{spec:?}").contains(&token));
 }
 
 #[test]
@@ -743,7 +794,7 @@ fn server_app_074_the_child_runs_from_a_cleared_environment() {
     let paths = AppPaths::new(&dir.path().join("root"));
     let settings = settings_in(&paths, &format!(r#"{{"port": {}}}"#, free_port()));
     let resources = resources(dir.path());
-    let mut spec = spec::api_spec(&settings, &paths, &resources).unwrap();
+    let mut spec = spec::api_spec(&settings, &paths, &resources, None).unwrap();
     let dump = dir.path().join("env.txt");
     let config = dir.path().join("api.conf");
     fs::write(&config, format!("env_dump={}\n", dump.display())).unwrap();
@@ -777,7 +828,7 @@ fn server_app_034_a_missing_api_executable_is_reported_on_the_row_without_a_cras
     let dir = tempfile::tempdir().unwrap();
     let paths = AppPaths::new(&dir.path().join("root"));
     let settings = settings_in(&paths, "{}");
-    let error = spec::api_spec(&settings, &paths, &dir.path().join("none")).unwrap_err();
+    let error = spec::api_spec(&settings, &paths, &dir.path().join("none"), None).unwrap_err();
     assert!(error.starts_with("API executable missing"));
 
     let rig = Rig::new();

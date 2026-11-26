@@ -432,3 +432,93 @@ fn wait_pid(run_dir: &Path, different_from: Option<u32>) -> u32 {
     }
     panic!("the api pid never appeared");
 }
+
+#[test]
+fn server_app_089_restart_server_applies_remote_access_and_the_open_first_passkey_step() {
+    let bed = Bed::new();
+    let host = stub_host(&bed);
+    let dump = bed.dir.path().join("api-env.txt");
+    fs::write(
+        bed.dir.path().join("resources/api/agent-board-api.conf"),
+        format!("env_dump={}\n", dump.display()),
+    )
+    .unwrap();
+    let running = start(&host);
+    running
+        .setup
+        .remote_on("https://board.example.net")
+        .unwrap();
+    let opened = running.setup.first_passkey_open().unwrap();
+
+    let (mut keep_open, reader) = std::os::unix::net::UnixStream::pair().unwrap();
+    let writer = {
+        let run_dir = running.paths.root().join("run");
+        let dump = dump.clone();
+        std::thread::spawn(move || {
+            use std::io::Write;
+            let dumped = |needle: &str| {
+                let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+                loop {
+                    let text = fs::read_to_string(&dump).unwrap_or_default();
+                    if text.contains(needle) || std::time::Instant::now() > deadline {
+                        return text;
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(10));
+                }
+            };
+            let first = wait_pid(&run_dir, None);
+            let before = dumped("AUTH_MODE=");
+            keep_open.write_all(b"state\nrestart-server\n").unwrap();
+            wait_pid(&run_dir, Some(first));
+            dumped("AUTH_MODE=login");
+            keep_open.write_all(b"state\nquit\n").unwrap();
+            before
+        })
+    };
+
+    let mut out = Vec::new();
+    serve_with(
+        &running,
+        io::BufReader::new(reader),
+        &mut out,
+        Arc::new(Recorder::default()),
+        Arc::new(RunnerRecorder::default()),
+        &|| None,
+    );
+    let before = writer.join().unwrap();
+    let after = fs::read_to_string(&dump).unwrap();
+
+    assert!(before.contains("AUTH_MODE=no-login"), "{before}");
+    let lines: Vec<&str> = after.lines().collect();
+    for expected in [
+        "AUTH_MODE=login",
+        "PUBLIC_URL=https://board.example.net",
+        "PASSKEYS=on",
+        "REQUEST_SIGNATURE=on",
+        "CLAIM_USER=ines",
+    ] {
+        assert!(lines.contains(&expected), "{expected} in {after}");
+    }
+    assert!(lines.contains(&format!("SIGNUP_TOKEN={}", opened.token).as_str()));
+    assert!(!after.contains("NO_LOGIN_USER"));
+
+    let text = String::from_utf8(out).unwrap();
+    assert!(!text.contains(&opened.token));
+    let states: Vec<Value> = text
+        .lines()
+        .map(|line| serde_json::from_str::<Value>(line).unwrap())
+        .filter(|event| event["type"] == "state")
+        .collect();
+    assert_eq!(
+        states.first().unwrap()["settings"]["publicUrl"],
+        Value::Null
+    );
+    assert_eq!(
+        states.last().unwrap()["settings"]["publicUrl"],
+        "https://board.example.net"
+    );
+    assert_eq!(states.last().unwrap()["settings"]["requestSignature"], true);
+    let log = fs::read_to_string(running.paths.app_log()).unwrap();
+    assert!(log.contains("settings reloaded, remote access on"), "{log}");
+    assert!(!log.contains(&opened.token));
+}

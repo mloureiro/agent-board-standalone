@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use agent_board_server_core::actions::Action;
 use agent_board_server_core::console::Console;
 use agent_board_server_core::enrol::FormView;
 use serde_json::{Value, json};
@@ -9,6 +10,7 @@ use tauri::{
 
 const CONNECT_LABEL: &str = "connect-worker";
 const PAIR_LABEL: &str = "pair-device";
+const SETUP_LABEL: &str = "set-up";
 const WRONG_WINDOW: &str = "this window cannot run that command";
 
 #[derive(Default)]
@@ -134,4 +136,90 @@ pub fn pair_state(window: WebviewWindow, shown: State<PairShown>) -> Result<Valu
 #[tauri::command]
 pub fn close_self(window: WebviewWindow) {
     let _ = window.close();
+}
+
+pub fn show_setup(app: &AppHandle) {
+    let _ = open(app, SETUP_LABEL, "setup.html", "Set up", (620.0, 720.0));
+}
+
+fn setup_view(console: &Console, extra: Value) -> Result<Value, String> {
+    let mut view = json!({ "status": console.setup_status()? });
+    if let (Some(view), Value::Object(extra)) = (view.as_object_mut(), extra) {
+        view.extend(extra);
+    }
+    Ok(view)
+}
+
+fn restart(console: &Arc<Console>) -> Value {
+    console
+        .dispatch(Action::RestartServer)
+        .unwrap_or_else(|| json!({ "ok": true }))
+}
+
+#[tauri::command]
+pub fn setup_state(window: WebviewWindow, console: State<Arc<Console>>) -> Result<Value, String> {
+    only_from(&window, SETUP_LABEL)?;
+    setup_view(&console, json!({}))
+}
+
+#[tauri::command]
+pub fn setup_remote(
+    window: WebviewWindow,
+    console: State<Arc<Console>>,
+    public_url: Option<String>,
+) -> Result<Value, String> {
+    only_from(&window, SETUP_LABEL)?;
+    match public_url {
+        Some(public_url) => console.setup().remote_on(&public_url)?,
+        None => console.setup().remote_off()?,
+    };
+    let restarted = restart(&console);
+    setup_view(&console, json!({ "restart": restarted }))
+}
+
+#[tauri::command]
+pub fn setup_first_passkey(
+    window: WebviewWindow,
+    console: State<Arc<Console>>,
+) -> Result<Value, String> {
+    only_from(&window, SETUP_LABEL)?;
+    let opened = console.setup().first_passkey_open()?;
+    let restarted = restart(&console);
+    let browser = console.open_in_browser(&opened.sign_up_url).err();
+    setup_view(
+        &console,
+        json!({
+            "restart": restarted,
+            "signUpUrl": opened.sign_up_url,
+            "userName": opened.user_name,
+            "token": opened.token,
+            "browserFailure": browser,
+        }),
+    )
+}
+
+#[tauri::command]
+pub fn setup_first_passkey_done(
+    window: WebviewWindow,
+    console: State<Arc<Console>>,
+) -> Result<Value, String> {
+    only_from(&window, SETUP_LABEL)?;
+    console.setup().first_passkey_close()?;
+    let restarted = restart(&console);
+    setup_view(&console, json!({ "restart": restarted }))
+}
+
+#[tauri::command]
+pub fn setup_connect_worker(
+    app: AppHandle,
+    window: WebviewWindow,
+    console: State<Arc<Console>>,
+) -> Result<(), String> {
+    only_from(&window, SETUP_LABEL)?;
+    if console.may_open_connect() {
+        show_connect(&app);
+        Ok(())
+    } else {
+        Err("Connect worker needs the API running".to_string())
+    }
 }

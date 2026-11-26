@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use crate::account;
 use crate::backup::Backups;
+use crate::cli::SetupCommand;
 use crate::credentials;
 use crate::durations::Durations;
 use crate::launchctl::SystemLaunchctl;
@@ -14,6 +15,7 @@ use crate::login_item::{self, Build};
 use crate::overrides::Overrides;
 use crate::paths::{AppPaths, ROOT_ENV, Root};
 use crate::settings::{Settings, SettingsError};
+use crate::setup::SetupPlace;
 use crate::spec;
 use crate::supervisor::{Plan, StartGate};
 use crate::uninstall;
@@ -94,6 +96,9 @@ pub struct Running {
     pub api_gate: Option<StartGate>,
     pub versions: Versions,
     pub open_program: Option<PathBuf>,
+    pub setup: SetupPlace,
+    pub resources: PathBuf,
+    pub first_run: bool,
     _lock: InstanceLock,
 }
 
@@ -114,7 +119,16 @@ pub fn start(host: &Host) -> io::Result<Start> {
     app_log.info(&format!("starting, root {}", root.path().display()));
     let _ = access_log.rotate_if_full();
 
-    let settings = Settings::load_or_create(&paths, &host.login_name);
+    let created = Settings::create_if_missing(&paths, &host.login_name);
+    let first_run = matches!(created, Ok(true));
+    let settings = created.and_then(|_| Settings::load(&paths, &host.login_name));
+    let resources = host.resources_dir();
+    let setup = SetupPlace {
+        paths: paths.clone(),
+        login_name: host.login_name.clone(),
+        service: root.keychain_service(),
+        store: Arc::from(credentials::open_store(&host.overrides)),
+    };
     match &settings {
         Ok(settings) => {
             app_log.info(&format!("settings loaded, port {}", settings.port));
@@ -134,7 +148,17 @@ pub fn start(host: &Host) -> io::Result<Start> {
 
     let plan = Plan {
         api: match &settings {
-            Ok(settings) => spec::api_spec(settings, &paths, &host.resources_dir()),
+            Ok(settings) => {
+                let token = match settings.remote().then(|| setup.signup_token()) {
+                    Some(Err(error)) => {
+                        app_log.error(&format!("sign-up token unreadable: {error}"));
+                        None
+                    }
+                    Some(Ok(token)) => token,
+                    None => None,
+                };
+                spec::api_spec(settings, &paths, &resources, token.as_deref())
+            }
             Err(error) => Err(error.to_string()),
         },
         worker: None,
@@ -151,7 +175,7 @@ pub fn start(host: &Host) -> io::Result<Start> {
         app_paths: paths.clone(),
         paths: WorkerPaths::new(root.path()),
         service: root.keychain_service(),
-        store: Arc::from(credentials::open_store(&host.overrides)),
+        store: Arc::clone(&setup.store),
         store_file: host.overrides.credential_store_file.clone(),
         cli_source: host.resources_dir().join(CLI_RELATIVE),
         executable: host.executable.clone(),
@@ -195,6 +219,9 @@ pub fn start(host: &Host) -> io::Result<Start> {
         api_gate,
         versions: Versions::read(&host.resources_dir()),
         open_program: host.overrides.open_program.clone(),
+        setup,
+        resources,
+        first_run,
         _lock: lock,
     })))
 }
@@ -218,6 +245,28 @@ pub fn run_uninstall(host: &Host, delete_data: bool, out: &mut dyn Write) -> i32
         store: store.as_ref(),
     };
     uninstall::run(&environment, delete_data, out)
+}
+
+pub fn run_setup(
+    host: &Host,
+    command: &SetupCommand,
+    out: &mut dyn Write,
+    err: &mut dyn Write,
+) -> i32 {
+    let root = match host.root() {
+        Ok(root) => root,
+        Err(message) => {
+            let _ = writeln!(err, "{message}");
+            return 1;
+        }
+    };
+    let place = SetupPlace {
+        paths: root.paths(),
+        login_name: host.login_name.clone(),
+        service: root.keychain_service(),
+        store: Arc::from(credentials::open_store(&host.overrides)),
+    };
+    crate::setup::run_command(&place, command, out, err)
 }
 
 pub fn run_headless(
