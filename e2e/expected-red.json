@@ -16,33 +16,11 @@
       "user commands without a worker › [cli-029] board reply --resume sends the task back to the top of Todo"
     ],
     "browser/accessibility.spec.ts": [
-      "accessibility of the primary pages › [web-080] the unlock page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
-      "accessibility of the primary pages › [web-080] the board page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
-      {
-        "title": "accessibility of the primary pages › [web-080] the board page is operable by keyboard alone with a visible focus indicator @chromium",
-        "projects": ["chromium-desktop"]
-      },
-      "accessibility of the primary pages › [web-080] the new task page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
-      {
-        "title": "accessibility of the primary pages › [web-080] the new task page is operable by keyboard alone with a visible focus indicator @chromium",
-        "projects": ["chromium-desktop"]
-      },
       "accessibility of the primary pages › [web-080] the task page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
       {
         "title": "accessibility of the primary pages › [web-080] the task page is operable by keyboard alone with a visible focus indicator @chromium",
         "projects": ["chromium-desktop"]
-      },
-      "accessibility of the primary pages › [web-080] the schedules page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
-      {
-        "title": "accessibility of the primary pages › [web-080] the schedules page is operable by keyboard alone with a visible focus indicator @chromium",
-        "projects": ["chromium-desktop"]
-      },
-      "accessibility of the primary pages › [web-080] the settings page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
-      {
-        "title": "accessibility of the primary pages › [web-080] the settings page is operable by keyboard alone with a visible focus indicator @chromium",
-        "projects": ["chromium-desktop"]
-      },
-      "accessibility of the sign-in page › [web-080] the sign-in page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme"
+      }
     ],
     "browser/board.spec.ts": [
       "board › [web-029] dragging moves a card from Backlog to Todo and the order persists after a reload",

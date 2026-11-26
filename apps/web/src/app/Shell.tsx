@@ -13,6 +13,7 @@ import {
   NewTaskProvider,
   ServerStatePanel,
   NeedsMeNotifier,
+  PageStart,
   Toasts,
   panelFor,
 } from '../components/index.js';
@@ -53,6 +54,7 @@ export function Shell(): ReactNode {
   return (
     <ProjectFilterProvider>
       <NewTaskProvider key={epoch}>
+        <PageStart />
         <ProjectFilterGuard />
         <AppHeader />
         <ConnectionBanners />

@@ -7,6 +7,7 @@ import { LockButton } from '../keys/index.js';
 import { ProjectFilterSelect, ProjectsNav, useProjects } from '../projects/index.js';
 import { ServerFilterSelect, ServersButton } from '../servers-dialog/index.js';
 import { ColorSchemeMenu } from './ColorSchemeMenu.js';
+import { focusPageStart } from './PageStart.js';
 import { NewTaskButton } from './new-task.js';
 import { SignOutButton } from './SignOutButton.js';
 
@@ -36,7 +37,10 @@ function NavLinks({ phone, onNavigate }: { phone: boolean; onNavigate?: () => vo
       component={NavLink}
       to={item.to}
       end={item.to === '/'}
-      onClick={onNavigate}
+      onClick={() => {
+        focusPageStart();
+        onNavigate?.();
+      }}
     >
       {item.label}
     </Anchor>

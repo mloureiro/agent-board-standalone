@@ -182,6 +182,7 @@ export function Board(props: {
       ) : null}
       <BoardDnd onDrop={(id, target) => void onDrop(id, target)}>
         <Box
+          tabIndex={0}
           style={{
             display: 'grid',
             gridAutoFlow: 'column',
