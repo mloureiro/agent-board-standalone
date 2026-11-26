@@ -67,10 +67,18 @@ export const authorizeUserCommand = async (
     );
   const taskId = 'task' in target ? target.task : await runTask(tx, target.run);
   const [row] = await tx
-    .select({ machine: task.machine, status: task.status, runId: task.runId })
+    .select({
+      machine: task.machine,
+      status: task.status,
+      runId: task.runId,
+      openQuestionNoteId: task.openQuestionNoteId,
+    })
     .from(task)
     .where(eq(task.id, taskId));
   if (row === undefined) throw new ApiError('not-found', `no task ${taskId}`);
-  if (row.status === 'running' && row.runId !== null && row.machine === machineId)
+  const holdsRun =
+    (row.status === 'running' && row.runId !== null) ||
+    (row.status === 'needs-me' && row.openQuestionNoteId !== null);
+  if (holdsRun && row.machine === machineId)
     throw new ApiError('run-holds-task', 'this machine holds the active run of the task');
 };
