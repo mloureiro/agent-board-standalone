@@ -439,6 +439,19 @@ describe('proposals', () => {
     expect(world.moves).toHaveLength(0);
   });
 
+  it('[web-030] the prompt opens only once the drag has stopped clearing text selections', async () => {
+    await proposal();
+    openBoard();
+    await findTitle('Proposed work');
+    await dragCard(cardNamed('Proposed work'), columnNamed(COLUMN.todo));
+
+    await screen.findByRole('dialog');
+    const clear = vi.spyOn(Selection.prototype, 'removeAllRanges');
+    document.dispatchEvent(new Event('selectionchange'));
+
+    expect(clear).not.toHaveBeenCalled();
+  });
+
   it('[web-030] confirming starts the proposal with the prompt sealed as the user', async () => {
     await proposal();
     const { user } = openBoard();
