@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Connect worker</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <form id="form" autocomplete="off">
+      <label for="token">Token</label>
+      <div class="field">
+        <input
+          id="token"
+          type="password"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+        <span id="token-count" class="count"></span>
+      </div>
+      <label for="data-key">Data key</label>
+      <div class="field">
+        <input
+          id="data-key"
+          type="password"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+        <span id="data-key-count" class="count"></span>
+      </div>
+      <p id="status" role="status"></p>
+      <div class="buttons">
+        <button type="button" id="close">Close</button>
+        <button type="submit" id="connect" disabled>Connect</button>
+      </div>
+    </form>
+    <script src="connect.js"></script>
+  </body>
+</html>

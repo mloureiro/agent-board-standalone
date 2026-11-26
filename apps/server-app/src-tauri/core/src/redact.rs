@@ -12,11 +12,14 @@ static ISSUED_CREDENTIAL: LazyLock<Regex> = LazyLock::new(|| {
 static HEX_SECRET: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"[0-9a-fA-F]{64,}").expect("hex pattern"));
 
+static PAIRING_CODE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"\b[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}\b").expect("pairing code pattern")
+});
+
 pub fn redact(line: &str) -> String {
     let without_header = AUTHORIZATION.replace_all(line, format!("${{1}}{MASK}"));
     let without_credentials =
         ISSUED_CREDENTIAL.replace_all(&without_header, format!("${{1}}{MASK}"));
-    HEX_SECRET
-        .replace_all(&without_credentials, MASK)
-        .into_owned()
+    let without_hex = HEX_SECRET.replace_all(&without_credentials, MASK);
+    PAIRING_CODE.replace_all(&without_hex, MASK).into_owned()
 }

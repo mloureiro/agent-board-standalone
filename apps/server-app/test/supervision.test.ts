@@ -276,18 +276,6 @@ describe('supervision through the headless runner', () => {
     for (const address of addresses) expect(address).toMatch(/^(127\.0\.0\.1|\[::1\]):\d+$/);
   });
 
-  it('[server-app-022] actions of later iterations are refused with a clear error line', async () => {
-    const session = start();
-    session.send('open-board');
-    await until(() => session.events.some((event) => event['type'] === 'error'), 'the error line');
-    expect(session.events.find((event) => event['type'] === 'error')).toMatchObject({
-      action: 'open-board',
-      message: 'open-board is not implemented in this build',
-    });
-    session.send('quit');
-    await session.closed;
-  });
-
   it('[server-app-032] the app leaves no child behind when its input ends', async () => {
     const session = start();
     await running(session);

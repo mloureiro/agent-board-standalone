@@ -3,10 +3,11 @@ mod common;
 use std::fs;
 use std::io::{self, Cursor};
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use agent_board_server_core::app::{self, Host, Running, Start};
 use agent_board_server_core::durations::Durations;
+use agent_board_server_core::handover::CommandRunner;
 use agent_board_server_core::headless::serve_with;
 use agent_board_server_core::login_item::Build;
 use agent_board_server_core::opener::Opener;
@@ -21,6 +22,16 @@ impl Opener for Recorder {
     fn open(&self, path: &Path) -> io::Result<()> {
         self.0.lock().unwrap().push(path.to_path_buf());
         Ok(())
+    }
+}
+
+#[derive(Default)]
+struct RunnerRecorder(Mutex<Vec<Vec<String>>>);
+
+impl CommandRunner for RunnerRecorder {
+    fn run(&self, args: &[String]) -> io::Result<i32> {
+        self.0.lock().unwrap().push(args.to_vec());
+        Ok(0)
     }
 }
 
@@ -45,13 +56,14 @@ fn start(host: &Host) -> Box<Running> {
     }
 }
 
-fn drive(running: &Running, input: &str, opener: &dyn Opener) -> Vec<Value> {
+fn drive(running: &Running, input: &str, opener: Arc<dyn Opener>) -> Vec<Value> {
     let mut out = Vec::new();
     serve_with(
         running,
         Cursor::new(input.to_string()),
         &mut out,
         opener,
+        Arc::new(RunnerRecorder::default()),
         &|| None,
     );
     String::from_utf8(out)
@@ -65,12 +77,12 @@ fn drive(running: &Running, input: &str, opener: &dyn Opener) -> Vec<Value> {
 fn server_app_022_stdin_actions_print_json_state_lines_and_quit_ends_the_run() {
     let bed = Bed::new();
     let running = start(&host(&bed));
-    let recorder = Recorder::default();
+    let recorder = Arc::new(Recorder::default());
 
     let events = drive(
         &running,
         "state\nnonsense\n\nopen-logs\nopen-settings\nquit\nstate\n",
-        &recorder,
+        recorder.clone(),
     );
 
     let types: Vec<&str> = events
@@ -92,7 +104,7 @@ fn server_app_022_stdin_actions_print_json_state_lines_and_quit_ends_the_run() {
 fn server_app_022_the_end_of_input_quits_like_the_quit_action() {
     let bed = Bed::new();
     let running = start(&host(&bed));
-    let events = drive(&running, "state\n", &Recorder::default());
+    let events = drive(&running, "state\n", Arc::new(Recorder::default()));
     assert_eq!(events.last().unwrap()["type"], "quit");
 }
 
@@ -100,8 +112,8 @@ fn server_app_022_the_end_of_input_quits_like_the_quit_action() {
 fn server_app_021_the_open_actions_open_the_logs_folder_and_the_settings_file() {
     let bed = Bed::new();
     let running = start(&host(&bed));
-    let recorder = Recorder::default();
-    drive(&running, "open-logs\nopen-settings\n", &recorder);
+    let recorder = Arc::new(Recorder::default());
+    drive(&running, "open-logs\nopen-settings\n", recorder.clone());
     assert_eq!(
         *recorder.0.lock().unwrap(),
         [running.paths.logs_dir(), running.paths.settings_file()]
@@ -116,12 +128,12 @@ fn server_app_021_settings_apply_only_after_quit_and_reopen() {
     let settings_file = running.paths.settings_file();
     fs::write(&settings_file, r#"{"port": 5005}"#).unwrap();
 
-    let events = drive(&running, "state\n", &Recorder::default());
+    let events = drive(&running, "state\n", Arc::new(Recorder::default()));
     assert_eq!(events[0]["settings"]["port"], 4785);
     drop(running);
 
     let reopened = start(&host);
-    let events = drive(&reopened, "state\n", &Recorder::default());
+    let events = drive(&reopened, "state\n", Arc::new(Recorder::default()));
     assert_eq!(events[0]["settings"]["port"], 5005);
 }
 
@@ -153,7 +165,7 @@ fn server_app_067_refused_settings_keep_the_app_up_with_a_message_in_the_state_a
     fs::write(root.paths().settings_file(), r#"{"port": 80}"#).unwrap();
 
     let running = start(&host);
-    let events = drive(&running, "state\n", &Recorder::default());
+    let events = drive(&running, "state\n", Arc::new(Recorder::default()));
 
     assert_eq!(events[0]["settings"]["status"], "refused");
     assert!(
@@ -175,7 +187,7 @@ fn server_app_070_a_start_writes_timestamped_status_lines_to_the_app_log() {
     let bed = Bed::new();
     let host = host(&bed);
     let running = start(&host);
-    drive(&running, "quit\n", &Recorder::default());
+    drive(&running, "quit\n", Arc::new(Recorder::default()));
 
     let log = fs::read_to_string(running.paths.app_log()).unwrap();
     assert!(
@@ -208,16 +220,44 @@ fn server_app_070_an_access_log_that_is_already_full_is_rotated_at_start() {
 }
 
 #[test]
-fn server_app_022_the_actions_of_later_iterations_are_parsed_and_refused_for_now() {
+fn server_app_022_every_tray_action_is_parsed_and_the_unavailable_ones_are_refused() {
     let bed = Bed::new();
     let running = start(&host(&bed));
-    let events = drive(&running, "open-board\npair-device\n", &Recorder::default());
+    let events = drive(
+        &running,
+        "open-board\npair-device\nbackup-now\nrestart-worker\nconnect-worker a b\nfrobnicate\n",
+        Arc::new(Recorder::default()),
+    );
 
-    let errors: Vec<&Value> = events.iter().filter(|e| e["type"] == "error").collect();
-    assert_eq!(errors.len(), 2);
+    let refused: Vec<(&str, &str)> = events
+        .iter()
+        .filter(|event| event["type"] == "action")
+        .map(|event| {
+            assert_eq!(event["ok"], false);
+            (
+                event["action"].as_str().unwrap(),
+                event["message"].as_str().unwrap(),
+            )
+        })
+        .collect();
     assert_eq!(
-        errors[1]["message"],
-        "pair-device is not implemented in this build"
+        refused,
+        [
+            ("open-board", "the API is not running"),
+            (
+                "pair-device",
+                "pairing needs the request signature: set requestSignature to true in settings.json and reopen the app"
+            ),
+            ("backup-now", "the API is not running"),
+            ("restart-worker", "Worker not connected"),
+            ("connect-worker", "the API is not running"),
+        ]
+    );
+    assert!(
+        events
+            .iter()
+            .any(|event| event["type"] == "error"
+                && event["message"] == "unknown action: frobnicate")
     );
 }
 
@@ -225,7 +265,7 @@ fn server_app_022_the_actions_of_later_iterations_are_parsed_and_refused_for_now
 fn server_app_022_the_state_line_carries_the_supervision_rows() {
     let bed = Bed::new();
     let running = start(&host(&bed));
-    let events = drive(&running, "state\n", &Recorder::default());
+    let events = drive(&running, "state\n", Arc::new(Recorder::default()));
 
     let supervision = &events[0]["supervision"];
     assert!(
@@ -311,7 +351,8 @@ fn server_app_032_a_signal_stops_the_children_and_quits_even_when_input_stays_op
         &running,
         io::BufReader::new(reader),
         &mut out,
-        &Recorder::default(),
+        Arc::new(Recorder::default()),
+        Arc::new(RunnerRecorder::default()),
         &|| {
             flag.load(std::sync::atomic::Ordering::SeqCst)
                 .then_some(libc::SIGTERM)
@@ -353,7 +394,8 @@ fn server_app_028_restart_server_restarts_the_api_and_the_state_lines_follow() {
         &running,
         io::BufReader::new(reader),
         &mut out,
-        &Recorder::default(),
+        Arc::new(Recorder::default()),
+        Arc::new(RunnerRecorder::default()),
         &|| None,
     );
     let first = writer.join().unwrap();

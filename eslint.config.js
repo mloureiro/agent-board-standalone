@@ -26,6 +26,17 @@ export default tseslint.config(
     rules: { 'boundaries/parts': 'error' },
   },
   {
+    files: ['apps/server-app/frontend/**/*.js'],
+    languageOptions: {
+      globals: {
+        window: 'readonly',
+        document: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+      },
+    },
+  },
+  {
     files: ['apps/web/src/**/*.{ts,tsx}'],
     ignores: ['apps/web/src/storage/**'],
     rules: {

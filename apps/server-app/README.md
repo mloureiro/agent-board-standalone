@@ -67,9 +67,53 @@ behaviour (crash, hang, ignore SIGTERM, start late, spawn a grandchild) from `ST
 `build:binary` builds it next to the app binary.
 
 The headless runner prints a `state` line whenever the rows change (`supervision.api`, `supervision.worker`,
-`gaveUp`, `blocked`, `backup`) and implements `state`, `restart-server`, `backup-now`, `open-logs`, `open-settings`,
-`quit` and the worker actions below. The other actions answer `error` with "<action> is not implemented in this build"
-until their iteration.
+`gaveUp`, `blocked`, `backup`) and implements every tray action (see "Tray" below).
+
+## Tray
+
+The menu is built from one pure model (`core::menu`) and refreshed whenever the supervision rows, the backup or the
+busy lock change. Items, in order: Open board, the API row, the worker row, the Last backup row, the version line,
+Restart server, Back up now, Restart worker, Disconnect worker, Check worker, Open logs folder, Open settings file,
+Connect worker…, Pair a device…, Quit. Open board and Connect worker… are enabled only while the API runs; Restart,
+Disconnect and Check worker only once a worker is connected; Back up now only while the API runs; Pair a device… only
+while the API runs with `requestSignature` on. While an enrolment, a backup, Quit or another recovery action runs,
+every item except Open board, Connect worker… and Quit is disabled, and a click that still arrives is refused and
+logged to `app.log` (`refused <action>: <reason>`). A row that is `failed` or gave up puts a `!` next to the tray icon
+and the tooltip reads that row's text; the mark clears when the row recovers.
+
+The version line reads `server app <X> · API <Y> · CLI <Z>`. The bundle step must write one line each to
+`resources/api/version` and `resources/cli/version` (`[A-Za-z0-9._+-]{1,64}`): neither executable can print its version
+without doing its work, so a missing or invalid file reads "unknown".
+
+Open board hands `http://127.0.0.1:<port>/` to the client app with `open -b <client bundle id>
+"agentboard://open?v=1&url=<encoded>"` (the link and the bundle id are the contract's, run as vectors in
+`core/tests/handover.rs`) and falls back to `open <url>` in the default browser when that exits non-zero. Only a
+loopback URL without credentials is ever handed over.
+
+Pair a device… asks the API's control channel for a one-time code and shows it with its expiry (10 minutes) in a small
+window; the code is never written to a log (the log redaction masks the `XXXX-XXXX` shape). Connect worker… opens an
+app-owned window with two masked inputs, a character count each, no machine name, "Connecting…" while it works (the
+window cannot be closed meanwhile) and "Connected as <machine>" or the refusal reason; the pasted values live only in
+the window's inputs, the form model and, once promoted, the credential store. The pages are static files in `frontend/`
+(CSP `default-src 'none'`, own scripts and styles only) that call named app commands.
+
+Every item is one `Action` of `core::actions`, run by `Console::dispatch`; the tray and the headless runner share it.
+The headless actions are `open-board`, `backup-now`, `restart-server`, `restart-worker`, `disconnect-worker`,
+`check-worker`, `connect-worker <token> <data-key>`, `open-logs`, `open-settings`, `pair-device`, `quit`, `state` and
+`menu` (prints `{"type":"menu","items":[{id,label,enabled}],"badge","tooltip","busy"}`). Open board prints the `open`
+commands it ran in `commands`. `AGENT_BOARD_OPEN_PROGRAM=<absolute path>` (non-release builds or `AGENT_BOARD_E2E=1`)
+replaces `/usr/bin/open`, so tests record the calls.
+
+## What stays plain on disk
+
+Worker run logs and agent transcripts are written as plain files under `<root>/worker` and `<root>/logs`, outside the
+data folder, and nothing encrypts them: only the disk's own encryption (FileVault) protects them. The board's data
+folder holds sealed content; these files do not.
+
+## Manual walk
+
+The checks no automated test can drive (tray text and mark, Keychain prompts, launchd relaunch, pairing through a
+tunnel, uninstall, installing over the old local server) are in `docs/manual/server-app.md`.
 
 ## Worker and enrolment
 
@@ -99,7 +143,7 @@ each dispatch tick reads `ok`, `refused — …` or `error — …` from the CLI
 
 ## Backup and restore
 
-`backup-now` (the "Back up now" tray item from the tray iteration) runs five steps on its own thread, so Quit never
+`backup-now` (the "Back up now" tray item) runs five steps on its own thread, so Quit never
 waits for it: hold the API over its control channel (`<root>/run/api.sock`, `core::control`, 10 s per command and
 120 s for the hold), copy the data folder to `<backupDir>/manual-<UTC stamp>.partial`, rename it to
 `manual-<stamp>`, resume the API and show the time as "Last backup" (`state.backup.lastBackup`, read from the newest
