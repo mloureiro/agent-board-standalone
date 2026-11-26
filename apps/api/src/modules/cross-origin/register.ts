@@ -3,8 +3,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 
 import type { ServerContext } from '../../context.js';
 import { ApiError } from '../../errors.js';
-import { isLoopbackName } from '../env.js';
-import { ANY_HOST, effectiveHost } from '../listen/index.js';
+import { ownHostNames } from '../listen/index.js';
 
 const VERSION_PATH = '/api/version';
 const CORS_ALLOWED_METHODS = 'GET, HEAD, POST, OPTIONS';
@@ -24,16 +23,10 @@ const ownOrigins = (context: ServerContext, request: FastifyRequest): Set<string
   const { signIn, listen } = context.config;
   if (signIn.mode === 'login') return new Set([signIn.publicUrl]);
   const port = context.listeningPort();
-  const host = effectiveHost(listen, false);
-  const names = new Set<string>(listen.allowedHosts);
-  if (listen.allowedHosts.length === 0) {
-    if (host === ANY_HOST || host === '::') {
-      const sent = request.headers.host;
-      if (sent !== undefined) return new Set([`http://${sent.toLowerCase()}`]);
-    } else {
-      names.add(host);
-    }
-    if (isLoopbackName(host)) for (const name of ['localhost', '127.0.0.1', '::1']) names.add(name);
+  const names = ownHostNames(listen, false);
+  if (names === null) {
+    const sent = request.headers.host;
+    return sent === undefined ? new Set() : new Set([`http://${sent.toLowerCase()}`]);
   }
   return new Set([...names].flatMap((name) => originsOf(name, port)));
 };

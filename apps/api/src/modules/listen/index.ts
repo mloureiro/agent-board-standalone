@@ -8,6 +8,7 @@ export {
   LOOPBACK_HOST,
   bareHostname,
   effectiveHost,
+  ownHostNames,
   type ListenConfig,
 } from './config.js';
 export const listenModule = defineModule({

@@ -1,4 +1,4 @@
-import { csv, envObject, onOff, refuse } from '../env.js';
+import { csv, envObject, isLoopbackName, LOOPBACK_NAMES, onOff, refuse } from '../env.js';
 
 export interface ListenConfig {
   host: string | null;
@@ -46,3 +46,13 @@ export const listenSchema = envObject.transform((env, ctx): ListenConfig => {
 
 export const effectiveHost = (listen: ListenConfig, login: boolean): string =>
   listen.host ?? (login ? ANY_HOST : LOOPBACK_HOST);
+
+export const ownHostNames = (listen: ListenConfig, login: boolean): Set<string> | null => {
+  const names = new Set<string>(listen.allowedHosts);
+  if (listen.allowedHosts.length > 0) return names;
+  const host = effectiveHost(listen, login);
+  if (host === ANY_HOST || host === '::') return null;
+  names.add(host);
+  if (isLoopbackName(host)) for (const name of LOOPBACK_NAMES) names.add(name);
+  return names;
+};
