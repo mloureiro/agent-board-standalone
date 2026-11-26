@@ -97,7 +97,12 @@ export async function installRelease(env: UpdateEnv, release: Release): Promise<
   await withUpdateLock(dirs.state, async () => {
     rmSync(staging, { recursive: true, force: true });
     try {
-      const { file } = await downloadVerified(rt, release, target, staging);
+      const { file, signedBy } = await downloadVerified(rt, release, target, staging);
+      env.out(
+        signedBy === null
+          ? `verified ${release.tag} by checksum (checksums only, no signature key built in)`
+          : `verified ${release.tag} by checksum and the signature of key ${signedBy}`,
+      );
       await probeVersion(rt, file, release.version);
       const backup = createBackup({
         dirs,

@@ -44,6 +44,7 @@ describe('board self-update', () => {
     const m = machine({ releasesUrl: entry.listUrl });
     expect(await m.run('self-update')).toBe(0);
     expect(m.binaryText()).toBe('binary of 1.0.0');
+    expect(m.stdout().match(/checksums only, no signature key built in/g)).toHaveLength(1);
     expect(m.test.spawnCalls.map((call) => [call.file, ...call.args])).toEqual([
       [realpathSync(m.binary), '--profile', 'default', 'self-update', '--resume'],
     ]);

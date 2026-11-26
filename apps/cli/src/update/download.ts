@@ -8,12 +8,15 @@ import { CliError } from '../errors.js';
 import type { Runtime } from '../runtime.js';
 import {
   CHECKSUMS_ASSET,
+  SIGNATURE_ASSET,
   assertFetchable,
   assetName,
   parseChecksums,
   type Release,
   type UpdateTarget,
 } from './release-source.js';
+import { MAX_SIGNATURE_BYTES, parsePublicKey, verifySignature } from './signature.js';
+import { EMBEDDED_UPDATE_KEY } from './update-key.js';
 
 const DOWNLOAD_TIMEOUT_MS = 10 * 60_000;
 const MAX_BINARY_BYTES = 400 * 1024 * 1024;
@@ -34,23 +37,73 @@ async function open(rt: Runtime, url: string): Promise<Response> {
   return response;
 }
 
-async function checksumFor(rt: Runtime, release: Release, name: string): Promise<string> {
+async function readCapped(response: Response, max: number, what: string): Promise<Buffer> {
+  if (response.body === null) return Buffer.alloc(0);
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of Readable.fromWeb(response.body as never) as AsyncIterable<Buffer>) {
+    size += chunk.length;
+    if (size > max) throw new CliError(`${what} is too large`);
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
+async function verifyChecksums(
+  rt: Runtime,
+  release: Release,
+  updateKey: string,
+  checksums: Buffer,
+): Promise<string> {
+  const publicKey = parsePublicKey(updateKey);
+  const refuse = (reason: string): CliError =>
+    new CliError(
+      `release ${release.tag} is not signed with the key this board trusts (${publicKey.keyId}): ${reason}; nothing was installed`,
+    );
+  const listing = release.assets.find((asset) => asset.name === SIGNATURE_ASSET);
+  if (listing === undefined) throw refuse(`it has no ${SIGNATURE_ASSET}`);
+  const signature = await readCapped(
+    await open(rt, listing.url),
+    MAX_SIGNATURE_BYTES,
+    SIGNATURE_ASSET,
+  );
+  try {
+    verifySignature(publicKey, checksums, signature.toString('utf8'));
+  } catch (error) {
+    if (error instanceof CliError) throw refuse(error.message);
+    throw error;
+  }
+  return publicKey.keyId;
+}
+
+async function checksumFor(
+  rt: Runtime,
+  release: Release,
+  name: string,
+  updateKey: string | null,
+): Promise<{ sum: string; signedBy: string | null }> {
   const listing = release.assets.find((asset) => asset.name === CHECKSUMS_ASSET);
   if (listing === undefined) {
     throw new CliError(`release ${release.tag} has no ${CHECKSUMS_ASSET}: it cannot be verified`);
   }
-  const text = await (await open(rt, listing.url)).text();
-  if (text.length > MAX_CHECKSUMS_BYTES) throw new CliError(`${CHECKSUMS_ASSET} is too large`);
-  const sum = parseChecksums(text).get(name);
+  const checksums = await readCapped(
+    await open(rt, listing.url),
+    MAX_CHECKSUMS_BYTES,
+    CHECKSUMS_ASSET,
+  );
+  const signedBy =
+    updateKey === null ? null : await verifyChecksums(rt, release, updateKey, checksums);
+  const sum = parseChecksums(checksums.toString('utf8')).get(name);
   if (sum === undefined) {
     throw new CliError(`${CHECKSUMS_ASSET} of ${release.tag} has no checksum for ${name}`);
   }
-  return sum;
+  return { sum, signedBy };
 }
 
 export interface Downloaded {
   readonly file: string;
   readonly sha256: string;
+  readonly signedBy: string | null;
 }
 
 export async function downloadVerified(
@@ -58,11 +111,12 @@ export async function downloadVerified(
   release: Release,
   target: UpdateTarget,
   stagingDir: string,
+  updateKey: string | null = EMBEDDED_UPDATE_KEY,
 ): Promise<Downloaded> {
   const name = assetName(target);
   const asset = release.assets.find((entry) => entry.name === name);
   if (asset === undefined) throw new CliError(`release ${release.tag} has no ${name} asset`);
-  const expected = await checksumFor(rt, release, name);
+  const { sum: expected, signedBy } = await checksumFor(rt, release, name, updateKey);
 
   mkdirSync(stagingDir, { recursive: true, mode: 0o700 });
   const file = path.join(stagingDir, `${name}.part`);
@@ -92,7 +146,7 @@ export async function downloadVerified(
     );
   }
   chmodSync(file, 0o755);
-  return { file, sha256: actual };
+  return { file, sha256: actual, signedBy };
 }
 
 export async function probeVersion(rt: Runtime, file: string, version: string): Promise<void> {
