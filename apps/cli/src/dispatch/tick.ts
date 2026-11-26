@@ -15,7 +15,7 @@ import { ApiError } from '../transport/errors.js';
 import { WatchStore } from '../watch/store.js';
 import { scanWatches, watchHeartbeatFresh } from '../watch/scan.js';
 import type { TickEnv } from './env.js';
-import { SLEEP_GAP_MS } from './limits.js';
+import { SLEEP_GAP_MS, STOPPING_RECHECK_MS } from './limits.js';
 import { ownLane } from './config.js';
 import {
   earliest,
@@ -49,11 +49,19 @@ function pinnedElsewhere(task: OpenTask['wire'], machine: string): string | unde
   return pinned ? `pinned to ${task.machine}` : undefined;
 }
 
-type Verdict = { readonly kind: 'eligible' } | { readonly kind: 'skip'; readonly why?: string };
+type Verdict =
+  | { readonly kind: 'eligible' }
+  | { readonly kind: 'skip'; readonly why?: string; readonly recheckAt?: Date };
 
 function judge(env: TickEnv, task: OpenTask, active: ReadonlySet<string>): Verdict {
   const { wire } = task;
-  if (active.has(task.id)) return { kind: 'skip', why: 'its last worker is still stopping' };
+  if (active.has(task.id)) {
+    return {
+      kind: 'skip',
+      why: 'its last worker is still stopping',
+      recheckAt: new Date(env.now().getTime() + STOPPING_RECHECK_MS),
+    };
+  }
   if (wire.createdBy === 'agent') {
     return { kind: 'skip', why: 'proposed by an agent, not started by you' };
   }
@@ -173,8 +181,12 @@ export async function runTick(env: TickEnv): Promise<TickResult> {
   const delayed: Date[] = [];
   for (const task of order(listed.filter((candidate) => candidate.wire.status === 'todo'))) {
     const verdict = judge(env, task, new Set(activeWorkers));
-    if (verdict.kind === 'eligible') eligible.push(task);
-    else if (verdict.why !== undefined) log(`SKIP ${task.id} ${verdict.why}`);
+    if (verdict.kind === 'eligible') {
+      eligible.push(task);
+      continue;
+    }
+    if (verdict.recheckAt !== undefined) delayed.push(verdict.recheckAt);
+    if (verdict.why !== undefined) log(`SKIP ${task.id} ${verdict.why}`);
     else if (task.wire.notBefore !== null) delayed.push(new Date(task.wire.notBefore));
   }
 
