@@ -17,7 +17,7 @@
   "api-016": "apps/api/test/start-configuration-and-database.test.ts",
   "api-017": "apps/api/test/start-configuration-and-database.test.ts",
   "api-018": "apps/api/test/start-configuration-and-database.test.ts",
-  "api-019": "apps/api/test/start-configuration-and-database.test.ts",
+  "api-019": "apps/api/test/bun-executable.test.ts",
   "api-020": "apps/api/test/start-configuration-and-database.test.ts",
   "api-021": "apps/api/test/start-configuration-and-database.test.ts",
   "api-023": "apps/api/test/start-configuration-and-database.test.ts",
