@@ -532,7 +532,7 @@ async fn sign_out_is_signed_and_other_client_auth_routes_too() {
     keys.set_token(&id, "abc_t").unwrap();
     bridge.sign_out(&id).await.unwrap();
     bridge
-        .server_fetch(&id, "POST", "/api/auth/handoff/approve", &[], Some("{}"))
+        .server_fetch(&id, "GET", "/api/auth/handoff/describe?flow=f", &[], None)
         .await
         .unwrap();
     bridge

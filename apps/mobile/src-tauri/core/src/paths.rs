@@ -11,6 +11,7 @@ const CREDENTIAL_ROUTES: &[&str] = &[
     "/api/auth/saml/finish",
     "/api/auth/passkey/login",
     "/api/auth/passkey/signup",
+    "/api/auth/handoff/approve",
     "/api/auth/handoff/finish",
     "/api/pair",
     "/api/machine/register-key",

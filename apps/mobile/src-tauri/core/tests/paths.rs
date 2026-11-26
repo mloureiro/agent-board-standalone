@@ -77,6 +77,7 @@ fn refuses_credential_routes_whatever_the_case_or_query() {
         "/api/PAIR",
         "/api/pair/",
         "/api/pair?x=1",
+        "/api/auth/handoff/approve",
         "/api/auth/handoff/finish",
         "/api/auth/oidc/finish",
         "/api/auth/saml/finish",

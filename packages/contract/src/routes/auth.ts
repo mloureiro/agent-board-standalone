@@ -186,6 +186,7 @@ export const authHandoffApproveRoute = defineRoute({
   request: handoffFlow,
   response: signedIn,
   errors: ['forbidden', 'not-found'],
+  issuesCredential: true,
 });
 
 export const authHandoffFinishRoute = defineRoute({
