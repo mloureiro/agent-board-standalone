@@ -217,6 +217,6 @@ Commit the regenerated icon files of the three apps, merge, and build again.
 ## If something goes wrong
 
 - Turn remote access off (`<server> setup remote --off`, then Restart server): the board is back on this Mac only,
-  without sign-in. Stop the tunnel (`tailscale funnel --bg off <port>` or quit `cloudflared`).
+  without sign-in. Stop the tunnel (`tailscale funnel reset`, or quit `cloudflared`).
 - The migration never changed the old board: the old local server can start again from its own data.
 - `<root>/logs/app.log` and `<root>/logs/api.log` hold the reasons the tray rows show.
