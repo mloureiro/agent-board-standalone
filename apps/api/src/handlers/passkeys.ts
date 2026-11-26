@@ -35,6 +35,16 @@ const passkeyConfig = (context: ServerContext): LoginConfig => {
   return signIn;
 };
 
+const ONLY_CLAIMED = 'Sign-up on this board is open only to the account being set up.';
+
+const refuseOtherThanClaimed = (login: LoginConfig, username: string): void => {
+  if (login.claimUser !== null && username !== login.claimUser)
+    throw new ApiError('forbidden', ONLY_CLAIMED);
+};
+
+const claimable = (login: LoginConfig, username: string, source: string | null): boolean =>
+  username === login.claimUser && source === null;
+
 const challengeOf = (data: Record<string, unknown>): string =>
   typeof data.challenge === 'string' ? data.challenge : '';
 
@@ -139,7 +149,9 @@ export const passkeyHandlers: HandlerSet = (context) => {
           'bad-request',
           'A name is lower case letters, digits, dots, dashes, underscores and @, up to 64.',
         );
-      if ((await database.withSystem((system) => system.lookupUser(username))) !== null)
+      refuseOtherThanClaimed(login, username);
+      const existing = await database.withSystem((system) => system.lookupUser(username));
+      if (existing !== null && !claimable(login, username, existing.source))
         throw new ApiError('forbidden', NAME_TAKEN);
       const options = await registrationOptionsFor(login, username, []);
       const started = await startFlow(context, {
@@ -162,9 +174,15 @@ export const passkeyHandlers: HandlerSet = (context) => {
         'forbidden',
         SIGN_IN_FAILED,
       );
+      refuseOtherThanClaimed(login, username);
       await database.withOwner(username, async (tx) => {
-        if ((await admitUser(tx, username, 'passkey')) === 'existing')
+        const [existing] = await tx
+          .select({ source: schema.appUser.source })
+          .from(schema.appUser)
+          .where(eq(schema.appUser.username, username));
+        if (existing !== undefined && !claimable(login, username, existing.source))
           throw new ApiError('forbidden', NAME_TAKEN);
+        await admitUser(tx, username, 'passkey');
         const stored = await tx
           .insert(schema.passkey)
           .values({

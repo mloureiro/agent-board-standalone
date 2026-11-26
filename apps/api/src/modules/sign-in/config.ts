@@ -2,6 +2,7 @@ import type { SignInMethod } from '@agent-board/contract';
 
 import type { z } from 'zod';
 
+import { SIGNUP_NAME_RULE } from '../../auth/passkeys.js';
 import { csv, envObject, onOff, refuse } from '../env.js';
 
 export interface NoLoginConfig {
@@ -16,6 +17,7 @@ export interface LoginConfig {
   scheme: 'http' | 'https';
   passkeys: boolean;
   signupToken: string | null;
+  claimUser: string | null;
   allowedGroups: string[];
   sessionDays: number;
   oidc: OidcSettings | null;
@@ -50,6 +52,7 @@ const LOGIN_ONLY_NAMES = [
   'PUBLIC_URL',
   'PASSKEYS',
   'SIGNUP_TOKEN',
+  'CLAIM_USER',
   'ALLOWED_GROUPS',
   'SESSION_DAYS',
 ];
@@ -234,6 +237,7 @@ export const signInSchema = envObject.transform((env, ctx): SignInConfig => {
   const saml = parseSaml(env, production, url?.origin ?? '', ctx);
   const allowedGroups = csv(env.ALLOWED_GROUPS);
   const signupToken = env.SIGNUP_TOKEN ?? null;
+  const claimUser = env.CLAIM_USER ?? null;
   const sessionDays = parseSessionDays(env.SESSION_DAYS, (message) =>
     refuse(ctx, 'SESSION_DAYS', message),
   );
@@ -250,6 +254,14 @@ export const signInSchema = envObject.transform((env, ctx): SignInConfig => {
     refuse(ctx, 'SIGNUP_TOKEN', `must be at least ${MIN_SIGNUP_TOKEN_LENGTH} characters`);
   if (signupToken !== null && !passkeys)
     refuse(ctx, 'SIGNUP_TOKEN', 'needs PASSKEYS=on: an account is created with a passkey');
+  if (claimUser !== null && signupToken === null)
+    refuse(ctx, 'CLAIM_USER', 'needs SIGNUP_TOKEN: the account is taken over through sign-up');
+  if (claimUser !== null && !SIGNUP_NAME_RULE.test(claimUser))
+    refuse(
+      ctx,
+      'CLAIM_USER',
+      'must be a sign-up name: lower case letters, digits, dots, dashes, underscores and @',
+    );
   if (!passkeys && !oidc && !saml)
     refuse(
       ctx,
@@ -264,6 +276,7 @@ export const signInSchema = envObject.transform((env, ctx): SignInConfig => {
     scheme: url?.protocol === 'https:' ? 'https' : 'http',
     passkeys,
     signupToken,
+    claimUser,
     allowedGroups,
     sessionDays,
     oidc,
