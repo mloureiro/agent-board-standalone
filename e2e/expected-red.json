@@ -33,7 +33,10 @@
         "title": "redirect sign-in › [P-05] SAML redirect sign-in finishes in the tab that started it",
         "projects": ["webkit-desktop"]
       },
-      "open client sessions › [P-10] after sign-out elsewhere the event stream ends, the reconnect gets 401 and the client shows sign-in",
+      {
+        "title": "open client sessions › [P-10] after sign-out elsewhere the event stream ends, the reconnect gets 401 and the client shows sign-in",
+        "projects": ["chromium-desktop"]
+      },
       {
         "title": "hand-off from WebKit › [P-03] a WebKit client completes hand-off sign-in through a second browser context that approves @webkit",
         "projects": ["webkit-desktop"]

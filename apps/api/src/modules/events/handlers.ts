@@ -42,18 +42,23 @@ export const eventsHandlers =
         );
         if (found.length === 0) throw new ApiError('not-found', 'this project does not exist');
       }
-      return openStream(reply, context, owner, timings, (send) => ({
+      const recheck = (): Promise<boolean> =>
+        stillValid(() => authenticateClient(context, request));
+      return openStream(reply, context, owner, timings, (send, end) => ({
         onMessage: (message) => {
           if (message.kind === 'resync') send('changed');
+          else if (message.kind === 'change' && message.projectId === undefined)
+            void recheck().then(
+              (valid) => (valid ? send('changed') : end()),
+              () => send('changed'),
+            );
           else if (
             message.kind === 'change' &&
-            (filter === undefined ||
-              message.projectId === undefined ||
-              message.projectId === filter)
+            (filter === undefined || message.projectId === filter)
           )
             send('changed');
         },
-        recheck: () => stillValid(() => authenticateClient(context, request)),
+        recheck,
       }));
     },
 

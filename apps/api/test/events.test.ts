@@ -32,6 +32,7 @@ import {
 import { loadConfig } from '../src/modules/index.js';
 import { createServer } from '../src/server.js';
 import { createOpenStreams } from '../src/streams.js';
+import { tokenHash } from '@agent-board/sealing';
 import { CONTRACT_HEADERS, CLIENT_TOKEN, MACHINE_TOKEN, loginEnv, noLoginEnv } from './helpers.js';
 import {
   POSTGRES_URL,
@@ -115,6 +116,7 @@ const node = async (options: {
   bus?: EventBus;
   database?: Database;
   credentials?: CredentialStore | undefined;
+  timings?: typeof FAST;
 }): Promise<Node> => {
   const bus = options.bus ?? createMemoryEvents();
   const services: ServerServices = {
@@ -127,7 +129,7 @@ const node = async (options: {
     events: bus,
   };
   const app = await createServer(loadConfig(options.env ?? noLoginEnv()), services, {
-    handlerSets: [eventsHandlers(FAST)],
+    handlerSets: [eventsHandlers(options.timings ?? FAST)],
   });
   await app.listen({ host: '127.0.0.1', port: 0 });
   const address = app.server.address() as { port: number };
@@ -235,6 +237,32 @@ describe('client event stream', () => {
       headers: { ...CONTRACT_HEADERS, ...headers },
     });
     expect(again.status).toBe(401);
+  });
+
+  it('[api-095] ends at once on an owner-wide change once its session is gone, while a live session gets changed', async () => {
+    const signedOut = new Set<string>();
+    const credentials: CredentialStore = {
+      findSession: async (hash) => ({ owner: 'owner', expired: signedOut.has(hash) }),
+      findMachine: async () => null,
+    };
+    const server = await node({
+      env: loginEnv(),
+      credentials,
+      timings: { pingMs: 60_000, debounceMs: 40 },
+    });
+    const gone = await opened(`${server.url}/api/client/events`, {
+      authorization: `Bearer ${CLIENT_TOKEN}`,
+    });
+    const live = await opened(`${server.url}/api/client/events`, {
+      authorization: `Bearer abc_${'C'.repeat(43)}`,
+    });
+    await gone.until((text) => text.includes(': open'));
+    await live.until((text) => text.includes(': open'));
+    signedOut.add(await tokenHash(CLIENT_TOKEN));
+    await publishChange(server.bus, 'owner');
+    expect(await gone.ended()).toBe(true);
+    expect(count(gone.text(), 'event: changed')).toBe(0);
+    await live.until((text) => text.includes('event: changed'));
   });
 
   it('[api-095] never holds a database transaction while open and is registered in services.streams', async () => {
