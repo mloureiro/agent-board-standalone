@@ -11,7 +11,7 @@ const card = (id: string): BoardCard =>
     labels: [],
     note: null,
     watches: 0,
-  }) as BoardCard;
+  }) as unknown as BoardCard;
 
 const column = ['a', 'b', 'c'].map(card);
 
