@@ -7,11 +7,7 @@
     ],
     "blackbox/matrix-refusal.test.ts": "*",
     "blackbox/schedules.test.ts": [
-      "[api-077] an after schedule › [api-077] fires once when the upstream task moves from running to done",
       "[api-077] an after schedule › [api-077] fires once more for running to done on a second run"
-    ],
-    "blackbox/sessions.test.ts": [
-      "no-login mode with the database inspected › [api-029] the user row does not exist after reads only and exists after one committed write"
     ],
     "blackbox/signature.test.ts": [
       "request signature on a no-login server › [api-022] a badly signed request gets 401",
@@ -25,13 +21,9 @@
       "request signature bound at sign-in on a login server › [api-120] a user revokes a bound key on a login server and it gets 401"
     ],
     "blackbox/user-commands.test.ts": [
-      "user commands with a worker › [api-119] a machine token cannot set the grant and a user session can",
-      "user commands with a worker › [api-119] a note written by a granted machine is authored by the user with the machine recorded",
       "user commands with a worker › [api-119] answer answers 409 run-holds-task from the machine holding the active run",
       "user commands with a worker › [api-119] dismiss-question answers 409 run-holds-task from the machine holding the active run",
-      "user commands with a worker › [api-119] take-back succeeds from a machine with the grant",
       "user commands with a worker › [cli-029] board reply and send refuse inside a run before sending",
-      "user commands with a worker › [cli-030] board take-back works on a run quiet for 20 minutes",
       "user commands without a worker › [cli-029] board reply --resume sends the task back to the top of Todo"
     ],
     "browser/accessibility.spec.ts": [
@@ -83,7 +75,10 @@
       "drafts after sign-out › [web-064] drafts clear on sign-out"
     ],
     "browser/parity.spec.ts": [
-      "redirect sign-in › [P-05] SAML redirect sign-in finishes in the tab that started it",
+      {
+        "title": "redirect sign-in › [P-05] SAML redirect sign-in finishes in the tab that started it",
+        "projects": ["webkit-desktop"]
+      },
       "open client sessions › [P-10] after sign-out elsewhere the event stream ends, the reconnect gets 401 and the client shows sign-in",
       "hand-off finish from another origin › [P-11] a hand-off finish with a wrong verifier leaves the flow usable and the right verifier completes it",
       {
@@ -95,13 +90,9 @@
         "projects": ["webkit-desktop"]
       }
     ],
-    "browser/projects.spec.ts": [
-      {
-        "title": "project filter on the task, schedule and event queries › [api-104] client.events with a project raises changed only for that project's changes",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      }
+    "browser/proposals.spec.ts": [
+      "proposals › [api-056] an agent-created task is a Backlog proposal that no machine claims"
     ],
-    "browser/proposals.spec.ts": "*",
     "browser/questions.spec.ts": "*",
     "browser/responsive.spec.ts": [
       "phone viewport journeys on a no-login board › [web-049] the pinned panel stays visible and its send button works with the keyboard open @phone",
@@ -111,9 +102,15 @@
       "phone viewport journeys on a no-login board › [web-098] the reply journey completes at the phone viewport @phone",
       "phone viewport journeys on a no-login board › [web-098] the answer a question journey completes at the phone viewport @phone",
       "phone viewport journeys on a no-login board › [web-098] the new task journey completes at the phone viewport @phone",
-      "phone viewport journeys on a no-login board › [web-098] the schedules journey completes at the phone viewport @phone",
+      {
+        "title": "phone viewport journeys on a no-login board › [web-098] the schedules journey completes at the phone viewport @phone",
+        "projects": ["chromium-desktop", "webkit-desktop", "webkit-phone"]
+      },
       "phone viewport journeys on a no-login board › [web-098] the settings journey completes at the phone viewport @phone",
-      "phone viewport sign-in on a login board › [web-098] the sign in journey completes at the phone viewport @phone"
+      {
+        "title": "phone viewport sign-in on a login board › [web-098] the sign in journey completes at the phone viewport @phone",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      }
     ],
     "browser/sealing-at-rest.spec.ts": "*",
     "browser/settings.spec.ts": [
@@ -133,10 +130,14 @@
       "[web-075] Settings › Account › [web-075] importing the exported file into a fresh account restores its tasks"
     ],
     "browser/sign-in.spec.ts": [
-      "sign-in page › [web-014] SAML returns to the client return page and lands signed in, in the same tab",
-      "sign-in page › [web-014] a SAML provider error shows on the sign-in page",
-      "sign-in page › [web-016] approving from another browser signs the client in without a navigation",
-      "another server › [web-103] approving there signs the client in without reload and it holds an abc_ token for that server and no cookie"
+      {
+        "title": "sign-in page › [web-014] SAML returns to the client return page and lands signed in, in the same tab",
+        "projects": ["webkit-desktop"]
+      },
+      {
+        "title": "sign-in page › [web-014] a SAML provider error shows on the sign-in page",
+        "projects": ["webkit-desktop"]
+      }
     ],
     "browser/signature.spec.ts": "*",
     "browser/task-page.spec.ts": "*",
