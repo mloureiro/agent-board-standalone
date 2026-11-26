@@ -57,7 +57,7 @@ export function passphraseField(page: Page): Locator {
 
 export async function waitForBoard(page: Page): Promise<void> {
   await expect(boardLink(page)).toBeVisible({ timeout: UI_TIMEOUT_MS });
-  await expect(passphraseField(page)).toHaveCount(0);
+  await expect(passphraseField(page)).toHaveCount(0, { timeout: UI_TIMEOUT_MS });
 }
 
 export async function unlockWith(page: Page, passphrase: string): Promise<void> {
