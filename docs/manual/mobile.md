@@ -6,50 +6,47 @@ and the notification logic; this walk covers what only a phone shows.
 
 ## What you need
 
-- A Mac running the server app, with the server app's port (shown in its tray menu as `http://127.0.0.1:<port>`).
-- A Tailscale account on the Mac and the phone, with HTTPS enabled for the tailnet (any https tunnel or reverse proxy
-  that forwards to the loopback port works the same way; ADR-0013 option a).
+- A Mac running the server app with remote access on (`install.md` section 4.1): a tunnel to the server's port, its
+  https address `<public-url>` (for example `https://my-mac.tail1234.ts.net`) set in **Set up…**, and your first
+  passkey made (section 4.2). The board then signs everyone in with passkeys (ADR-0013 option a).
+- A way to use that passkey on the phone: a passkey kept in a password manager the phone shares, a security key, or the
+  cross-device sign-in (the phone's browser shows a QR code that the Mac or another phone with the passkey scans).
 - The APK: the `agent-board-mobile-apk` artifact of a green `Mobile APK` run, or the file attached to the
   `mobile-v<version>` release. Debug runs are signed with a throwaway key: uninstall an older build before installing
   a newer one signed with a different key.
 
-## 1. Expose the server app over https
+## 1. Reach the server over https
 
-1. On the Mac, run `tailscale serve https / http://127.0.0.1:<port>` and note the host name it prints, for example
-   `https://my-mac.tail1234.ts.net`.
-2. In the server app, open Settings and add that host name (without the scheme) to **Remote hosts**.
-3. Turn **Request signature** on.
-4. Restart the server app.
+1. On the phone's browser open `<public-url>/healthz`. It answers `ok`.
+2. Open `<public-url>`. The board shows the sign-in page, never the board itself: it runs no-login only on the Mac's
+   own address while remote access is off.
 
-Expected: the tray menu shows the server running again; `https://<host name>/healthz` opens in the Mac's browser and
-answers `ok`.
+Expected: the server answers through the tunnel and asks for sign-in.
 
 ## 2. Install and add the server
 
 1. Copy the APK to the phone and open it. Allow installs from that source when Android asks.
 2. Open **Agent Board**.
-3. Open **Servers**, choose **Add server**, enter a name and the tunnel address (`https://<host name>`) and confirm.
+3. Open **Servers**, choose **Add server**, enter a name and `<public-url>` and confirm.
 4. Android shows a native confirmation naming the server and its address. Accept it.
 
 Expected: the confirmation is a system dialog (not part of the page); the server appears in the list; adding
 `http://<any non-loopback host>` is refused with the insecure-address message.
 
-## 3. Pair the phone
+## 3. Sign in with the one-time code
 
-1. The page shows **Pairing needed**.
-2. On the Mac, open the server app's tray menu and choose **Pair a device…**; a code like `ABCD-1234` appears.
-3. Enter it on the phone within ten minutes and submit.
-
-Expected: the page leaves the pairing form. Entering a wrong or reused code shows "The pairing code was refused or
-has expired." and stays on the form. In the server app, Settings › Devices lists the phone.
-
-## 4. Sign in
-
-1. If the page shows the sign-in screen, choose **Sign in with your browser**.
-2. The system browser opens the server's approval page; approve it (use a passkey if the server has one).
+1. The page shows the sign-in screen. Choose **Sign in with your browser**. The page shows a code.
+2. The phone's browser opens the server's approval page with the same code. Sign in there with your passkey and
+   approve. Approving from a browser on the Mac instead works too: open the approval link there and compare the code.
 3. Return to the app.
 
-Expected: the app signs in without asking for a credential itself; the board loads.
+Expected: the app signs in without asking for a credential itself, and the board loads. The code works once: a
+second approval of the same flow is refused.
+
+## 4. Pairing code (only without remote access)
+
+"Pair a device…" in the server app's tray gives a one-time code for a board that runs without sign-in. With remote
+access on it is greyed out and the API refuses pairing codes, so this section does not apply to the phone walk.
 
 ## 5. Use the board
 
