@@ -1,0 +1,20 @@
+{
+  "owner": "tester",
+  "dataKey": "abk1_sXJV9XtKYmCYsyeSkURGLyZK_8YYIen59PY-gR50u6E",
+  "keyId": "589c8b88e93fcf77",
+  "slots": [
+    {
+      "kind": "passphrase",
+      "kdf": "argon2id",
+      "m": 8192,
+      "t": 1,
+      "p": 1,
+      "salt": "yfrlwFJp-Uy8T0p3RhFUKg",
+      "wrapped": "abw1.wPti69GZTuV7PDTGY1X47cByaopmnpC_wpy8yYiSMIRnHuavjAIbnwF5flnjlLth1mdNMGHoVxecDDP3"
+    },
+    {
+      "kind": "recovery",
+      "wrapped": "abw1.85kPVDFlVTfKiQGaoHgCTR4pX7LqqOecz3qkllgiC2CvZw4ED6gwKCtTWTmMogLgnWRNoVN4rXvMaxX9"
+    }
+  ]
+}

@@ -18,3 +18,4 @@ dist-bridge/
 
 # Source board for the end-to-end suite, built by the build script
 apps/migrate/test/fixtures/source-board/
+apps/server-app/src-tauri/resources/

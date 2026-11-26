@@ -107,12 +107,7 @@
       "phone viewport journeys on a no-login board › [web-098] the settings journey completes at the phone viewport @phone",
       "phone viewport sign-in on a login board › [web-098] the sign in journey completes at the phone viewport @phone"
     ],
-    "browser/run-to-done.spec.ts": "*",
     "browser/sealing-at-rest.spec.ts": "*",
-    "browser/server-app-layout.spec.ts": [
-      "the server app layout with a remote host › [server-app-074] a remoteHosts name is an allowed host",
-      "restarting the server app on the same root › [server-app-002] cards stay, the worker reconnects without board init and the client opens unlocked"
-    ],
     "browser/servers.spec.ts": "*",
     "browser/settings.spec.ts": [
       {

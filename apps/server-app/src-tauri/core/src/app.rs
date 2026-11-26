@@ -1,6 +1,6 @@
 use std::ffi::OsString;
 use std::io::{self, BufRead, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use crate::account;
@@ -21,6 +21,23 @@ use crate::upgrade::Upgrade;
 use crate::versions::Versions;
 use crate::worker_paths::WorkerPaths;
 use crate::worker_setup::{CLI_RELATIVE, WorkerSetup};
+
+pub const BUNDLE_RESOURCES: &str = "../Resources/resources";
+
+pub fn resources_for(executable: &Path) -> PathBuf {
+    let Some(folder) = executable.parent() else {
+        return PathBuf::from("resources");
+    };
+    let beside = folder.join("resources");
+    let bundled = folder.join(BUNDLE_RESOURCES);
+    if beside.is_dir() {
+        beside
+    } else if bundled.is_dir() {
+        bundled
+    } else {
+        beside
+    }
+}
 
 pub struct Host {
     pub home: PathBuf,
@@ -52,11 +69,10 @@ impl Host {
     }
 
     pub fn resources_dir(&self) -> PathBuf {
-        self.overrides.resources_dir.clone().unwrap_or_else(|| {
-            self.executable
-                .parent()
-                .map_or_else(|| PathBuf::from("resources"), |dir| dir.join("resources"))
-        })
+        self.overrides
+            .resources_dir
+            .clone()
+            .unwrap_or_else(|| resources_for(&self.executable))
     }
 
     pub fn launch_agents_dir(&self) -> PathBuf {
