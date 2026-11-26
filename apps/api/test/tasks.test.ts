@@ -145,6 +145,30 @@ describe.each(TARGETS)('task lifecycle on $name', (target) => {
       expect((await board.use((tx) => claimTask(tx, proposal.id, 'm1'))).status).toBe('running');
     });
 
+    it('[api-056] a proposal carries no machine until the user starts it in a directory of a machine', async () => {
+      const board = await newBoard();
+      await board.seedMachine('m1');
+      const directoryId = randomUUID();
+      await board.use((tx) =>
+        tx.insert(directory).values({
+          id: directoryId,
+          machineId: 'm1',
+          projectId: board.projectId,
+          path: envelope(),
+        }),
+      );
+      const { task: proposal } = await board.add({
+        createdBy: 'agent',
+        directoryId,
+        machine: 'm1',
+      });
+      expect(proposal.machine).toBeNull();
+      const started = await board.use((tx) =>
+        moveTask(tx, { id: proposal.id, status: 'todo', startInput: envelope(60) }, 'owner'),
+      );
+      expect(started.machine).toBe('m1');
+    });
+
     it('[api-056] a proposal cannot be claimed while it waits in backlog', async () => {
       const board = await newBoard();
       const { task: proposal } = await board.add({ createdBy: 'agent' });

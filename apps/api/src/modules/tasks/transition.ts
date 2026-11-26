@@ -4,7 +4,7 @@ import type { TaskStatus } from '@agent-board/contract';
 import { and, eq } from 'drizzle-orm';
 
 import { systemClock } from '../../clock.js';
-import { note, task } from '../../db/schema/index.js';
+import { directory, note, task } from '../../db/schema/index.js';
 import { ApiError } from '../../errors.js';
 import type { ScopedDatabase } from '../database/index.js';
 import { completeOccurrence } from '../scheduling/occurrence.js';
@@ -78,6 +78,13 @@ export const transitionTask = async (
     values.input = change.start.input;
     values.createdBy = 'user';
     values.proposed = false;
+    if (current.directoryId !== null && current.machine === null) {
+      const [home] = await tx
+        .select({ machineId: directory.machineId })
+        .from(directory)
+        .where(eq(directory.id, current.directoryId));
+      if (home) values.machine = home.machineId;
+    }
   }
   if (to === 'running' && current.status !== 'running') {
     values.runStartedAt = now;
