@@ -19,20 +19,28 @@ export function freePort(host: string = LOOPBACK): Promise<number> {
   });
 }
 
+const BIND_RACE = /EADDRINUSE|address already in use/i;
 const PORT_RACE = /EADDRINUSE|address already in use|not ready after|exited before it was ready/i;
+const BIND_ATTEMPTS = 3;
 
-export const PORT_RACE_ATTEMPTS = 3;
+const messageOf = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
 
-export function isPortRace(error: unknown): boolean {
-  return PORT_RACE.test(error instanceof Error ? error.message : String(error));
-}
-
-export async function retryOnPortRace<T>(attempt: () => Promise<T>): Promise<T> {
+export async function retryOnBindRace<T>(attempt: () => Promise<T>): Promise<T> {
   for (let tried = 1; ; tried++) {
     try {
       return await attempt();
     } catch (error) {
-      if (tried >= PORT_RACE_ATTEMPTS || !isPortRace(error)) throw error;
+      if (tried >= BIND_ATTEMPTS || !BIND_RACE.test(messageOf(error))) throw error;
     }
+  }
+}
+
+export async function retryOnPortRace<T>(attempt: () => Promise<T>): Promise<T> {
+  try {
+    return await attempt();
+  } catch (error) {
+    if (!PORT_RACE.test(messageOf(error))) throw error;
+    return attempt();
   }
 }
