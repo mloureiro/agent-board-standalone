@@ -233,6 +233,23 @@ describe('event stream watcher', () => {
     await done;
   });
 
+  it('backs off when the server keeps ending the stream as soon as it opens', async () => {
+    const controller = new AbortController();
+    const { transport, opened } = transportOf([{ body: streamOf([]) }]);
+    const done = watchEvents({
+      transport,
+      path: '/api/client/events',
+      signal: controller.signal,
+      backoffMs: [60_000],
+      onMessage: () => undefined,
+    });
+    await until(() => opened() === 2);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(opened()).toBe(2);
+    controller.abort();
+    await done;
+  });
+
   it('retries after a failed connection and after a bad status', async () => {
     const received: string[] = [];
     const controller = new AbortController();
