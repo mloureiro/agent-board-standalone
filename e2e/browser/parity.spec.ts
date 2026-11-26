@@ -425,8 +425,7 @@ test.describe('reply drafting in WebKit', () => {
       reply.pressSequentially(text, { delay: TYPING_DELAY_MS }),
       (async () => {
         await expect.poll(() => reply.inputValue()).not.toBe('');
-        const stopped = await w.machine.cli(['stop', task.id]);
-        expect(stopped.code).toBe(0);
+        await w.user.ok('client.tasks.stop', { id: task.id });
       })(),
       expect(statusBadge(page)).toHaveText(STATUS_LABELS.needsMe, { timeout: 60_000 }),
     ]);
