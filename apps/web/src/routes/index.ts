@@ -4,4 +4,4 @@ export { ClosedPage } from './closed/index.js';
 export { NotFoundPage } from './not-found/index.js';
 export { SchedulesPage } from './schedules/index.js';
 export { SettingsPage } from './settings/index.js';
-export { TaskPage } from './task/index.js';
+export { TaskLink, TaskPage } from './task/index.js';

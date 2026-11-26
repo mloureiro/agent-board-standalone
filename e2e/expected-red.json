@@ -72,9 +72,6 @@
       "board with a running card › [web-035] a running card shows context usage as a thin line"
     ],
     "browser/connection.spec.ts": "*",
-    "browser/migrate.spec.ts": [
-      "the migrated board in the browser › [migrate-003] the owner passphrase unlocks the migrated board and every task opens"
-    ],
     "browser/new-task.spec.ts": [
       "new task form › [web-061] the form takes prompt, project, icon, directory, title, labels, priority, model, effort, lane, agent and auto-done",
       "drafts › [web-064] unsent text in the new-task prompt, the reply box and a question Other field survives navigation, a reload and a tab switch",

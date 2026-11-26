@@ -1,5 +1,5 @@
 import type { UiTaskListItem } from '@agent-board/contract';
-import { bindings, open, seal, type Binding, type Keys } from '@agent-board/sealing';
+import { bindings, open, seal, type Binding, type Keys, type Origin } from '@agent-board/sealing';
 
 export const UNREADABLE_TITLE = 'Unreadable task';
 
@@ -40,6 +40,29 @@ export const attempt = async (
   }
 };
 
+interface TaskRef {
+  readonly id: string;
+  readonly scheduleId?: string | null;
+}
+
+const originsOf = (task: TaskRef): readonly Origin[] =>
+  task.scheduleId === null || task.scheduleId === undefined
+    ? [{ task: task.id }]
+    : [{ task: task.id }, { schedule: task.scheduleId }];
+
+export const attemptTaskField = async (
+  keys: Keys,
+  field: 'title' | 'icon' | 'labels' | 'agent',
+  task: TaskRef,
+  envelope: string | null | undefined,
+): Promise<string | null> => {
+  for (const origin of originsOf(task)) {
+    const text = await attempt(keys, bindings[field](origin), envelope);
+    if (text !== null) return text;
+  }
+  return null;
+};
+
 export function parseLabels(text: string | null): readonly string[] {
   if (text === null || text.trim() === '') return [];
   try {
@@ -70,9 +93,9 @@ function countWatches(text: string | null): number {
 export async function decryptCard(keys: Keys, task: UiTaskListItem): Promise<BoardCard> {
   const author = task.lastNote?.author;
   const [title, icon, labels, watches, note] = await Promise.all([
-    attempt(keys, bindings.title({ task: task.id }), task.title),
-    attempt(keys, bindings.icon({ task: task.id }), task.icon),
-    attempt(keys, bindings.labels({ task: task.id }), task.labels),
+    attemptTaskField(keys, 'title', task, task.title),
+    attemptTaskField(keys, 'icon', task, task.icon),
+    attemptTaskField(keys, 'labels', task, task.labels),
     attempt(keys, bindings.watches(task.id), task.watches),
     task.lastNote === null || author === undefined || author === 'server'
       ? Promise.resolve(null)
@@ -98,12 +121,12 @@ export async function decryptCard(keys: Keys, task: UiTaskListItem): Promise<Boa
 }
 
 export const inputBinding = (
-  taskId: string,
+  origin: Origin,
   creator: 'user' | 'agent' | 'intake',
   shape: InputShape,
 ): Binding =>
   bindings.input({
-    origin: { task: taskId },
+    origin,
     creator,
     forkOf: shape.forkOf,
     agent: shape.agent,
@@ -112,16 +135,22 @@ export const inputBinding = (
 
 export async function openPrompt(
   keys: Keys,
-  task: Pick<UiTaskListItem, 'id' | 'input' | 'createdBy' | 'directoryId' | 'agent' | 'forkOf'>,
+  task: Pick<
+    UiTaskListItem,
+    'id' | 'input' | 'createdBy' | 'directoryId' | 'agent' | 'forkOf' | 'scheduleId'
+  >,
 ): Promise<OpenedPrompt | null> {
-  const agent = await attempt(keys, bindings.agent({ task: task.id }), task.agent);
+  const agent = await attemptTaskField(keys, 'agent', task, task.agent);
   const directories = task.directoryId === null ? [null] : [task.directoryId, null];
   const agents = agent === null ? [null] : [agent, null];
-  for (const directoryId of directories) {
-    for (const agentName of agents) {
-      const shape: InputShape = { forkOf: task.forkOf ?? null, agent: agentName, directoryId };
-      const text = await attempt(keys, inputBinding(task.id, task.createdBy, shape), task.input);
-      if (text !== null) return { text, shape };
+  for (const origin of originsOf(task)) {
+    for (const directoryId of directories) {
+      for (const agentName of agents) {
+        const shape: InputShape = { forkOf: task.forkOf ?? null, agent: agentName, directoryId };
+        const binding = inputBinding(origin, task.createdBy, shape);
+        const text = await attempt(keys, binding, task.input);
+        if (text !== null) return { text, shape };
+      }
     }
   }
   return null;
@@ -132,7 +161,7 @@ export const sealPromptAsUser = (
   taskId: string,
   shape: InputShape,
   text: string,
-): Promise<string> => seal(keys, inputBinding(taskId, 'user', shape), text);
+): Promise<string> => seal(keys, inputBinding({ task: taskId }, 'user', shape), text);
 
 export const sealIcon = (keys: Keys, taskId: string, icon: string): Promise<string> =>
   seal(keys, bindings.icon({ task: taskId }), icon);

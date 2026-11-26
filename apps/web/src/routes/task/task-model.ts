@@ -3,6 +3,7 @@ import { bindings, type Keys } from '@agent-board/sealing';
 
 import {
   attempt,
+  attemptTaskField,
   openPrompt,
   parseLabels,
   UNREADABLE_TITLE,
@@ -121,7 +122,7 @@ export function parseWatches(
 }
 
 async function relatedOf(keys: Keys, task: UiTask): Promise<RelatedTask> {
-  const title = await attempt(keys, bindings.title({ task: task.id }), task.title);
+  const title = await attemptTaskField(keys, 'title', task, task.title);
   return { id: task.id, title: title ?? UNREADABLE_TITLE };
 }
 
@@ -155,9 +156,9 @@ export async function decryptTask(keys: Keys, detail: UiTaskDetail): Promise<Tas
     parent,
     parentPrompt,
   ] = await Promise.all([
-    attempt(keys, bindings.title({ task: task.id }), task.title),
-    attempt(keys, bindings.icon({ task: task.id }), task.icon),
-    attempt(keys, bindings.labels({ task: task.id }), task.labels),
+    attemptTaskField(keys, 'title', task, task.title),
+    attemptTaskField(keys, 'icon', task, task.icon),
+    attemptTaskField(keys, 'labels', task, task.labels),
     openPrompt(keys, task),
     attempt(keys, bindings.workdir({ task: task.id }), task.legacyDirectory),
     Promise.all(task.prs.map((pr) => attempt(keys, bindings.pr(task.id), pr.pr))),
