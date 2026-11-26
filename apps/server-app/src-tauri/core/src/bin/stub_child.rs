@@ -91,7 +91,17 @@ fn answer(mut stream: TcpStream) {
     );
 }
 
+// macOS sets close-on-exec after socket(), so a stub forked mid-bind by a parallel test keeps that socket.
+fn close_inherited_descriptors() {
+    for fd in 3..1024 {
+        unsafe {
+            libc::close(fd);
+        }
+    }
+}
+
 fn main() {
+    close_inherited_descriptors();
     let config = read_config();
     println!("stub started pid {}", std::process::id());
     if let Some(path) = config.get("order_log") {
