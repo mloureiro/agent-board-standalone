@@ -49,6 +49,7 @@ import {
   type Vocabulary,
 } from '../modules/tasks/index.js';
 import { contractOf } from './request-contract.js';
+import { announceTaskChange } from '../modules/events/index.js';
 import { taskWriter } from './task-writer.js';
 
 const dateOf = (value: string | null | undefined): Date | null | undefined =>
@@ -93,16 +94,18 @@ export const createTaskActionHandlers =
           return wireOne(tx, request, row);
         }),
 
-      'machine.heartbeat': ({ input, principal }) =>
-        write(principal.owner, async (tx) => {
-          await heartbeatTask(
+      'machine.heartbeat': async ({ input, principal }) => {
+        const changed = await database.withOwner(principal.owner, (tx) =>
+          heartbeatTask(
             tx,
             input.id,
             { lane: input.lane, borrowed: input.borrowed },
             { machine: principal.machineId, run: input.run },
-          );
-          return {};
-        }),
+          ),
+        );
+        if (changed) await announceTaskChange(context.services.events, principal.owner);
+        return {};
+      },
 
       'machine.pause': ({ input, principal, request }) =>
         write(principal.owner, async (tx) => {

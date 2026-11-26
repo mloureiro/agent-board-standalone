@@ -29,6 +29,7 @@ describe('task action routes on pglite', () => {
   let opened: OpenedTarget;
   let app: Awaited<ReturnType<typeof createServer>>;
   let projectId: string;
+  const events = createMemoryEvents();
 
   const machine = (command: string, payload: unknown) =>
     app.inject({
@@ -63,7 +64,7 @@ describe('task action routes on pglite', () => {
         database: opened.database,
         credentials: knownMachine,
         streams: createOpenStreams(),
-        events: createMemoryEvents(),
+        events,
       },
       { handlerSets: HANDLER_SETS },
     );
@@ -93,6 +94,18 @@ describe('task action routes on pglite', () => {
     expect(
       (await machine('heartbeat', { id: 'nope', lane: 'a', borrowed: false })).statusCode,
     ).toBe(404);
+  });
+
+  it('[api-066] a heartbeat announces a change only when lane or borrowed changed, not for liveness alone', async () => {
+    const { id, run } = await startRun();
+    const seen: string[] = [];
+    await events.subscribe('owner', (message) => seen.push(message.kind));
+    await machine('heartbeat', { id, run, lane: 'lane-b', borrowed: false });
+    expect(seen).toEqual(expect.arrayContaining(['tasks', 'change']));
+    seen.length = 0;
+    await machine('heartbeat', { id, run, lane: 'lane-b', borrowed: false });
+    await machine('heartbeat', { id, run, lane: 'lane-b', borrowed: false });
+    expect(seen).toEqual([]);
   });
 
   it('[api-067] pause, wait and wake answer 409 for a stale run and move the held one', async () => {
