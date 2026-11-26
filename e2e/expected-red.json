@@ -99,11 +99,6 @@
       {
         "title": "project filter on the task, schedule and event queries › [api-104] client.events with a project raises changed only for that project's changes",
         "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      "projects in the browser client › [web-082] the sidebar is a drawer on a phone @phone",
-      {
-        "title": "projects of several servers in the sidebar › [web-082] the sidebar lists the projects of each open server and navigates by project",
-        "projects": ["chromium-desktop", "webkit-desktop"]
       }
     ],
     "browser/proposals.spec.ts": "*",
@@ -121,7 +116,6 @@
       "phone viewport sign-in on a login board › [web-098] the sign in journey completes at the phone viewport @phone"
     ],
     "browser/sealing-at-rest.spec.ts": "*",
-    "browser/servers.spec.ts": "*",
     "browser/settings.spec.ts": [
       {
         "title": "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] a task newly in Needs me fires a notification while the page is unfocused",
@@ -145,7 +139,6 @@
       "another server › [web-103] approving there signs the client in without reload and it holds an abc_ token for that server and no cookie"
     ],
     "browser/signature.spec.ts": "*",
-    "browser/storage.spec.ts": "*",
     "browser/task-page.spec.ts": "*",
     "browser/transcript.spec.ts": "*"
   }

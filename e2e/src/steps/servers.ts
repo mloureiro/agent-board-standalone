@@ -25,6 +25,7 @@ export const SERVER_UI = {
   allServers: /^all servers$/i,
   newTask: /^new task$/i,
   boardLink: 'Board',
+  phoneMenu: 'Menu',
   draftField: /prompt|new task|task/i,
 } as const;
 
@@ -127,7 +128,9 @@ export async function closeServerList(page: Page): Promise<void> {
 
 export async function unlockAll(page: Page, passphrase: string): Promise<void> {
   const field = page.getByLabel(UNLOCK_NAMES.passphrase).first();
-  const board = page.getByRole('link', { name: SERVER_UI.boardLink, exact: true });
+  const board = page
+    .getByRole('link', { name: SERVER_UI.boardLink, exact: true })
+    .or(page.getByRole('button', { name: SERVER_UI.phoneMenu, exact: true }));
   for (let round = 0; round < 6; round += 1) {
     await expect(field.or(board).first()).toBeVisible({ timeout: UNLOCK_TIMEOUT_MS });
     if (!(await field.isVisible())) {
@@ -160,6 +163,7 @@ export async function addServer(
   await dialog.getByRole('button', { name: SERVER_UI.submitAdd }).click();
   await expect(dialog).toBeHidden();
   await expect(serverRow(page, server.name)).toBeVisible();
+  await closeServerList(page);
 }
 
 export async function chooseOption(
