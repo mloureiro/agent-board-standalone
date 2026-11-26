@@ -79,7 +79,12 @@ test.describe('the migrated board in the browser', () => {
     await expect(page.getByLabel(UNLOCK_NAMES.passphrase)).toHaveCount(0);
 
     for (const { row } of tasks) {
-      const title = await key.open(bindings.title({ task: row.id }), row.title);
+      const title = await key
+        .open(bindings.title({ task: row.id }), row.title)
+        .catch((error: unknown) => {
+          if (row.scheduleId === null) throw error;
+          return key.open(bindings.title({ schedule: row.scheduleId }), row.title);
+        });
       await openTask(page, board.url, row.id, board.fixture.passphrase);
       await expect(page.locator('body')).toContainText(title);
       await expect(

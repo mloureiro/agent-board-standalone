@@ -38,7 +38,7 @@ import { useServers } from '../../servers/index.js';
 import type { ServerClient } from '../../transport/client.js';
 import { POLL_MS, boardKey, featuresOf, useEventStream } from '../board/board-data.js';
 import { fetchProjectNames } from '../../projects/fetch-projects.js';
-import { attempt, sealPromptAsUser } from '../board/card-model.js';
+import { attempt, attemptTaskField, sealPromptAsUser } from '../board/card-model.js';
 import { skillsOf, type Skill } from './catalog-model.js';
 import { newTaskId, sealAnswers, sealNote } from './compose.js';
 import type { Answer, Question } from './question-model.js';
@@ -391,7 +391,7 @@ export function useTaskActions(data: TaskData, id: string): TaskActions {
         const parent = current.parentTask;
         const old = current.parentPrompt;
         if (parent === null || old === null) throw new Error('The parent task cannot be read.');
-        const oldTitle = await attempt(keys, bindings.title({ task: parent.id }), parent.title);
+        const oldTitle = await attemptTaskField(keys, 'title', parent, parent.title);
         return callRoute(client, applyPolishClientTaskRoute, {
           id: parent.id,
           polishId,

@@ -3,14 +3,13 @@ import {
   getClientTaskRoute,
   listClientTasksRoute,
 } from '@agent-board/contract';
-import { bindings } from '@agent-board/sealing';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import { currentBridge } from '../bridge/index.js';
 import { NOTIFICATIONS_SETTING, settingAt, usePage, useSettings } from '../pages/index.js';
 import { useEnvironment } from '../session/index.js';
-import { attempt } from '../routes/board/card-model.js';
+import { attemptTaskField } from '../routes/board/card-model.js';
 
 export const ATTENTION_POLL_MS = 3_000;
 
@@ -56,7 +55,7 @@ export function NeedsMeNotifier(): ReactNode {
             const detail = await page.call(getClientTaskRoute, { id }).catch(() => null);
             if (detail === null) return { id, title: 'A task' };
             const title =
-              (await attempt(page.keys, bindings.title({ task: id }), detail.task.title)) ??
+              (await attemptTaskField(page.keys, 'title', detail.task, detail.task.title)) ??
               'A task';
             titles.current.set(id, title);
             return { id, title };
@@ -68,8 +67,7 @@ export function NeedsMeNotifier(): ReactNode {
       return Promise.all(
         needing.map(async (task) => ({
           id: task.id,
-          title:
-            (await attempt(page.keys, bindings.title({ task: task.id }), task.title)) ?? 'A task',
+          title: (await attemptTaskField(page.keys, 'title', task, task.title)) ?? 'A task',
         })),
       );
     },
