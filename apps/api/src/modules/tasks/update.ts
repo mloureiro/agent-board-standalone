@@ -96,6 +96,6 @@ export const updateTask = async (
     current.status === 'running' &&
     (row.status === 'needs-me' || row.status === 'done')
   )
-    await occurrenceFinished(tx, current, row.updatedAt);
+    await occurrenceFinished(tx, current, row.updatedAt, row.status);
   return row;
 };

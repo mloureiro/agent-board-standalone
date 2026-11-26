@@ -273,6 +273,11 @@ describe.each(TARGETS)('schedules on $name', (target) => {
         updateTask(tx, again.id, { status: 'needs-me' }, { machine: 'm1', run: again.runId! }),
       );
       expect((await board.row(dependent.schedule.id)).occurrenceTaskId).toBeNull();
+
+      await board.use((tx) => moveTask(tx, { id: claimed.id, status: 'todo' }, 'owner'));
+      const last = await board.use((tx) => claimTask(tx, claimed.id, 'm1'));
+      await board.use((tx) => updateTask(tx, last.id, { status: 'done' }, { machine: 'm1' }));
+      expect((await board.row(dependent.schedule.id)).occurrenceTaskId).not.toBeNull();
     });
 
     it('[api-077] an after schedule that is paused, ended or already pending is skipped', async () => {
