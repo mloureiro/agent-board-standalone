@@ -84,9 +84,6 @@ export async function unlockIfAsked(page: Page, passphrase: string): Promise<voi
   ).toBeVisible({
     timeout: UI_TIMEOUT_MS,
   });
-  await expect(passphraseField(page).or(column(page, 'backlog')).first()).toBeVisible({
-    timeout: UI_TIMEOUT_MS,
-  });
   if (await passphraseField(page).isVisible()) await unlockInPage(page, passphrase);
   await expect(boardLink(page)).toBeVisible({ timeout: UI_TIMEOUT_MS });
   await expect(passphraseField(page)).toHaveCount(0);
