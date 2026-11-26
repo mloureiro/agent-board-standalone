@@ -7,6 +7,7 @@ export const LISTEN_STOP_TIMEOUT_MS = LISTEN_UNIT.stopTimeoutSeconds * 1000;
 
 export const SWEEP_GRACE_MINUTES = 5;
 export const SPAWN_GRACE_MS = 30_000;
+export const STOPPING_RECHECK_MS = 5_000;
 export const SLEEP_GAP_MS = 10 * 60_000;
 export const LOCK_STALE_MS = TICK_LIMIT_MS + TICK_GRACE_MS + 60_000;
 

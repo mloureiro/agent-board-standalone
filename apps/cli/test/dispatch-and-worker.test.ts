@@ -441,6 +441,25 @@ describe('dispatch tick', () => {
     }
   });
 
+  it('[cli-064] a todo task whose last worker is still stopping waits and the tick is due again soon', async () => {
+    const rigged = await rig({ env: PROCESS });
+    const { stub, cli } = rigged;
+    const { dirs } = contextOf(rigged);
+    await stub.addTask({ id: 'backAAAA', status: 'todo', machine: 'test-machine' });
+    createRunFiles(dirs.run).writeId('backAAAA', 'pid', process.pid);
+    writeFileSync(
+      path.join(dirs.run, 'backAAAA.lane'),
+      JSON.stringify({ lane: 'general', borrowed: false, startedAt: new Date().toISOString() }),
+    );
+    const before = Date.now();
+    expect(await cli.run('internal', 'dispatch')).toBe(0);
+    expect(stub.tasks.get('backAAAA')?.status).toBe('todo');
+    expect(cli.stdout()).toContain('SKIP backAAAA its last worker is still stopping');
+    const due = Date.parse(readFileSync(path.join(dirs.run, 'dispatch.next'), 'utf8'));
+    expect(due).toBeGreaterThan(before);
+    expect(due).toBeLessThan(before + 60_000);
+  });
+
   it('[cli-066] a run over the maximum hours is stopped and swept', async () => {
     const rigged = await rig({ env: PROCESS, config: 'machine: test-machine\nmaxRunHours: 1\n' });
     const { stub, cli } = rigged;
