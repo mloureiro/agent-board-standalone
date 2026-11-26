@@ -85,7 +85,9 @@ export async function unlockIfAsked(page: Page, passphrase: string): Promise<voi
     timeout: UI_TIMEOUT_MS,
   });
   if (await passphraseField(page).isVisible()) await unlockInPage(page, passphrase);
-  await expect(boardLink(page)).toBeVisible({ timeout: UI_TIMEOUT_MS });
+  await expect(page.getByRole('button', { name: BOARD_NAMES.lock })).toBeVisible({
+    timeout: UI_TIMEOUT_MS,
+  });
   await expect(passphraseField(page)).toHaveCount(0);
 }
 
@@ -307,17 +309,29 @@ interface Point {
   readonly y: number;
 }
 
-async function pointIn(target: Locator, where: 'center' | 'top' | 'bottom'): Promise<Point> {
+type Where = 'center' | 'top' | 'bottom';
+
+function heightAt(box: { y: number; height: number }, where: Where): number {
+  if (where === 'top') return box.y + 4;
+  if (where === 'bottom') return box.y + box.height - 4;
+  return box.y + box.height / 2;
+}
+
+async function pointIn(target: Locator, where: Where): Promise<Point> {
   await target.scrollIntoViewIfNeeded();
   const box = await target.boundingBox();
   if (box === null) throw new Error('the drop target has no box');
-  const y =
-    where === 'top'
-      ? box.y + 4
-      : where === 'bottom'
-        ? box.y + box.height - 4
-        : box.y + box.height / 2;
-  return { x: box.x + box.width / 2, y };
+  return { x: box.x + box.width / 2, y: heightAt(box, where) };
+}
+
+async function visiblePointIn(page: Page, target: Locator, where: Where): Promise<Point> {
+  const box = await target.boundingBox();
+  const viewport = page.viewportSize();
+  if (box === null || viewport === null) throw new Error('the drop target has no box');
+  const left = Math.max(box.x, 0);
+  const right = Math.min(box.x + box.width, viewport.width);
+  if (right <= left) throw new Error('the drop target is outside the viewport');
+  return { x: (left + right) / 2, y: heightAt(box, where) };
 }
 
 export async function mouseDrag(
@@ -345,7 +359,7 @@ export async function touchDrag(
   where: 'center' | 'top' | 'bottom' = 'center',
 ): Promise<void> {
   const from = await pointIn(source, 'center');
-  const to = await pointIn(target, where);
+  const to = await visiblePointIn(page, target, where);
   const path = Array.from({ length: TOUCH_STEPS + 1 }, (_, step) => ({
     x: from.x + ((to.x - from.x) * step) / TOUCH_STEPS,
     y: from.y + ((to.y - from.y) * step) / TOUCH_STEPS,
