@@ -85,6 +85,7 @@ export interface ApiStub {
   readonly directories: Map<string, WireDirectory>;
   readonly watches: Map<string, string | null>;
   readonly schedules: Map<string, WireSchedule>;
+  readonly projectNames: Map<string, string>;
   readonly converted: { directories: { id: string; path: string }[]; assign: unknown[] }[];
   readonly published: { feeds: string[]; agents: { version: number; document: string }[] };
   setLegacy(
@@ -133,6 +134,7 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
   const directories = new Map<string, WireDirectory>();
   const watches = new Map<string, string | null>();
   const schedules = new Map<string, WireSchedule>();
+  const projectNames = new Map<string, string>();
   const converted: ApiStub['converted'] = [];
   const published: ApiStub['published'] = { feeds: [], agents: [] };
   const dedupe = new Map<string, string>();
@@ -950,6 +952,23 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
               ),
       };
     },
+    'list-projects': async () => ({
+      projects: await Promise.all(
+        [
+          [DEFAULT_PROJECT, null] as const,
+          ...[...projectNames].map(([id, name]) => [id, name] as const),
+        ].map(async ([id, name], position) => ({
+          id,
+          name: name === null ? null : await sealed(bindings.projectName(id), name),
+          icon: null,
+          position,
+          isDefault: id === DEFAULT_PROJECT,
+          archivedAt: null,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        })),
+      ),
+    }),
     'list-machines': () => ({
       machines: [
         { name: MACHINE, lastSeenAt: null, current: true },
@@ -1051,6 +1070,7 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
     directories,
     watches,
     schedules,
+    projectNames,
     converted,
     published,
     setLegacy: (document, uses) => {

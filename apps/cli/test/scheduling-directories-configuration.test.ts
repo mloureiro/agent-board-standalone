@@ -13,6 +13,7 @@ import { useRig } from './support/harness.js';
 const rig = useRig();
 
 const PROJECT = '00000000-0000-4000-8000-0000000000aa';
+const OTHER_PROJECT = '00000000-0000-4000-8000-0000000000bb';
 
 function configOf(cli: { test: { path(...segments: string[]): string } }): Record<string, unknown> {
   return parse(readFileSync(cli.test.path('config', 'config.yaml'), 'utf8')) as Record<
@@ -367,6 +368,36 @@ describe('board projects', () => {
       directories: 1,
       default: true,
     });
+  });
+
+  it('[cli-039] prints each project name, opened with the key, and lists projects that hold no work', async () => {
+    const { stub, cli } = await rig({
+      config: `machine: test-machine\nproject: ${PROJECT}\n`,
+    });
+    stub.projectNames.set(PROJECT, 'Release train');
+    stub.projectNames.set(OTHER_PROJECT, 'Empty one');
+    await stub.addTask({ id: 'taskBBBB', projectId: PROJECT });
+    cli.reset();
+    expect(await cli.run('projects')).toBe(0);
+    expect(cli.stdout()).toContain(
+      `Release train  ${PROJECT}  1 task(s), 0 directory(ies)  (default for this host)`,
+    );
+    expect(cli.stdout()).toContain(`Empty one  ${OTHER_PROJECT}  0 task(s), 0 directory(ies)`);
+    cli.reset();
+    expect(await cli.run('projects', '--json')).toBe(0);
+    expect(JSON.parse(cli.stdout())).toContainEqual(
+      expect.objectContaining({ id: OTHER_PROJECT, name: 'Empty one' }),
+    );
+  });
+
+  it('[cli-039] a server without the project list prints ids only', async () => {
+    const { stub, cli } = await rig({ board: { features: ['projects', 'directories'] } });
+    stub.projectNames.set(OTHER_PROJECT, 'Hidden');
+    await stub.addTask({ id: 'taskAAAA' });
+    cli.reset();
+    expect(await cli.run('projects')).toBe(0);
+    expect(cli.stdout()).not.toContain('Hidden');
+    expect(cli.stdout()).toContain(DEFAULT_PROJECT);
   });
 
   it('[cli-039] default writes project: to the config in the shape board add reads, and prints the current one', async () => {

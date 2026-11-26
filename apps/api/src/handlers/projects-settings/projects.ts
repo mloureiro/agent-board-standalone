@@ -22,6 +22,15 @@ const wire = (row: ProjectRow): WireProject => ({
   updatedAt: row.updatedAt.toISOString(),
 });
 
+const listProjects = async (tx: ScopedDatabase): Promise<{ projects: WireProject[] }> => ({
+  projects: (
+    await tx
+      .select()
+      .from(project)
+      .orderBy(asc(project.position), asc(project.createdAt), asc(project.id))
+  ).map(wire),
+});
+
 const load = async (tx: ScopedDatabase, id: string): Promise<ProjectRow> => {
   const [row] = await tx.select().from(project).where(eq(project.id, id));
   if (row === undefined) throw new ApiError('not-found', 'no such project');
@@ -69,14 +78,10 @@ export const projectHandlers = (context: ServerContext): HandlerTable => {
 
   return {
     'client.projects.list': ({ principal }) =>
-      database.withOwner(principal.owner, async (tx) => ({
-        projects: (
-          await tx
-            .select()
-            .from(project)
-            .orderBy(asc(project.position), asc(project.createdAt), asc(project.id))
-        ).map(wire),
-      })),
+      database.withOwner(principal.owner, (tx) => listProjects(tx)),
+
+    'machine.list-projects': ({ principal }) =>
+      database.withOwner(principal.owner, (tx) => listProjects(tx)),
 
     'client.projects.create': ({ input, principal }) =>
       write(principal.owner, input.id, async (tx) => {

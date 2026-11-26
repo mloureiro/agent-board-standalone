@@ -308,6 +308,21 @@ describe('machine API ordering and limits', () => {
   });
 });
 
+describe('machine project list', () => {
+  it('[cli-039] a machine lists the owner projects with sealed names, like the client list', async () => {
+    const fresh = await enrolled();
+    const id = '66666666-6666-4666-8666-666666666666';
+    await board.database.withOwner(OWNER, (tx) =>
+      tx.insert(schema.project).values({ id, name: envelope(40, 'N'), position: 9 }),
+    );
+    const listed = await call(board, 'machine.list-projects', {}, { token: fresh.token });
+    expect(listed.status).toBe(200);
+    expect(listed.body.projects.find((entry) => entry.id === id)?.name).toBe(envelope(40, 'N'));
+    const client = await call(board, 'client.projects.list', {});
+    expect(listed.body.projects).toEqual(client.body.projects);
+  });
+});
+
 describe('machine versions and documents', () => {
   const cli = (version: string, contract = '1') => ({
     'x-board-client': `cli/${version}`,

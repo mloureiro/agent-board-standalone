@@ -1,5 +1,6 @@
 export const FEATURE_LABELS = {
   projects: 'projects',
+  'machine-projects': 'the machine project list',
   directories: 'directories',
   'legacy-dirs': 'legacy directory conversion',
   'client-tokens': 'client tokens',

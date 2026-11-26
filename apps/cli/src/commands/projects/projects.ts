@@ -1,4 +1,5 @@
-import { listTasksRoute } from '@agent-board/contract';
+import { listProjectsRoute, listTasksRoute } from '@agent-board/contract';
+import { bindings, open } from '@agent-board/sealing';
 
 import { UsageError } from '../../errors.js';
 import {
@@ -41,8 +42,21 @@ export async function runProjects(
   if (local.defaultProject !== null && !counts.has(local.defaultProject)) {
     counts.set(local.defaultProject, { tasks: 0, directories: 0 });
   }
+  const names = new Map<string, string>();
+  if (s.supports('machine-projects')) {
+    for (const listed of (await s.query(listProjectsRoute, {})).projects) {
+      if (!counts.has(listed.id)) counts.set(listed.id, { tasks: 0, directories: 0 });
+      if (listed.name === null) continue;
+      try {
+        names.set(listed.id, await open(s.keys, bindings.projectName(listed.id), listed.name));
+      } catch {
+        continue;
+      }
+    }
+  }
   const projects = [...counts.entries()].map(([id, row]) => ({
     id,
+    ...(names.has(id) ? { name: names.get(id) } : {}),
     ...row,
     default: id === local.defaultProject,
   }));
@@ -53,7 +67,7 @@ export async function runProjects(
   if (projects.length === 0) ctx.out('the board holds no tasks or directories in any project yet');
   for (const project of projects) {
     ctx.out(
-      `${project.id}  ${project.tasks} task(s), ${project.directories} directory(ies)${
+      `${project.name === undefined ? '' : `${project.name}  `}${project.id}  ${project.tasks} task(s), ${project.directories} directory(ies)${
         project.default ? '  (default for this host)' : ''
       }`,
     );

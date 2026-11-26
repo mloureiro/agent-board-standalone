@@ -1,8 +1,5 @@
 {
   "files": {
-    "blackbox/events-projects.test.ts": [
-      "board projects › [cli-039] board projects lists the server's projects"
-    ],
     "blackbox/matrix-refusal.test.ts": "*",
     "blackbox/schedules.test.ts": [
       "[api-077] an after schedule › [api-077] fires once more for running to done on a second run"
