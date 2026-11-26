@@ -129,8 +129,10 @@ export const occurrenceFinished = async (
   tx: ScopedDatabase,
   finished: Pick<TaskRow, 'id' | 'scheduleId' | 'occurrenceFinishedAt'>,
   now: Date,
+  outcome: 'needs-me' | 'done',
 ): Promise<void> => {
-  if (finished.scheduleId === null || finished.occurrenceFinishedAt !== null) return;
+  if (finished.scheduleId === null) return;
+  if (outcome === 'needs-me' && finished.occurrenceFinishedAt !== null) return;
   await tx.update(task).set({ occurrenceFinishedAt: now }).where(eq(task.id, finished.id));
   await triggerAfter(tx, finished.scheduleId, now);
 };

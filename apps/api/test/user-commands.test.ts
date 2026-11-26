@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { RouteName } from '@agent-board/contract';
+import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
@@ -169,6 +170,30 @@ describe('user-authored machine commands', () => {
       expect(errorCode(reply), command).toBe('run-holds-task');
     }
     expect(seen).toHaveLength(before);
+  });
+
+  it('[api-119] a task waiting on an open question is held by the machine that asked it', async () => {
+    const { name, token } = await enrol(true);
+    const id = uniqueName('task');
+    await seedTask(board, { id, status: 'needs-me', machine: name });
+    await board.database.withOwner(OWNER, async (tx) => {
+      const { note, task } = await import('../src/db/schema/index.js');
+      await tx.insert(note).values({
+        id: 'open-question-1',
+        taskId: id,
+        author: 'agent',
+        kind: 'question',
+        body: envelope(),
+        questions: envelope(),
+      });
+      await tx.update(task).set({ openQuestionNoteId: 'open-question-1' }).where(eq(task.id, id));
+    });
+    for (const command of ['answer', 'dismiss-question'] as const) {
+      const [route, input] = request(id, 'unused-run')[command]!;
+      const reply = await call(board, route as never, input as never, { token });
+      expect(reply.status, command).toBe(409);
+      expect(errorCode(reply), command).toBe('run-holds-task');
+    }
   });
 
   it('[api-119] another machine’s run, or a task that is no longer running, does not hold the task', async () => {

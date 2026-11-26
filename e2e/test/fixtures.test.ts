@@ -18,6 +18,7 @@ import { createTask } from '../src/fixtures/tasks.js';
 import { handoffToken, noLoginUser, pkcePair, type BoardUser } from '../src/fixtures/users.js';
 import { startApi, type ApiHandle } from '../src/harness/api.js';
 import { createPgliteDatabase } from '../src/harness/database.js';
+import { retryOnBindRace } from '../src/harness/ports.js';
 import { E2E_ROOT } from '../src/harness/paths.js';
 import { createTmp, type Tmp } from '../src/harness/tmp.js';
 
@@ -341,5 +342,40 @@ describe('retryOnPortRace', () => {
       }),
     ).rejects.toThrow('not ready');
     expect(calls).toBe(2);
+  });
+});
+
+describe('retryOnBindRace', () => {
+  it('retries a lost bind until a start succeeds', async () => {
+    let calls = 0;
+    const result = await retryOnBindRace(async () => {
+      calls += 1;
+      if (calls < 3) throw new Error('listen EADDRINUSE: address already in use');
+      return 'started';
+    });
+    expect(result).toBe('started');
+    expect(calls).toBe(3);
+  });
+
+  it('gives up after three lost binds', async () => {
+    let calls = 0;
+    await expect(
+      retryOnBindRace(async () => {
+        calls += 1;
+        throw new Error('listen EADDRINUSE: address already in use');
+      }),
+    ).rejects.toThrow('EADDRINUSE');
+    expect(calls).toBe(3);
+  });
+
+  it('does not retry a slow start', async () => {
+    let calls = 0;
+    await expect(
+      retryOnBindRace(async () => {
+        calls += 1;
+        throw new Error('API not ready after 20000 ms');
+      }),
+    ).rejects.toThrow('not ready');
+    expect(calls).toBe(1);
   });
 });

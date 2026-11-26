@@ -2,7 +2,7 @@ import { createWriteStream, readFileSync, type WriteStream } from 'node:fs';
 
 import { databaseEnv, withStartLock, type Database } from './database.js';
 import { partPath } from './paths.js';
-import { freePort } from './ports.js';
+import { freePort, retryOnBindRace } from './ports.js';
 import { launch, runProcess, terminate, type RunResult, type Running } from './run.js';
 import type { Tmp } from './tmp.js';
 
@@ -112,7 +112,13 @@ async function spawnUntilReady(
   }
 }
 
-export async function startApi(options: ApiOptions): Promise<ApiHandle> {
+export function startApi(options: ApiOptions): Promise<ApiHandle> {
+  return options.port === undefined
+    ? retryOnBindRace(() => startApiOnce(options))
+    : startApiOnce(options);
+}
+
+async function startApiOnce(options: ApiOptions): Promise<ApiHandle> {
   const host = options.auth === 'login' ? 'localhost' : '127.0.0.1';
   const port = options.port ?? (await freePort());
   const env = apiEnv(options, port);

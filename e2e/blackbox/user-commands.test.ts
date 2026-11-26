@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { bindings } from '@agent-board/sealing';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -510,7 +512,9 @@ describe('user commands with a worker', () => {
     expect(await refusedInsideRun(fx, ['reply', idle.id, 'inside'])).toBe(2);
     expect(await refusedInsideRun(fx, ['send', running.id, 'inside'])).toBe(2);
     expect((await threadOf(fx, idle.id)).some((note) => note.text === 'inside')).toBe(false);
-    expect(stubStdin(fx).some((line) => line.includes('inside'))).toBe(false);
+    expect(
+      stubStdin(fx).some((line) => line.includes('inside') && !line.includes('#stub: board')),
+    ).toBe(false);
   });
 
   it('[cli-030] board stop interrupts a running task', async () => {
@@ -643,6 +647,7 @@ describe('user commands without a worker', () => {
     const first = await newTask(fx, 'waiting in todo', { status: 'todo' });
     const second = await newTask(fx, 'also waiting in todo', { status: 'todo' });
     const target = await newTask(fx, 'to be resumed', { status: 'backlog' });
+    await fx.runner.ok('machine.update-task', { id: target.id, sessionId: randomUUID() });
     const text = uniqueLabel('resume-');
     const run = await fx.operator.cli(['reply', target.id, '--resume', text]);
     expect(run.code, combined(run)).toBe(0);

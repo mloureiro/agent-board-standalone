@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import { E2E_ROOT } from '../harness/paths.ts';
-import { freePort, LOOPBACK } from '../harness/ports.ts';
+import { freePort, LOOPBACK, retryOnBindRace } from '../harness/ports.ts';
 import { launch, terminate } from '../harness/run.ts';
 
 export const OIDC_MAIN = path.join(E2E_ROOT, 'src', 'fakes', 'oidc', 'main.ts');
@@ -23,7 +23,17 @@ export interface FakeOptions {
 
 const POLL_MS = 50;
 
-export async function startFake(
+export function startFake(
+  script: string,
+  args: readonly string[],
+  options: FakeOptions,
+): Promise<FakeHandle> {
+  return options.port === undefined
+    ? retryOnBindRace(() => startFakeOnce(script, args, options))
+    : startFakeOnce(script, args, options);
+}
+
+async function startFakeOnce(
   script: string,
   args: readonly string[],
   options: FakeOptions,
