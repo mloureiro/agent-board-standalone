@@ -7,7 +7,6 @@ use agent_board_client_core::handover::{
     EarlyLinks, HandoverPlan, UNKNOWN_VERSION_MESSAGE, plan as plan_handover,
 };
 use agent_board_client_core::handshake::RETRY_DELAYS as HANDSHAKE_DELAYS;
-use agent_board_client_core::legacy::{session_service, stores_to_delete, sweep_sessions};
 use agent_board_client_core::opening::{
     LaunchWindow, Opening, WindowAction, launch_plan, plan_open, window_error,
 };
@@ -543,28 +542,6 @@ fn client_app_013_a_known_address_opens_and_an_unknown_one_is_added() {
             url: "http://localhost:4001/".to_owned()
         }
     );
-}
-
-#[test]
-fn client_app_008_legacy_stores_are_listed_for_deletion() {
-    let first = *uuid::Uuid::parse_str(FIRST_ID).unwrap().as_bytes();
-    let second = *uuid::Uuid::parse_str(SECOND_ID).unwrap().as_bytes();
-    let not_a_server = *uuid::Uuid::from_u128(1).as_bytes();
-    assert_eq!(
-        stores_to_delete([first, second, first, not_a_server]),
-        vec![id(SECOND_ID), id(FIRST_ID)]
-    );
-    assert!(stores_to_delete([]).is_empty());
-
-    let secrets = MemorySecrets::default();
-    let service = session_service();
-    assert_eq!(service, "com.mloureiro.agent-board-client.session");
-    secrets.put(&service, FIRST_ID, b"old");
-    secrets.put(&service, "legacy-account", b"old");
-    secrets.put(&token_service(), FIRST_ID, b"current");
-    assert_eq!(sweep_sessions(&secrets), 2);
-    assert!(secrets.peek(&service, FIRST_ID).is_none());
-    assert!(secrets.peek(&token_service(), FIRST_ID).is_some());
 }
 
 #[test]

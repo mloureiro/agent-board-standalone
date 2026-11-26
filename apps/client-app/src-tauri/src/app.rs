@@ -6,7 +6,7 @@ use crate::keychain::{Background, Keychain};
 use crate::removals::Removals;
 use crate::state::{AppState, CONTRACT};
 use crate::tab_registry::{TabQueue, TabRegistry};
-use crate::{alerts, handover, legacy, menu, windows};
+use crate::{alerts, handover, menu, windows};
 use agent_board_client_core::bridge::Bridge;
 use agent_board_client_core::files::DirStore;
 use agent_board_client_core::handover::EarlyLinks;
@@ -57,8 +57,6 @@ fn launch(app: &AppHandle, state: &Arc<AppState>) -> tauri::Result<()> {
         }
     }
     let state = Arc::clone(state);
-    let cleaning = (app.clone(), Arc::clone(&state));
-    tauri::async_runtime::spawn(async move { legacy::clean(&cleaning.0, &cleaning.1).await });
     if !state.bridge.servers().complete() {
         return Ok(());
     }

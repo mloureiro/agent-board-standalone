@@ -63,6 +63,6 @@ describe('handover', () => {
     expect(emitted).toEqual(HANDOVER_CASES);
     for (const entry of emitted) check(entry);
     expect(await read('bundle-id.json')).toEqual({ bundleId: CLIENT_APP_BUNDLE_ID });
-    expect(CLIENT_APP_BUNDLE_ID).toBe('com.mloureiro.agent-board-client');
+    expect(CLIENT_APP_BUNDLE_ID).toBe('dev.mloureiro.agent-board-client');
   });
 });

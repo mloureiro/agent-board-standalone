@@ -9,7 +9,6 @@ pub mod http;
 pub mod ids;
 pub mod keybindings;
 pub mod layout;
-pub mod legacy;
 pub mod links;
 pub mod log;
 pub mod navigation;
@@ -30,4 +29,4 @@ pub mod tokens;
 pub mod watch;
 pub mod zoom;
 
-pub const BUNDLE_ID: &str = "com.mloureiro.agent-board-client";
+pub const BUNDLE_ID: &str = "dev.mloureiro.agent-board-client";
