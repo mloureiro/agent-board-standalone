@@ -45,11 +45,11 @@ Other preparation:
 1. Launch the app. No window opens and there is no Dock icon, only an icon in the menu bar.
 2. Click the icon. The items, top to bottom: Open board; the rows `API: …`, `Worker not connected`,
    `Last backup: never`; the version line; Restart server, Back up now, Restart worker, Disconnect worker, Check
-   worker; Open logs folder, Open settings file; Connect worker…, Pair a device…; Quit. The rows and the version line
-   are grey.
+   worker; Open logs folder, Open settings file; Connect worker…, Pair a device…, Set up…; Quit. The rows and the
+   version line are grey. Set up… is always enabled.
 3. Wait until the row reads `API: Running`. Open board, Back up now and Connect worker… are enabled. Restart worker,
    Disconnect worker and Check worker are grey. Pair a device… is grey while `requestSignature` is not `true` in
-   `<root>/settings.json`.
+   `<root>/settings.json`, and while remote access is on.
 4. Read the version line: `server app <X> · API <Y> · CLI <Z>`. The three versions are the release's. After you
    rename `<resources>/api/version` and reopen the app, the line reads `API unknown`; rename it back.
 5. Quit the app. In a terminal run `nc -l <port>` (this holds the port), then open the app. The tray icon carries a `!`
@@ -96,16 +96,47 @@ Set `"requestSignature": true` in `<root>/settings.json`, quit and reopen the ap
 4. Click Pair a device… again and wait 11 minutes. The new code is refused as expired.
 5. Open `<root>/logs/app.log`. It says `pairing code issued` and holds no code.
 
-Remote devices with a tunnel:
-
-6. Add the tunnel's host name to `remoteHosts` in `<root>/settings.json` and set `requestSignature` to `true`. Quit and
-   reopen the app.
-7. On this Mac run `tailscale serve --bg <port>` (or the tunnel tool in use), then note the HTTPS address it prints.
-8. On a second device in the same tailnet open that address. The board reports that it needs pairing. Click Pair a
-   device… on the tray, type the code on the second device. The board opens there.
-9. Run `tailscale serve reset` when done.
+Pairing is for devices that reach the board on this Mac without sign-in. With remote access on (next entry) the API
+runs with sign-in, Pair a device… is grey, and a device signs in through the browser hand-off instead.
 
 Expected: only a paired device gets in, a code is single-use and short-lived, and no code is in any log.
+
+## 089: Remote access and first passkey
+
+The board is reached from anywhere through a tunnel, and then needs sign-in with passkeys everywhere. Have Tailscale
+Funnel or `cloudflared` installed on this Mac, and a phone that is not on this Mac's network (mobile data).
+
+1. Click Set up… on the tray (it also opens by itself on the very first launch). Section 1 shows the two tunnel
+   commands with this app's port filled in.
+2. Run one of them in a terminal: `tailscale funnel --bg <port>` (prints an `https://…ts.net` address) or
+   `cloudflared tunnel --url http://127.0.0.1:<port>` (prints an `https://…trycloudflare.com` address).
+3. Paste the https address into the field and click Turn on. The API restarts; `<root>/settings.json` now holds
+   `publicUrl` and every other key as before. Typing an `http://` address, a path or a port is refused and the file is
+   left as it was.
+4. Section 2 now offers Create my first passkey. Click it. The window shows the name to sign up with and a one-time
+   token, and the default browser opens `<publicUrl>/`.
+5. In Safari or Chrome at `<publicUrl>/`, sign up with that name and the token and add a passkey. The board opens with
+   your existing boards (the account is the one the board used without sign-in).
+6. Back in the window click I added my passkey. The API restarts and the token is gone: signing up again with it is
+   refused.
+7. Sign out in the browser and sign in again with the passkey.
+8. On the phone's browser, off the LAN, open `<publicUrl>/`. Sign in with your browser: the phone shows a code;
+   approve it from the signed-in browser on this Mac. The board opens on the phone.
+9. Open `http://127.0.0.1:<port>/` on this Mac in a private window. It asks for sign-in too: there is no board
+   without sign-in while remote access is on. Click Open board on the tray with the client app closed: the browser
+   opens `<publicUrl>/`.
+10. Open `<root>/logs/app.log` and `<root>/logs/api.log`. Neither holds the token.
+11. Click Turn off in Section 1. The API restarts without sign-in, `publicUrl` and `remoteHosts` are gone from the
+    settings file, and `<publicUrl>/` answers with an error. Stop the tunnel (`tailscale funnel reset` or Ctrl-C).
+
+The same steps run without the window, from a terminal, with the app's binary
+`"<app>/Contents/MacOS/agent-board-server"`: `setup status`, `setup remote --public-url https://<host>`,
+`setup first-passkey` (prints the address, the name and the token on three lines), `setup first-passkey --done` and
+`setup remote --off`. Each changing command ends with the sentence to restart the server from the tray or to reopen
+the app; click Restart server to apply.
+
+Expected: remote access always means sign-in, the token works only for the board's own name and only while the step is
+open, and nothing secret reaches a log.
 
 ## 060: Keychain prompt after an ad-hoc rebuild
 
