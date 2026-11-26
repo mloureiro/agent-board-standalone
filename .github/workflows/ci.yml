@@ -179,11 +179,21 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/server-app/src-tauri
-      - run: pnpm install --frozen-lockfile --filter "@agent-board/server-app..."
+      - uses: oven-sh/setup-bun@v2
+      - run: pnpm install --frozen-lockfile
       - run: pnpm --filter "@agent-board/server-app..." --if-present run build
       - run: pnpm --filter @agent-board/server-app shell:check
+      - run: pnpm --filter @agent-board/server-app assemble --build
       - run: pnpm --filter @agent-board/server-app build:binary
+      - run: pnpm --filter @agent-board/server-app bundle
+      - run: pnpm --filter @agent-board/server-app sign:check
       - run: pnpm --filter @agent-board/server-app test
+      - run: ditto -c -k --keepParent "apps/server-app/src-tauri/target/release/bundle/macos/Agent Board Server.app" "$RUNNER_TEMP/agent-board-server-app.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server-app-adhoc-signed
+          path: ${{ runner.temp }}/agent-board-server-app.zip
+          if-no-files-found: error
 
   sealing-runtimes:
     needs: changes

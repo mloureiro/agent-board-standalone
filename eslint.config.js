@@ -12,6 +12,7 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/src-tauri/target/**',
       '**/src-tauri/gen/**',
+      '**/src-tauri/resources/**',
       'wiki/**',
       '.claude/worktrees/**',
       'apps/mobile/src-tauri/**/*.js',

@@ -16,6 +16,7 @@ import { partSkipReason } from '../src/harness/skip.js';
 import { recordPlaywrightSkip, waitFor } from '../src/steps/migration.js';
 
 const START_TIMEOUT_MS = 120_000;
+const SIGHTING_WAIT_MS = 90_000;
 const REMOTE_HOST = 'box.example.test';
 const OTHER_HOST = 'other.example.test';
 const SIGN_IN_NAMES = /sign in|log in|login/i;
@@ -26,7 +27,9 @@ interface Layout {
   readonly key: UnlockedKey;
 }
 
-function useLayout(options: { remoteHosts?: readonly string[]; cli?: boolean } = {}) {
+function useLayout(
+  options: { remoteHosts?: readonly string[]; cli?: boolean; user?: boolean } = {},
+) {
   const state: { started: Layout | null; reason: string | null } = {
     started: null,
     reason: null,
@@ -44,6 +47,10 @@ function useLayout(options: { remoteHosts?: readonly string[]; cli?: boolean } =
       web: true,
       ...(options.remoteHosts === undefined ? {} : { remoteHosts: options.remoteHosts }),
     });
+    if (options.user === false) {
+      state.started = { layout } as Layout;
+      return;
+    }
     const user = await noLoginUser(layout);
     const key = await unlockedKey(layout, user);
     state.started = { layout, user, key };
@@ -141,7 +148,7 @@ test.describe('the server app layout from a cleared environment', () => {
 });
 
 test.describe('the server app layout with a remote host', () => {
-  const harness = useLayout({ remoteHosts: [REMOTE_HOST] });
+  const harness = useLayout({ remoteHosts: [REMOTE_HOST], user: false });
 
   test('[server-app-074] a remoteHosts name is an allowed host', async () => {
     const { layout } = harness.current;
@@ -185,6 +192,7 @@ test.describe('restarting the server app on the same root', () => {
   test('[server-app-002] cards stay, the worker reconnects without board init and the client opens unlocked', async ({
     browserName,
   }) => {
+    test.setTimeout(START_TIMEOUT_MS + SIGHTING_WAIT_MS);
     const { layout, user, key } = harness.current;
     const title = 'card that survives the restart';
     await createTask(layout, user, key, { prompt: title, title, status: 'backlog' });
@@ -216,25 +224,31 @@ test.describe('restarting the server app on the same root', () => {
       await first.close();
     }
 
-    const lastSeen = async (since: number) => {
+    const lastSeenAfter = async (since: number) => {
       const machines = (await user.ok('client.machines.list', {})).machines;
       const seen = machines.find((machine) => machine.name === 'app-worker')?.lastSeenAt;
-      return seen !== undefined && seen !== null && Date.parse(seen) >= since ? seen : null;
+      return seen !== undefined && seen !== null && Date.parse(seen) > since ? seen : null;
     };
     const worker = layout.startCli(['internal', 'listen']);
+    let seenBeforeRestart: string;
     try {
-      await waitFor(() => lastSeen(0), { label: 'the worker to connect', timeoutMs: 60_000 });
+      seenBeforeRestart = await waitFor(() => lastSeenAfter(0), {
+        label: 'the worker to connect',
+        timeoutMs: 60_000,
+      });
     } finally {
       await worker.stop();
     }
     await layout.restartApi();
-    const restartedAt = Date.now();
     const reconnected = layout.startCli(['internal', 'listen']);
     try {
-      await waitFor(() => lastSeen(restartedAt), {
+      await waitFor(() => lastSeenAfter(Date.parse(seenBeforeRestart)), {
         label: 'the worker to reconnect after the restart',
-        timeoutMs: 60_000,
+        timeoutMs: SIGHTING_WAIT_MS,
       });
+      const machines = await layout.cli(['machines']);
+      expect(machines.code, `${machines.stdout}${machines.stderr}`).toBe(0);
+      expect(machines.stdout).toContain('app-worker');
       const listed = (await user.ok('client.tasks.list', {})).tasks;
       expect(listed.length).toBeGreaterThan(0);
 

@@ -77,7 +77,7 @@ export function passphraseField(page: Page): Locator {
 }
 
 export async function unlockIfAsked(page: Page, passphrase: string): Promise<void> {
-  await expect(boardLink(page).or(passphraseField(page)).first()).toBeVisible({
+  await expect(column(page, 'backlog').or(passphraseField(page)).first()).toBeVisible({
     timeout: UI_TIMEOUT_MS,
   });
   if (await passphraseField(page).isVisible()) await unlockInPage(page, passphrase);

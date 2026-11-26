@@ -6,7 +6,11 @@
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
-    "bundle": "tauri build -- --package agent-board-server",
+    "assemble": "node scripts/assemble.ts",
+    "bundle": "node scripts/bundle.ts",
+    "sign:check": "node scripts/sign-check.ts",
+    "release": "node scripts/release.ts",
+    "release:check": "node scripts/release-check.ts",
     "build:binary": "cargo build --manifest-path src-tauri/Cargo.toml --locked -p agent-board-server && cargo build --manifest-path src-tauri/Cargo.toml --locked -p agent-board-server-core --bin stub_child",
     "test": "vitest run && pnpm run test:rust",
     "typecheck": "tsc --noEmit && cargo check --manifest-path src-tauri/Cargo.toml --locked",

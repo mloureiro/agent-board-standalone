@@ -175,3 +175,69 @@ Restore (a card added after the backup is gone):
 
 `<root>/data-schema-version` is not part of a backup. After restoring a backup made under another bundle version,
 delete that file so the next start makes a pre-upgrade copy before the API migrates the restored folder.
+
+## Bundle
+
+`pnpm --filter @agent-board/server-app run assemble --build` builds the three artifacts the app carries and collects them
+into `src-tauri/resources/` (git-ignored). Without `--build` it takes the existing outputs and names the missing artifact
+and the command that builds it; `--api`, `--cli` and `--web` point at pre-built paths. `pnpm … bundle` then runs
+`tauri build` and leaves the ad-hoc signed app at
+`src-tauri/target/release/bundle/macos/Agent Board Server.app`. No secret is needed.
+
+| Path in `resources/` (and in `Contents/Resources/resources/`) | Content                                                                                          |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `api/agent-board-api`                                         | The API single executable (`apps/api` `build:executable`); PGlite assets and migrations are embedded in it |
+| `api/schema-version`                                          | The API's last migration tag, read by the pre-upgrade backup                                     |
+| `api/version`, `cli/version`                                  | The API and CLI package versions, shown by the tray's version line                               |
+| `cli/board`                                                   | The CLI binary (`apps/cli` `compile`, target `darwin-arm64`), the worker                          |
+| `web/`                                                        | The browser client build (`apps/web` `dist`), served by the API                                  |
+
+The app finds the folder next to its binary in a development build, in `Contents/Resources/resources` inside the `.app`,
+and in `AGENT_BOARD_SERVER_RESOURCES` for the test seams.
+
+## Signing
+
+One identity signs the app and every bundled executable. `assemble` signs `api/agent-board-api` and `cli/board` ad hoc
+before Tauri seals them into the app, and `tauri.conf.json` signs the app with the ad-hoc identity `-`.
+`pnpm … sign:check [<app>]` reads `codesign -d --verbose=4` of the app, its binary and every executable under
+`Contents/Resources`, fails when any object is unsigned or the signers differ (ad hoc, or authority and team
+identifier) and verifies each with `codesign --verify --strict`. CI runs it on the built app. A named identity is a
+matter of replacing `-` and the `codesign` identity in `assemble`; the check does not change.
+
+## Security model
+
+- The API listens on `127.0.0.1:<port>` only and there is no TLS on loopback. With `requestSignature` off, any local
+  process can act as the settings user. With it on, only clients paired through "Pair a device…" can; unsigned and badly
+  signed requests get 401. `remoteHosts` requires `requestSignature: true`.
+- Worker run logs and agent transcripts stay plain on disk outside the data folder, protected only by FileVault (see
+  "What stays plain on disk").
+
+## Idle memory
+
+Measured by `test/build-data-at-rest-resources.test.ts` 10 s after the worker is enrolled and idle, with `ps` RSS of the
+processes of the headless app (the same binary without AppKit), the API and the worker units. Measured on one Apple
+silicon Mac:
+
+| Process              | Measured RSS     | Threshold asserted |
+| -------------------- | ---------------- | ------------------ |
+| API single executable | 0.6 to 1.3 GiB | below 1.7 GiB      |
+| App plus worker units | about 105 MiB    | below 250 MiB      |
+
+The API figure is PGlite's WebAssembly memory. It is a known figure, kept as measured for the final review of the
+release: the threshold is set above it rather than the API lowered to meet a smaller one. The tray build adds WebKit to
+the app's own figure; that part is not measured by the automated run.
+
+## Tests against the real artifacts
+
+`test/end-to-end.test.ts`, `network.test.ts` and `build-data-at-rest-resources.test.ts` run the built binary headless
+with the real API, CLI and web build and a stub `claude` from the end-to-end suite. They skip with the missing command
+when the artifacts are not built; CI builds them first. The N-1 data folder of server-app-009 is written at test time:
+the API's Node build is copied with its last migration removed, run once to create a key setup and a machine, and
+stopped. The app then opens that folder with the full migration set after exactly one `pre-upgrade-<tag>-<stamp>` copy.
+
+## Release
+
+`pnpm --filter @agent-board/server-app release 1.0.0 [--notes "..."]` sets the version in `package.json`,
+`src/version.ts`, both Cargo manifests and `Cargo.lock`, and writes `CHANGELOG.md` (notes already written under the
+version heading are kept). `release:check 1.0.0` then verifies all of them and the built `.app`'s version; then
+`pnpm release:tags` creates `server-app-v1.0.0`.

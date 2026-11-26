@@ -75,6 +75,7 @@ test.describe('server-app layout run to Done', () => {
     const directory = worker.tmp.path('work');
     mkdirSync(directory, { recursive: true });
     expect((await worker.cli(['dirs', 'add', directory])).code).toBe(0);
+    expect((await worker.cli(['dirs', 'set', 'default', 'true', directory])).code).toBe(0);
     const listener = worker.start(['internal', 'listen']);
     try {
       await openBoard(page, account);
@@ -97,7 +98,7 @@ test.describe('server-app layout run to Done', () => {
       await expect(statusBadge(page)).toHaveText(STATUS_LABELS.done, {
         timeout: UI_TIMEOUT_MS,
       });
-      await boardLink(page).click();
+      await boardLink(page).first().click();
       await expect(cardIn(page, 'done', title)).toBeVisible({ timeout: UI_TIMEOUT_MS });
     } finally {
       await listener.stop().catch(() => undefined);

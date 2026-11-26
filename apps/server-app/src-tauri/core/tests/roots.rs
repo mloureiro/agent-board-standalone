@@ -239,3 +239,32 @@ fn server_app_054_the_file_store_keeps_each_service_apart_and_deletes_idempotent
     );
     assert!(fs::read_to_string(store.path()).unwrap().contains("svc-b"));
 }
+
+#[test]
+fn server_app_088_resources_are_found_beside_the_binary_and_inside_the_bundle() {
+    use agent_board_server_core::app::resources_for;
+
+    let scratch = tempfile::tempdir().unwrap();
+    let dev = scratch.path().join("target/debug");
+    fs::create_dir_all(dev.join("resources")).unwrap();
+    assert_eq!(
+        resources_for(&dev.join("agent-board-server")),
+        dev.join("resources")
+    );
+
+    let app = scratch.path().join("Agent Board Server.app/Contents");
+    fs::create_dir_all(app.join("MacOS")).unwrap();
+    fs::create_dir_all(app.join("Resources/resources")).unwrap();
+    let found = resources_for(&app.join("MacOS/agent-board-server"));
+    assert_eq!(
+        found.canonicalize().unwrap(),
+        app.join("Resources/resources").canonicalize().unwrap()
+    );
+
+    let bare = scratch.path().join("bare");
+    fs::create_dir_all(&bare).unwrap();
+    assert_eq!(
+        resources_for(&bare.join("agent-board-server")),
+        bare.join("resources")
+    );
+}
