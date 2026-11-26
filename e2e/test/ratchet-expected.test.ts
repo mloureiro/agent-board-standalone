@@ -58,8 +58,8 @@ describe('expected-red.json', () => {
     expect(() => parseExpectedRed(raw)).toThrow(/expected-red\.json/);
   });
 
-  it('[repo-009] the committed file is valid and lists the browser board file', () => {
+  it('[repo-009] the committed file is valid and lists the matrix refusal file', () => {
     const expected = loadExpectedRed(new URL('../expected-red.json', import.meta.url).pathname);
-    expect(expected.files['browser/board.spec.ts']).toBeDefined();
+    expect(expected.files['blackbox/matrix-refusal.test.ts']).toBe('*');
   });
 });

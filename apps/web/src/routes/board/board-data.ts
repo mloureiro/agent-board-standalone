@@ -15,6 +15,7 @@ import { useServers } from '../../servers/index.js';
 import type { ServerClient } from '../../transport/client.js';
 import { watchEvents } from '../../transport/index.js';
 import { decryptCard, type BoardCard } from './card-model.js';
+import { CONTEXT_FEATURE } from './context-model.js';
 import { applyMove, type MoveRequest } from './columns.js';
 import { fetchProjectNames } from '../../projects/fetch-projects.js';
 import { useProjectFilter } from '../../projects/project-filter.js';
@@ -141,8 +142,12 @@ export function useBoardData(): BoardData | null {
       const client = clientRef.current;
       if (client === null || keys === null) return [];
       const answer = await callRoute(client, listClientTasksRoute, {});
+      const withContext = features.includes(CONTEXT_FEATURE);
       return Promise.all(
-        answer.tasks.map(async (task) => ({ ...(await decryptCard(keys, task)), serverId: scope })),
+        answer.tasks.map(async (task) => ({
+          ...(await decryptCard(keys, task, withContext)),
+          serverId: scope,
+        })),
       );
     },
   });

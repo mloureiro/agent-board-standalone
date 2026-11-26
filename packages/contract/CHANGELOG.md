@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.1.0
+
+The `context-usage` feature marks a server that fills `context` on task list items with the newest run's latest context reading, and a worker that reports it. A server without the feature has no readings and the browser client shows no context line or bar. The contract level stays 1.
 
 `CLIENT_APP_BUNDLE_ID` is `dev.mloureiro.agent-board-client`: the client app has its own identity and installs beside the previous Agent Board client instead of replacing it.
 
