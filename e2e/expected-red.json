@@ -104,7 +104,7 @@
       "phone viewport journeys on a no-login board › [web-098] the new task journey completes at the phone viewport @phone",
       {
         "title": "phone viewport journeys on a no-login board › [web-098] the schedules journey completes at the phone viewport @phone",
-        "projects": ["chromium-desktop", "webkit-desktop", "webkit-phone"]
+        "projects": ["chromium-desktop", "webkit-desktop", "chromium-phone", "webkit-phone"]
       },
       "phone viewport journeys on a no-login board › [web-098] the settings journey completes at the phone viewport @phone",
       {
