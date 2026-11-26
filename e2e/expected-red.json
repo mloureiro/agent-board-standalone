@@ -17,8 +17,14 @@
       }
     ],
     "browser/board.spec.ts": [
-      "board › [web-029] a touch drag moves a card between columns on a phone @phone",
-      "board with a running card › [web-035] a running card shows context usage as a thin line",
+      {
+        "title": "board › [web-029] a touch drag moves a card between columns on a phone @phone",
+        "projects": ["chromium-phone", "webkit-phone"]
+      },
+      {
+        "title": "board with a running card › [web-035] a running card shows context usage as a thin line",
+        "projects": ["chromium-desktop", "webkit-desktop"]
+      },
       {
         "title": "board › [web-029] cards reorder within Backlog and the order persists after a reload",
         "projects": ["webkit-desktop"]
@@ -34,10 +40,6 @@
         "projects": ["webkit-desktop"]
       },
       {
-        "title": "open client sessions › [P-10] after sign-out elsewhere the event stream ends, the reconnect gets 401 and the client shows sign-in",
-        "projects": ["chromium-desktop"]
-      },
-      {
         "title": "reply drafting in WebKit › [P-18] [web-058] a status change while typing keeps focus, caret and text, and Backspace outside a field does not navigate @webkit",
         "projects": ["webkit-desktop"]
       }
@@ -45,21 +47,11 @@
     "browser/proposals.spec.ts": [
       "proposals › [api-056] an agent-created task is a Backlog proposal that no machine claims"
     ],
-    "browser/questions.spec.ts": [
-      {
-        "title": "questions with a running worker › [web-055] mod+Enter submits the answer",
-        "projects": ["chromium-desktop"]
-      }
-    ],
     "browser/responsive.spec.ts": [
       {
         "title": "phone viewport journeys on a no-login board › [web-098] the project filter journey completes at the phone viewport @phone",
         "projects": ["webkit-desktop"]
       }
-    ],
-    "browser/sealing-at-rest.spec.ts": [
-      "[api-053] Sealing at rest in Postgres › [api-053] no text, jsonb or array column holds a plaintext title, prompt, note or directory path @chromium",
-      "[api-053] Sealing at rest in Postgres › [api-053] the sealed columns hold envelopes @chromium"
     ],
     "browser/sign-in.spec.ts": [
       {
@@ -73,8 +65,7 @@
     ],
     "browser/task-page.spec.ts": [
       "task page on a running worker › [web-048] the / skill list opened from the reply box is fully visible and not behind the panel",
-      "task page on a running worker › [web-050] on a running task Stop & send interrupts the run and delivers the message",
-      "task page on a running worker › [web-058] the reply box keeps focus, caret and text when the run status changes"
+      "task page on a running worker › [web-050] on a running task Stop & send interrupts the run and delivers the message"
     ],
     "browser/transcript.spec.ts": [
       "transcript drawer and context bar › [web-059] the drawer lists every run of a task and shows thinking",
