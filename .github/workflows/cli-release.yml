@@ -6,11 +6,11 @@ on:
       - 'cli-v*'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   binaries:
-    name: build and publish the CLI binaries
+    name: build the CLI binaries
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,14 +34,39 @@ jobs:
       - run: node apps/cli/scripts/smoke.ts apps/cli/dist/release/board-linux-x64
       - working-directory: apps/cli/dist/release
         run: sha256sum board-linux-x64 board-linux-arm64 board-darwin-arm64 > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cli-release
+          path: |
+            apps/cli/dist/release/board-linux-x64
+            apps/cli/dist/release/board-linux-arm64
+            apps/cli/dist/release/board-darwin-arm64
+            apps/cli/dist/release/SHA256SUMS
+          if-no-files-found: error
+
+  publish:
+    name: publish the CLI release
+    needs: binaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: cli-release
+          path: release
+      - working-directory: release
+        run: sha256sum --check SHA256SUMS
       - env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
         run: |
           gh release create "$TAG" \
-            apps/cli/dist/release/board-linux-x64 \
-            apps/cli/dist/release/board-linux-arm64 \
-            apps/cli/dist/release/board-darwin-arm64 \
-            apps/cli/dist/release/SHA256SUMS \
+            release/board-linux-x64 \
+            release/board-linux-arm64 \
+            release/board-darwin-arm64 \
+            release/SHA256SUMS \
+            --verify-tag \
             --title "$TAG" \
             --notes "CLI release $TAG. Install with apps/cli/scripts/install.sh or run board self-update."
