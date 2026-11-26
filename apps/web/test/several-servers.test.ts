@@ -211,6 +211,31 @@ describe('connection check retries', () => {
     healthy = true;
     expect(await screen.findByRole('navigation', { name: 'Main' })).toBeInTheDocument();
   });
+  it('[web-092] focus events faster than a slow check still let each check land', async () => {
+    let checks = 0;
+    let signedOut = false;
+    const slow = async (): Promise<ConnectionState> => {
+      checks += 1;
+      const answer: ConnectionState = signedOut
+        ? { state: 'signed-out', server: serverVersion() }
+        : { state: 'up', server: serverVersion() };
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      return answer;
+    };
+    renderApp({ check: slow, registry: createBrowserRegistry({ pageOrigin: PAGE_ORIGIN }) });
+    expect(await screen.findByRole('navigation', { name: 'Main' })).toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    signedOut = true;
+    const storm = setInterval(() => window.dispatchEvent(new Event('focus')), 40);
+    try {
+      expect(
+        await screen.findByRole('heading', { name: 'Signed out' }, { timeout: 3000 }),
+      ).toBeInTheDocument();
+    } finally {
+      clearInterval(storm);
+    }
+    expect(checks).toBeLessThan(40);
+  });
 });
 
 describe('version handshake', () => {

@@ -74,21 +74,44 @@ function Monitor(props: {
   readonly onWake: (serverId: string) => void;
 }): null {
   const { server, transport, check, upIntervalMs, downIntervalMs, nonce, onResult, onWake } = props;
+  const runNow = useRef<(() => void) | null>(null);
   useEffect(() => {
     let cancelled = false;
+    let running = false;
+    let again = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const run = async (): Promise<void> => {
+      if (running) {
+        again = true;
+        return;
+      }
+      running = true;
+      clearTimeout(timer);
       const result = await check(server, transport);
+      running = false;
       if (cancelled) return;
       onResult(server.id, result);
+      if (again) {
+        again = false;
+        void run();
+        return;
+      }
       timer = setTimeout(() => void run(), result.state === 'up' ? upIntervalMs : downIntervalMs);
     };
+    runNow.current = () => void run();
     void run();
     return () => {
       cancelled = true;
+      runNow.current = null;
       clearTimeout(timer);
     };
-  }, [server, transport, check, upIntervalMs, downIntervalMs, nonce, onResult]);
+  }, [server, transport, check, upIntervalMs, downIntervalMs, onResult]);
+  const seenNonce = useRef(nonce);
+  useEffect(() => {
+    if (nonce === seenNonce.current) return;
+    seenNonce.current = nonce;
+    runNow.current?.();
+  }, [nonce]);
   useEffect(() => {
     const wake = (): void => {
       if (document.visibilityState !== 'hidden') onWake(server.id);

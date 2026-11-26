@@ -135,9 +135,18 @@ describe('board events', () => {
     });
   });
 
-  it('[cli-023] --task, --status, --type, --actor, --machine and --project keep only what matches', async () => {
-    const projectA = '00000000-0000-4000-8000-0000000000aa';
-    const seed = async (stub: ApiStub) => {
+  const projectA = '00000000-0000-4000-8000-0000000000aa';
+  const filters: { args: string[]; keeps: (line: Line) => boolean }[] = [
+    { args: ['--task', 'wanted01'], keeps: (line) => line.task === 'wanted01' },
+    { args: ['--status', 'todo'], keeps: (line) => line.status === 'todo' },
+    { args: ['--type', 'moved'], keeps: (line) => line.type === 'moved' },
+    { args: ['--actor', 'user'], keeps: (line) => line.actor === 'user' },
+    { args: ['--machine', 'm-one'], keeps: (line) => line.machine === 'm-one' },
+    { args: ['--project', projectA], keeps: (line) => line.project === projectA },
+  ];
+
+  it.each(filters)('[cli-023] $args.0 keeps only what matches', async ({ args, keeps }) => {
+    const run = await listening(args, async (stub: ApiStub) => {
       await stub.addTask({
         id: 'wanted01',
         status: 'backlog',
@@ -145,32 +154,18 @@ describe('board events', () => {
         projectId: projectA,
       });
       await stub.addTask({ id: 'other001', status: 'backlog', machine: 'm-two' });
-    };
-    const cases: { args: string[]; keeps: (line: Line) => boolean }[] = [
-      { args: ['--task', 'wanted01'], keeps: (line) => line.task === 'wanted01' },
-      { args: ['--status', 'todo'], keeps: (line) => line.status === 'todo' },
-      { args: ['--type', 'moved'], keeps: (line) => line.type === 'moved' },
-      { args: ['--actor', 'user'], keeps: (line) => line.actor === 'user' },
-      { args: ['--machine', 'm-one'], keeps: (line) => line.machine === 'm-one' },
-      { args: ['--project', projectA], keeps: (line) => line.project === projectA },
-    ];
-    for (const { args, keeps } of cases) {
-      const run = await listening(args, seed);
-      await run.change(() => {
-        run.stub.patch('other001', { priority: 'high' });
-        run.stub.patch('wanted01', { status: 'todo', movedBy: 'user' });
-      });
-      await until(() => lines(run.cli).length > 0, `an event for ${args.join(' ')}`);
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      await run.stop();
-      const seen = lines(run.cli);
-      expect(seen.length, args.join(' ')).toBeGreaterThan(0);
-      expect(seen.every(keeps), args.join(' ')).toBe(true);
-      expect(
-        seen.some((line) => line.task === 'other001'),
-        args.join(' '),
-      ).toBe(false);
-    }
+    });
+    await run.change(() => {
+      run.stub.patch('other001', { priority: 'high' });
+      run.stub.patch('wanted01', { status: 'todo', movedBy: 'user' });
+    });
+    await until(() => lines(run.cli).length > 0, `an event for ${args.join(' ')}`);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    await run.stop();
+    const seen = lines(run.cli);
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.every(keeps)).toBe(true);
+    expect(seen.some((line) => line.task === 'other001')).toBe(false);
   });
 
   it('[cli-023] prints one readable line per event without --json', async () => {

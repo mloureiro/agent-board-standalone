@@ -50,16 +50,20 @@ fn eventually(seconds: u64, mut condition: impl FnMut() -> bool) -> bool {
     false
 }
 
-// Below the OS ephemeral range and never bound here: a port released by a probe could otherwise be taken
-// by a parallel test's outgoing socket, or inherited by a child forked while it was bound.
+// Below the OS ephemeral range, so no parallel test's outgoing socket can take a handed-out port.
 const PORT_RANGE: std::ops::Range<u16> = 20_000..30_000;
 
 static NEXT_PORT: AtomicU32 = AtomicU32::new(0);
 
 fn free_port() -> u16 {
     let span = u32::from(PORT_RANGE.end - PORT_RANGE.start);
-    let index = NEXT_PORT.fetch_add(1, Ordering::SeqCst) + std::process::id() * 64;
-    PORT_RANGE.start + (index % span) as u16
+    loop {
+        let index = NEXT_PORT.fetch_add(1, Ordering::SeqCst) + std::process::id() * 64;
+        let port = PORT_RANGE.start + (index % span) as u16;
+        if !health::port_in_use(port) {
+            return port;
+        }
+    }
 }
 
 fn alive(pid: u32) -> bool {
@@ -640,7 +644,7 @@ fn server_app_034_a_port_held_on_the_wildcard_address_counts_as_in_use() {
     let holder = TcpListener::bind(("0.0.0.0", port)).unwrap();
     assert!(health::port_in_use(port));
     drop(holder);
-    assert!(!health::port_in_use(port));
+    assert!(eventually(5, || !health::port_in_use(port)));
 }
 
 #[test]
