@@ -19,6 +19,22 @@ const CREDENTIAL_ROUTES: &[&str] = &[
     "/api/client/passkeys/register",
 ];
 
+fn has_encoded_unreserved_or_malformed_escape(route: &str) -> bool {
+    let bytes = route.as_bytes();
+    bytes.iter().enumerate().any(|(index, &byte)| {
+        if byte != b'%' {
+            return false;
+        }
+        let escape = bytes
+            .get(index + 1..index + 3)
+            .and_then(|hex| std::str::from_utf8(hex).ok())
+            .and_then(|hex| u8::from_str_radix(hex, 16).ok());
+        escape.is_none_or(|decoded| {
+            decoded.is_ascii_alphanumeric() || matches!(decoded, b'-' | b'.' | b'_' | b'~')
+        })
+    })
+}
+
 pub fn normalise_path(path: &str) -> Result<String, PathRefusal> {
     if path
         .chars()
@@ -38,6 +54,9 @@ pub fn normalise_path(path: &str) -> Result<String, PathRefusal> {
     {
         return Err(PathRefusal::Traversal);
     }
+    if has_encoded_unreserved_or_malformed_escape(route) {
+        return Err(PathRefusal::Malformed);
+    }
     if route.contains("//")
         || route
             .split('/')
@@ -49,7 +68,10 @@ pub fn normalise_path(path: &str) -> Result<String, PathRefusal> {
         return Err(PathRefusal::OutsideApi);
     }
     let comparable = lowered.trim_end_matches('/');
-    if CREDENTIAL_ROUTES.contains(&comparable) || comparable.starts_with("/api/machine/") {
+    if CREDENTIAL_ROUTES.contains(&comparable)
+        || comparable == "/api/machine"
+        || comparable.starts_with("/api/machine/")
+    {
         return Err(PathRefusal::CredentialRoute);
     }
     Ok(match query {

@@ -37,6 +37,24 @@ fn refuses_traversal_in_any_spelling() {
 }
 
 #[test]
+fn refuses_encoded_unreserved_characters_and_malformed_escapes() {
+    for path in [
+        "/api/p%61ir",
+        "/api/client/machines/%69ssue",
+        "/api/client/passkeys/regist%45r",
+        "/api/m%61chine/register-key",
+        "/api/client/tasks%7e",
+        "/api/client/tasks%",
+        "/api/client/tasks%4",
+        "/api/client/tasks%zz",
+    ] {
+        assert_eq!(normalise_path(path), Err(PathRefusal::Malformed), "{path}");
+    }
+    assert!(normalise_path("/api/client/tasks?q=%61").is_ok());
+    assert!(normalise_path("/api/client/tasks/a%20b").is_ok());
+}
+
+#[test]
 fn refuses_paths_outside_the_api() {
     for path in [
         "/",
@@ -69,6 +87,7 @@ fn refuses_credential_routes_whatever_the_case_or_query() {
         "/api/client/passkeys/register",
         "/api/machine/register-key",
         "/api/machine/anything",
+        "/api/machine",
     ] {
         assert_eq!(
             normalise_path(path),
