@@ -110,12 +110,19 @@ export async function contextSignedInAs(
   return context;
 }
 
+const NAVIGATION_RACE = /execution context was destroyed|failed to fetch|load failed/i;
+
 export async function pageSession(page: Page): Promise<string> {
-  return page.evaluate(async () => {
-    const response = await fetch('/api/version');
-    const body = (await response.json()) as { session?: string };
-    return body.session ?? 'missing';
-  });
+  try {
+    return await page.evaluate(async () => {
+      const response = await fetch('/api/version');
+      const body = (await response.json()) as { session?: string };
+      return body.session ?? 'missing';
+    });
+  } catch (error) {
+    if (error instanceof Error && NAVIGATION_RACE.test(error.message)) return 'navigating';
+    throw error;
+  }
 }
 
 export async function signInMethods(server: ServerRef): Promise<string[]> {
@@ -261,6 +268,13 @@ export async function shownHandoffCode(page: Page): Promise<string> {
   const text = (await page.locator('body').innerText()).match(/\b[A-Z0-9]{4}-[A-Z0-9]{4}\b/);
   if (text === null) throw new Error('the page shows no hand-off code');
   return text[0];
+}
+
+export async function shownHandoffFlow(page: Page): Promise<string> {
+  const href = await page.locator('a[href*="flow="]').first().getAttribute('href');
+  const flow = href === null ? null : new URL(href, page.url()).searchParams.get('flow');
+  if (flow === null) throw new Error('the page shows no hand-off link with a flow');
+  return flow;
 }
 
 export async function signUpWithPasskey(

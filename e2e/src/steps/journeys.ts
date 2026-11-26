@@ -444,9 +444,13 @@ export async function signInByHandoff(
   await page.goto(board.url);
   await page.getByRole('button', { name: NAMES.handoff }).click();
   const code = await shownHandoffCode(page);
+  const flow = new URL(
+    (await page.locator('a[href*="flow="]').first().getAttribute('href')) ?? '',
+    page.url(),
+  ).searchParams.get('flow');
   const context = await contextSignedInAs(browser, approver);
   try {
-    await approveHandoff(context, board.url, code);
+    await approveHandoff(context, board.url, code, flow);
   } finally {
     await context.close();
   }
