@@ -1,15 +1,5 @@
 {
   "files": {
-    "blackbox/matrix-refusal.test.ts": "*",
-    "browser/proposals.spec.ts": [
-      "proposals › [api-056] an agent-created task is a Backlog proposal that no machine claims"
-    ],
-    "browser/task-page.spec.ts": [
-      "task page on a running worker › [web-048] the / skill list opened from the reply box is fully visible and not behind the panel",
-      "task page on a running worker › [web-050] on a running task Stop & send interrupts the run and delivers the message"
-    ],
-    "browser/transcript.spec.ts": [
-      "transcript drawer and context bar › [web-059] the drawer lists every run of a task and shows thinking"
-    ]
+    "blackbox/matrix-refusal.test.ts": "*"
   }
 }
