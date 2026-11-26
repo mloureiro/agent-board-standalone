@@ -21,7 +21,11 @@ const guarded = <T>(
 ): Promise<T> =>
   call.context.services.database.withOwner(call.principal.owner, async (tx) => {
     await authorizeUserCommand(tx, call.principal.machineId, target);
-    return work(tx, { owner: call.principal.owner, viaMachineId: call.principal.machineId });
+    return work(tx, {
+      owner: call.principal.owner,
+      viaMachineId: call.principal.machineId,
+      now: call.context.clock.now(),
+    });
   });
 
 const commanded = async (

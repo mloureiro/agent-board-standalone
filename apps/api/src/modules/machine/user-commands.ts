@@ -26,6 +26,7 @@ type RouteOf<N extends string> = Extract<(typeof routes)[number], { name: N }>;
 export interface UserActor {
   owner: string;
   viaMachineId: string;
+  now: Date;
 }
 
 export type UserActions = {

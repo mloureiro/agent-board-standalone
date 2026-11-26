@@ -259,6 +259,7 @@ describe('[api-077] an after schedule', () => {
     id,
     title: await key.seal(bindings.title({ schedule: id }), `schedule ${id}`),
     input: await key.seal(bindings.input({ origin: { schedule: id }, creator: 'user' }), 'prompt'),
+    autoDone: true,
     ...rule,
   });
 

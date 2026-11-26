@@ -28,7 +28,7 @@ export const taskUserActions: UserActions = {
   send: async (tx, actor, input) => wireOne(tx, await sendToTask(tx, input, actingAs(actor))),
   stop: async (tx, actor, input) => wireOne(tx, await stopTask(tx, input, actingAs(actor))),
   'take-back': async (tx, actor, input) =>
-    wireOne(tx, await takeBackTask(tx, input.id, actingAs(actor))),
+    wireOne(tx, await takeBackTask(tx, input.id, actingAs(actor), actor.now)),
   rerun: async (tx, actor, input) => wireOne(tx, await rerunTask(tx, input.id, actingAs(actor))),
   'set-closed': async (tx, actor, input) =>
     wireOne(tx, await setTaskClosed(tx, input.id, input.closed, actingAs(actor))),

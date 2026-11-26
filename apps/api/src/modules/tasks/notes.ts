@@ -63,4 +63,9 @@ export const toWireNote = (row: NoteRow): WireNote =>
   ({ ...noteFieldsOf(row), author: row.author, body: row.body }) as WireNote;
 
 export const toThreadNote = (row: NoteRow): UiThreadNote =>
-  ({ ...noteFieldsOf(row), by: row.by, author: row.author, body: row.body }) as UiThreadNote;
+  ({
+    ...noteFieldsOf(row),
+    by: row.viaMachineId ?? row.by,
+    author: row.author,
+    body: row.body,
+  }) as UiThreadNote;

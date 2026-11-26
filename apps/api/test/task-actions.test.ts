@@ -33,6 +33,7 @@ import {
   stopTaskWatch,
   takeBackTask,
   taskDetail,
+  toThreadNote,
   updateTask,
   waitTask,
   wakeTask,
@@ -476,6 +477,7 @@ describe.each(TARGETS)('task actions on $name', (target) => {
       const thread = await board.notesOf(done.id);
       expect(thread.filter((entry) => entry.kind === 'comment')).toHaveLength(2);
       expect(thread.at(-1)?.viaMachineId).toBe('m1');
+      expect(toThreadNote(thread.at(-1)!).by).toBe('m1');
       const running = await board.running();
       expect(
         await refusal(

@@ -98,6 +98,14 @@ export async function createWorld(board: Board, options: WorldOptions): Promise<
     name: 'task-page',
     env: { STUB_CLAUDE_LOG: stubLog },
   });
+  const workdir = machine.tmp.path('workdir');
+  mkdirSync(workdir, { recursive: true });
+  const configured = await machine.cli(['config', 'set', 'defaultCwd', workdir]);
+  if (configured.code !== 0) {
+    throw new Error(
+      `board config set exited ${configured.code}\n${configured.stdout}${configured.stderr}`,
+    );
+  }
   writeSkills(machine.tmp.home, options.skills ?? []);
   let listener: RunningCli | null = null;
   const world: TaskWorld = {

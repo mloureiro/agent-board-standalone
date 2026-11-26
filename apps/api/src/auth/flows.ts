@@ -82,6 +82,22 @@ export const readFlow = async (
     kind,
   );
 
+const PAIRING_CODE = /^[A-Za-z0-9]{4}-[A-Za-z0-9]{4}$/;
+
+export const readHandoffFlow = async (
+  context: ServerContext,
+  reference: string,
+): Promise<AuthFlow | null> =>
+  PAIRING_CODE.test(reference)
+    ? live(
+        context,
+        await context.services.database.withSystem(async (system) =>
+          system.getAuthFlowByCode(await codeHash(reference)),
+        ),
+        'handoff',
+      )
+    : readFlow(context, reference, 'handoff');
+
 export const takeFlow = async (
   context: ServerContext,
   id: string,
