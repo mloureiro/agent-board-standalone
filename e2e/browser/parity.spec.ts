@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { CONTRACT, routeByName, sessionCookieName } from '@agent-board/contract';
+import { CONTRACT, CONTRACT_HEADER, routeByName, sessionCookieName } from '@agent-board/contract';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
 import { call } from '../src/client/contract-client.js';
@@ -227,17 +227,15 @@ test.describe('open client sessions', () => {
       await page.reload();
       await expect.poll(() => statuses.includes(200), { timeout: UI_TIMEOUT_MS }).toBe(true);
 
-      const ended = page.waitForEvent('requestfinished', {
-        predicate: (request) => new URL(request.url()).pathname === EVENTS_PATH,
+      await user.ok('auth.logout', {});
+
+      await expect(page.getByRole('button', { name: NAMES.handoff })).toBeVisible({
         timeout: RESTART_TIMEOUT_MS,
       });
-      await user.ok('auth.logout', {});
-      await ended;
-
-      await expect.poll(() => statuses.includes(401), { timeout: RESTART_TIMEOUT_MS }).toBe(true);
-      await expect(page.getByRole('button', { name: NAMES.handoff })).toBeVisible({
-        timeout: UI_TIMEOUT_MS,
+      const reconnect = await page.request.get(new URL(EVENTS_PATH, board.url).toString(), {
+        headers: { [CONTRACT_HEADER]: String(CONTRACT) },
       });
+      expect(reconnect.status()).toBe(401);
     } finally {
       await close();
     }
