@@ -211,6 +211,83 @@ the exported owner names are kept.
    wrong role.
 5. Take a database backup (`pg_dump`) of the target before the real run, and a scratch database for the first run.
 
+## Rehearsal on a synthetic board (done 2026-11-26)
+
+The walk above was rehearsed end to end on a board made with the old local server, on one Mac, with nothing of the
+real board involved. Repeat it this way before touching real data. Every value here is a placeholder. Use scratch
+directories outside the repository.
+
+Result of the rehearsal: 10 tasks (4 Done, 1 Needs me, 2 Backlog, 3 Todo of which one is a schedule occurrence), 13
+notes, 1 schedule, 1 machine, 4 transcript runs with 19 events and 1 pull-request link. `inspect`, the dry run and
+the count check agreed on every count. The board unlocked with the old passphrase, every kind of task opened, the
+schedule showed, and a new card reached Done through the new CLI. One bug was found and fixed (see "Found").
+
+### A. The old system, isolated
+
+1. Copy `board-server` and `board` from the installed old server app (`Contents/MacOS/`) and its
+   `Contents/Resources/resources/` (`drizzle`, `pglite`, `frontend`) into a scratch folder `<old>`. Do not use the
+   app's own data folder.
+2. Start the backend with the environment the old app gives it, a scratch data folder and its own port:
+
+```bash
+env -i HOME="$HOME" PATH="$PATH" NODE_ENV=production HOST=127.0.0.1 PORT=<backend-port> \
+  NO_LOGIN_USER=<owner> ALLOWED_HOSTS=127.0.0.1:<web-port>,localhost:<web-port> \
+  DATABASE_URL=pglite://local<old>/data/pglite APP_DATABASE_URL=pglite://board_app:x@local<old>/data/pglite \
+  MIGRATIONS_DIR=<old>/resources/drizzle PGLITE_ASSETS_DIR=<old>/resources/pglite <old>/board-server
+```
+
+3. Put a tiny static server in front of it on `<web-port>`: it serves `<old>/resources/frontend` (index.html for
+   unknown paths) and forwards `/trpc`, `/api/` and `/healthz` to `<backend-port>` with the `Host` header unchanged. The
+   backend answers 421 "unknown host" for any other Host.
+4. Open `http://127.0.0.1:<web-port>/` in a browser, set a passphrase, store the recovery key, then Settings,
+   Machines: add a machine and copy its token and data key into two mode-600 files.
+5. Point the old CLI at scratch folders. `board init` ignores `XDG_CONFIG_HOME` and writes into the real
+   `~/.config/agent-board`; set `AGENT_BOARD_CONFIG_DIR` and `AGENT_BOARD_STATE_DIR` first, in a wrapper script, then:
+
+```bash
+<old>/ob init --url http://127.0.0.1:<web-port> --token-file <token-file> --data-key-file <data-key-file> --machine <machine>
+<old>/ob dirs add <dir-a>; <old>/ob dirs add <dir-b>
+```
+
+6. Create the board with `<old>/ob schedule --new ...` run inside `<dir-a>` or `<dir-b>`: `--model haiku --effort low`
+   cards for the runs, `--backlog`, `--hold`, `--in 30d` and `--every 1d --in 20d` for the other lanes, `--icon` and
+   `--label` for the decoration, then `<old>/ob comment <task> "..."` for notes and `<old>/ob pr <task> <url>` for a
+   link. Run the cheap cards with one `<old>/ob internal dispatch` (the old worker), wait for their sessions to end,
+   and `<old>/ob move <task> done`.
+7. Stop the backend (a PGlite folder has one process), then `cp -R <old>/data/pglite <copy>`.
+
+### B. Migrate and verify
+
+1. Build from the release commit: `pnpm --filter @agent-board/migrate build`, `pnpm --filter @agent-board/api
+build:executable`, `pnpm --filter @agent-board/web build`, `pnpm --filter @agent-board/cli build:binary`.
+2. Follow steps 4 to 9 above: `inspect`, `export --dry-run`, then `run` into an empty scratch target, then into the
+   real target, each with `NO_LOGIN_USER=<owner>`. Both end with `count check passed`.
+3. Start the new API on its own folder and port. Outside the server app it needs `AUTH_MODE=no-login`,
+   `NO_LOGIN_USER=<owner>`, `DATABASE_URL=pglite://<new-data>`, `HOST=127.0.0.1`, `PORT=<port>`, `ALLOWED_HOSTS=127.0.0.1,localhost`
+   (host names only, no port) and `WEB_ROOT=<web-dist>`.
+4. In a browser open `http://127.0.0.1:<port>/`, unlock with the old passphrase and compare: tasks per lane, a task
+   with notes, a Done task with its transcript (the Transcript button), the task with the pull-request link, the
+   schedule page (it can take a few seconds) and the schedule's occurrence task. No card may show "could not be read".
+5. Enrol the new CLI with the old token and data key and the same `AGENT_BOARD_CONFIG_DIR` / `AGENT_BOARD_STATE_DIR`
+   treatment: `<new>/nb init --url http://127.0.0.1:<port> --token-file ... --data-key-file ... --machine <machine>`.
+   It prints `legacy directories: N matched, 0 unmatched` (N is the tasks plus schedules that had a directory).
+6. In a listed directory run `<new>/nb schedule --new --model haiku --effort low --auto-done "<short prompt>"`, then
+   `<new>/nb internal dispatch`. The card goes Running and then Done within a minute.
+
+### Found
+
+- A task made by a schedule keeps its working directory sealed under the schedule. The CLI conversion and the web
+  client tried only the task's own binding, so the occurrence task stayed "unmatched" and showed "The working
+  directory could not be read." Fixed by trying the schedule binding for tasks that came from a schedule.
+- The old worker ended its runs in Needs me even with `--auto-done`; the rehearsal moved them to Done by hand.
+
+### Clean up
+
+Stop the old backend, the static server, both APIs and any worker you started (`pgrep -fl board-server`, `pgrep -fl
+agent-board-api`), then delete the scratch folders and the files that held the token and data key. Look for
+`~/.config/agent-board` created by an old `board init` that ran without `AGENT_BOARD_CONFIG_DIR` and remove it if it
+holds only the rehearsal's files.
+
 ## Leftover temporary directories
 
 A run that is killed (Ctrl-C twice, a power cut, a kill signal) can leave its temporary PGlite copy of the source and

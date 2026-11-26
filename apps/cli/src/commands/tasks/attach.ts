@@ -51,16 +51,17 @@ export async function runAttach(
         ?.path ?? null;
   }
   if (workdir === null && wire.legacyDirectory !== null) {
-    try {
-      workdir = await open(
-        s.keys,
-        bindings.workdir(
-          wire.scheduleId === null ? { task: id } : { task: id, schedule: wire.scheduleId },
-        ),
-        wire.legacyDirectory,
-      );
-    } catch {
-      workdir = null;
+    const candidates =
+      wire.scheduleId === null
+        ? [{ task: id }]
+        : [{ schedule: wire.scheduleId }, { task: id, schedule: wire.scheduleId }];
+    for (const origin of candidates) {
+      try {
+        workdir = await open(s.keys, bindings.workdir(origin), wire.legacyDirectory);
+        break;
+      } catch {
+        workdir = null;
+      }
     }
   }
   if (workdir === null || !isDirectory(workdir)) {

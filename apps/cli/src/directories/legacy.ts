@@ -53,6 +53,24 @@ function legacyBinding(use: { kind: 'task' | 'schedule'; id: string }) {
   return bindings.workdir(use.kind === 'task' ? { task: use.id } : { schedule: use.id });
 }
 
+async function openUse(
+  session: Session,
+  use: { kind: 'task' | 'schedule'; id: string; legacyDirectory: string },
+  scheduleIds: readonly string[],
+): Promise<string | null> {
+  const own = await attempt(session, legacyBinding(use), use.legacyDirectory);
+  if (own !== null || use.kind === 'schedule') return own;
+  for (const scheduleId of scheduleIds) {
+    const inherited = await attempt(
+      session,
+      bindings.workdir({ schedule: scheduleId }),
+      use.legacyDirectory,
+    );
+    if (inherited !== null) return inherited;
+  }
+  return null;
+}
+
 export async function convertLegacyDirectories(
   session: Session,
   configDir: string,
@@ -80,8 +98,9 @@ export async function convertLegacyDirectories(
 
   const assign: { kind: 'task' | 'schedule'; id: string; directoryId: string }[] = [];
   const unmatched: LegacyUse[] = [];
+  const scheduleIds = legacy.tasks.flatMap((use) => (use.kind === 'schedule' ? [use.id] : []));
   for (const use of legacy.tasks) {
-    const text = await attempt(session, legacyBinding(use), use.legacyDirectory);
+    const text = await openUse(session, use, scheduleIds);
     const directoryId = text === null ? undefined : idByPath.get(normalizePath(text));
     if (directoryId === undefined) unmatched.push({ kind: use.kind, id: use.id });
     else assign.push({ kind: use.kind, id: use.id, directoryId });

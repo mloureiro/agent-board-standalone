@@ -26,15 +26,18 @@ async function legacyBoard(documentPaths: string[], uses: Record<string, string 
   );
   const entries = await Promise.all(
     Object.entries(uses).map(async ([key, legacy]) => {
-      const [kind, id] = key.split(':') as ['task' | 'schedule', string];
+      const [kind, id, inheritedFrom] = key.split(':') as ['task' | 'schedule', string, string?];
       if (kind === 'task') await stub.addTask({ id, directoryId: null });
+      const origin =
+        inheritedFrom !== undefined
+          ? { schedule: inheritedFrom }
+          : kind === 'task'
+            ? { task: id }
+            : { schedule: id };
       return {
         kind,
         id,
-        legacyDirectory: await stub.seal(
-          bindings.workdir(kind === 'task' ? { task: id } : { schedule: id }),
-          legacy ?? '',
-        ),
+        legacyDirectory: await stub.seal(bindings.workdir(origin), legacy ?? ''),
       };
     }),
   );
@@ -94,6 +97,19 @@ describe('legacy directory conversion', () => {
     expect(stub.tasks.get('taskAAAA')?.directoryId).toBe(web);
     expect(stub.tasks.get('taskBBBB')?.directoryId).toBe(web);
     expect(stub.tasks.get('taskEEEE')?.directoryId).toBeNull();
+  });
+
+  it('[cli-085] converts the directory of a task made by a schedule, which is sealed under the schedule', async () => {
+    const stub = await legacyBoard(['/srv/web'], {
+      'schedule:schedDDDD': '/srv/web',
+      'task:occAAAA:schedDDDD': '/srv/web',
+      'task:occBBBB:schedUNKNOWN': '/srv/web',
+    });
+    const { test, code } = await init(stub);
+    expect(code, test.captured.stderr).toBe(0);
+    expect(test.captured.stdout).toContain('legacy directories: 2 matched, 1 unmatched');
+    expect(test.captured.stdout).toContain('unmatched task occBBBB');
+    expect(stub.tasks.get('occAAAA')?.directoryId).not.toBeNull();
   });
 
   it('[cli-085] reports every unmatched id and keeps the converted directories in the config so set-dirs does not drop them', async () => {
