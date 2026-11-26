@@ -63,7 +63,7 @@ export function ColumnView(props: ColumnViewProps): ReactNode {
             projectName={projectNameFor(card)}
             serverName={serverNameFor(card)}
             usageHoldUntil={usageHoldFor(card)}
-            onEdit={(value) => onEdit(card, value)}
+            onEdit={onEdit}
           />
         ))}
       </Stack>

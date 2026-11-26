@@ -1,6 +1,6 @@
 import { ActionIcon, Anchor, Badge, Group, Menu, Paper, Stack, Text } from '@mantine/core';
 import { useMediaQuery, useMergedRef } from '@mantine/hooks';
-import { useRef, useState, type ReactNode } from 'react';
+import { memo, useCallback, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 
 import { badgesOf, prSummaries, prText } from './badges.js';
@@ -19,10 +19,10 @@ export interface CardViewProps {
   readonly projectName: string | null;
   readonly serverName: string | null;
   readonly usageHoldUntil: number | null;
-  readonly onEdit: (value: CardEditValue) => void;
+  readonly onEdit: (card: BoardCard, value: CardEditValue) => void;
 }
 
-export function CardView(props: CardViewProps): ReactNode {
+function CardViewBase(props: CardViewProps): ReactNode {
   const { card, now, projectName, serverName, usageHoldUntil, onEdit } = props;
   const { active, select } = useServers();
   const { task } = card;
@@ -38,6 +38,8 @@ export function CardView(props: CardViewProps): ReactNode {
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [editing, setEditing] = useState<CardEdit | null>(null);
+
+  const save = useCallback((value: CardEditValue) => onEdit(card, value), [onEdit, card]);
 
   const badges = badgesOf(card, { now, usageHoldUntil });
   const prs = prSummaries(card);
@@ -179,7 +181,9 @@ export function CardView(props: CardViewProps): ReactNode {
           )}
         </Stack>
       </Paper>
-      <CardEditDialog card={card} edit={editing} onClose={() => setEditing(null)} onSave={onEdit} />
+      <CardEditDialog card={card} edit={editing} onClose={() => setEditing(null)} onSave={save} />
     </>
   );
 }
+
+export const CardView = memo(CardViewBase);

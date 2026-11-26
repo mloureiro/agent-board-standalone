@@ -120,7 +120,7 @@ export function Board(props: {
     [cards, groups, sourceOf, actions],
   );
 
-  const onEdit = useCallback(
+  const editCard = useCallback(
     async (card: BoardCard, value: CardEditValue): Promise<void> => {
       const source = sourceOf(card);
       if (source === undefined) return;
@@ -139,6 +139,10 @@ export function Board(props: {
       });
     },
     [actions, sourceOf],
+  );
+  const onEdit = useCallback(
+    (card: BoardCard, value: CardEditValue): void => void editCard(card, value),
+    [editCard],
   );
 
   const merged = groups['needs-me'].filter(isMergedOnly);
@@ -198,7 +202,7 @@ export function Board(props: {
                   projectNameFor={projectNameFor}
                   serverNameFor={serverNameFor}
                   usageHoldFor={usageHoldFor}
-                  onEdit={(card, value) => void onEdit(card, value)}
+                  onEdit={onEdit}
                   {...(status === 'needs-me'
                     ? { mergedCount: merged.length, onMoveMerged: () => void moveMerged() }
                     : {})}
