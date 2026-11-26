@@ -18,3 +18,21 @@ export function freePort(host: string = LOOPBACK): Promise<number> {
     });
   });
 }
+
+const PORT_RACE = /EADDRINUSE|address already in use|not ready after|exited before it was ready/i;
+
+export const PORT_RACE_ATTEMPTS = 3;
+
+export function isPortRace(error: unknown): boolean {
+  return PORT_RACE.test(error instanceof Error ? error.message : String(error));
+}
+
+export async function retryOnPortRace<T>(attempt: () => Promise<T>): Promise<T> {
+  for (let tried = 1; ; tried++) {
+    try {
+      return await attempt();
+    } catch (error) {
+      if (tried >= PORT_RACE_ATTEMPTS || !isPortRace(error)) throw error;
+    }
+  }
+}

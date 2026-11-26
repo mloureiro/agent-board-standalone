@@ -9,7 +9,7 @@ import {
 } from '../harness/board.js';
 import { createDatabase, type Database, type DatabaseKind } from '../harness/database.js';
 import { partPath } from '../harness/paths.js';
-import { freePort } from '../harness/ports.js';
+import { freePort, retryOnPortRace } from '../harness/ports.js';
 import { createTmp } from '../harness/tmp.js';
 
 export interface LaunchOptions {
@@ -31,16 +31,7 @@ export function postgresAllowedIn(project: string): boolean {
   return project === POSTGRES_PROJECT;
 }
 
-const PORT_RACE = /EADDRINUSE|address already in use|not ready after|exited before it was ready/i;
-
-export async function retryOnPortRace<T>(attempt: () => Promise<T>): Promise<T> {
-  try {
-    return await attempt();
-  } catch (error) {
-    if (!PORT_RACE.test(error instanceof Error ? error.message : String(error))) throw error;
-    return attempt();
-  }
-}
+export { retryOnPortRace };
 
 export function hostOf(auth: AuthMode): string {
   return auth === 'login' ? 'localhost' : '127.0.0.1';
