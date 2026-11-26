@@ -32,18 +32,19 @@ pub fn probe(port: u16, timeout: Duration) -> bool {
 }
 
 pub fn port_in_use(port: u16) -> bool {
-    let bound = matches!(
-        std::net::TcpListener::bind(("127.0.0.1", port)),
-        Err(error) if error.kind() == std::io::ErrorKind::AddrInUse
-    );
-    bound
-        || [
-            IpAddr::V4(Ipv4Addr::LOCALHOST),
-            IpAddr::V6(Ipv6Addr::LOCALHOST),
-        ]
-        .into_iter()
-        .any(|ip| {
-            TcpStream::connect_timeout(&SocketAddr::new(ip, port), Duration::from_millis(250))
-                .is_ok()
-        })
+    let answers = [
+        IpAddr::V4(Ipv4Addr::LOCALHOST),
+        IpAddr::V6(Ipv6Addr::LOCALHOST),
+    ]
+    .into_iter()
+    .any(|ip| {
+        TcpStream::connect_timeout(&SocketAddr::new(ip, port), Duration::from_millis(250)).is_ok()
+    });
+    // Connect before binding: macOS sets close-on-exec after socket(), so a child forked meanwhile can
+    // inherit the probe listener and accept a connect made after it.
+    answers
+        || matches!(
+            std::net::TcpListener::bind(("127.0.0.1", port)),
+            Err(error) if error.kind() == std::io::ErrorKind::AddrInUse
+        )
 }
