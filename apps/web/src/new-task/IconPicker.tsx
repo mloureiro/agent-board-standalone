@@ -1,32 +1,7 @@
 import { Button, Group, Popover, SimpleGrid, Stack, Text, UnstyledButton } from '@mantine/core';
 import { useState, type ReactNode } from 'react';
 
-export const ICONS = [
-  '🚀',
-  '🐛',
-  '✨',
-  '🔧',
-  '📝',
-  '🧪',
-  '🔍',
-  '📦',
-  '🔒',
-  '⚡',
-  '🎨',
-  '📈',
-  '🧹',
-  '📚',
-  '🌐',
-  '💡',
-  '🔥',
-  '✅',
-  '⚠️',
-  '🗑️',
-  '🔌',
-  '🧩',
-  '🛠️',
-  '🏗️',
-] as const;
+import { ICONS, iconLabel } from '../components/icon-label.js';
 
 export function IconPicker(props: {
   readonly value: string;
@@ -59,7 +34,14 @@ export function IconPicker(props: {
             </Text>
             <SimpleGrid cols={6} spacing={4}>
               {props.recent.map((icon) => (
-                <UnstyledButton key={icon} onClick={() => choose(icon)} fz="xl" ta="center" p={4}>
+                <UnstyledButton
+                  key={icon}
+                  aria-label={iconLabel(icon)}
+                  onClick={() => choose(icon)}
+                  fz="xl"
+                  ta="center"
+                  p={4}
+                >
                   {icon}
                 </UnstyledButton>
               ))}
@@ -68,7 +50,14 @@ export function IconPicker(props: {
         )}
         <SimpleGrid cols={6} spacing={4}>
           {ICONS.map((icon) => (
-            <UnstyledButton key={icon} onClick={() => choose(icon)} fz="xl" ta="center" p={4}>
+            <UnstyledButton
+              key={icon}
+              aria-label={iconLabel(icon)}
+              onClick={() => choose(icon)}
+              fz="xl"
+              ta="center"
+              p={4}
+            >
               {icon}
             </UnstyledButton>
           ))}

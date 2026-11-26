@@ -364,14 +364,14 @@ describe('recent icons', () => {
         .map((button) => button.textContent),
     ).toEqual(['🔥', '🚀']);
 
-    await user.click(dialog.getAllByRole('button', { name: '🧪' })[0] as HTMLElement);
+    await user.click(dialog.getAllByRole('button', { name: /🧪/ })[0] as HTMLElement);
     await waitFor(() =>
       expect(world.settingsValue().icons).toEqual({ recent: ['🧪', '🔥', '🚀'] }),
     );
 
     await user.click(dialog.getByRole('button', { name: 'Icon' }));
     const reopened = await dialog.findByRole('group', { name: 'Recent icons' });
-    await user.click(within(reopened).getByRole('button', { name: '🚀' }));
+    await user.click(within(reopened).getByRole('button', { name: /🚀/ }));
     await waitFor(() =>
       expect(world.settingsValue().icons).toEqual({ recent: ['🚀', '🧪', '🔥'] }),
     );
@@ -384,7 +384,7 @@ describe('recent icons', () => {
     const { user } = render('/');
     const dialog = await openIcons(user);
     await dialog.findByRole('group', { name: 'Recent icons' });
-    await user.click(dialog.getAllByRole('button', { name: '🚀' })[0] as HTMLElement);
+    await user.click(dialog.getAllByRole('button', { name: /🚀/ })[0] as HTMLElement);
     await waitFor(() => {
       const recent = (world.settingsValue().icons as { recent: string[] }).recent;
       expect(recent).toHaveLength(24);
