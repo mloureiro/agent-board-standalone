@@ -51,6 +51,7 @@ function Inspector(props: {
   readonly inspect: KeyInspector;
   readonly clientOf: (serverId: string) => ServerClient | null;
   readonly reportKeyUnknown: (serverId: string) => void;
+  readonly settledBy: (serverId: string) => number;
   readonly onState: (serverId: string, state: KeysState) => void;
 }): null {
   const { serverId, up, nonce, inspect } = props;
@@ -64,12 +65,14 @@ function Inspector(props: {
     const client = latest.current.clientOf(serverId);
     if (client === null) return undefined;
     let cancelled = false;
+    const settled = latest.current.settledBy(serverId);
+    const stale = (): boolean => cancelled || latest.current.settledBy(serverId) !== settled;
     inspect({ serverId, client }).then(
       (next) => {
-        if (!cancelled) latest.current.onState(serverId, next);
+        if (!stale()) latest.current.onState(serverId, next);
       },
       (cause: unknown) => {
-        if (cancelled) return;
+        if (stale()) return;
         if (isKeyUnknown(cause)) latest.current.reportKeyUnknown(serverId);
         latest.current.onState(serverId, {
           status: 'failed',
@@ -97,6 +100,15 @@ export function KeysProvider(props: {
   const [nonces, setNonces] = useState<Record<string, number>>({});
   const [epoch, setEpoch] = useState(0);
   const dataKeys = useRef<Record<string, { keyId: string; text: string } | undefined>>({});
+  const settlements = useRef<Record<string, number>>({});
+  const settledBy = useCallback((serverId: string) => settlements.current[serverId] ?? 0, []);
+  const settle = useCallback(
+    (serverId: string, next: KeysState) => {
+      settlements.current[serverId] = settledBy(serverId) + 1;
+      setStates((previous) => ({ ...previous, [serverId]: next }));
+    },
+    [settledBy],
+  );
   const serverCount = useRef(servers.length);
   serverCount.current = servers.length;
 
@@ -122,7 +134,7 @@ export function KeysProvider(props: {
           dataKeys.current[serverId] =
             dataKey === undefined ? undefined : { keyId: keys.keyId, text: dataKey };
           await writeStoredKeys(serverId, keys);
-          onState(serverId, { status: 'unlocked', keys });
+          settle(serverId, { status: 'unlocked', keys });
         },
         dataKey: () => {
           const held = dataKeys.current[serverId];
@@ -131,7 +143,7 @@ export function KeysProvider(props: {
         forget: async () => {
           dataKeys.current[serverId] = undefined;
           await removeStoredKeys(serverId);
-          onState(serverId, IDLE);
+          settle(serverId, IDLE);
           reinspect(serverId);
         },
         lock: async () => {
@@ -142,7 +154,7 @@ export function KeysProvider(props: {
           serverNamespace(serverId).local.clear();
           await removeStoredKeys(serverId);
           setEpoch((previous) => previous + 1);
-          onState(serverId, IDLE);
+          settle(serverId, IDLE);
           reinspect(serverId);
         },
         reinspect: () => reinspect(serverId),
@@ -154,7 +166,7 @@ export function KeysProvider(props: {
       of: (serverId: string | null): KeysValue =>
         serverId === null ? absent : (built.get(serverId) ?? absent),
     };
-  }, [servers, states, kdf, epoch, onState, reinspect, queryClient]);
+  }, [servers, states, kdf, epoch, settle, reinspect, queryClient]);
 
   return (
     <KeysContext.Provider value={registry}>
@@ -168,6 +180,7 @@ export function KeysProvider(props: {
           inspect={inspect}
           clientOf={clientOf}
           reportKeyUnknown={reportKeyUnknown}
+          settledBy={settledBy}
           onState={onState}
         />
       ))}
