@@ -58,7 +58,7 @@ const ORDER = [
   'quit',
 ];
 
-const BUNDLE_ID = 'com.mloureiro.agent-board-client';
+const BUNDLE_ID = 'dev.mloureiro.agent-board-client';
 
 describe('tray menu, handover and pairing through the headless runner', () => {
   let scratch: string;

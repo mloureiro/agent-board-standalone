@@ -8,7 +8,7 @@ use crate::opener::OPEN_PROGRAM;
 
 pub const SCHEME: &str = "agentboard";
 pub const VERSION: u32 = 1;
-pub const CLIENT_APP_BUNDLE_ID: &str = "com.mloureiro.agent-board-client";
+pub const CLIENT_APP_BUNDLE_ID: &str = "dev.mloureiro.agent-board-client";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Problem {

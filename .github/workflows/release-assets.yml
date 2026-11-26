@@ -88,7 +88,7 @@ jobs:
         run: |
           bundles="apps/client-app/src-tauri/target/universal-apple-darwin/release/bundle/macos"
           mkdir -p dist-release
-          for name in "Agent Board" "Agent Board Debug"; do
+          for name in "Agent Board Client" "Agent Board Client Debug"; do
             codesign --verify --deep --strict "$bundles/$name.app"
             ditto -c -k --keepParent "$bundles/$name.app" "dist-release/${name// /-}.zip"
           done

@@ -6,7 +6,6 @@ mod confirm;
 mod fetches;
 mod handover;
 mod keychain;
-mod legacy;
 mod links;
 mod menu;
 mod notifications;

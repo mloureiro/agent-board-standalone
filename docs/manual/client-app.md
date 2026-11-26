@@ -2,28 +2,27 @@
 
 Steps that no automated test can drive, because they need real native window chrome, the Dock, notifications or the
 macOS Keychain. Each entry names the requirement row it covers in `requirements/catalogue/client-app.md`. The walk
-runs once per release on a Mac with macOS 14 or later, against a built app: either the `Agent Board` or
-`Agent Board Debug` zip attached to the `client-app-v<version>` release (unzip it outside `/tmp`), or a local build
+runs once per release on a Mac with macOS 14 or later, against a built app: either the `Agent Board Client` or
+`Agent Board Client Debug` zip attached to the `client-app-v<version>` release (unzip it outside `/tmp`), or a local build
 (`pnpm --filter @agent-board/client-app bundle`, then open
-`apps/client-app/src-tauri/target/release/bundle/macos/Agent Board.app`). The debug variant has the same bundle id, so
+`apps/client-app/src-tauri/target/release/bundle/macos/Agent Board Client.app`). The debug variant has the same bundle id, so
 it shares the Keychain items, the notification permission and the data of the release one, and adds the Web Inspector
 (right-click a page, Inspect Element).
 
 ## Before you start
 
-**The first launch of the new app deletes data of the OLD client app.** It removes the old app's per-server WebKit
-stores, its `tabs/` folder and its Keychain session entry (`<bundle id>.session`). It keeps `servers.json`, so the
-server list survives. Do not start the new app on a Mac whose old client app data you still need.
+The app is `Agent Board Client.app`, bundle id `dev.mloureiro.agent-board-client`. It installs beside the previous
+client (`Agent Board.app`, `com.mloureiro.agent-board-client`) and never reads, changes or deletes that app's data,
+WebKit stores or Keychain items. The two keep separate server lists, sign-ins and notification permissions.
 
 To walk without touching anything that matters, use a throwaway state:
 
 1. Make a new macOS user (System Settings › Users & Groups) and run the walk there, or
-2. Back up `~/Library/Application Support/com.mloureiro.agent-board-client` and `~/Library/WebKit/com.mloureiro.agent-board-client`
+2. Back up `~/Library/Application Support/dev.mloureiro.agent-board-client` and `~/Library/WebKit/dev.mloureiro.agent-board-client`
    first, and restore them afterwards.
 
-Entry 008 needs old-app data on purpose. Every other entry wants a clean state: no `servers.json`, no Agent Board items
-in Keychain Access (search `com.mloureiro.agent-board-client`) and no entry for the app in System Settings ›
-Notifications.
+Every entry wants a clean state: no `servers.json`, no items in Keychain Access under
+`dev.mloureiro.agent-board-client` and no entry for `Agent Board Client` in System Settings › Notifications.
 
 Other preparation:
 
@@ -31,8 +30,10 @@ Other preparation:
   example `http://localhost:1`) is useful for the failure checks of later entries.
 - Entries that name a login-mode server or a request-signature server say so at their start.
 - Keep the app out of `/tmp`: LaunchServices ignores bundles there, which breaks `agentboard://` links.
+- Both clients claim `agentboard://` links. While the previous client is installed, run the link entries with
+  `open -b dev.mloureiro.agent-board-client '<link>'` (as the server app does), so the link cannot reach the old app.
 - The app is ad-hoc signed, so macOS may refuse to open a downloaded copy on first launch. Remove the quarantine flag
-  with `xattr -dr com.apple.quarantine "Agent Board.app"` or approve it in System Settings › Privacy & Security.
+  with `xattr -dr com.apple.quarantine "Agent Board Client.app"` or approve it in System Settings › Privacy & Security.
 
 ## 010: a server window cannot be closed
 
@@ -156,16 +157,17 @@ ignores bundles there).
 Expected: the cold and the warm link both reach the app once, a known address is opened and an unknown loopback
 address is added, and a link that is not acceptable only brings the list forward.
 
-## 008: launch removes the old app's stores
+## 008: launch keeps the previous client's data and removes only unlisted servers' stores
 
-Do this only on a Mac where the previous Agent Board client was used, and only when its data may be deleted.
+On a Mac where the previous Agent Board client (`Agent Board.app`) was used:
 
-1. Check that `~/Library/Application Support/com.mloureiro.agent-board-client/tabs` exists and that
-   `security find-generic-password -s com.mloureiro.agent-board-client.session` finds an item.
-2. Launch the new app once.
-3. The `tabs` directory is gone, the Keychain query finds nothing, and `servers.json` next to it is unchanged.
+1. Note `ls ~/Library/Application\ Support/com.mloureiro.agent-board-client` and
+   `security find-generic-password -s com.mloureiro.agent-board-client.session` (an item or "could not be found").
+2. Launch `Agent Board Client`, add a server, open it, remove it again from the list, then quit and relaunch.
+3. The listing and the Keychain query of step 1 print the same as before. In
+   `~/Library/Application Support/dev.mloureiro.agent-board-client/tab-files` no file of the removed server is left.
 
-Expected: the old per-server stores, tab files and session items are deleted at launch and the server list is kept.
+Expected: nothing of the previous client changes, and the new app's own stores of unlisted servers are deleted.
 
 When `servers.json` cannot be read in full, the app keeps a copy as `servers.json.unreadable` next to it. While that
 copy exists, launch and the list page delete no store of servers missing from the list; delete the copy once the list
@@ -181,7 +183,7 @@ list.
    inside the app window. Sign in there by any method and approve the code.
 3. The app window signs in on its own within a few seconds and shows the board. The code was never typed in the app.
 4. Quit the app with Cmd-Q and launch it again. Open the same server. It is still signed in with no new code.
-5. In Keychain Access, search for `com.mloureiro.agent-board-client`. One item per signed-in server exists under the
+5. In Keychain Access, search for `dev.mloureiro.agent-board-client`. One item per signed-in server exists under the
    `.client-token` service, with the server's id as account. If the server has the request signature on, a
    `.signing-key` item exists as well.
 6. Use the sign-out button in the app. The page shows sign-in again, and both Keychain items for that server are gone.
@@ -330,7 +332,7 @@ answered the notification prompt for this app.
 3. Replace build A with build B (same name, same location) and open it.
 4. Make another task need you. A banner shows and no permission prompt shows. The Notifications entry still reads
    Allow Notifications on and no second entry exists.
-5. Repeat the steps with `Agent Board Debug` in place of build B. It shows banners without a prompt and without a
+5. Repeat the steps with `Agent Board Client Debug` in place of build B. It shows banners without a prompt and without a
    second entry, because it has the same bundle id. Its ad-hoc signature differs from the release build, so the
    Keychain prompts of the walk "Keychain prompt after an update (S4)" show for the token and key items. They are not
    a failure of this entry.
@@ -351,12 +353,12 @@ Expected: the All servers window always matches the server windows that are open
 
 ## 048: runs on macOS 14 and later, on Apple silicon and Intel
 
-1. Check the bundle without launching it: `lipo -archs "Agent Board.app/Contents/MacOS/agent-board-client"` prints
+1. Check the bundle without launching it: `lipo -archs "Agent Board Client.app/Contents/MacOS/agent-board-client"` prints
    `x86_64 arm64`, and
-   `/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "Agent Board.app/Contents/Info.plist"` prints `14.0`.
+   `/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "Agent Board Client.app/Contents/Info.plist"` prints `14.0`.
 2. On an Apple silicon Mac with macOS 14 or later, open the app, add a server and open it. The board loads.
 3. On an Intel Mac with macOS 14 or later, repeat step 2 with the same zip. If no Intel Mac is at hand, run
-   `arch -x86_64 "Agent Board.app/Contents/MacOS/agent-board-client"` on Apple silicon (Rosetta) and check that the
+   `arch -x86_64 "Agent Board Client.app/Contents/MacOS/agent-board-client"` on Apple silicon (Rosetta) and check that the
    list window shows.
 4. On a Mac with macOS 13 or older, open the app. macOS refuses with a message that the app needs a newer macOS
    version, and nothing launches.
@@ -394,7 +396,7 @@ an absent item.
 The end-to-end check of a release. Use the zip attached to the `client-app-v<version>` release, on a clean state
 (see "Before you start"), with the server app of the same release train on the same Mac.
 
-1. Unzip `Agent-Board.zip` outside `/tmp`, remove the quarantine flag if macOS blocks it, and open the app once. The
+1. Unzip `Agent-Board-Client.zip` outside `/tmp`, remove the quarantine flag if macOS blocks it, and open the app once. The
    list window shows with no server. The first launch ran the cleanup of the old app's stores.
 2. Start the server app. In its tray menu choose "Open board". The client app comes to the front, a server window
    opens for the server app's address, and the list gains an entry for it. If the client app is not installed, the
@@ -407,7 +409,7 @@ The end-to-end check of a release. Use the zip attached to the `client-app-v<ver
 6. Quit with Cmd-Q and open the app again. No server window comes back, because nothing loads at launch. Open the
    server from the list: its window opens with the tabs it had, the board shows the card in Done, and no sign-in is
    asked.
-7. Repeat steps 2 to 4 with `Agent Board Debug`. Its ad-hoc signature differs from the release build, so the Keychain
+7. Repeat steps 2 to 4 with `Agent Board Client Debug`. Its ad-hoc signature differs from the release build, so the Keychain
    prompts of the walk "Keychain prompt after an update (S4)" show for the token and key items. Allow them. It then
    reaches the same server with the same sign-in, and right-click Inspect Element opens the Web Inspector.
 

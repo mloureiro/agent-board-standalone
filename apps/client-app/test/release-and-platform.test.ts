@@ -67,9 +67,9 @@ describe('client-app release workflow', () => {
     const cargo = await text('src-tauri', 'Cargo.toml');
 
     expect(debug).not.toHaveProperty('identifier');
-    expect(debug.productName).toBe('Agent Board Debug');
-    expect(base.productName).toBe('Agent Board');
-    expect(base.identifier).toBe('com.mloureiro.agent-board-client');
+    expect(debug.productName).toBe('Agent Board Client Debug');
+    expect(base.productName).toBe('Agent Board Client');
+    expect(base.identifier).toBe('dev.mloureiro.agent-board-client');
     expect(cargo).toMatch(/^devtools = \["tauri\/devtools"\]$/m);
     expect(cargo).toMatch(/^custom-protocol = /m);
   });
