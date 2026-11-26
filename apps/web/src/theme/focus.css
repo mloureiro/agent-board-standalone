@@ -2,3 +2,11 @@
   outline: 2px solid var(--mantine-primary-color-filled) !important;
   outline-offset: 2px;
 }
+
+:root[data-mantine-color-scheme='light'] {
+  --mantine-color-dimmed: var(--mantine-color-gray-7);
+}
+
+:root[data-mantine-color-scheme='dark'] {
+  --mantine-color-dimmed: var(--mantine-color-dark-1);
+}

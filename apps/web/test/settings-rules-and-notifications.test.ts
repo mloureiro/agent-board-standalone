@@ -228,6 +228,24 @@ describe('Settings › Notifications', () => {
     expect(Object.keys(localStorage).some((key) => /notif/i.test(key))).toBe(false);
   });
 
+  it('[web-073] the Permissions API outranks a Notification.permission that disagrees with it', async () => {
+    grant('denied');
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      permissions: {
+        query: async () => ({
+          state: 'granted',
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+        }),
+      },
+    });
+    const { user } = render();
+    await openTab(user, 'Notifications');
+    await screen.findByRole('checkbox', { name: 'Notifications' });
+    await waitFor(() => expect(screen.queryByText(/blocks notifications/)).toBeNull());
+  });
+
   it('[web-073] reads the setting back from the server and turns it off', async () => {
     await world.setDocument('settings', JSON.stringify({ notifications: { desktop: true } }), 2);
     grant('granted');

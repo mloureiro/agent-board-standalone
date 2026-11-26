@@ -186,6 +186,15 @@ export async function createWorld(board: Board, options: WorldOptions): Promise<
   });
   const directory = board.tmp.path('work', 'journeys');
   mkdirSync(directory, { recursive: true });
+  const registration = { env: machine.env, cwd: directory };
+  const added = await runProcess(partPath('cli'), ['dirs', 'add', '--no-repo'], registration);
+  if (added.code !== 0) throw new Error(`board dirs add exited ${added.code}\n${added.stderr}`);
+  const marked = await runProcess(
+    partPath('cli'),
+    ['dirs', 'set', 'default', 'true', directory],
+    registration,
+  );
+  if (marked.code !== 0) throw new Error(`board dirs set exited ${marked.code}\n${marked.stderr}`);
   let listener: ReturnType<EnrolledMachine['start']> | null = null;
   const world: JourneyWorld = {
     board,
@@ -327,8 +336,6 @@ export async function createSchedule(
   prompt: string,
 ): Promise<RunResult> {
   const options = { env: world.machine.env, cwd: world.directory };
-  const added = await runProcess(partPath('cli'), ['dirs', 'add', '--no-repo'], options);
-  if (added.code !== 0) throw new Error(`board dirs add exited ${added.code}\n${added.stderr}`);
   const scheduled = await runProcess(
     partPath('cli'),
     ['schedule', '--every', '1h', '--title', title, prompt],
@@ -353,6 +360,11 @@ export async function unlockIfAsked(page: Page, passphrase: string): Promise<voi
   await expect(page.getByRole('main').or(passphraseField(page)).first()).toBeVisible({
     timeout: UI_TIMEOUT_MS,
   });
+  await expect(passphraseField(page).or(page.getByRole('button', { name: /^lock$/i }))).toBeVisible(
+    {
+      timeout: UI_TIMEOUT_MS,
+    },
+  );
   if (await passphraseField(page).isVisible()) await unlockInPage(page, passphrase);
   await waitForBoard(page);
 }

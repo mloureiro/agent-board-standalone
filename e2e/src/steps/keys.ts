@@ -67,9 +67,9 @@ export async function unlockWith(page: Page, passphrase: string): Promise<void> 
 }
 
 export async function unlockIfAsked(page: Page, passphrase: string): Promise<void> {
-  await expect(boardLink(page).or(passphraseField(page)).first()).toBeVisible({
-    timeout: UI_TIMEOUT_MS,
-  });
+  await expect(passphraseField(page).or(page.getByRole('button', { name: /^lock$/i }))).toBeVisible(
+    { timeout: UI_TIMEOUT_MS },
+  );
   if (await passphraseField(page).isVisible()) await unlockInPage(page, passphrase);
   await waitForBoard(page);
 }

@@ -46,6 +46,12 @@ async function expectAccessibleInBothSchemes(page: Page): Promise<void> {
   const backgrounds: string[] = [];
   for (const colorScheme of SCHEMES) {
     await page.emulateMedia({ colorScheme });
+    const previous = backgrounds.at(-1);
+    if (previous !== undefined) {
+      await expect
+        .poll(() => backgroundOf(page), { message: 'the dark scheme changes the background' })
+        .not.toBe(previous);
+    }
     expect(await violationsOf(page), `axe violations in ${colorScheme} mode`).toEqual([]);
     backgrounds.push(await backgroundOf(page));
   }

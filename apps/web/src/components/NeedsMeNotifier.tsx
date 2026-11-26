@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import { currentBridge } from '../bridge/index.js';
+import { useNotificationPermission } from './notification-permission.js';
 import { NOTIFICATIONS_SETTING, settingAt, usePage, useSettings } from '../pages/index.js';
 import { useEnvironment } from '../session/index.js';
 import { attemptTaskField } from '../routes/board/card-model.js';
@@ -27,12 +28,12 @@ export function NeedsMeNotifier(): ReactNode {
   const known = useRef<ReadonlySet<string> | null>(null);
   const titles = useRef(new Map<string, string>());
   const native = currentBridge();
+  const [permission] = useNotificationPermission();
   const serverId = page?.serverId ?? null;
   const enabled =
     settings?.settings !== undefined &&
     settingAt(settings.settings, NOTIFICATIONS_SETTING) === true &&
-    (native !== null ||
-      (typeof Notification !== 'undefined' && Notification.permission === 'granted'));
+    (native !== null || permission === 'granted');
 
   const settingsLoaded = settings?.settings !== undefined;
   useEffect(() => {
@@ -44,6 +45,7 @@ export function NeedsMeNotifier(): ReactNode {
     queryKey: [...(page?.base ?? []), 'needs-me'],
     enabled: page !== null && enabled,
     refetchInterval: ATTENTION_POLL_MS,
+    refetchIntervalInBackground: true,
     queryFn: async (): Promise<Waiting[]> => {
       if (page === null) return [];
       if (page.features.includes('attention')) {

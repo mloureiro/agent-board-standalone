@@ -37,7 +37,7 @@ export function ColumnView(props: ColumnViewProps): ReactNode {
       data-over={drop.isOver ? 'true' : undefined}
       style={{
         minHeight: idle ? 0 : 120,
-        opacity: idle ? 0.6 : 1,
+        borderStyle: idle ? 'dashed' : undefined,
         background: drop.isOver ? 'var(--mantine-color-blue-light)' : undefined,
       }}
     >

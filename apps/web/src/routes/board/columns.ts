@@ -57,10 +57,15 @@ export function moveFor(
 ): MoveRequest | null {
   if (target.overCard === activeId) return null;
   if (target.overCard !== null) {
+    const others = columnCards.filter((card) => cardUid(card) !== activeId);
+    const at = others.findIndex((card) => cardUid(card) === target.overCard);
+    const above = target.before ? others[at - 1] : others[at];
+    const below = target.before ? others[at] : others[at + 1];
     return {
       id: activeId,
       status: target.status,
-      ...(target.before ? { beforeId: target.overCard } : { afterId: target.overCard }),
+      ...(above === undefined || at < 0 ? {} : { afterId: cardUid(above) }),
+      ...(below === undefined || at < 0 ? {} : { beforeId: cardUid(below) }),
     };
   }
   const last = [...columnCards].reverse().find((card) => cardUid(card) !== activeId);

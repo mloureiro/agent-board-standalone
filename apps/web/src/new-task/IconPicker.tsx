@@ -23,7 +23,7 @@ export function IconPicker(props: {
           aria-expanded={opened}
           onClick={() => setOpened((current) => !current)}
         >
-          {props.value === '' ? 'Choose icon' : props.value}
+          {props.value === '' ? 'Icon' : props.value}
         </Button>
       </Popover.Target>
       <Popover.Dropdown>

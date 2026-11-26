@@ -53,6 +53,16 @@ describe('header and navigation', () => {
   });
 });
 
+describe('keyboard order', () => {
+  it('[web-080] activating a header link puts the next Tab stop at the top of the page', async () => {
+    const { user } = renderApp();
+    await user.click(await screen.findByRole('link', { name: 'Schedules' }));
+    await screen.findByRole('heading', { name: 'Schedules' });
+    await user.tab();
+    expect(await screen.findByRole('link', { name: 'Board' })).toHaveFocus();
+  });
+});
+
 describe('New task', () => {
   it('[web-002] the New task button opens the New task form', async () => {
     const { user } = renderApp();
