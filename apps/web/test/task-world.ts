@@ -172,10 +172,15 @@ export class TaskWorld extends BoardWorld {
     this.threads.set(taskId, [...(this.threads.get(taskId) ?? []), ...sealed]);
   }
 
-  async seedRun(taskId: string, runId: string, events: readonly SeedEvent[] = []): Promise<void> {
+  async seedRun(
+    taskId: string,
+    runId: string,
+    events: readonly SeedEvent[] = [],
+    startedAt: string = isoAt(-hours(1)),
+  ): Promise<void> {
     this.runs.set(taskId, [
       ...(this.runs.get(taskId) ?? []),
-      { id: runId, machine: 'laptop', startedAt: isoAt(-hours(1)) },
+      { id: runId, machine: 'laptop', startedAt },
     ]);
     await this.addEvents(taskId, runId, events);
   }
