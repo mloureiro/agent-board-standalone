@@ -40,6 +40,7 @@ export interface CliRunOptions {
   readonly stdin?: string;
   readonly timeoutMs?: number;
   readonly env?: Readonly<Record<string, string>>;
+  readonly cwd?: string;
 }
 
 export interface EnrolledMachine {
@@ -137,6 +138,7 @@ export async function enrolledMachine(
         env: { ...options.env, ...run.env },
         ...(run.stdin === undefined ? {} : { stdin: run.stdin }),
         ...(run.timeoutMs === undefined ? {} : { timeoutMs: run.timeoutMs }),
+        ...(run.cwd === undefined ? {} : { cwd: run.cwd }),
       }),
     start: (args, run = {}) =>
       startCli(args, {
