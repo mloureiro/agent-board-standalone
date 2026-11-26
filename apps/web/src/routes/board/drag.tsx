@@ -26,8 +26,9 @@ function swallowNextClick(): void {
     event.preventDefault();
     event.stopPropagation();
   };
-  window.addEventListener('click', swallow, true);
-  setTimeout(() => window.removeEventListener('click', swallow, true), CLICK_AFTER_DROP_MS);
+  const target = window;
+  target.addEventListener('click', swallow, true);
+  setTimeout(() => target.removeEventListener('click', swallow, true), CLICK_AFTER_DROP_MS);
 }
 
 class PointerTypeSensor extends PointerSensor {
