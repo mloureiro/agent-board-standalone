@@ -12,6 +12,7 @@ import {
 import { pkcePair, type BoardUser } from '../fixtures/users.js';
 import { missingParts, type PartName } from '../harness/paths.js';
 import { featureSkipReason, partSkipReason } from '../harness/skip.js';
+import { openServerList, serverList } from './servers.js';
 
 export const DAY_SECONDS = 24 * 60 * 60;
 export const HANDOFF_EXPIRY_SECONDS = 10 * 60;
@@ -278,9 +279,10 @@ export async function signUpWithPasskey(
 
 export async function selectServerInClient(page: Page, name: string): Promise<void> {
   const pattern = new RegExp(escapeRegExp(name), 'i');
-  await page
+  await openServerList(page);
+  await serverList(page)
     .getByRole('button', { name: pattern })
-    .or(page.getByRole('link', { name: pattern }))
+    .or(serverList(page).getByRole('link', { name: pattern }))
     .first()
     .click();
 }

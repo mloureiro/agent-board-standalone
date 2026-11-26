@@ -5,12 +5,12 @@ import { expect, test } from '@playwright/test';
 import { useBoard } from '../src/harness/playwright.js';
 import {
   JOURNEY_NAMES,
-  SETTINGS_NAMES,
   UI_TIMEOUT_MS,
   cardOf,
   clearWebStorageKeepingServerList,
   entriesContaining,
   journeyMarker,
+  openNotificationSettings,
   readWebStorage,
   runJourney,
   seedAccount,
@@ -47,7 +47,7 @@ test.describe('web storage holds volatile state only', () => {
     await expect(card.getByRole('img', { name: journey.icon })).toBeVisible();
     await expect(card.getByText(journey.label)).toBeVisible();
 
-    await page.getByRole('link', { name: SETTINGS_NAMES.settings }).click();
+    await openNotificationSettings(page);
     await expect(page.getByRole('checkbox', { name: JOURNEY_NAMES.notifications })).toBeChecked();
     expect((await user.ok('client.settings.get', {})).document).not.toBeNull();
   });

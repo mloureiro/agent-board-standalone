@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 
 import { badgesOf, prSummaries, prText } from './badges.js';
 import { CardEditDialog, type CardEdit, type CardEditValue } from './CardEditDialog.js';
+import { iconLabel } from '../../components/icon-label.js';
 import { useServers } from '../../servers/index.js';
 import { cardUid, type BoardCard } from './card-model.js';
 import { canDragFrom, canDropOn } from './columns.js';
@@ -77,7 +78,7 @@ function CardViewBase(props: CardViewProps): ReactNode {
           <Group gap="xs" wrap="nowrap" align="flex-start" justify="space-between">
             <Group gap="xs" wrap="nowrap" align="flex-start" style={{ minWidth: 0 }}>
               {card.icon === null ? null : (
-                <span role="img" aria-label={card.icon}>
+                <span role="img" aria-label={iconLabel(card.icon)}>
                   {card.icon}
                 </span>
               )}

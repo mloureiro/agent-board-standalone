@@ -133,7 +133,7 @@ describe('new task form', () => {
     await user.type(form.getByRole('textbox', { name: 'Title' }), 'Badge fix');
     await user.selectOptions(form.getByLabelText('Project'), 'Work');
     await user.click(form.getByRole('button', { name: 'Icon' }));
-    await user.click(await form.findByRole('button', { name: '🚀' }));
+    await user.click(await form.findByRole('button', { name: /🚀/ }));
     await user.selectOptions(form.getByLabelText('Directory'), '/work/docs');
     await user.type(form.getByLabelText('Labels'), 'bug, ui{Enter}');
     await user.selectOptions(form.getByLabelText('Priority'), 'High');

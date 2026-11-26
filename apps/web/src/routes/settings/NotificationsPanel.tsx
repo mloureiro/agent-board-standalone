@@ -23,6 +23,7 @@ export function NotificationsPanel(): ReactNode {
   const data = useSettings();
   const [permission, setPermission] = useState<Permission>(permissionOf);
   const [error, setError] = useState<string | null>(null);
+  const [requested, setRequested] = useState<boolean | null>(null);
   if (data === null) return null;
   if (!data.offered) return <Text c="dimmed">{NO_SETTINGS}</Text>;
   const enabled =
@@ -31,6 +32,7 @@ export function NotificationsPanel(): ReactNode {
 
   const change = (next: boolean): void => {
     setError(null);
+    setRequested(next);
     const ask =
       next && !native && permission === 'default' && typeof Notification !== 'undefined'
         ? Notification.requestPermission().then((answer) => setPermission(answer))
@@ -39,7 +41,8 @@ export function NotificationsPanel(): ReactNode {
       .then(() => data.set(NOTIFICATIONS_SETTING, next))
       .catch((cause: unknown) =>
         setError(cause instanceof Error ? cause.message : 'The setting could not be saved.'),
-      );
+      )
+      .finally(() => setRequested(null));
   };
 
   return (
@@ -47,7 +50,7 @@ export function NotificationsPanel(): ReactNode {
       <Checkbox
         label="Notifications"
         description="Show a notification when a task needs you and this window is not in front. The setting follows you to your other devices. Each browser keeps its own permission."
-        checked={enabled}
+        checked={requested ?? enabled}
         disabled={data.settings === undefined}
         onChange={(event) => change(event.currentTarget.checked)}
       />

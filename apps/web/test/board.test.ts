@@ -117,7 +117,7 @@ describe('card', () => {
     openBoard();
 
     const card = cardNamed(await findTitle('Ship the thing'));
-    expect(within(card).getByRole('img', { name: '🚀' })).toBeInTheDocument();
+    expect(within(card).getByRole('img', { name: /🚀/ })).toBeInTheDocument();
     expect(within(card).getByText('PR open')).toBeInTheDocument();
     expect(within(card).getByText('PR merged')).toBeInTheDocument();
     expect(within(card).getByText('Active 3 min ago')).toBeInTheDocument();
@@ -156,7 +156,7 @@ describe('card', () => {
     expect(sent.id).toBe('t1');
     expect(sent.icon).not.toContain('🔥');
     expect(await open(await OWNER_KEYS, bindings.icon({ task: 't1' }), sent.icon)).toBe('🔥');
-    expect(await within(cardNamed('Pick an icon')).findByRole('img', { name: '🔥' })).toBeVisible();
+    expect(await within(cardNamed('Pick an icon')).findByRole('img', { name: /🔥/ })).toBeVisible();
   });
 
   it('[web-034] on touch the card offers a menu to change its labels', async () => {

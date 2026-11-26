@@ -22,6 +22,7 @@ export const SETUP_NAMES = {
 export const SETTINGS_NAMES = {
   settings: /^settings$/i,
   encryption: /^encryption$/i,
+  notificationsSection: /^notifications$/i,
   current: /^current passphrase$/i,
   next: /^new passphrase$/i,
   confirm: /^confirm new passphrase$/i,
@@ -114,6 +115,15 @@ export async function passphraseOpensSlots(user: BoardUser, passphrase: string):
   }
 }
 
+export async function openNotificationSettings(page: Page): Promise<void> {
+  await page.getByRole('link', { name: SETTINGS_NAMES.settings }).click();
+  await page
+    .getByRole('tab', { name: SETTINGS_NAMES.notificationsSection })
+    .or(page.getByRole('link', { name: SETTINGS_NAMES.notificationsSection }))
+    .first()
+    .click();
+}
+
 export async function changePassphraseInSettings(
   page: Page,
   current: string,
@@ -201,9 +211,10 @@ export async function runJourney(page: Page, journey: JourneyMarker): Promise<vo
   await page.getByRole('button', { name: JOURNEY_NAMES.newTask }).click();
   await page.getByLabel(JOURNEY_NAMES.prompt).fill(journey.prompt);
   await page.getByLabel(JOURNEY_NAMES.title).fill(journey.title);
-  await page.getByRole('button', { name: JOURNEY_NAMES.icon }).first().click();
-  await page.getByRole('button', { name: journey.icon }).first().click();
-  await page.getByRole('button', { name: JOURNEY_NAMES.create }).click();
+  const form = page.getByRole('dialog');
+  await form.getByRole('button', { name: JOURNEY_NAMES.icon }).first().click();
+  await form.getByRole('button', { name: journey.icon }).first().click();
+  await form.getByRole('button', { name: JOURNEY_NAMES.create }).click();
 
   const card = cardOf(page, journey.title);
   await expect(card).toBeVisible({ timeout: UI_TIMEOUT_MS });
@@ -213,17 +224,20 @@ export async function runJourney(page: Page, journey: JourneyMarker): Promise<vo
   await page.keyboard.press('Enter');
   await expect(card.getByText(journey.label)).toBeVisible();
 
-  await page.getByRole('link', { name: SETTINGS_NAMES.settings }).click();
+  await openNotificationSettings(page);
   await page.getByRole('checkbox', { name: JOURNEY_NAMES.notifications }).check();
 
   await page.getByRole('link', { name: SETUP_NAMES.boardLink }).click();
   await cardOf(page, journey.title).getByRole('link', { name: journey.title }).click();
   const reply = replyBox(page);
   await reply.fill(journey.draft);
-  await panelButton(page, TASK_PAGE.send).click();
+  await panelButton(page, TASK_PAGE.comment).click();
   await expect(reply).toHaveValue('');
   await reply.fill(`${journey.draft} still typing`);
-  await page.getByRole('link', { name: SETUP_NAMES.boardLink }).click();
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: SETUP_NAMES.boardLink })
+    .click();
 }
 
 export async function clearWebStorageKeepingServerList(page: Page): Promise<string[]> {
