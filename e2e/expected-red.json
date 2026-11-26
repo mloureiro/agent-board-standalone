@@ -1,15 +1,6 @@
 {
   "files": {
     "blackbox/matrix-refusal.test.ts": "*",
-    "blackbox/schedules.test.ts": [
-      "[api-077] an after schedule › [api-077] fires once more for running to done on a second run"
-    ],
-    "blackbox/user-commands.test.ts": [
-      "user commands with a worker › [api-119] answer answers 409 run-holds-task from the machine holding the active run",
-      "user commands with a worker › [api-119] dismiss-question answers 409 run-holds-task from the machine holding the active run",
-      "user commands with a worker › [cli-029] board reply and send refuse inside a run before sending",
-      "user commands without a worker › [cli-029] board reply --resume sends the task back to the top of Todo"
-    ],
     "browser/accessibility.spec.ts": [
       {
         "title": "accessibility of the primary pages › [web-080] the task page is operable by keyboard alone with a visible focus indicator @chromium",
