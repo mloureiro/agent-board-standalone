@@ -117,10 +117,19 @@ describe('supervision through the headless runner', () => {
     const session = start();
     await running(session);
     const killed = apiPid() as number;
+    const before = session.events.length;
 
     process.kill(killed, 'SIGKILL');
     await until(() => apiPid() !== undefined && apiPid() !== killed, 'a new API pid');
-    await running(session);
+    await until(() => {
+      session.send('state');
+      const after = session.events
+        .slice(before)
+        .filter((event) => event['type'] === 'state')
+        .map((event) => (event['supervision'] as Supervision).api.state);
+      const restarted = after.indexOf('restarting');
+      return restarted >= 0 && after.slice(restarted + 1).includes('running');
+    }, 'the API running again after the restart');
 
     expect(isAlive(killed)).toBe(false);
     expect(await healthz()).toBe(200);
