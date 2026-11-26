@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { keyIdString } from '../../limits.js';
+import { signingKeyIdString } from '../../limits.js';
 import { emptyResult } from '../../schemas/common.js';
 import { uiDevice } from '../../schemas/device.js';
 import { clientCommand, clientQuery } from '../route.js';
@@ -14,7 +14,7 @@ export const listClientDevicesRoute = clientQuery('devices/list', {
 });
 
 export const revokeClientDeviceRoute = clientCommand('devices/revoke', {
-  request: z.object({ keyId: keyIdString }).strict(),
+  request: z.object({ keyId: signingKeyIdString }).strict(),
   response: emptyResult,
   errors: ['not-found'],
   ...devices,

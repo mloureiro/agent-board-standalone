@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { keyIdString } from '../../limits.js';
+import { signingKeyIdString } from '../../limits.js';
 import { emptyResult } from '../../schemas/common.js';
 import { publicKeyString } from '../../schemas/ids.js';
 import { versionAnswer } from '../../schemas/machine.js';
@@ -18,7 +18,7 @@ export const registerKeyRoute = machineCommand('register-key', {
       label: z.string().min(1).max(64),
     })
     .strict(),
-  response: z.object({ keyId: keyIdString }).strict(),
+  response: z.object({ keyId: signingKeyIdString }).strict(),
   errors: ['conflict'],
   feature: 'request-signature',
   issuesCredential: true,

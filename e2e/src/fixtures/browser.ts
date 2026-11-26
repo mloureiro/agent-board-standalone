@@ -46,11 +46,12 @@ export async function approveHandoff(
   otherContext: BrowserContext,
   serverUrl: string,
   code: string,
-  path: string = APPROVAL_PATH,
+  flow: string | null = null,
 ): Promise<Page> {
   const page = await otherContext.newPage();
-  const target = new URL(path, serverUrl);
+  const target = new URL(APPROVAL_PATH, serverUrl);
   target.searchParams.set('code', code);
+  if (flow !== null) target.searchParams.set('flow', flow);
   await page.goto(target.toString());
   await page.getByRole('button', { name: UNLOCK_NAMES.approve }).click();
   return page;

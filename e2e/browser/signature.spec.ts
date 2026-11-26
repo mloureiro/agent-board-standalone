@@ -4,6 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { runApi } from '../src/harness/api.js';
 import { useBoard } from '../src/harness/playwright.js';
+import { SETUP_NAMES, fillSetup, readRecoveryKey, waitForBoard } from '../src/steps/keys.js';
 import { pairCodeIn, readBrowserKeyStorage, shortTempPath } from '../src/steps/signature.js';
 
 function useSigningBoard(label: string) {
@@ -49,6 +50,9 @@ test.describe('browser client request signature', () => {
     await page.goto(harness.board.url);
     await pairWithCode(page, harness);
     await expect(page.getByRole('main')).toBeVisible();
+    await expect
+      .poll(async () => (await readBrowserKeyStorage(page)).keys.length, { timeout: 10_000 })
+      .toBeGreaterThan(0);
     const storage = await readBrowserKeyStorage(page);
     expect(storage.databases).toHaveLength(1);
     const privateKeys = storage.keys.filter((key) => key.type === 'private');
@@ -65,7 +69,11 @@ test.describe('browser client request signature', () => {
   }) => {
     await page.goto(harness.board.url);
     await pairWithCode(page, harness);
-    await expect(page.getByRole('main')).toBeVisible();
+    await fillSetup(page, 'a passphrase for this board');
+    await readRecoveryKey(page);
+    await page.getByRole('checkbox', { name: SETUP_NAMES.stored }).check();
+    await page.getByRole('button', { name: SETUP_NAMES.done }).click();
+    await waitForBoard(page);
     await page.getByRole('link', { name: /settings/i }).click();
     await page
       .getByRole('tab', { name: /devices/i })

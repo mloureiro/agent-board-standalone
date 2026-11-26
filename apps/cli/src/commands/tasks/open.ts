@@ -1,5 +1,5 @@
 import type { WireNote, WireTask } from '@agent-board/contract';
-import { bindings, open, type Binding, type Keys } from '@agent-board/sealing';
+import { bindings, open, type Binding, type Keys, type Origin } from '@agent-board/sealing';
 
 export const UNREADABLE_TEXT = '(cannot decrypt)';
 
@@ -72,6 +72,23 @@ export function inputBinding(
   });
 }
 
+async function attemptTaskField(
+  keys: Keys,
+  field: 'title' | 'agent' | 'icon' | 'labels',
+  wire: WireTask,
+  envelope: string,
+): Promise<string | null> {
+  const origins: Origin[] =
+    wire.scheduleId === null
+      ? [{ task: wire.id }]
+      : [{ task: wire.id }, { schedule: wire.scheduleId }];
+  for (const origin of origins) {
+    const text = await attempt(keys, bindings[field](origin), envelope);
+    if (text !== null) return text;
+  }
+  return null;
+}
+
 export async function openTask(keys: Keys, wire: WireTask): Promise<OpenTask> {
   const unreadable: Unreadable[] = [];
   const track = (field: Unreadable, value: string | null, present: boolean): string | null => {
@@ -79,15 +96,11 @@ export async function openTask(keys: Keys, wire: WireTask): Promise<OpenTask> {
     return value;
   };
 
-  const title = track(
-    'title',
-    await attempt(keys, bindings.title({ task: wire.id }), wire.title),
-    true,
-  );
+  const title = track('title', await attemptTaskField(keys, 'title', wire, wire.title), true);
   const agent =
     wire.agent === null || wire.agent === undefined
       ? null
-      : track('agent', await attempt(keys, bindings.agent({ task: wire.id }), wire.agent), true);
+      : track('agent', await attemptTaskField(keys, 'agent', wire, wire.agent), true);
   let input = await attempt(keys, inputBinding(wire, agent, 'task'), wire.input);
   if (input === null && wire.scheduleId !== null) {
     input = await attempt(keys, inputBinding(wire, agent, 'schedule'), wire.input);
@@ -102,10 +115,10 @@ export async function openTask(keys: Keys, wire: WireTask): Promise<OpenTask> {
   const icon =
     wire.icon === null
       ? null
-      : track('icon', await attempt(keys, bindings.icon({ task: wire.id }), wire.icon), true);
+      : track('icon', await attemptTaskField(keys, 'icon', wire, wire.icon), true);
   let labels: string[] = [];
   if (wire.labels !== null) {
-    const text = await attempt(keys, bindings.labels({ task: wire.id }), wire.labels);
+    const text = await attemptTaskField(keys, 'labels', wire, wire.labels);
     const parsed = text === null ? null : labelsOf(text);
     if (parsed === null) unreadable.push('labels');
     else labels = parsed;

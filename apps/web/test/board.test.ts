@@ -1,5 +1,5 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
-import { open } from '@agent-board/sealing';
+import { open, seal } from '@agent-board/sealing';
 import { bindings } from '@agent-board/sealing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -69,6 +69,24 @@ describe('columns and counts', () => {
       'Done 1',
     ]);
     expect(cardsIn(columnNamed(COLUMN.backlog))).toEqual(['In backlog', 'Also backlog']);
+  });
+
+  it('[web-027] a schedule occurrence shows the title, icon and labels sealed for its schedule', async () => {
+    const keys = await OWNER_KEYS;
+    const schedule = 'sched-1';
+    const seeded = await world.seed({ id: 'occurrence-1', title: 'placeholder', status: 'todo' });
+    Object.assign(seeded, {
+      scheduleId: schedule,
+      title: await seal(keys, bindings.title({ schedule }), 'Hourly sync check'),
+      icon: await seal(keys, bindings.icon({ schedule }), '🚀'),
+      labels: await seal(keys, bindings.labels({ schedule }), JSON.stringify(['ops'])),
+    });
+    openBoard();
+
+    await screen.findByRole('link', { name: 'Hourly sync check' });
+    const card = cardNamed('Hourly sync check');
+    expect(within(card).getByText('ops')).toBeInTheDocument();
+    expect(within(card).getByRole('img', { name: /🚀/ })).toBeInTheDocument();
   });
 
   it('[web-027] Waiting stays a slim empty column while nothing waits', async () => {

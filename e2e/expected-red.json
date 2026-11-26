@@ -9,17 +9,6 @@
     "blackbox/schedules.test.ts": [
       "[api-077] an after schedule › [api-077] fires once more for running to done on a second run"
     ],
-    "blackbox/signature.test.ts": [
-      "request signature on a no-login server › [api-022] a badly signed request gets 401",
-      "request signature on a no-login server › [api-022] the signature is checked before the body is read: a bad signature on an oversized body gets 401, not 413",
-      "request signature on a no-login server › [api-120] agent-board-api pair prints an XXXX-XXXX code while the API holds the PGlite folder",
-      "request signature on a no-login server › [api-120] POST /api/pair binds a key once and refuses a second use of the code",
-      "request signature on a no-login server › [api-120] one register-key binds per issued machine token, a second is refused and re-issuing clears it",
-      "request signature on a no-login server › [api-120] the user lists the bound keys, revokes one and the revoked key gets 401",
-      "request signature on a no-login server › [cli-083] board init generates, registers and stores a signing key; with it removed the next call gets 401",
-      "request signature bound at sign-in on a login server › [api-120] the sign-in finish carrying a public key binds it to the new session",
-      "request signature bound at sign-in on a login server › [api-120] a user revokes a bound key on a login server and it gets 401"
-    ],
     "blackbox/user-commands.test.ts": [
       "user commands with a worker › [api-119] answer answers 409 run-holds-task from the machine holding the active run",
       "user commands with a worker › [api-119] dismiss-question answers 409 run-holds-task from the machine holding the active run",
@@ -64,9 +53,6 @@
       "board with a running card › [web-035] a running card shows context usage as a thin line"
     ],
     "browser/connection.spec.ts": "*",
-    "browser/migrate.spec.ts": [
-      "the migrated board in the browser › [migrate-003] the owner passphrase unlocks the migrated board and every task opens"
-    ],
     "browser/new-task.spec.ts": [
       "new task form › [web-061] the form takes prompt, project, icon, directory, title, labels, priority, model, effort, lane, agent and auto-done",
       "drafts › [web-064] unsent text in the new-task prompt, the reply box and a question Other field survives navigation, a reload and a tab switch",
@@ -80,7 +66,6 @@
         "projects": ["webkit-desktop"]
       },
       "open client sessions › [P-10] after sign-out elsewhere the event stream ends, the reconnect gets 401 and the client shows sign-in",
-      "hand-off finish from another origin › [P-11] a hand-off finish with a wrong verifier leaves the flow usable and the right verifier completes it",
       {
         "title": "hand-off from WebKit › [P-03] a WebKit client completes hand-off sign-in through a second browser context that approves @webkit",
         "projects": ["webkit-desktop"]
@@ -139,7 +124,6 @@
         "projects": ["webkit-desktop"]
       }
     ],
-    "browser/signature.spec.ts": "*",
     "browser/task-page.spec.ts": "*",
     "browser/transcript.spec.ts": "*"
   }

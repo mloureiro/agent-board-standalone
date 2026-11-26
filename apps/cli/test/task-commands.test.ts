@@ -1,7 +1,7 @@
 import { mkdirSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 
-import { bindings } from '@agent-board/sealing';
+import { bindings, seal } from '@agent-board/sealing';
 import { describe, expect, it } from 'vitest';
 
 import { DEFAULT_PROJECT, type ApiStub } from './support/api-stub.js';
@@ -69,6 +69,24 @@ describe('board tasks and board show', () => {
     const { cli } = await rig();
     expect(await cli.run('tasks', '--status', 'later')).toBe(2);
     expect(await cli.run('tasks', '--project', 'nope')).toBe(2);
+  });
+
+  it('[cli-013] shows a schedule occurrence whose title, icon and labels are sealed for its schedule', async () => {
+    const { stub, cli } = await rig();
+    await stub.addTask({ id: 'taskOCCR', title: 'placeholder', status: 'todo' });
+    const schedule = { schedule: 'schedAAA' };
+    stub.patch('taskOCCR', {
+      scheduleId: 'schedAAA',
+      title: await seal(stub.keys, bindings.title(schedule), 'Hourly sync check'),
+      icon: await seal(stub.keys, bindings.icon(schedule), '🚀'),
+      labels: await seal(stub.keys, bindings.labels(schedule), JSON.stringify(['ops'])),
+    });
+
+    expect(await cli.run('show', '--json', 'taskOCCR')).toBe(0);
+    const parsed = JSON.parse(cli.stdout()) as {
+      task: { title: string; icon: string | null; labels: string[] };
+    };
+    expect(parsed.task).toMatchObject({ title: 'Hourly sync check', icon: '🚀', labels: ['ops'] });
   });
 
   it('[cli-013] shows a task with its thread in order, in text and in JSON', async () => {
