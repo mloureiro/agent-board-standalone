@@ -30,7 +30,7 @@ describe.each(FIXTURES)('PGlite reader on $name', (fixture) => {
     await source.dispose();
   });
 
-  it('detects the source version', async () => {
+  it('[migrate-010] detects the source version', async () => {
     const report = await inspectSource(source.folder);
     expect(report.version).toBe(fixture.name);
     expect(report.journal).toBe(fixture.migrations);
@@ -44,7 +44,7 @@ describe.each(FIXTURES)('PGlite reader on $name', (fixture) => {
     }
   });
 
-  it('leaves the original folder byte for byte unchanged and removes its working copy', async () => {
+  it('[migrate-001] leaves the original folder byte for byte unchanged and removes its working copy', async () => {
     const before = await hashFolder(source.folder);
     const workspace = await mkdtemp(join(source.scratch, 'tmp-'));
     const previous = process.env.TMPDIR;
@@ -59,7 +59,7 @@ describe.each(FIXTURES)('PGlite reader on $name', (fixture) => {
     expect(await readdir(workspace)).toEqual([]);
   });
 
-  it('refuses writes', async () => {
+  it('[migrate-001] refuses writes', async () => {
     const reader = await openSource(source.folder);
     try {
       await expect(reader.query("update task set title = title where id = 'x'")).rejects.toThrow(
@@ -78,7 +78,7 @@ describe.each(FIXTURES)('PGlite reader on $name', (fixture) => {
 });
 
 describe('PGlite folder refusals', () => {
-  it('names an unknown PG_VERSION', async () => {
+  it('[migrate-010] names an unknown PG_VERSION', async () => {
     const scratch = await materializeFolder('local-v2');
     try {
       await writeFile(join(scratch.folder, 'PG_VERSION'), '16\n');
@@ -119,7 +119,7 @@ describe('PGlite folder refusals', () => {
     }
   });
 
-  it('refuses an unknown schema version by its journal count', async () => {
+  it('[migrate-010] refuses an unknown schema version by its journal count', async () => {
     const scratch = await materializeFolder('local-v2');
     try {
       const reader = await openSource(scratch.folder);
@@ -152,7 +152,7 @@ describe.skipIf(postgresUrl === undefined)('Postgres reader', () => {
     await database.drop();
   });
 
-  it('detects hosted-main', async () => {
+  it('[migrate-001] detects hosted-main', async () => {
     const reader = await openSource(database.url);
     try {
       expect((await detectSourceVersion(reader)).version).toBe('hosted-main');
@@ -161,7 +161,7 @@ describe.skipIf(postgresUrl === undefined)('Postgres reader', () => {
     }
   });
 
-  it('fails a write attempt', async () => {
+  it('[migrate-001] fails a write attempt', async () => {
     const reader = await openSource(database.url);
     try {
       await expect(reader.query("update task set title = title where id = 'x'")).rejects.toThrow(
@@ -197,7 +197,7 @@ describe.skipIf(postgresUrl === undefined)('Postgres reader', () => {
 const ownerCopy = process.env.MIGRATE_OWNER_COPY;
 
 describe.skipIf(ownerCopy === undefined)('copy of a real data folder', () => {
-  it('opens and reports a supported version', async () => {
+  it('[migrate-010] opens and reports a supported version', async () => {
     const report = await inspectSource(ownerCopy as string);
     expect(report.counts.size).toBeGreaterThan(0);
   });

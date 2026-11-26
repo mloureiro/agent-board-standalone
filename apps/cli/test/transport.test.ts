@@ -48,7 +48,7 @@ function depsFor(server: FakeServer, overrides: Partial<HttpDeps> = {}): HttpDep
 }
 
 describe('request headers', () => {
-  it('sends the bearer token, the contract headers and a JSON body to the machine route', async () => {
+  it('[cli-003] sends the bearer token, the contract headers and a JSON body to the machine route', async () => {
     const server = await board();
     await sendRequest(depsFor(server), {
       method: 'POST',
@@ -89,7 +89,7 @@ describe('request failures', () => {
     await expect(failure).rejects.toThrow(/bad token \(401 unauthorized\)/);
   });
 
-  it('does not follow redirects', async () => {
+  it('[cli-003] does not follow redirects', async () => {
     const target = await startServer(() => ({ body: { reached: true } }));
     const redirecting = await startServer(() => ({
       status: 302,
@@ -105,7 +105,7 @@ describe('request failures', () => {
     expect(target.seen).toHaveLength(0);
   });
 
-  it('gives up after the 45 s timeout', async () => {
+  it('[cli-003] gives up after the 45 s timeout', async () => {
     expect(REQUEST_TIMEOUT_MS).toBe(45_000);
     const server = await startServer(() => ({ body: {} }));
     stoppers.push(() => server.stop());
@@ -279,7 +279,7 @@ describe('verdicts and feature gating', () => {
     expect(verdictOf({ ...stub, contract: 0 }).verdict).toBe('server-too-old');
   });
 
-  it('refuses before sending a command whose feature the server lacks, naming it', () => {
+  it('[cli-005] refuses before sending a command whose feature the server lacks, naming it', () => {
     expect(() => requireFeature(info(), 'watches')).toThrow(/lacks the feature "watches"/);
     expect(() => requireFeature(info(), 'projects')).not.toThrow();
   });
