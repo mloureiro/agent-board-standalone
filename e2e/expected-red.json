@@ -19,10 +19,6 @@
       {
         "title": "accessibility of the primary pages › [web-080] the task page is operable by keyboard alone with a visible focus indicator @chromium",
         "projects": ["chromium-desktop"]
-      },
-      {
-        "title": "accessibility of the primary pages › [web-080] the new task page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
-        "projects": ["webkit-desktop"]
       }
     ],
     "browser/board.spec.ts": [
