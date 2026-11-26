@@ -156,6 +156,7 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
   let feedRequests: readonly string[] = [];
   let advertisedCli: string | null = null;
   let usageIndex: string | null = null;
+  let catalogIndex: string | null = null;
   let runCounter = 0;
   const forbidden = new Set<string>();
   const runs = new Map<string, StubRun[]>();
@@ -748,6 +749,10 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
         title: body.title !== undefined,
       };
     },
+    'set-catalog': (body) => {
+      catalogIndex = body.index as string;
+      return {};
+    },
     'set-usage': (body) => {
       usageIndex = body.index as string;
       return {};
@@ -992,6 +997,7 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
       agentsVersion: boardAgents?.version ?? null,
       feedsIndex,
       usageIndex,
+      catalogIndex,
       feedRequests,
       cli: advertisedCli,
     }),

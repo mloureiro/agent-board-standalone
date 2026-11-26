@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { mkdirSync } from 'node:fs';
 
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { bindings } from '@agent-board/sealing';
@@ -98,6 +99,15 @@ test.describe('new task form', () => {
     const worker = await startWorker(harness.board, account, { listen: false, grant: false });
     const projectName = uniqueTitle('project');
     const projectId = await createProject(account, projectName);
+    const projectDirectory = worker.machine.tmp.path('project-work');
+    mkdirSync(projectDirectory, { recursive: true });
+    for (const args of [
+      ['projects', 'default', projectId],
+      ['dirs', 'add', projectDirectory],
+    ]) {
+      const done = await worker.machine.cli(args);
+      if (done.code !== 0) throw new Error(`board ${args.join(' ')} exited ${done.code}`);
+    }
     const title = uniqueTitle('full form');
     const values = {
       prompt: `${title} prompt body`,
@@ -115,7 +125,7 @@ test.describe('new task form', () => {
       await setField(page, FORM.project, projectName);
       await page.getByRole('button', { name: FORM.icon }).first().click();
       await page.getByRole('button', { name: values.icon }).first().click();
-      await setField(page, FORM.directory, worker.directory);
+      await setField(page, FORM.directory, projectDirectory);
       await setField(page, FORM.labels, values.label);
       await setField(page, FORM.priority, 'High');
       await setField(page, FORM.model, 'Opus');
@@ -151,17 +161,12 @@ test.describe('new task form', () => {
       );
 
       await card(page, title).getByRole('link', { name: title }).click();
-      for (const shown of [
-        title,
-        projectName,
-        values.prompt,
-        values.label,
-        values.lane,
-        values.agent,
-        values.icon,
-      ]) {
+      for (const shown of [title, projectName, values.prompt, values.label, values.icon]) {
         await expect(page.getByText(shown).first()).toBeVisible({ timeout: UI_TIMEOUT_MS });
       }
+      await expect(page.getByLabel(FORM.lane, { exact: true })).toHaveValue(values.lane, {
+        timeout: UI_TIMEOUT_MS,
+      });
 
       const shown = await worker.machine.cli(['show', task.id, '--json']);
       expect(shown.code).toBe(0);
@@ -172,7 +177,7 @@ test.describe('new task form', () => {
       expect(valuesOf(json, 'autoDone')).toContain(true);
       expect([projectId, projectName].some((project) => shown.stdout.includes(project))).toBe(true);
       expect(
-        [task.directoryId as string, worker.directory].some((directory) =>
+        [task.directoryId as string, projectDirectory].some((directory) =>
           shown.stdout.includes(directory),
         ),
       ).toBe(true);
@@ -196,6 +201,7 @@ interface Editor {
   readonly name: string;
   open(page: Page): Promise<Locator>;
   submit(page: Page): Promise<void>;
+  afterSend?(page: Page): Promise<void>;
 }
 
 const QUESTIONS = JSON.stringify({
@@ -264,6 +270,10 @@ async function editors(account: Account): Promise<Editor[]> {
         await questionForm(page)
           .getByRole('button', { name: TASK_PAGE.submitAnswer, exact: true })
           .click();
+      },
+      afterSend: async (page) => {
+        await goToTask(page, askTitle);
+        await expect(questionForm(page)).toHaveCount(0, { timeout: UI_TIMEOUT_MS });
       },
     },
   ];
@@ -372,7 +382,11 @@ test.describe('drafts', () => {
 
       await expect.poll(() => draftEntries(page, text), { timeout: UI_TIMEOUT_MS }).toEqual([]);
       await boardLink(page).click();
-      await expect(await editor.open(page)).toHaveValue('', { timeout: UI_TIMEOUT_MS });
+      if (editor.afterSend === undefined) {
+        await expect(await editor.open(page)).toHaveValue('', { timeout: UI_TIMEOUT_MS });
+      } else {
+        await editor.afterSend(page);
+      }
     }
   });
 

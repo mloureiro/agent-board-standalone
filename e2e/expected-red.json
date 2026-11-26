@@ -1,25 +1,5 @@
 {
   "files": {
-    "blackbox/matrix-refusal.test.ts": "*",
-    "browser/accessibility.spec.ts": [
-      {
-        "title": "accessibility of the primary pages › [web-080] the task page is operable by keyboard alone with a visible focus indicator @chromium",
-        "projects": ["chromium-desktop"]
-      }
-    ],
-    "browser/new-task.spec.ts": [
-      "new task form › [web-061] the form takes prompt, project, icon, directory, title, labels, priority, model, effort, lane, agent and auto-done",
-      "drafts › [web-064] drafts clear on send"
-    ],
-    "browser/proposals.spec.ts": [
-      "proposals › [api-056] an agent-created task is a Backlog proposal that no machine claims"
-    ],
-    "browser/task-page.spec.ts": [
-      "task page on a running worker › [web-048] the / skill list opened from the reply box is fully visible and not behind the panel",
-      "task page on a running worker › [web-050] on a running task Stop & send interrupts the run and delivers the message"
-    ],
-    "browser/transcript.spec.ts": [
-      "transcript drawer and context bar › [web-059] the drawer lists every run of a task and shows thinking"
-    ]
+    "blackbox/matrix-refusal.test.ts": "*"
   }
 }

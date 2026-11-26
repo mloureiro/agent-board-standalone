@@ -4,7 +4,7 @@ import { bindings, open, seal } from '@agent-board/sealing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TRANSCRIPT_POLL_MS } from '../src/routes/task/TranscriptDrawer.js';
-import { OWNER_KEYS, frozenClock } from './board-world.js';
+import { OWNER_KEYS, frozenClock, hours, isoAt, minutes } from './board-world.js';
 import { renderApp } from './render.js';
 import {
   DIRECTORY_DOCS,
@@ -536,6 +536,26 @@ describe('transcript drawer', () => {
 
     await user.click(within(runs[0] as HTMLElement).getByRole('button'));
     expect(await within(drawer).findByText('First run answer')).toBeInTheDocument();
+  });
+
+  it('[web-059] opens on the newest run and lists the runs oldest first whatever order the server answers in', async () => {
+    await world.seed({ id: ID, title: 'Newest first', status: 'needs-me' });
+    await world.seedRun(
+      ID,
+      'run-newer-0002',
+      [textEvent(0, 'Newer run answer')],
+      isoAt(-minutes(5)),
+    );
+    await world.seedRun(ID, 'run-older-0001', [textEvent(0, 'Older run answer')], isoAt(-hours(2)));
+    const { user } = openTask();
+    await screen.findByRole('heading', { name: 'Newest first' });
+
+    await user.click(screen.getByRole('button', { name: 'Transcript' }));
+    const drawer = await screen.findByRole('dialog', { name: 'Transcript' });
+    expect(await within(drawer).findByText('Newer run answer')).toBeInTheDocument();
+    const runs = within(drawer).getAllByRole('listitem');
+    await user.click(within(runs[0] as HTMLElement).getByRole('button'));
+    expect(await within(drawer).findByText('Older run answer')).toBeInTheDocument();
   });
 
   it('[web-059] matches a result to its tool call by order when the events carry no ids', async () => {

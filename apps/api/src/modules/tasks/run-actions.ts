@@ -124,6 +124,21 @@ export const stoppedTask = async (
   const current = await lockTask(tx, id);
   requireRunOf(current, caller);
   await reportedBy(tx, id, message, caller);
+  const [undelivered] =
+    current.stopMessageId === null
+      ? []
+      : await tx
+          .select({ id: note.id })
+          .from(note)
+          .where(and(eq(note.id, current.stopMessageId), eq(note.pending, true)));
+  if (undelivered !== undefined)
+    return transitionTask(tx, current, {
+      to: 'todo',
+      place: 'top',
+      by: 'machine',
+      userStop: true,
+      set: { next: current.sessionId ? 'resume' : 'fresh' },
+    });
   return transitionTask(tx, current, { to: 'needs-me', by: 'machine', userStop: true });
 };
 
@@ -241,11 +256,7 @@ export const ackRunMessages = async (
       .update(note)
       .set({ pending: false, deliveredAt: new Date() })
       .where(and(eq(note.taskId, id), eq(note.pending, true), inArray(note.id, [...ack.ids])));
-  if (ack.stop)
-    await tx
-      .update(task)
-      .set({ stopRequestedAt: null, stopMessageId: null })
-      .where(eq(task.id, id));
+  if (ack.stop) await tx.update(task).set({ stopRequestedAt: null }).where(eq(task.id, id));
 };
 
 export const attachSession = async (

@@ -7,7 +7,7 @@ import {
 import { bindings, open } from '@agent-board/sealing';
 import { Box, Code, Drawer, Stack, Text, UnstyledButton } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { callRoute } from '../../auth/api.js';
 import { Markdown } from '../../components/index.js';
@@ -217,7 +217,10 @@ export function TranscriptDrawer(props: {
       return (await callRoute(client, clientTranscriptRunsRoute, { id: taskId })).runs;
     },
   });
-  const list = runs.data ?? [];
+  const list = useMemo(
+    () => [...(runs.data ?? [])].sort((a, b) => Date.parse(a.startedAt) - Date.parse(b.startedAt)),
+    [runs.data],
+  );
   const known = chosen !== null && list.some((run) => run.id === chosen);
   const selected = known ? chosen : (list.at(-1)?.id ?? null);
 

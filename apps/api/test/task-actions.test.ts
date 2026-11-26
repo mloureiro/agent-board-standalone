@@ -31,6 +31,7 @@ import {
   setTaskWatches,
   stopTask,
   stopTaskWatch,
+  stoppedTask,
   takeBackTask,
   taskDetail,
   toThreadNote,
@@ -177,6 +178,32 @@ describe.each(TARGETS)('task actions on $name', (target) => {
       expect(after).toEqual({ stop: false, messages: [] });
       const delivered = (await board.notesOf(running.id)).filter((entry) => entry.deliveredAt);
       expect(delivered).toHaveLength(2);
+    });
+
+    it('[api-065] a stop that carried a message ends the run into a resume that gets the message, a plain stop ends in needs-me', async () => {
+      const board = await newBoard();
+      const withMessage = await board.running();
+      await board.use((tx) =>
+        updateTask(tx, withMessage.id, { sessionId: randomUUID() }, { machine: 'm1' }),
+      );
+      const run = withMessage.runId!;
+      await board.use((tx) =>
+        stopTask(tx, { id: withMessage.id, message: message('after the stop') }, user),
+      );
+      await board.use((tx) =>
+        ackRunMessages(tx, withMessage.id, { ids: [], stop: true }, { machine: 'm1', run }),
+      );
+      const resumed = await board.use((tx) =>
+        stoppedTask(tx, withMessage.id, message(), { machine: 'm1', run }),
+      );
+      expect(resumed).toMatchObject({ status: 'todo', next: 'resume', stopMessageId: null });
+
+      const plain = await board.running();
+      await board.use((tx) => stopTask(tx, { id: plain.id }, user));
+      const stopped = await board.use((tx) =>
+        stoppedTask(tx, plain.id, message(), { machine: 'm1', run: plain.runId! }),
+      );
+      expect(stopped.status).toBe('needs-me');
     });
 
     it('[api-065] stop on a resume that no worker picked up and on a wait takes the task off the agent', async () => {

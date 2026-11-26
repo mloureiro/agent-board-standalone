@@ -89,14 +89,17 @@ async function tabThrough(page: Page): Promise<Traversal> {
         element.closest('[aria-hidden="true"], [inert]') === null
       );
     };
-    const groups = new Set<string>();
+    const groupStop = (radio: HTMLInputElement): HTMLInputElement => {
+      const mates = [...document.querySelectorAll<HTMLInputElement>('input[type="radio"]')].filter(
+        (mate) => mate.name === radio.name && mate.form === radio.form && shown(mate),
+      );
+      return mates.find((mate) => mate.checked) ?? mates[0] ?? radio;
+    };
     const controls = [...document.querySelectorAll(selector)].filter((element) => {
       if (!shown(element) || element.getAttribute('tabindex') === '-1') return false;
       if ('disabled' in element && (element as HTMLButtonElement).disabled) return false;
       if (element instanceof HTMLInputElement && element.type === 'radio') {
-        const group = `${element.form?.id ?? ''}:${element.name}`;
-        if (groups.has(group)) return false;
-        groups.add(group);
+        return groupStop(element) === element;
       }
       return true;
     });

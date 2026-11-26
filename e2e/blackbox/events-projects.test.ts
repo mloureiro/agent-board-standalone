@@ -23,7 +23,7 @@ import {
   type Fixture,
 } from '../src/steps/user-commands.js';
 
-async function addProposal(
+async function addPinnedTask(
   fixture: Fixture,
   machine: EnrolledMachine,
   pinTo: string,
@@ -31,13 +31,13 @@ async function addProposal(
   const id = newTaskId();
   await machine.ok('machine.add-task', {
     id,
-    title: await fixture.key.seal(bindings.title({ task: id }), `proposal ${id}`),
+    title: await fixture.key.seal(bindings.title({ task: id }), `pinned ${id}`),
     input: await fixture.key.seal(
-      bindings.input({ origin: { task: id }, creator: 'agent' }),
-      'a proposal',
+      bindings.input({ origin: { task: id }, creator: 'user' }),
+      'a task',
     ),
     status: 'backlog',
-    createdBy: 'agent',
+    createdBy: 'user',
     machine: pinTo,
   });
   return id;
@@ -145,8 +145,8 @@ describe('board events', () => {
 
   it('[cli-023] board events --machine shows only the changes of that machine', async () => {
     const fx = await fixture();
-    const mine = await addProposal(fx, fx.plain, fx.plain.name);
-    const theirs = await addProposal(fx, fx.runner, fx.runner.name);
+    const mine = await addPinnedTask(fx, fx.plain, fx.plain.name);
+    const theirs = await addPinnedTask(fx, fx.runner, fx.runner.name);
     const lines = await collectEvents(
       fx.operator,
       ['--machine', fx.plain.name],

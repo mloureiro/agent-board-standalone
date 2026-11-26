@@ -51,7 +51,8 @@ export const createTask = async (
   if (draft.notBefore !== undefined && status !== 'todo')
     throw new ApiError('bad-request', 'only a task in todo can have a start time');
   const projectId = await resolveProject(tx, draft.projectId, extras.scheduleId !== undefined);
-  const machine = await resolveMachine(tx, projectId, draft);
+  const placed = await resolveMachine(tx, projectId, draft);
+  const machine = proposed ? null : placed;
   const [row] = await tx
     .insert(task)
     .values({
