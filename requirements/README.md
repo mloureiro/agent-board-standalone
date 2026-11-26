@@ -11,6 +11,7 @@ requirements of the plan. Every inventory row is either a catalogue row or dropp
 | [catalogue/](catalogue/) | One file per owning part: [api](catalogue/api.md), [contract](catalogue/contract.md), [sealing](catalogue/sealing.md), [cli](catalogue/cli.md), [web](catalogue/web.md), [server-app](catalogue/server-app.md), [client-app](catalogue/client-app.md), [mobile](catalogue/mobile.md), [migrate](catalogue/migrate.md), [repo](catalogue/repo.md) (repository-wide rows) |
 | [sources.md](sources.md) | Every inventory row and the catalogue rows it became (generated) |
 | [dropped.md](dropped.md) | Inventory rows dropped, and pin-caused (`P`) rows replaced, each with its reason |
+| [red-rows.md](red-rows.md) | Rows whose test is still listed in `e2e/expected-red.json`, each with why and what turns it green |
 | [parity.md](parity.md) | The twenty parity problems P-01…P-20, the rows that prevent them and the test that would catch them |
 | [storage-audit.md](storage-audit.md) | Every browser-storage key (and on-disk UI state) in today's UIs, volatile or content, and where it moves |
 | [cli-review.md](cli-review.md) | Census of every `board` command, option, environment variable and exit code, and the gap review |
