@@ -28,6 +28,7 @@ export default defineConfig({
   fullyParallel: false,
   outputDir: process.env.E2E_OUTPUT_DIR ?? path.join(os.tmpdir(), 'agent-board-e2e-results'),
   reporter: reportFile ? [['json', { outputFile: reportFile }], ['list']] : [['list']],
+  use: { trace: 'retain-on-failure', screenshot: 'only-on-failure' },
   projects: [
     {
       name: 'chromium-desktop',
