@@ -439,6 +439,30 @@ describe('proposals', () => {
     expect(world.moves).toHaveLength(0);
   });
 
+  it('[web-030] the prompt opens only once the drag has stopped clearing text selections', async () => {
+    await proposal();
+    openBoard();
+    await findTitle('Proposed work');
+    const added = vi.spyOn(document, 'addEventListener');
+    const removed = vi.spyOn(document, 'removeEventListener');
+    const selectionListeners = (spy: typeof added) =>
+      spy.mock.calls.filter(([type]) => type === 'selectionchange').map(([, listener]) => listener);
+    let stillClearing: unknown[] | null = null;
+    const watch = new MutationObserver(() => {
+      if (stillClearing !== null || document.querySelector('[role="dialog"]') === null) return;
+      const gone = selectionListeners(removed);
+      stillClearing = selectionListeners(added).filter((listener) => !gone.includes(listener));
+    });
+    watch.observe(document.body, { childList: true, subtree: true });
+
+    await dragCard(cardNamed('Proposed work'), columnNamed(COLUMN.todo));
+    await screen.findByRole('dialog');
+    watch.disconnect();
+
+    expect(selectionListeners(added)).not.toEqual([]);
+    expect(stillClearing).toEqual([]);
+  });
+
   it('[web-030] confirming starts the proposal with the prompt sealed as the user', async () => {
     await proposal();
     const { user } = openBoard();

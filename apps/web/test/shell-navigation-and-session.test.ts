@@ -1,11 +1,12 @@
 import { MantineProvider } from '@mantine/core';
+import { deriveKeys } from '@agent-board/sealing';
 import { MutationObserver, QueryClientProvider, QueryObserver } from '@tanstack/react-query';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { createElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createQueryClient } from '../src/app/index.js';
-import { KeysProvider, useKeys } from '../src/keys/index.js';
+import { KeysProvider, useKeys, type KeyInspector, type KeysState } from '../src/keys/index.js';
 import { DATA_KEYS_NAME } from '../src/keys/stored-keys.js';
 import { ServersProvider } from '../src/servers/index.js';
 import { ToastProvider, Toasts, createToastHub, pageTitle } from '../src/components/index.js';
@@ -328,6 +329,56 @@ describe('Lock', () => {
     expect(await serverNamespace('srv-1').secrets.get(DATA_KEYS_NAME)).toBeUndefined();
     expect(serverNamespace('srv-1').local.get('draft:new')).toBeNull();
     expect(serverNamespace('srv-2').local.get('draft:new')).toBe('another server');
+  });
+
+  it('[web-020] a key check that answers after the unlock does not lock the board again', async () => {
+    const keys = await deriveKeys(new Uint8Array(32), 'owner');
+    const locked: KeysState = { status: 'locked', owner: 'owner', keyId: keys.keyId };
+    let answerLate: (state: KeysState) => void = () => undefined;
+    let checks = 0;
+    const inspect: KeyInspector = () => {
+      checks += 1;
+      return checks === 1
+        ? Promise.resolve(locked)
+        : new Promise((resolve) => {
+            answerLate = resolve;
+          });
+    };
+    const Probe = () => {
+      const { state, adopt, reinspect } = useKeys();
+      return createElement(
+        'div',
+        null,
+        createElement('output', null, state.status),
+        createElement('button', { onClick: reinspect }, 'Check again'),
+        createElement('button', { onClick: () => void adopt(keys) }, 'Unlock now'),
+      );
+    };
+    render(
+      createElement(
+        MantineProvider,
+        { env: 'test' },
+        createElement(
+          QueryClientProvider,
+          { client: createQueryClient({ onError: () => undefined }) },
+          createElement(ServersProvider, {
+            registry: fixedRegistry([HOME]),
+            context: { pageOrigin: 'http://localhost', bridge: null },
+            check: upCheck,
+            children: createElement(KeysProvider, { inspect, children: createElement(Probe) }),
+          }),
+        ),
+      ),
+    );
+    expect(await screen.findByText('locked')).toBeInTheDocument();
+
+    await act(async () => screen.getByRole('button', { name: 'Check again' }).click());
+    await waitFor(() => expect(checks).toBe(2));
+    await act(async () => screen.getByRole('button', { name: 'Unlock now' }).click());
+    expect(await screen.findByText('unlocked')).toBeInTheDocument();
+    await act(async () => answerLate(locked));
+
+    expect(screen.getByRole('status')).toHaveTextContent('unlocked');
   });
 
   it('[web-004] Lock empties the query cache and the pending writes', async () => {

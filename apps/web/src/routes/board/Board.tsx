@@ -16,7 +16,7 @@ import {
 import { useNow } from './clock.js';
 import { canDropOn, groupByStatus, moveFor, type DropTarget, type MoveRequest } from './columns.js';
 import { ColumnView } from './ColumnView.js';
-import { BoardDnd } from './drag.js';
+import { BoardDnd, selectionReleased } from './drag.js';
 import { isMergedOnly } from './badges.js';
 import { ProposalStartDialog } from './ProposalStartDialog.js';
 
@@ -109,7 +109,10 @@ export function Board(props: {
         ...(afterId === undefined ? {} : { afterId }),
       };
       if (card.task.proposed && card.task.status === 'backlog' && target.status === 'todo') {
-        const prompt = await openPrompt(source.keys, card.task);
+        const [prompt] = await Promise.all([
+          openPrompt(source.keys, card.task),
+          selectionReleased(),
+        ]);
         if (prompt !== null) {
           setPending({ card, move, prompt, source });
           return;

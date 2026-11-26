@@ -19,6 +19,12 @@ export const TOUCH_TOLERANCE_PX = 8;
 export const MOUSE_DISTANCE_PX = 6;
 
 const CLICK_AFTER_DROP_MS = 100;
+// dnd-kit keeps clearing every text selection for 50 ms after a drop; WebKit then drops typing
+// into a field focused in that window.
+const SELECTION_RELEASED_MS = 100;
+
+export const selectionReleased = (): Promise<void> =>
+  new Promise((done) => setTimeout(done, SELECTION_RELEASED_MS));
 
 function swallowNextClick(): void {
   const swallow = (event: MouseEvent): void => {
