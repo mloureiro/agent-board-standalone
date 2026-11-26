@@ -209,9 +209,8 @@ matter of replacing `-` and the `codesign` identity in `assemble`; the check doe
 - The API listens on `127.0.0.1:<port>` only and there is no TLS on loopback. With `requestSignature` off, any local
   process can act as the settings user. With it on, only clients paired through "Pair a device…" can; unsigned and badly
   signed requests get 401. `remoteHosts` requires `requestSignature: true`.
-- Worker run logs (`<root>/worker/state`) and the agent transcripts of the tools the agent runs stay plain on disk
-  outside the data folder. They are protected only by disk encryption (FileVault), not by the sealing that covers the
-  database.
+- Worker run logs and agent transcripts stay plain on disk outside the data folder, protected only by FileVault (see
+  "What stays plain on disk").
 
 ## Idle memory
 

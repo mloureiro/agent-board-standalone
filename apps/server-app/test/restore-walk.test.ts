@@ -74,7 +74,7 @@ describe('restore walk on a real PGlite folder', () => {
     return session;
   }
 
-  async function healthy(): Promise<void> {
+  async function healthy(session: Session): Promise<void> {
     await until(
       async () => {
         try {
@@ -84,6 +84,17 @@ describe('restore walk on a real PGlite folder', () => {
         }
       },
       'the real API answering /healthz',
+      60,
+    );
+    await until(
+      () => {
+        session.send('state');
+        const states = session.events.filter((event) => event['type'] === 'state');
+        const supervision = states.at(-1)?.['supervision'] as
+          { api: { state: string } } | undefined;
+        return supervision?.api.state === 'running';
+      },
+      'the app reporting the API running',
       60,
     );
   }
@@ -113,7 +124,7 @@ describe('restore walk on a real PGlite folder', () => {
 
   it('[server-app-039] the documented restore brings back the data as it was at the backup, without a card added later', async () => {
     const first = start();
-    await healthy();
+    await healthy(first);
     const project = randomUUID();
     await post('projects/create', { id: project, name: envelope(), icon: null });
     await post('tasks/create', {
@@ -144,14 +155,14 @@ describe('restore walk on a real PGlite folder', () => {
     cpSync(join(backups, backup), data, { recursive: true });
 
     const second = start();
-    await healthy();
+    await healthy(second);
     expect(await taskIds()).toEqual(['before-backup']);
     await quit(second);
   });
 
   it('[server-app-041] a new bundled schema version backs up the real database before the API opens it', async () => {
     const first = start();
-    await healthy();
+    await healthy(first);
     const project = randomUUID();
     await post('projects/create', { id: project, name: envelope(), icon: null });
     await post('tasks/create', {
@@ -165,7 +176,7 @@ describe('restore walk on a real PGlite folder', () => {
 
     writeFileSync(join(resources, 'api/schema-version'), 'real-2\n');
     const second = start();
-    await healthy();
+    await healthy(second);
 
     const names = backupNames(join(root, 'backups'));
     expect(names).toHaveLength(1);
