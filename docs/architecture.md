@@ -149,20 +149,20 @@ Every concern is a module with a zod schema for its environment variables. At st
 module, then runs one cross-module validation pass; an invalid combination refuses the start with a message
 naming the variables involved (api-021).
 
-| Module            | Variables                                                                                                        | Default                   | Rows                  |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------- | --------------------- |
-| database          | `DATABASE_URL` (`postgres://…` or `pglite://<dir>`), `DATABASE_ADMIN_URL`                                        | required                  | api-001, 002, 015–018 |
-| sign-in           | `AUTH_MODE` (`login`, `no-login`), `NO_LOGIN_USER`, `PUBLIC_URL`, `PASSKEYS`, `OIDC_*`, `SAML_*`, `SIGNUP_TOKEN` | required                  | api-005–007, 025–042  |
-| listen            | `HOST`, `PORT`, `ALLOWED_HOSTS`, `TRUST_PROXY` (`on`, `off`)                                                     | loopback in no-login      | api-013, 014, 121     |
-| cross-origin      | `ALLOWED_ORIGINS`                                                                                                | empty (same origin only)  | api-113, 114          |
-| request signature | `REQUEST_SIGNATURE` (`on`, `off`)                                                                                | `off`                     | api-022, 120, 122     |
-| events            | `EVENTS_DRIVER` (`memory`, `postgres`)                                                                           | `memory`                  | api-024, 094, 095     |
-| scheduling        | `SCHEDULING` (`on`, `off`)                                                                                       | `on`                      | api-023, 075–080      |
-| feeds             | `FEEDS` (`on`, `off`)                                                                                            | `on`                      | api-023, 092          |
-| web               | `WEB_ROOT` (a directory holding the browser client's build)                                                      | unset: no static files    | api-108–110           |
-| control           | `CONTROL_SOCKET` (a Unix socket path)                                                                            | unset: no control channel | api-111, 120          |
-| access log        | `ACCESS_LOG` (a file path)                                                                                       | unset                     | api-112               |
-| tls (conditional) | `TLS_CERT`, `TLS_KEY`, or `TLS_SELF_SIGNED_DIR`                                                                  | unset                     | api-124               |
+| Module            | Variables                                                                                                                      | Default                   | Rows                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------- | --------------------- |
+| database          | `DATABASE_URL` (`postgres://…` or `pglite://<dir>`), `DATABASE_ADMIN_URL`                                                      | required                  | api-001, 002, 015–018 |
+| sign-in           | `AUTH_MODE` (`login`, `no-login`), `NO_LOGIN_USER`, `PUBLIC_URL`, `PASSKEYS`, `OIDC_*`, `SAML_*`, `SIGNUP_TOKEN`, `CLAIM_USER` | required                  | api-005–007, 025–042  |
+| listen            | `HOST`, `PORT`, `ALLOWED_HOSTS`, `TRUST_PROXY` (`on`, `off`)                                                                   | loopback in no-login      | api-013, 014, 121     |
+| cross-origin      | `ALLOWED_ORIGINS`                                                                                                              | empty (same origin only)  | api-113, 114          |
+| request signature | `REQUEST_SIGNATURE` (`on`, `off`)                                                                                              | `off`                     | api-022, 120, 122     |
+| events            | `EVENTS_DRIVER` (`memory`, `postgres`)                                                                                         | `memory`                  | api-024, 094, 095     |
+| scheduling        | `SCHEDULING` (`on`, `off`)                                                                                                     | `on`                      | api-023, 075–080      |
+| feeds             | `FEEDS` (`on`, `off`)                                                                                                          | `on`                      | api-023, 092          |
+| web               | `WEB_ROOT` (a directory holding the browser client's build)                                                                    | unset: no static files    | api-108–110           |
+| control           | `CONTROL_SOCKET` (a Unix socket path)                                                                                          | unset: no control channel | api-111, 120          |
+| access log        | `ACCESS_LOG` (a file path)                                                                                                     | unset                     | api-112               |
+| tls (conditional) | `TLS_CERT`, `TLS_KEY`, or `TLS_SELF_SIGNED_DIR`                                                                                | unset                     | api-124               |
 
 Cross-module rules:
 

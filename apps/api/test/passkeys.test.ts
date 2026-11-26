@@ -318,6 +318,53 @@ describe('passkey sign-up', () => {
     expect((await signUpOptions(board, 'grace')).statusCode).toBe(403);
   });
 
+  it('[api-033] a name with no sign-in method yet is taken without a claimed name', async () => {
+    const board = await started();
+    await board.database.withOwner('owner', (tx) => ensureUser(tx, 'owner', null));
+    expect((await signUpOptions(board, 'owner')).statusCode).toBe(403);
+  });
+
+  it('[api-033] the claimed name takes over its account once, keeping its data, and signs in', async () => {
+    const board = await started({ CLAIM_USER: 'owner' } as Env);
+    await board.database.withOwner('owner', (tx) => ensureUser(tx, 'owner', null));
+    const before = await board.database.withOwner('owner', (tx) =>
+      tx.select().from(schema.project),
+    );
+
+    const device = authenticator();
+    const answer = await signUp(board, device, 'owner');
+    expect(answer.statusCode, answer.body).toBe(200);
+    expect(cookieFrom(answer)).not.toBe('');
+    expect(await board.database.withSystem((system) => system.lookupUser('owner'))).toEqual({
+      username: 'owner',
+      source: 'passkey',
+    });
+    expect(
+      await board.database.withOwner('owner', (tx) => tx.select().from(schema.project)),
+    ).toEqual(before);
+    expect(await passkeyRows(board, 'owner')).toHaveLength(1);
+
+    expect((await signUpOptions(board, 'owner')).statusCode).toBe(403);
+  });
+
+  it('[api-033] a claimed name refuses every other name and never takes an account with a method', async () => {
+    const board = await started({ CLAIM_USER: 'owner' } as Env);
+    const other = await signUpOptions(board, 'grace');
+    expect(other.statusCode).toBe(403);
+    expect(other.json().error.message).toContain('only to the account being set up');
+
+    await board.database.withOwner('owner', (tx) => ensureUser(tx, 'owner', 'oidc'));
+    expect((await signUpOptions(board, 'owner')).statusCode).toBe(403);
+  });
+
+  it('[api-033] a claimed name that does not exist yet is created by sign-up', async () => {
+    const board = await started({ CLAIM_USER: 'owner' } as Env);
+    expect((await signUp(board, authenticator(), 'owner')).statusCode).toBe(200);
+    expect((await board.database.withSystem((system) => system.lookupUser('owner')))?.source).toBe(
+      'passkey',
+    );
+  });
+
   it('[api-033] a registration with a wrong challenge or origin creates nothing', async () => {
     const board = await started();
     const begun = (await signUpOptions(board, 'ada')).json();

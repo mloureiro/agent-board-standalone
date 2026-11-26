@@ -215,6 +215,18 @@ describe('authentication mode', () => {
     });
   });
 
+  it('[api-007] refuses a claimed name without a sign-up token, an invalid one and one next to no-login', () => {
+    expect(refusal(loginEnv({ CLAIM_USER: 'owner' }))).toContain('CLAIM_USER: needs SIGNUP_TOKEN');
+    expect(refusal(loginEnv({ SIGNUP_TOKEN: 'x'.repeat(32), CLAIM_USER: 'Owner Name' }))).toContain(
+      'CLAIM_USER: must be a sign-up name',
+    );
+    expect(refusal(noLoginEnv({ CLAIM_USER: 'owner' }))).toContain('CLAIM_USER');
+    expect(
+      loadConfig(loginEnv({ SIGNUP_TOKEN: 'x'.repeat(32), CLAIM_USER: 'owner' })).signIn,
+    ).toMatchObject({ claimUser: 'owner' });
+    expect(loadConfig(loginEnv()).signIn).toMatchObject({ claimUser: null });
+  });
+
   it('[api-007] refuses login mode with no method enabled', () => {
     expect(refusal(loginEnv({ PASSKEYS: 'off' }))).toContain('no way to sign in');
     expect(
