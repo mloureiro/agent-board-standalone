@@ -9,50 +9,16 @@
     ],
     "browser/board.spec.ts": [
       {
-        "title": "board › [web-029] a touch drag moves a card between columns on a phone @phone",
-        "projects": ["chromium-phone", "webkit-phone"]
-      },
-      {
         "title": "board with a running card › [web-035] a running card shows context usage as a thin line",
         "projects": ["chromium-desktop", "webkit-desktop"]
-      },
-      {
-        "title": "board › [web-029] cards reorder within Backlog and the order persists after a reload",
-        "projects": ["webkit-desktop"]
       }
     ],
     "browser/new-task.spec.ts": [
       "new task form › [web-061] the form takes prompt, project, icon, directory, title, labels, priority, model, effort, lane, agent and auto-done",
       "drafts › [web-064] drafts clear on send"
     ],
-    "browser/parity.spec.ts": [
-      {
-        "title": "redirect sign-in › [P-05] SAML redirect sign-in finishes in the tab that started it",
-        "projects": ["webkit-desktop"]
-      },
-      {
-        "title": "reply drafting in WebKit › [P-18] [web-058] a status change while typing keeps focus, caret and text, and Backspace outside a field does not navigate @webkit",
-        "projects": ["webkit-desktop"]
-      }
-    ],
     "browser/proposals.spec.ts": [
       "proposals › [api-056] an agent-created task is a Backlog proposal that no machine claims"
-    ],
-    "browser/responsive.spec.ts": [
-      {
-        "title": "phone viewport journeys on a no-login board › [web-098] the project filter journey completes at the phone viewport @phone",
-        "projects": ["webkit-desktop"]
-      }
-    ],
-    "browser/sign-in.spec.ts": [
-      {
-        "title": "sign-in page › [web-014] SAML returns to the client return page and lands signed in, in the same tab",
-        "projects": ["webkit-desktop"]
-      },
-      {
-        "title": "sign-in page › [web-014] a SAML provider error shows on the sign-in page",
-        "projects": ["webkit-desktop"]
-      }
     ],
     "browser/task-page.spec.ts": [
       "task page on a running worker › [web-048] the / skill list opened from the reply box is fully visible and not behind the panel",
