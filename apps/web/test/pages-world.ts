@@ -9,6 +9,7 @@ import {
   issueClientMachineRoute,
   listClientDevicesRoute,
   listClientFeedsRoute,
+  clientAttentionRoute,
   listClientMachinesRoute,
   listClientPasskeysRoute,
   listClientSchedulesRoute,
@@ -101,6 +102,7 @@ export class PagesWorld extends TaskWorld {
   readonly exportRows: Record<string, Record<string, unknown>[]> = {};
   readonly exportPages = new Map<string, string[]>();
   readonly taskLists: string[] = [];
+  attentionPolls = 0;
   readonly imports: { table: string; rows: unknown[]; keyId: string }[] = [];
   deleted: string | null = null;
   keySetup: KeySetup | null = null;
@@ -253,6 +255,13 @@ export class PagesWorld extends TaskWorld {
             ),
           });
         }
+        case clientAttentionRoute.path:
+          this.attentionPolls += 1;
+          return json(200, {
+            tasks: this.tasks
+              .filter((task) => task.status === 'needs-me')
+              .map((task) => ({ id: task.id, projectId: task.projectId, since: task.updatedAt })),
+          });
         case listClientMachinesRoute.path:
           return this.machineList();
         case listClientFeedsRoute.path:

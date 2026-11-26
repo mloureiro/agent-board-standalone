@@ -1,4 +1,8 @@
-import { listClientTasksRoute } from '@agent-board/contract';
+import {
+  clientAttentionRoute,
+  getClientTaskRoute,
+  listClientTasksRoute,
+} from '@agent-board/contract';
 import { bindings } from '@agent-board/sealing';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, type ReactNode } from 'react';
@@ -22,6 +26,7 @@ export function NeedsMeNotifier(): ReactNode {
   const settings = useSettings();
   const environment = useEnvironment();
   const known = useRef<ReadonlySet<string> | null>(null);
+  const titles = useRef(new Map<string, string>());
   const native = currentBridge();
   const serverId = page?.serverId ?? null;
   const enabled =
@@ -42,6 +47,22 @@ export function NeedsMeNotifier(): ReactNode {
     refetchInterval: ATTENTION_POLL_MS,
     queryFn: async (): Promise<Waiting[]> => {
       if (page === null) return [];
+      if (page.features.includes('attention')) {
+        const { tasks } = await page.call(clientAttentionRoute, {});
+        return Promise.all(
+          tasks.map(async ({ id }) => {
+            const cached = titles.current.get(id);
+            if (cached !== undefined) return { id, title: cached };
+            const detail = await page.call(getClientTaskRoute, { id }).catch(() => null);
+            if (detail === null) return { id, title: 'A task' };
+            const title =
+              (await attempt(page.keys, bindings.title({ task: id }), detail.task.title)) ??
+              'A task';
+            titles.current.set(id, title);
+            return { id, title };
+          }),
+        );
+      }
       const answer = await page.call(listClientTasksRoute, {});
       const needing = answer.tasks.filter((task) => task.status === 'needs-me');
       return Promise.all(

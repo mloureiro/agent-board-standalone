@@ -278,6 +278,34 @@ describe('Settings › Notifications', () => {
     expect(shown).toHaveLength(1);
   }, 20_000);
 
+  it('[web-073] polls the attention list and reads each new task title once when the server offers it', async () => {
+    world.features = [...world.features, 'attention'];
+    await world.setDocument('settings', JSON.stringify({ notifications: { desktop: true } }), 1);
+    const { shown } = grant('granted');
+    vi.spyOn(document, 'hasFocus').mockReturnValue(false);
+    render('/closed');
+    await screen.findByRole('heading', { name: 'Closed' });
+    await waitFor(() => expect(world.attentionPolls).toBeGreaterThan(0));
+    const listsBefore = world.taskLists.length;
+
+    await world.seedTask({
+      id: '88888888-8888-4888-8888-888888888883',
+      title: 'Answer me',
+      status: 'needs-me',
+    });
+    await waitFor(() => expect(shown).toHaveLength(1), { timeout: 8000 });
+    expect(shown[0]?.title).toBe('Answer me');
+    const polls = world.attentionPolls;
+    await waitFor(() => expect(world.attentionPolls).toBeGreaterThan(polls), { timeout: 5000 });
+
+    const titleReads = world.requests.filter((request) =>
+      request.startsWith(`GET /api/client/tasks/get?id=88888888-8888-4888-8888-888888888883`),
+    );
+    expect(titleReads).toHaveLength(1);
+    expect(shown).toHaveLength(1);
+    expect(world.taskLists.slice(listsBefore).every((url) => url.includes('closed='))).toBe(true);
+  }, 20_000);
+
   const silentCase = async (options: {
     permission: NotificationPermission;
     enabled: boolean;
