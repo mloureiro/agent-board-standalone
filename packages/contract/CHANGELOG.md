@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+A request-signature key id is the 43-character base64url SHA-256 the sealing package derives (`signingKeyId`), not a 16-hex data-key id. `signingKeyIdString` accepts that form, and the 16-hex form older device rows hold. It is used by the device list and revoke, the pairing answer, the machine key registration answer and the export's device rows, which refused every real signing key id before.
+
 `auth.handoff.approve` is marked `issuesCredential`: approving binds a flow started elsewhere to the caller, and that flow's finish then returns a session, so the wrappers refuse it from page code like the other credential routes.
 
 ## 1.0.0
