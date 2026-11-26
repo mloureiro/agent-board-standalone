@@ -312,8 +312,8 @@ interface Point {
 type Where = 'center' | 'top' | 'bottom';
 
 function heightAt(box: { y: number; height: number }, where: Where): number {
-  if (where === 'top') return box.y + 4;
-  if (where === 'bottom') return box.y + box.height - 4;
+  if (where === 'top') return box.y + box.height / 4;
+  if (where === 'bottom') return box.y + (box.height * 3) / 4;
   return box.y + box.height / 2;
 }
 
@@ -338,13 +338,14 @@ export async function mouseDrag(
   page: Page,
   source: Locator,
   target: Locator,
-  where: 'center' | 'top' | 'bottom' = 'center',
+  where: Where = 'center',
 ): Promise<void> {
+  await target.scrollIntoViewIfNeeded();
   const from = await pointIn(source, 'center');
-  const to = await pointIn(target, where);
   await page.mouse.move(from.x, from.y);
   await page.mouse.down();
   await page.mouse.move(from.x + 6, from.y + 6, { steps: 4 });
+  const to = await visiblePointIn(page, target, where);
   await page.mouse.move(to.x, to.y, { steps: 24 });
   await page.mouse.up();
 }
@@ -356,7 +357,7 @@ export async function touchDrag(
   page: Page,
   source: Locator,
   target: Locator,
-  where: 'center' | 'top' | 'bottom' = 'center',
+  where: Where = 'center',
 ): Promise<void> {
   const from = await pointIn(source, 'center');
   const to = await visiblePointIn(page, target, where);
