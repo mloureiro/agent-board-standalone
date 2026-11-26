@@ -154,7 +154,7 @@ export const machineHandlers = (): HandlerTable => ({
   },
 
   'machine.transcript': async ({ input, principal, context }) => {
-    await context.services.database.withOwner(principal.owner, (tx) =>
+    const appended = await context.services.database.withOwner(principal.owner, (tx) =>
       appendTranscript(tx, principal.machineId, {
         taskId: input.id,
         runId: input.runId,
@@ -164,6 +164,8 @@ export const machineHandlers = (): HandlerTable => ({
         events: input.events,
       }),
     );
+    if (appended.contextProjectId !== null)
+      await announceTaskChange(context.services.events, principal.owner, appended.contextProjectId);
     return {};
   },
 });
