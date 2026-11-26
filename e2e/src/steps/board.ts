@@ -302,6 +302,7 @@ export async function hideAndShowTab(page: Page): Promise<void> {
 export const CLIENT_PATHS = {
   events: routeByName('client.events').path,
   list: routeByName('client.tasks.list').path,
+  move: routeByName('client.tasks.move').path,
 } as const;
 
 interface Point {
@@ -348,6 +349,19 @@ export async function mouseDrag(
   const to = await visiblePointIn(page, target, where);
   await page.mouse.move(to.x, to.y, { steps: 24 });
   await page.mouse.up();
+}
+
+export async function persistedMouseDrag(
+  page: Page,
+  source: Locator,
+  target: Locator,
+  where: Where = 'center',
+): Promise<void> {
+  const moved = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === CLIENT_PATHS.move,
+  );
+  await mouseDrag(page, source, target, where);
+  expect((await moved).ok()).toBe(true);
 }
 
 const HOLD_MS = 600;

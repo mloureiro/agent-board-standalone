@@ -507,5 +507,6 @@ describe('directories per project', () => {
       projectId: PROJECT_ALPHA,
       place: { machine: 'laptop', directoryId: DIRECTORY_DOCS },
     });
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
   });
 });

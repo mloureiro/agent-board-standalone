@@ -12,6 +12,7 @@ import {
   call,
   envelope,
   issue,
+  listen,
   seedTask,
   startBoard,
   uniqueName,
@@ -70,6 +71,21 @@ const upload = async (
   );
 
 describe('transcripts', () => {
+  it('[api-095] a stored context event announces a task change for the project, other events do not', async () => {
+    const { token } = await enrolled();
+    const taskId = uniqueName('task');
+    await seedTask(board, { id: taskId });
+    const runId = uniqueName('run');
+    const heard = await listen(board);
+
+    expect((await upload(token, taskId, runId, [event(0), event(1, 'thinking')])).status).toBe(200);
+    expect(heard).toEqual([]);
+
+    expect((await upload(token, taskId, runId, [event(2, 'context')])).status).toBe(200);
+    expect(heard).toContainEqual({ kind: 'tasks' });
+    expect(heard).toContainEqual({ kind: 'change', projectId: board.projectId });
+  });
+
   it('[api-081] accepts 5000 sealed events in one call, idempotent per run and seq, keeping context events out of lists and counts', async () => {
     const { token } = await enrolled();
     const taskId = uniqueName('task');

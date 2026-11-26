@@ -16,12 +16,19 @@ export interface TranscriptBatch {
   events: readonly TranscriptBatchEvent[];
 }
 
+export interface AppendedTranscript {
+  readonly contextProjectId: string | null;
+}
+
 export const appendTranscript = async (
   tx: ScopedDatabase,
   machine: string,
   batch: TranscriptBatch,
-): Promise<void> => {
-  const [owning] = await tx.select({ id: task.id }).from(task).where(eq(task.id, batch.taskId));
+): Promise<AppendedTranscript> => {
+  const [owning] = await tx
+    .select({ id: task.id, projectId: task.projectId })
+    .from(task)
+    .where(eq(task.id, batch.taskId));
   if (owning === undefined) throw new ApiError('not-found', `no task ${batch.taskId}`);
   const last = batch.events.at(-1)?.at ?? batch.startedAt;
   await tx
@@ -45,7 +52,7 @@ export const appendTranscript = async (
     throw new ApiError('forbidden', 'the run belongs to another machine');
   if (run.taskId !== batch.taskId)
     throw new ApiError('bad-request', 'the run belongs to another task');
-  if (batch.events.length === 0) return;
+  if (batch.events.length === 0) return { contextProjectId: null };
   const inserted = await tx
     .insert(transcriptEvent)
     .values(
@@ -69,6 +76,8 @@ export const appendTranscript = async (
       lastEventAt: sql`greatest(${transcriptRun.lastEventAt}, ${new Date(last).toISOString()}::timestamptz)`,
     })
     .where(eq(transcriptRun.id, batch.runId));
+  const storedContext = inserted.some((row) => row.kind === 'context');
+  return { contextProjectId: storedContext ? owning.projectId : null };
 };
 
 const iso = (value: Date): string => value.toISOString();

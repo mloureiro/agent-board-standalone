@@ -16,6 +16,7 @@ import {
   mouseDrag,
   openBoard,
   orderIn,
+  persistedMouseDrag,
   reopenBoard,
   seedAccount,
   startWorker,
@@ -106,7 +107,7 @@ test.describe('board', () => {
     expect(before).toHaveLength(4);
     const last = before[before.length - 1] as string;
     const head = before[0] as string;
-    await mouseDrag(page, cardIn(page, 'todo', last), cardIn(page, 'todo', head), 'top');
+    await persistedMouseDrag(page, cardIn(page, 'todo', last), cardIn(page, 'todo', head), 'top');
     await expect.poll(() => orderIn(page, 'todo', titles)).toEqual([last, ...before.slice(0, -1)]);
     const after = await orderIn(page, 'todo', titles);
 
@@ -135,7 +136,12 @@ test.describe('board', () => {
     expect(before).toHaveLength(3);
     const last = before[2] as string;
     const head = before[0] as string;
-    await mouseDrag(page, cardIn(page, 'backlog', last), cardIn(page, 'backlog', head), 'top');
+    await persistedMouseDrag(
+      page,
+      cardIn(page, 'backlog', last),
+      cardIn(page, 'backlog', head),
+      'top',
+    );
     await expect
       .poll(() => orderIn(page, 'backlog', titles))
       .toEqual([last, before[0] as string, before[1] as string]);
@@ -221,6 +227,14 @@ test.describe('board with a running card', () => {
       });
       await waitForStatus(account, id, 'running');
       await openBoard(page, account);
+      await expect
+        .poll(
+          async () =>
+            (await account.user.ok('client.tasks.list', {})).tasks.find((task) => task.id === id)
+              ?.context ?? null,
+          { timeout: 30_000 },
+        )
+        .not.toBeNull();
 
       const line = cardIn(page, 'running', title).getByRole('progressbar', {
         name: BOARD_NAMES.context,
