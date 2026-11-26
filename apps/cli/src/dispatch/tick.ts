@@ -11,10 +11,12 @@ import { openTask } from '../commands/tasks/open.js';
 import { sealedNote } from '../commands/tasks/notes.js';
 import { applyBoardAgents } from '../agents/shared.js';
 import { applyFeedRequests } from '../feeds/requests.js';
+import { readLocalDirectories } from '../directories/local.js';
 import { ApiError } from '../transport/errors.js';
 import { WatchStore } from '../watch/store.js';
 import { scanWatches, watchHeartbeatFresh } from '../watch/scan.js';
 import type { TickEnv } from './env.js';
+import { sendCatalog } from './catalog.js';
 import { SLEEP_GAP_MS, STOPPING_RECHECK_MS } from './limits.js';
 import { ownLane } from './config.js';
 import {
@@ -361,6 +363,12 @@ export async function runTick(env: TickEnv): Promise<TickResult> {
     }
   } catch (error) {
     log(`WARN sending the usage status failed: ${message(error)}`);
+  }
+  try {
+    const paths = readLocalDirectories(ctx.dirs.config).entries.map((entry) => entry.path);
+    if (await sendCatalog(s, ctx.rt, paths)) log('CATALOG sent');
+  } catch (error) {
+    log(`WARN sending the catalog failed: ${message(error)}`);
   }
   try {
     await applyFeedRequests(ctx, s, log);

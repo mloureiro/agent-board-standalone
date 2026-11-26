@@ -362,6 +362,32 @@ describe('dispatch tick', () => {
     expect(document.heldTasks).toEqual(['lowAAAAA']);
   });
 
+  it('[web-054] a tick publishes the skills of the Claude config folder as the machine catalog, once', async () => {
+    const config = mkdtempSync(path.join(os.tmpdir(), 'board-claude-'));
+    mkdirSync(path.join(config, 'skills', 'alpha'), { recursive: true });
+    writeFileSync(
+      path.join(config, 'skills', 'alpha', 'SKILL.md'),
+      '---\nname: alpha\ndescription: The alpha skill\n---\n\nUse alpha.\n',
+    );
+    mkdirSync(path.join(config, 'skills', 'bare'), { recursive: true });
+    writeFileSync(path.join(config, 'skills', 'bare', 'SKILL.md'), 'no front matter\n');
+    const { stub, cli } = await rig({ env: { ...PROCESS, CLAUDE_CONFIG_DIR: config } });
+    expect(await cli.run('internal', 'dispatch')).toBe(0);
+    const [sent] = stub.bodies('set-catalog');
+    const document = JSON.parse(
+      await stub.open(
+        bindings.machineDocument('machine.catalog', 'test-machine'),
+        sent?.catalog as string,
+      ),
+    ) as { skills: { name: string; description: string | null }[] };
+    expect(document.skills).toEqual([
+      { name: 'alpha', description: 'The alpha skill' },
+      { name: 'bare', description: null },
+    ]);
+    expect(await cli.run('internal', 'dispatch')).toBe(0);
+    expect(stub.bodies('set-catalog')).toHaveLength(1);
+  });
+
   it('[cli-069] a worker starts as a transient systemd unit on Linux and as a detached process otherwise', async () => {
     const bin = mkdtempSync(path.join(os.tmpdir(), 'board-systemd-'));
     chmodSync(
