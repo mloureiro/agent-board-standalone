@@ -38,6 +38,7 @@ import {
   selectServerInClient,
   serverIdOf,
   shownHandoffCode,
+  shownHandoffFlow,
   signInMethods,
   signUpWithPasskey,
   triggerRefetch,
@@ -109,13 +110,14 @@ async function approveFrom(
   user: BoardUser,
   serverUrl: string,
   code: string,
+  flow: string,
 ): Promise<void> {
   const context = await contextSignedInAs(browser, user);
   try {
     const answered = context.waitForEvent('response', (response) =>
       response.url().includes('/api/auth/handoff/approve'),
     );
-    await approveHandoff(context, serverUrl, code);
+    await approveHandoff(context, serverUrl, code, flow);
     expect((await answered).ok()).toBe(true);
   } finally {
     await context.close();
@@ -290,12 +292,13 @@ test.describe('sign-in page', () => {
     await page.getByRole('button', { name: HANDOFF_BUTTON }).click();
     await expect(page.getByText(CODE_TEXT)).toBeVisible();
     const code = await shownHandoffCode(page);
+    const flow = await shownHandoffFlow(page);
     await page.evaluate(() => {
       (window as unknown as { e2eMarker: boolean }).e2eMarker = true;
     });
     const navigations = watchMainFrame(page);
 
-    await approveFrom(browser, approver, board.url, code);
+    await approveFrom(browser, approver, board.url, code, flow);
     await expectSignedIn(page);
     navigations.stop();
 
@@ -453,11 +456,13 @@ test.describe('another server', () => {
     await page.getByRole('button', { name: HANDOFF_BUTTON }).click();
     const approval = await popup;
     const code = new URL(approval.url()).searchParams.get('code');
+    const flow = new URL(approval.url()).searchParams.get('flow');
     expect(code).toMatch(HANDOFF_CODE_PATTERN);
+    expect(flow).not.toBeNull();
     await approval.close();
     const navigations = watchMainFrame(page);
 
-    await approveFrom(browser, approver, b.url, code as string);
+    await approveFrom(browser, approver, b.url, code as string, flow as string);
     await expect(page.getByRole('button', { name: HANDOFF_BUTTON })).toBeHidden({
       timeout: 20_000,
     });

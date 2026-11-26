@@ -246,28 +246,36 @@ test.describe('open client sessions', () => {
 
 test.describe('hand-off finish from another origin', () => {
   test.describe.configure({ timeout: 120_000 });
-  const boards = useStarted<{ client: Board; server: LoginBoard }>(['api'], async (project) => {
-    const postgresAllowed = postgresAllowedIn(project);
-    const client = await launchBoard({ auth: 'no-login', label: 'client-origin', postgresAllowed });
-    try {
-      const server = await startLoginBoard({
-        features: ['client-tokens'],
-        allowedOrigins: [client.url],
+  const boards = useStarted<{ client: Board; server: LoginBoard }>(
+    ['api', 'web'],
+    async (project) => {
+      const postgresAllowed = postgresAllowedIn(project);
+      const client = await launchBoard({
+        auth: 'no-login',
+        label: 'client-origin',
+        web: true,
         postgresAllowed,
       });
-      return {
-        value: { client, server },
-        missing: server.missingFeatures,
-        stop: async () => {
-          await server.stop();
-          await client.stop();
-        },
-      };
-    } catch (error) {
-      await client.stop();
-      throw error;
-    }
-  });
+      try {
+        const server = await startLoginBoard({
+          features: ['client-tokens'],
+          allowedOrigins: [client.url],
+          postgresAllowed,
+        });
+        return {
+          value: { client, server },
+          missing: server.missingFeatures,
+          stop: async () => {
+            await server.stop();
+            await client.stop();
+          },
+        };
+      } catch (error) {
+        await client.stop();
+        throw error;
+      }
+    },
+  );
 
   async function finishFrom(
     page: Page,
@@ -303,7 +311,7 @@ test.describe('hand-off finish from another origin', () => {
     if (started.body === null) throw new Error(`hand-off start answered ${started.status}`);
     await approver.ok('auth.handoff.approve', { flow: started.body.flow });
 
-    await page.goto(`${client.url}/healthz`);
+    await page.goto(client.url);
     expect(new URL(page.url()).origin).not.toBe(new URL(server.url).origin);
 
     const wrong = await finishFrom(page, server.url, {

@@ -82,7 +82,6 @@
     "browser/parity.spec.ts": [
       "redirect sign-in › [P-05] SAML redirect sign-in finishes in the tab that started it",
       "open client sessions › [P-10] after sign-out elsewhere the event stream ends, the reconnect gets 401 and the client shows sign-in",
-      "hand-off finish from another origin › [P-11] a hand-off finish with a wrong verifier leaves the flow usable and the right verifier completes it",
       {
         "title": "hand-off from WebKit › [P-03] a WebKit client completes hand-off sign-in through a second browser context that approves @webkit",
         "projects": ["webkit-desktop"]
@@ -131,9 +130,7 @@
     ],
     "browser/sign-in.spec.ts": [
       "sign-in page › [web-014] SAML returns to the client return page and lands signed in, in the same tab",
-      "sign-in page › [web-014] a SAML provider error shows on the sign-in page",
-      "sign-in page › [web-016] approving from another browser signs the client in without a navigation",
-      "another server › [web-103] approving there signs the client in without reload and it holds an abc_ token for that server and no cookie"
+      "sign-in page › [web-014] a SAML provider error shows on the sign-in page"
     ],
     "browser/signature.spec.ts": "*",
     "browser/task-page.spec.ts": "*",
