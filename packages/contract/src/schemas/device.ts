@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 import { DEVICE_KINDS } from '../enums.js';
-import { keyIdString } from '../limits.js';
+import { signingKeyIdString } from '../limits.js';
 import { isoTime } from './ids.js';
 
 export const uiDevice = z
   .object({
-    keyId: keyIdString,
+    keyId: signingKeyIdString,
     label: z.string().max(256),
     kind: z.enum(DEVICE_KINDS),
     createdAt: isoTime,

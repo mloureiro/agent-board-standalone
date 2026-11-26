@@ -12,7 +12,14 @@ import {
   TASK_CREATORS,
   TASK_STATUSES,
 } from './enums.js';
-import { blindIndexString, keyIdString, keySlots, MAX_OUTPUT_SIZE, sealedField } from './limits.js';
+import {
+  blindIndexString,
+  keyIdString,
+  keySlots,
+  MAX_OUTPUT_SIZE,
+  sealedField,
+  signingKeyIdString,
+} from './limits.js';
 import {
   directoryId,
   isoTime,
@@ -361,7 +368,7 @@ const documentRow = z.discriminatedUnion('kind', [
 
 const deviceRow = z
   .object({
-    keyId: keyIdString,
+    keyId: signingKeyIdString,
     publicKey: publicKeyString,
     label: z.string().max(256),
     kind: z.enum(DEVICE_KINDS),

@@ -80,6 +80,7 @@ export const sealedField = (field: SealedField) =>
 export const blindIndexString = z.string().regex(/^abh1\.[A-Za-z0-9_-]{43}$/);
 export const wrappedKeyString = z.string().regex(/^abw1\.[A-Za-z0-9_-]{80}$/);
 export const keyIdString = z.string().regex(/^[0-9a-f]{16}$/);
+export const signingKeyIdString = z.string().regex(/^([0-9a-f]{16}|[A-Za-z0-9_-]{43})$/);
 
 export const KDF_LIMITS = {
   m: { min: 8192, max: 262_144 },

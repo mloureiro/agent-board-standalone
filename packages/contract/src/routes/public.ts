@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { keyIdString } from '../limits.js';
+import { signingKeyIdString } from '../limits.js';
 import { healthAnswer, pairRequest, versionDocument } from '../schemas/auth.js';
 import { defineRoute } from './route.js';
 
@@ -32,7 +32,7 @@ export const publicPairRoute = defineRoute({
   path: '/api/pair',
   auth: 'public',
   request: pairRequest,
-  response: z.object({ keyId: keyIdString }).strict(),
+  response: z.object({ keyId: signingKeyIdString }).strict(),
   errors: ['forbidden', 'too-many-requests'],
   feature: 'pairing',
   issuesCredential: true,

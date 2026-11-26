@@ -13,17 +13,6 @@
     "blackbox/sessions.test.ts": [
       "no-login mode with the database inspected › [api-029] the user row does not exist after reads only and exists after one committed write"
     ],
-    "blackbox/signature.test.ts": [
-      "request signature on a no-login server › [api-022] a badly signed request gets 401",
-      "request signature on a no-login server › [api-022] the signature is checked before the body is read: a bad signature on an oversized body gets 401, not 413",
-      "request signature on a no-login server › [api-120] agent-board-api pair prints an XXXX-XXXX code while the API holds the PGlite folder",
-      "request signature on a no-login server › [api-120] POST /api/pair binds a key once and refuses a second use of the code",
-      "request signature on a no-login server › [api-120] one register-key binds per issued machine token, a second is refused and re-issuing clears it",
-      "request signature on a no-login server › [api-120] the user lists the bound keys, revokes one and the revoked key gets 401",
-      "request signature on a no-login server › [cli-083] board init generates, registers and stores a signing key; with it removed the next call gets 401",
-      "request signature bound at sign-in on a login server › [api-120] the sign-in finish carrying a public key binds it to the new session",
-      "request signature bound at sign-in on a login server › [api-120] a user revokes a bound key on a login server and it gets 401"
-    ],
     "blackbox/user-commands.test.ts": [
       "user commands with a worker › [api-119] a machine token cannot set the grant and a user session can",
       "user commands with a worker › [api-119] a note written by a granted machine is authored by the user with the machine recorded",
@@ -132,7 +121,6 @@
       "sign-in page › [web-014] SAML returns to the client return page and lands signed in, in the same tab",
       "sign-in page › [web-014] a SAML provider error shows on the sign-in page"
     ],
-    "browser/signature.spec.ts": "*",
     "browser/task-page.spec.ts": "*",
     "browser/transcript.spec.ts": "*"
   }
