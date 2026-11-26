@@ -553,6 +553,7 @@ export async function projectFilterJourney(page: Page, world: JourneyWorld): Pro
       .or(page.getByRole('button', { name, exact: true }))
       .first();
   const menu = page.getByRole('button', { name: NAMES.menu }).first();
+  await expect(project(firstName).or(menu).first()).toBeVisible({ timeout: UI_TIMEOUT_MS });
   if (!(await project(firstName).isVisible())) await menu.click();
   await project(firstName).click();
   await expect(page.getByText(firstTitle).first()).toBeVisible({ timeout: UI_TIMEOUT_MS });
