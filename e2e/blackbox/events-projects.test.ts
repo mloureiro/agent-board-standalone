@@ -64,6 +64,8 @@ describe('board events', () => {
       [],
       async () => {
         id = (await newTask(fx, 'watched', { status: 'backlog' })).id;
+        // Changes within one second coalesce: the server debounces machine events by 500 ms and the CLI diffs snapshots after 300 ms.
+        await new Promise((resolve) => setTimeout(resolve, 1_500));
         await fx.user.ok('client.tasks.move', { id, status: 'todo' });
       },
       (seen) =>
@@ -235,13 +237,10 @@ describe('board projects', () => {
     const fx = await fixture();
     const project = await hostDefaultSet();
     const title = uniqueLabel('scheduled-');
-    const run = await fx.runner.cli([
-      'schedule',
-      '--title',
-      title,
-      '--backlog',
-      'a scheduled prompt',
-    ]);
+    const run = await fx.runner.cli(
+      ['schedule', '--title', title, '--backlog', 'a scheduled prompt'],
+      { cwd: fx.workdir },
+    );
     expect(run.code, combined(run)).toBe(0);
     const task = await waitUntil('the scheduled task', () => findTaskByTitle(fx, title));
     expect(task.projectId).toBe(project.id);

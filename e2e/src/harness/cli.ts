@@ -16,6 +16,7 @@ export interface CliOptions {
   readonly stdin?: string;
   readonly env?: Readonly<Record<string, string>>;
   readonly timeoutMs?: number;
+  readonly cwd?: string;
 }
 
 export function cliEnv(
@@ -47,6 +48,7 @@ export function runCli(args: readonly string[], options: CliOptions): Promise<Ru
     env: cliEnv(options.board, options),
     ...(options.stdin === undefined ? {} : { stdin: options.stdin }),
     ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
+    ...(options.cwd === undefined ? {} : { cwd: options.cwd }),
   });
 }
 

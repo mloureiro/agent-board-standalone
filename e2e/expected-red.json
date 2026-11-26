@@ -1,9 +1,7 @@
 {
   "files": {
     "blackbox/events-projects.test.ts": [
-      "board events › [cli-023] board events streams the changes made on the board",
-      "board projects › [cli-039] board projects lists the server's projects",
-      "board projects › [cli-039] a default project set on the host receives board schedule without --project"
+      "board projects › [cli-039] board projects lists the server's projects"
     ],
     "blackbox/matrix-refusal.test.ts": "*",
     "blackbox/schedules.test.ts": [
