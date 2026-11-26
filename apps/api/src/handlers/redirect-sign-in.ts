@@ -78,7 +78,10 @@ export const redirectSignInHandlers: HandlerSet = (context) => ({
     const identity = await finishOidc(deps, taken.data, input).catch((error: unknown) => {
       throw error instanceof ApiError ? error : new ApiError('forbidden', SIGN_IN_FAILED);
     });
-    await claimUsername(deps.database, identity.username, 'oidc');
+    await claimUsername(deps.database, identity.username, 'oidc', {
+      issuer: identity.issuer,
+      subject: identity.subject,
+    });
     const sessionDeps = sessionDepsOf(context);
     const issued = await issueBoundSession(
       context,

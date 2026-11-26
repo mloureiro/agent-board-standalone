@@ -20,6 +20,10 @@ export const PLAIN_COLUMNS: Readonly<Record<string, Readonly<Record<string, stri
     key_slots:
       'wrapped copies of the data key with their key-derivation parameters; ciphertext, never the key',
     source: STATE,
+    identity_issuer:
+      'issuer URL of the identity provider that signed the user in; public, not content',
+    identity_subject:
+      'identifier the identity provider gave the user, compared on every sign-in; opaque, not content',
   },
   auth_flow: {
     id: ID,

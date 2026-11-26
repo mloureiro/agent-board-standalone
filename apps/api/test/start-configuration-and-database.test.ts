@@ -70,8 +70,30 @@ describe('health and hosts', () => {
     expect(unknownPath.statusCode).toBe(421);
   });
 
-  it('[api-014] without ALLOWED_HOSTS every Host is served', async () => {
+  it('[api-014] a login board without ALLOWED_HOSTS serves every Host', async () => {
+    const { app } = await started(loginEnv());
+    const answer = await app.inject({ url: '/api/version', headers: { host: 'anything.example' } });
+    expect(answer.statusCode).toBe(200);
+  });
+
+  it('[api-014] a loopback no-login board without ALLOWED_HOSTS serves only the loopback names', async () => {
     const { app } = await started(noLoginEnv());
+    for (const host of ['localhost:4000', '127.0.0.1:4000', '[::1]:4000', 'LOCALHOST']) {
+      const own = await app.inject({ url: '/api/version', headers: { host } });
+      expect(own.statusCode).toBe(200);
+    }
+    const rebound = await app.inject({
+      url: '/api/client/keys/get',
+      headers: { host: 'evil.example:4000' },
+    });
+    expect(rebound.statusCode).toBe(421);
+    expect(rebound.json().error.code).toBe('misdirected');
+    const health = await app.inject({ url: '/healthz', headers: { host: 'evil.example' } });
+    expect(health.statusCode).toBe(200);
+  });
+
+  it('[api-014] a no-login board bound to every interface without ALLOWED_HOSTS serves every Host', async () => {
+    const { app } = await started(noLoginEnv({ HOST: '0.0.0.0', REQUEST_SIGNATURE: 'on' }));
     const answer = await app.inject({ url: '/api/version', headers: { host: 'anything.example' } });
     expect(answer.statusCode).toBe(200);
   });

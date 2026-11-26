@@ -12,7 +12,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { owner } from './owner.js';
-import { sealedChecks, tenantPolicy } from './tenancy.js';
+import { sealedChecks, systemPolicy, tenantPolicy } from './tenancy.js';
 
 export const machine = pgTable(
   'machine',
@@ -48,6 +48,7 @@ export const machine = pgTable(
     check('machine_client_version_length', sql`char_length(${t.clientVersion}) between 1 and 64`),
     ...sealedChecks('machine'),
     tenantPolicy(),
+    systemPolicy(),
   ],
 ).enableRLS();
 
