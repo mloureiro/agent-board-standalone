@@ -112,11 +112,15 @@ export async function contextSignedInAs(
 }
 
 export async function pageSession(page: Page): Promise<string> {
-  return page.evaluate(async () => {
-    const response = await fetch('/api/version');
-    const body = (await response.json()) as { session?: string };
-    return body.session ?? 'missing';
-  });
+  try {
+    return await page.evaluate(async () => {
+      const response = await fetch('/api/version');
+      const body = (await response.json()) as { session?: string };
+      return body.session ?? 'missing';
+    });
+  } catch {
+    return 'unknown';
+  }
 }
 
 export async function signInMethods(server: ServerRef): Promise<string[]> {
