@@ -21,7 +21,6 @@
     ],
     "browser/board.spec.ts": [
       "board › [web-029] a touch drag moves a card between columns on a phone @phone",
-      "board › [web-032] a banner names a machine whose CLI is no longer accepted",
       "board with a running card › [web-035] a running card shows context usage as a thin line"
     ],
     "browser/new-task.spec.ts": [

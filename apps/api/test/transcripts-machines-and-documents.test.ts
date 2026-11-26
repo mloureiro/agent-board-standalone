@@ -341,6 +341,25 @@ describe('machine versions and documents', () => {
     expect((await call(board, 'client.machines.advertised-cli', {})).body.version).toBe('0.2.0');
   });
 
+  it('[api-086] a machine version call below the minimum level is refused with 412 and still records the reported level', async () => {
+    const fresh = await enrolled();
+    const refused = await call(
+      board,
+      'machine.version',
+      {},
+      { token: fresh.token, headers: cli('0.0.1', String(MIN_CLIENT.cli - 1)) },
+    );
+    expect(refused.status).toBe(412);
+    expect(await machineRow(fresh.name)).toMatchObject({
+      clientVersion: '0.0.1',
+      clientLevel: MIN_CLIENT.cli - 1,
+    });
+    const listed = (await call(board, 'client.machines.list', {})).body.machines.find(
+      (entry) => entry.name === fresh.name,
+    );
+    expect(listed?.clientStatus).toBe('incompatible');
+  });
+
   it('[api-086] a server that knows no CLI release advertises none', async () => {
     const other = await startBoard();
     try {

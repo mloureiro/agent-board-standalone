@@ -13,6 +13,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { authenticateClient, authenticateMachine } from '../auth/index.js';
 import type { ServerContext } from '../context.js';
 import { ApiError } from '../errors.js';
+import { recordSighting } from '../modules/machine/machines.js';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const FORM_CONTENT_TYPE = 'application/x-www-form-urlencoded';
@@ -21,6 +22,22 @@ const WHOLE_NUMBER = /^\d+$/;
 
 const contentTypeOf = (request: FastifyRequest): string =>
   (request.headers['content-type'] ?? '').split(';')[0]?.trim().toLowerCase() ?? '';
+
+const recordRefusedMachine = async (
+  context: ServerContext,
+  request: FastifyRequest,
+  version: string | null,
+  level: number,
+): Promise<void> => {
+  try {
+    const principal = await authenticateMachine(context, request);
+    await context.services.database.withOwner(principal.owner, (tx) =>
+      recordSighting(tx, principal.machineId, { version, level }),
+    );
+  } catch {
+    return;
+  }
+};
 
 export const registerGuards = (app: FastifyInstance, context: ServerContext): void => {
   app.addHook('onRequest', async (request) => {
@@ -65,8 +82,11 @@ export const registerGuards = (app: FastifyInstance, context: ServerContext): vo
         features: [],
       },
     );
-    if (verdict.kind === 'client-too-old')
+    if (verdict.kind === 'client-too-old') {
+      if (route.name === 'machine.version')
+        await recordRefusedMachine(context, request, declared?.version ?? null, Number(sent));
       throw new ApiError('upgrade-required', `${verdict.message} Upgrade the client.`);
+    }
   });
 
   app.addHook('onRequest', async (request, reply) => {
