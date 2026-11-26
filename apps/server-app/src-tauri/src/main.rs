@@ -5,6 +5,7 @@ use std::process::ExitCode;
 
 use agent_board_server_core::app::{self, Host, Start};
 use agent_board_server_core::cli::{self, Invocation, USAGE, USAGE_EXIT_CODE};
+use agent_board_server_core::credential_flow;
 
 fn exit(code: i32) -> ExitCode {
     ExitCode::from(u8::try_from(code).unwrap_or(1))
@@ -27,6 +28,11 @@ fn main() -> ExitCode {
         Invocation::Uninstall { delete_data } => {
             exit(app::run_uninstall(&host, delete_data, &mut io::stdout()))
         }
+        Invocation::WorkerCredentials { pending } => exit(credential_flow::run_command(
+            &host,
+            pending,
+            &mut io::stdout(),
+        )),
         Invocation::Headless => {
             let stdin = io::BufReader::new(io::stdin());
             exit(app::run_headless(&host, stdin, &mut io::stdout()))

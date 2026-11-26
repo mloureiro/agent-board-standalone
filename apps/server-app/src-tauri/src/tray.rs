@@ -2,8 +2,8 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use agent_board_server_core::app::Running;
+use agent_board_server_core::services::Services;
 use agent_board_server_core::signals;
-use agent_board_server_core::supervisor::Supervisor;
 use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::TrayIconBuilder;
 use tauri::{Manager, RunEvent};
@@ -16,13 +16,13 @@ fn hide_from_dock(app: &mut tauri::App) {
 #[cfg(not(target_os = "macos"))]
 fn hide_from_dock(_: &mut tauri::App) {}
 
-struct Supervision(Mutex<Option<Supervisor>>);
+struct Supervision(Mutex<Option<Services>>);
 
 impl Supervision {
     fn stop(&self) {
-        let supervisor = self.0.lock().ok().and_then(|mut slot| slot.take());
-        if let Some(supervisor) = supervisor {
-            supervisor.stop();
+        let services = self.0.lock().ok().and_then(|mut slot| slot.take());
+        if let Some(services) = services {
+            services.stop();
         }
     }
 }
@@ -50,12 +50,8 @@ pub fn run(running: Running) {
             }
             tray.build(app)?;
             running.app_log.info("tray ready");
-            let supervisor = Supervisor::start(
-                running.plan.clone(),
-                running.app_log.clone(),
-                Arc::new(|_| {}),
-            );
-            app.manage(Supervision(Mutex::new(Some(supervisor))));
+            let services = Services::start(&running, Arc::new(|| {}));
+            app.manage(Supervision(Mutex::new(Some(services))));
             app.manage(running);
             let handle = app.handle().clone();
             std::thread::spawn(move || {

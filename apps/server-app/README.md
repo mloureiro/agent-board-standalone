@@ -69,3 +69,29 @@ behaviour (crash, hang, ignore SIGTERM, start late, spawn a grandchild) from `ST
 The headless runner prints a `state` line whenever the rows change (`supervision.api`, `supervision.worker`,
 `gaveUp`, `blocked`) and implements `state`, `restart-server`, `open-logs`, `open-settings` and `quit`. The other
 actions answer `error` with "<action> is not implemented in this build" until their iteration.
+
+## Worker and enrolment
+
+The worker is the bundled CLI (`resources/cli/board`) run under `AGENT_BOARD_PROFILE=server-app` with the three
+directory overrides under `<root>/worker/{config,state,run}`; no launchd unit is installed. The app asks the CLI for its
+unit recipe (`board internal units`) and runs the listener, the watcher and the dispatch tick from it, supervised with
+the same restart policy as the API. It starts once the API is first healthy and, on Quit, is stopped first: SIGTERM to
+the worker processes, `board internal shutdown` to pause running cards, then SIGKILL for stragglers. Nothing runs while
+the worker is not enrolled; the row reads "Worker not connected".
+
+`<root>/worker/bin` holds `board-cli` (a link to the bundled CLI) and `board`, a wrapper that sets the worker
+environment and refuses `setup`, `self-update`, `restart` and `init` with exit 2. The worker `PATH` is that folder, the
+`workerPath` entries from `settings.json` (a list of at most 32 absolute folders without `:`; a single string is read
+as a one-entry list), then the recipe's tail; only `HOME`, `USER`, `LOGNAME`, `SHELL`, `TMPDIR`,
+`LANG` and `SSH_AUTH_SOCK` are inherited.
+
+The token and data key live only in the credential store (Keychain service from the root, accounts `worker-token` and
+`worker-data-key`, plus `.pending` for a pair under test). The CLI reads them through
+`AGENT_BOARD_CREDENTIALS_COMMAND`, a script in `<root>/worker/libexec` that calls the app binary with
+`--worker-credentials`; no file or process argument holds them.
+
+Headless actions: `connect-worker <token> <data-key>` (checks the pair as pending through `board init --force`, then
+stop, pause once, promote, start; a refusal changes nothing), `disconnect-worker`, `restart-worker` and `check-worker`
+(`board doctor --json` minus the checks in `core/src/dropped_checks.json`, plus a `claude` and `gh` lookup on the worker
+`PATH`, written to `logs/check-worker.log`). `core::enrol::EnrolForm` is the window's masked-input model. The row after
+each dispatch tick reads `ok`, `refused — …` or `error — …` from the CLI's `dispatch-result.json`.

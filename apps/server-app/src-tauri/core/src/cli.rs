@@ -8,6 +8,7 @@ pub enum Invocation {
     Tray,
     Headless,
     Uninstall { delete_data: bool },
+    WorkerCredentials { pending: bool },
     Usage,
 }
 
@@ -26,6 +27,8 @@ pub fn parse<I: IntoIterator<Item = OsString>>(args: I) -> Invocation {
         ["--headless"] => Invocation::Headless,
         ["--uninstall"] => Invocation::Uninstall { delete_data: false },
         ["--uninstall", "--delete-data"] => Invocation::Uninstall { delete_data: true },
+        ["--worker-credentials"] => Invocation::WorkerCredentials { pending: false },
+        ["--worker-credentials", "--pending"] => Invocation::WorkerCredentials { pending: true },
         _ => Invocation::Usage,
     }
 }

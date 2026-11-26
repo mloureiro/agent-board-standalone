@@ -22,7 +22,7 @@ fn server_app_067_an_empty_file_gives_every_default() {
     assert!(settings.start_at_login);
     assert_eq!(settings.data_dir, Path::new("/tmp/board-root/data"));
     assert_eq!(settings.backup_dir, Path::new("/tmp/board-root/backups"));
-    assert_eq!(settings.worker_path, None);
+    assert!(settings.worker_path.is_empty());
     assert!(settings.remote_hosts.is_empty());
     assert!(!settings.request_signature);
 }
@@ -39,10 +39,48 @@ fn server_app_067_every_key_is_taken() {
     assert_eq!(settings.backup_dir, Path::new("/srv/backups"));
     assert_eq!(settings.port, 5000);
     assert!(!settings.start_at_login);
+    assert_eq!(settings.worker_path, [Path::new("/opt/board")]);
+}
+
+#[test]
+fn server_app_045_worker_path_takes_a_list_of_absolute_entries_in_order() {
+    let settings = parse(r#"{"workerPath":["/opt/a","/opt/homebrew/bin"]}"#).unwrap();
     assert_eq!(
-        settings.worker_path.as_deref(),
-        Some(Path::new("/opt/board"))
+        settings.worker_path,
+        [Path::new("/opt/a"), Path::new("/opt/homebrew/bin")]
     );
+    assert!(
+        parse(r#"{"workerPath":[]}"#)
+            .unwrap()
+            .worker_path
+            .is_empty()
+    );
+
+    let entries = |count: usize| {
+        let names: Vec<String> = (0..count).map(|index| format!("\"/p/{index}\"")).collect();
+        format!(r#"{{"workerPath":[{}]}}"#, names.join(","))
+    };
+    assert_eq!(parse(&entries(32)).unwrap().worker_path.len(), 32);
+    assert!(refused(&entries(33)).contains("at most 32"));
+}
+
+#[test]
+fn server_app_045_a_bad_worker_path_entry_stops_the_load_with_a_message() {
+    for bad in [
+        r#""relative/bin""#,
+        r#"["/fine","relative"]"#,
+        r#"["/a:/b"]"#,
+        r#""/a:/b""#,
+        r#"[""]"#,
+        r#"["/a/../b"]"#,
+        r#"[7]"#,
+        r#"["/a",null]"#,
+        "true",
+    ] {
+        let message = refused(&format!(r#"{{"workerPath":{bad}}}"#));
+        assert!(message.starts_with("settings.json"), "{bad}: {message}");
+    }
+    assert!(refused(r#"{"workerPath":["/a:/b"]}"#).contains("`:`"));
 }
 
 #[test]
