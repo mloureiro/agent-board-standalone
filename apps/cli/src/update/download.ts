@@ -67,12 +67,14 @@ async function verifyChecksums(
     MAX_SIGNATURE_BYTES,
     SIGNATURE_ASSET,
   );
+  let signedTag: string;
   try {
-    verifySignature(publicKey, checksums, signature.toString('utf8'));
+    signedTag = verifySignature(publicKey, checksums, signature.toString('utf8')).trustedComment;
   } catch (error) {
     if (error instanceof CliError) throw refuse(error.message);
     throw error;
   }
+  if (signedTag !== release.tag) throw refuse(`its signature was made for ${signedTag}`);
   return publicKey.keyId;
 }
 

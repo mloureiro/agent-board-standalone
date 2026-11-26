@@ -158,6 +158,23 @@ describe('downloadVerified with a signature key', () => {
     expect(existsSync(test.path('staging'))).toBe(false);
   });
 
+  it('installs nothing when the signature was made for another tag', async () => {
+    const { test, release } = setup({
+      'board-linux-x64': BINARY,
+      SHA256SUMS: SUMS.toString(),
+      'SHA256SUMS.minisig': PREHASHED,
+    });
+    await expect(
+      downloadVerified(
+        test.rt,
+        { ...release, version: '9.9.10', tag: 'cli-v9.9.10' },
+        'linux-x64',
+        test.path('staging'),
+        KEY,
+      ),
+    ).rejects.toThrow(/cli-v9.9.10 is not signed.*made for cli-v9.9.9/);
+  });
+
   it('checks the checksum alone when no key is built in', async () => {
     const { test, release } = setup({ 'board-linux-x64': BINARY, SHA256SUMS: SUMS.toString() });
     const downloaded = await downloadVerified(
