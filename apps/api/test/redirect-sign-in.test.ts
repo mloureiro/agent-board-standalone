@@ -142,6 +142,18 @@ const me = (app: FastifyInstance, token: string) =>
 const userRow = async (board: Board, username: string) =>
   (await board.database.withSystem((system) => system.lookupUser(username))) ?? null;
 
+const bindingOf = async (board: Board, username: string) => {
+  const [row] = await board.database.withOwner(username, (tx) =>
+    tx
+      .select({
+        issuer: schema.appUser.identityIssuer,
+        subject: schema.appUser.identitySubject,
+      })
+      .from(schema.appUser),
+  );
+  return row;
+};
+
 describe('OIDC', () => {
   it('[api-035] starts a code flow with PKCE S256, state and nonce', async () => {
     const w = await world();
@@ -213,7 +225,7 @@ describe('OIDC', () => {
 
   it('[api-035] the username falls back to the email, and OIDC_USERNAME_CLAIM picks another claim', async () => {
     const first = await world();
-    first.oidc.claims = { sub: 's', email: 'Grace@Example.test' };
+    first.oidc.claims = { sub: 's', email: 'Grace@Example.test', email_verified: true };
     expect((await finishOidc(first, await oidcReturn(first))).statusCode).toBe(200);
     expect(await userRow(first.board, 'grace@example.test')).not.toBeNull();
 
@@ -221,6 +233,57 @@ describe('OIDC', () => {
     second.oidc.claims = { sub: 'Subject-9', preferred_username: 'ignored' };
     expect((await finishOidc(second, await oidcReturn(second))).statusCode).toBe(200);
     expect(await userRow(second.board, 'subject-9')).not.toBeNull();
+  });
+
+  it('[api-035] an email username needs a verified email, a preferred username does not', async () => {
+    const w = await world();
+    w.oidc.claims = { sub: 's', email: 'grace@example.test' };
+    const unverified = await finishOidc(w, await oidcReturn(w));
+    expect(unverified.statusCode).toBe(403);
+    expect(unverified.json().error.message).toContain('no usable user name');
+    expect(await userRow(w.board, 'grace@example.test')).toBeNull();
+
+    w.oidc.claims = { sub: 's', email: 'grace@example.test', email_verified: 'true' };
+    expect((await finishOidc(w, await oidcReturn(w))).statusCode).toBe(403);
+
+    w.oidc.claims = { sub: 's', preferred_username: 'grace', email: 'g@example.test' };
+    expect((await finishOidc(w, await oidcReturn(w))).statusCode).toBe(200);
+    expect(await userRow(w.board, 'grace')).not.toBeNull();
+  });
+
+  it('[api-035] the first sign-in stores the issuer and subject, and the same identity signs in again', async () => {
+    const w = await world();
+    await signInWithOidc(w);
+    expect(await bindingOf(w.board, 'ada')).toEqual({ issuer: w.oidc.url, subject: 'subject-1' });
+    expect((await finishOidc(w, await oidcReturn(w))).statusCode).toBe(200);
+  });
+
+  it('[api-035] a sign-in with the same username but another subject is refused', async () => {
+    const w = await world();
+    await signInWithOidc(w);
+    w.oidc.claims = { ...w.oidc.claims, sub: 'subject-2' };
+    const answer = await finishOidc(w, await oidcReturn(w));
+    expect(answer.statusCode).toBe(403);
+    expect(answer.json().error.message).toBe('sign-in failed');
+    expect(answer.cookies).toEqual([]);
+    expect(await bindingOf(w.board, 'ada')).toEqual({ issuer: w.oidc.url, subject: 'subject-1' });
+  });
+
+  it('[api-035] a user bound to another issuer is refused', async () => {
+    const w = await world();
+    await signInWithOidc(w);
+    await w.board.database.withOwner('ada', (tx) =>
+      tx.update(schema.appUser).set({ identityIssuer: 'https://other.example' }),
+    );
+    expect((await finishOidc(w, await oidcReturn(w))).statusCode).toBe(403);
+  });
+
+  it('[api-035] a user with no binding yet is bound by the next OIDC sign-in', async () => {
+    const w = await world();
+    await w.board.database.withOwner('ada', (tx) => ensureUser(tx, 'ada', 'oidc'));
+    expect(await bindingOf(w.board, 'ada')).toEqual({ issuer: null, subject: null });
+    expect((await finishOidc(w, await oidcReturn(w))).statusCode).toBe(200);
+    expect(await bindingOf(w.board, 'ada')).toEqual({ issuer: w.oidc.url, subject: 'subject-1' });
   });
 
   it('[api-035] a user outside ALLOWED_GROUPS is refused, one inside is signed in', async () => {

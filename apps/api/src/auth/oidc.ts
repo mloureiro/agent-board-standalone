@@ -12,6 +12,7 @@ import { parseProviderUsername } from './provider-user.js';
 export const OIDC_RETURN_PATH = '/auth/callback';
 
 const DEFAULT_USERNAME_CLAIMS = ['preferred_username', 'email'];
+const EMAIL_CLAIM = 'email';
 const REJECTED_STATUSES = new Set([400, 401, 403]);
 
 export interface OidcDeps {
@@ -24,6 +25,8 @@ export interface OidcDeps {
 
 export interface OidcIdentity {
   username: string;
+  issuer: string;
+  subject: string;
   upkeep: Json | null;
 }
 
@@ -99,7 +102,8 @@ const usernameOf = (settings: OidcSettings, claims: Claims): string | null => {
     settings.usernameClaim === null ? DEFAULT_USERNAME_CLAIMS : [settings.usernameClaim];
   for (const name of names) {
     const username = parseProviderUsername(claims[name]);
-    if (username !== null) return username;
+    if (username === null) continue;
+    return name === EMAIL_CLAIM && claims.email_verified !== true ? null : username;
   }
   return null;
 };
@@ -154,7 +158,12 @@ export const finishOidc = async (
     () => ({}),
   );
   const username = acceptClaims(deps.settings, deps.allowedGroups, { ...userinfo, ...idClaims });
-  return { username, upkeep: upkeepOf(tokens.refresh_token) };
+  return {
+    username,
+    issuer: idClaims.iss,
+    subject: idClaims.sub,
+    upkeep: upkeepOf(tokens.refresh_token),
+  };
 };
 
 const isRejection = (error: unknown): boolean => {
