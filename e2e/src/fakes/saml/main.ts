@@ -3,7 +3,9 @@ import { createSamlIdp } from './idp.ts';
 
 const flags = readFlags(process.argv.slice(2));
 const port = Number(requiredFlag(flags, 'port'));
-const issuer = flags.get('issuer') ?? `http://127.0.0.1:${port}`;
+// Same site as the board (localhost): Playwright 1.65 WebKit throws "Assertion error" when a cross-site
+// POST lands on a page with Cross-Origin-Opener-Policy, because WebKit opens a second provisional page.
+const issuer = flags.get('issuer') ?? `http://localhost:${port}`;
 
 const idp = createSamlIdp({
   issuer,
