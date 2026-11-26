@@ -40,6 +40,7 @@ export function prepareResources(scratch: string, config = ''): Resources {
   const program = join(dir, 'api/agent-board-api');
   mkdirSync(join(dir, 'api'), { recursive: true });
   mkdirSync(join(dir, 'web'), { recursive: true });
+  writeFileSync(join(dir, 'api/schema-version'), 'stub-1\n');
   copyFileSync(stub as string, program);
   chmodSync(program, 0o755);
   const configure = (text: string): void => writeFileSync(`${program}.conf`, `${text}\n`);

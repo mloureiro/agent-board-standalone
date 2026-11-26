@@ -26,14 +26,51 @@ pub struct Plan {
 
 pub type StatusSink = Arc<dyn Fn(&Status) + Send + Sync>;
 
+#[derive(Clone)]
+pub struct StartGate(Arc<GateCheck>);
+
+type GateCheck = dyn Fn(&AtomicBool) -> Result<(), String> + Send + Sync;
+
+impl StartGate {
+    pub fn new(check: impl Fn(&AtomicBool) -> Result<(), String> + Send + Sync + 'static) -> Self {
+        StartGate(Arc::new(check))
+    }
+
+    fn check(&self, cancel: &AtomicBool) -> Result<(), String> {
+        (self.0)(cancel)
+    }
+}
+
 enum Message {
     Stop,
     RestartApi,
 }
 
+#[derive(Default)]
+pub(crate) struct Flags {
+    held: AtomicBool,
+    cancel: AtomicBool,
+}
+
 struct Shared {
     status: Mutex<Status>,
-    held: AtomicBool,
+    flags: Flags,
+}
+
+#[derive(Clone)]
+pub struct Handle {
+    commands: Sender<Message>,
+    shared: Arc<Shared>,
+}
+
+impl Handle {
+    pub fn set_hold(&self, held: bool) {
+        self.shared.flags.held.store(held, Ordering::SeqCst);
+    }
+
+    pub fn restart_server(&self) {
+        let _ = self.commands.send(Message::RestartApi);
+    }
 }
 
 pub struct Supervisor {
@@ -44,12 +81,24 @@ pub struct Supervisor {
 
 impl Supervisor {
     pub fn start(plan: Plan, log: AppLog, sink: StatusSink) -> Supervisor {
+        Supervisor::start_gated(plan, None, log, sink)
+    }
+
+    pub fn start_gated(
+        plan: Plan,
+        api_gate: Option<StartGate>,
+        log: AppLog,
+        sink: StatusSink,
+    ) -> Supervisor {
         let shared = Arc::new(Shared {
             status: Mutex::new(Status::initial()),
-            held: AtomicBool::new(false),
+            flags: Flags::default(),
         });
         let (commands, inbox) = mpsc::channel();
-        let supervision = Loop::new(plan, log, sink, Arc::clone(&shared), inbox);
+        let mut supervision = Loop::new(plan, log, sink, Arc::clone(&shared), inbox);
+        if let Ok(api) = supervision.api.as_mut() {
+            api.gate = api_gate;
+        }
         *shared.status.lock().unwrap() = supervision.snapshot();
         let thread = thread::spawn(move || supervision.run());
         Supervisor {
@@ -68,7 +117,14 @@ impl Supervisor {
     }
 
     pub fn set_hold(&self, held: bool) {
-        self.shared.held.store(held, Ordering::SeqCst);
+        self.shared.flags.held.store(held, Ordering::SeqCst);
+    }
+
+    pub fn handle(&self) -> Handle {
+        Handle {
+            commands: self.commands.clone(),
+            shared: Arc::clone(&self.shared),
+        }
     }
 
     pub fn stop(mut self) -> Status {
@@ -77,6 +133,7 @@ impl Supervisor {
     }
 
     fn shutdown(&mut self) {
+        self.shared.flags.cancel.store(true, Ordering::SeqCst);
         let _ = self.commands.send(Message::Stop);
         if let Some(thread) = self.thread.take() {
             let _ = thread.join();
@@ -107,6 +164,7 @@ enum Phase {
     Waiting(Instant),
     GaveUp,
     Unavailable(String),
+    Blocked(String),
     Stopped,
 }
 
@@ -114,6 +172,7 @@ pub(crate) struct Node {
     pub(crate) spec: ChildSpec,
     phase: Phase,
     crashes: u32,
+    gate: Option<StartGate>,
 }
 
 impl Node {
@@ -163,6 +222,7 @@ pub(crate) fn node(spec: ChildSpec) -> Node {
         spec,
         phase: Phase::Pending,
         crashes: 0,
+        gate: None,
     }
 }
 
@@ -216,7 +276,7 @@ impl Loop {
                 &self.durations,
                 &self.run_dir,
                 &self.log,
-                &self.shared.held,
+                &self.shared.flags,
             );
         }
         if let Some(worker) = self.worker.as_mut() {
@@ -227,7 +287,7 @@ impl Loop {
                 &self.durations,
                 &self.run_dir,
                 &self.log,
-                &self.shared.held,
+                &self.shared.flags,
             );
         }
     }
@@ -283,7 +343,13 @@ impl Loop {
                 api: matches!(&self.api, Ok(n) if matches!(n.phase, Phase::GaveUp)),
                 worker: matches!(&self.worker, Some(n) if matches!(n.phase, Phase::GaveUp)),
             },
-            blocked: None,
+            blocked: match &self.api {
+                Ok(Node {
+                    phase: Phase::Blocked(reason),
+                    ..
+                }) => Some(reason.clone()),
+                _ => None,
+            },
         }
     }
 }
@@ -303,6 +369,7 @@ pub(crate) fn row(node: &Node, retries: u32, stopping: bool) -> Row {
             format!("Gave up after {} crashes", node.crashes),
         ),
         Phase::Unavailable(message) => Row::new(RowState::Failed, message.clone()),
+        Phase::Blocked(reason) => Row::new(RowState::Failed, format!("Blocked: {reason}")),
         Phase::Stopped => Row::new(RowState::Stopped, "Stopped"),
     }
 }
@@ -328,13 +395,26 @@ pub(crate) fn spawn(spec: &ChildSpec) -> io::Result<Child> {
     spawn_in_own_group(&mut command)
 }
 
-fn start_node(node: &mut Node, durations: &Durations, run_dir: &std::path::Path, log: &AppLog) {
+fn start_node(
+    node: &mut Node,
+    durations: &Durations,
+    run_dir: &std::path::Path,
+    log: &AppLog,
+    flags: &Flags,
+) {
     if let Some(port) = node.spec.health_port
         && health::port_in_use(port)
     {
         let message = format!("Port {port} in use; change port in settings.json");
         log.error(&format!("{}: {message}", node.spec.name));
         node.phase = Phase::Unavailable(message);
+        return;
+    }
+    if let Some(gate) = &node.gate
+        && let Err(reason) = gate.check(&flags.cancel)
+    {
+        log.error(&format!("{} blocked: {reason}", node.spec.name));
+        node.phase = Phase::Blocked(reason);
         return;
     }
     let _ = fs::create_dir_all(run_dir);
@@ -433,12 +513,13 @@ pub(crate) fn advance_node(
     durations: &Durations,
     run_dir: &std::path::Path,
     log: &AppLog,
-    held: &AtomicBool,
+    flags: &Flags,
 ) {
+    let held = &flags.held;
     let now = Instant::now();
     match &mut node.phase {
-        Phase::Pending if gate_open => start_node(node, durations, run_dir, log),
-        Phase::Waiting(until) if now >= *until => start_node(node, durations, run_dir, log),
+        Phase::Pending if gate_open => start_node(node, durations, run_dir, log, flags),
+        Phase::Waiting(until) if now >= *until => start_node(node, durations, run_dir, log, flags),
         Phase::Live(live) => {
             if let Ok(Some(status)) = live.child.try_wait() {
                 crash(

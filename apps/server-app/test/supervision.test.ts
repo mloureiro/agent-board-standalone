@@ -117,10 +117,19 @@ describe('supervision through the headless runner', () => {
     const session = start();
     await running(session);
     const killed = apiPid() as number;
+    const before = session.events.length;
 
     process.kill(killed, 'SIGKILL');
     await until(() => apiPid() !== undefined && apiPid() !== killed, 'a new API pid');
-    await running(session);
+    await until(() => {
+      session.send('state');
+      const after = session.events
+        .slice(before)
+        .filter((event) => event['type'] === 'state')
+        .map((event) => (event['supervision'] as Supervision).api.state);
+      const restarted = after.indexOf('restarting');
+      return restarted >= 0 && after.slice(restarted + 1).includes('running');
+    }, 'the API running again after the restart');
 
     expect(isAlive(killed)).toBe(false);
     expect(await healthz()).toBe(200);
@@ -269,11 +278,11 @@ describe('supervision through the headless runner', () => {
 
   it('[server-app-022] actions of later iterations are refused with a clear error line', async () => {
     const session = start();
-    session.send('backup-now');
+    session.send('open-board');
     await until(() => session.events.some((event) => event['type'] === 'error'), 'the error line');
     expect(session.events.find((event) => event['type'] === 'error')).toMatchObject({
-      action: 'backup-now',
-      message: 'backup-now is not implemented in this build',
+      action: 'open-board',
+      message: 'open-board is not implemented in this build',
     });
     session.send('quit');
     await session.closed;
@@ -320,6 +329,7 @@ describe('supervision with the real API executable', () => {
     mkdirSync(join(dir, 'web'), { recursive: true });
     copyFileSync(real, join(dir, 'api/agent-board-api'));
     writeFileSync(join(dir, 'web/index.html'), '<html></html>');
+    writeFileSync(join(dir, 'api/schema-version'), 'real-1\n');
 
     session = launch(root, { AGENT_BOARD_SERVER_RESOURCES: dir });
     const current = session;

@@ -211,16 +211,12 @@ fn server_app_070_an_access_log_that_is_already_full_is_rotated_at_start() {
 fn server_app_022_the_actions_of_later_iterations_are_parsed_and_refused_for_now() {
     let bed = Bed::new();
     let running = start(&host(&bed));
-    let events = drive(
-        &running,
-        "open-board\nbackup-now\npair-device\n",
-        &Recorder::default(),
-    );
+    let events = drive(&running, "open-board\npair-device\n", &Recorder::default());
 
     let errors: Vec<&Value> = events.iter().filter(|e| e["type"] == "error").collect();
-    assert_eq!(errors.len(), 3);
+    assert_eq!(errors.len(), 2);
     assert_eq!(
-        errors[2]["message"],
+        errors[1]["message"],
         "pair-device is not implemented in this build"
     );
 }
@@ -252,6 +248,7 @@ fn stub_host(bed: &Bed) -> Host {
         resources.join("api/agent-board-api"),
     )
     .unwrap();
+    fs::write(resources.join("api/schema-version"), "stub-1\n").unwrap();
     let mut host = host(bed);
     let port = std::net::TcpListener::bind("127.0.0.1:0")
         .unwrap()
