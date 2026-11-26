@@ -223,22 +223,5 @@ Expected: a clean removal that keeps the data unless `--delete-data` is given.
 
 ## Step 13: install over the old local server
 
-Preparation by the owner. Nothing here uses the old server's data folder in place.
-
-1. Quit the old local server from its tray menu and remove its login item according to its README, so it no longer
-   starts at login. Keep its data and its worker folder.
-2. Copy the new `Agent Board Server.app` to `/Applications` and remove the quarantine flag. Do not open it yet.
-3. Create the app folder and settings by hand: `mkdir -p "<root>"` and write `<root>/settings.json` with
-   `{"userName": "<owner>"}`. The value must equal the owner name exported from the old board; opening the app without
-   it derives a name from the macOS login and the import refuses.
-4. Migrate with the bundled API into the data folder, before the first start. Follow `docs/manual/migrate.md` steps 5
-   to 9 with `<api-exe>` set to `<resources>/api/agent-board-api` and `--target-db pglite://<root>/data`.
-5. Open the app. The API row reads `Running`. Compare the counts with the old board (migrate step 10), then open the
-   board in the browser (step 11) and one task (step 12).
-6. Click Connect worker…, paste the worker's existing token and data key (the pair the old setup used) and click
-   Connect. The window shows `Connected as <machine>` with the migrated machine's name.
-7. Wait for the worker row to read `Worker: ok`, then create a test task and check that the worker picks it up.
-8. Check Keychain Access for `dev.mloureiro.agent-board-server` items and `<root>/logs/app.log` for errors.
-
-Expected: the board opens with the old content, the migrated machine runs on the new app, and the old server stays
-stopped until the owner decides to remove it.
+Follow `docs/manual/install.md`: it takes the owner from the release builds through the migration, the Set up window,
+the worker and the clients to the final walk, and leaves the old local server and its data untouched.

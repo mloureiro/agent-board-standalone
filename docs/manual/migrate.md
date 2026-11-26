@@ -1,5 +1,7 @@
 # Migration tool: manual walk
 
+For the step-13 install, `install.md` says where this walk fits; start there.
+
 Steps that need a real old board, the real server app and a real worker host, so no automated test can drive them.
 The walk covers requirement row `migrate-009` in `requirements/catalogue/migrate.md`. It moves one old board (a
 local-server PGlite folder or a hosted Postgres database) into the new server app and ends with the board open in the

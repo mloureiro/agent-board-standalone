@@ -1,5 +1,7 @@
 # Client app: manual walk
 
+For the step-13 install, `install.md` says where this walk fits; start there.
+
 Steps that no automated test can drive, because they need real native window chrome, the Dock, notifications or the
 macOS Keychain. Each entry names the requirement row it covers in `requirements/catalogue/client-app.md`. The walk
 runs once per release on a Mac with macOS 14 or later, against a built app: either the `Agent Board Client` or
