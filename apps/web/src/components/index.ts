@@ -4,7 +4,7 @@ export { ConnectionBanners } from './ConnectionBanners.js';
 export { useNotificationPermission } from './notification-permission.js';
 export type { Permission } from './notification-permission.js';
 export { NeedsMeNotifier } from './NeedsMeNotifier.js';
-export { PageStart, focusPageStart } from './PageStart.js';
+export { PageStart, dialogPortal } from './PageStart.js';
 export { NewTaskButton, NewTaskProvider, useNewTask } from './new-task.js';
 export { APP_TITLE, pageTitle, usePageTitle } from './page-title.js';
 export { ServerStatePanel, panelFor } from './ServerStatePanel.js';

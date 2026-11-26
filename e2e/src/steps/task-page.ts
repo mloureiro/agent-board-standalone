@@ -260,7 +260,9 @@ export async function waitForRunStart(world: TaskWorld, marker: string): Promise
 export async function unlockIfAsked(page: Page, passphrase: string): Promise<void> {
   const field = page.getByLabel(UNLOCK_NAMES.passphrase);
   const board = page.getByRole('link', { name: NAMES.boardLink, exact: true });
-  await expect(field.or(board).first()).toBeVisible({ timeout: UNLOCK_WAIT_MS });
+  await expect(field.or(page.getByRole('button', { name: /^lock$/i }))).toBeVisible({
+    timeout: UNLOCK_WAIT_MS,
+  });
   if (!(await field.isVisible())) return;
   await field.fill(passphrase);
   await page.getByRole('button', { name: UNLOCK_NAMES.unlock }).click();

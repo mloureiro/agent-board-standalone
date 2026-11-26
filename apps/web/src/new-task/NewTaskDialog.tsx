@@ -14,6 +14,7 @@ import {
 import { useMediaQuery } from '@mantine/hooks';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 
+import { dialogPortal } from '../components/PageStart.js';
 import { useDraft, useLastDirectoryStore } from '../drafts/index.js';
 import { useRecentIcons } from '../pages/index.js';
 import { useProjectFilter } from '../projects/project-filter.js';
@@ -281,6 +282,15 @@ export function NewTaskDialog(props: {
       centered={!phone}
       fullScreen={phone}
       size="lg"
+      portalProps={dialogPortal()}
+      onEnterTransitionEnd={() =>
+        dialogPortal().target?.querySelector<HTMLElement>('[role="dialog"]')?.focus()
+      }
+      withOverlay={false}
+      trapFocus={false}
+      lockScroll={false}
+      closeOnClickOutside={false}
+      styles={{ inner: { pointerEvents: 'none' }, content: { pointerEvents: 'auto' } }}
     >
       <Body onClose={props.onClose} />
     </Modal>

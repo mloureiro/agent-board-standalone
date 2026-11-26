@@ -5,9 +5,9 @@ import { NavLink } from 'react-router';
 
 import { LockButton } from '../keys/index.js';
 import { ProjectFilterSelect, ProjectsNav, useProjects } from '../projects/index.js';
+import { useServers } from '../servers/index.js';
 import { ServerFilterSelect, ServersButton } from '../servers-dialog/index.js';
 import { ColorSchemeMenu } from './ColorSchemeMenu.js';
-import { focusPageStart } from './PageStart.js';
 import { NewTaskButton } from './new-task.js';
 import { SignOutButton } from './SignOutButton.js';
 
@@ -37,10 +37,7 @@ function NavLinks({ phone, onNavigate }: { phone: boolean; onNavigate?: () => vo
       component={NavLink}
       to={item.to}
       end={item.to === '/'}
-      onClick={() => {
-        focusPageStart();
-        onNavigate?.();
-      }}
+      onClick={onNavigate}
     >
       {item.label}
     </Anchor>
@@ -50,11 +47,13 @@ function NavLinks({ phone, onNavigate }: { phone: boolean; onNavigate?: () => vo
 export function AppHeader(): ReactNode {
   const phone = usePhone();
   const projects = useProjects();
+  const { active, connectionOf } = useServers();
+  const signedOut = active !== null && connectionOf(active.id).state === 'signed-out';
   const [menuOpen, { open, close }] = useDisclosure(false);
   return (
     <Group component="header" justify="space-between" wrap="wrap" gap="xs" px="md" py="xs">
       <Group gap="xs" wrap="wrap">
-        {phone ? (
+        {signedOut ? null : phone ? (
           <>
             <Button variant="default" onClick={open}>
               Menu
@@ -82,7 +81,7 @@ export function AppHeader(): ReactNode {
         <ProjectFilterSelect />
       </Group>
       <Group gap="xs" wrap="wrap">
-        <NewTaskButton />
+        {signedOut ? null : <NewTaskButton />}
         <ServersButton />
         <LockButton />
         <SignOutButton />

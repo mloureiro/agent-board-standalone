@@ -69,7 +69,9 @@ export async function seedAccount(
 }
 
 export function boardLink(page: Page): Locator {
-  return page.getByRole('link', { name: BOARD_NAMES.boardLink });
+  return page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: BOARD_NAMES.boardLink });
 }
 
 export function passphraseField(page: Page): Locator {
@@ -77,7 +79,9 @@ export function passphraseField(page: Page): Locator {
 }
 
 export async function unlockIfAsked(page: Page, passphrase: string): Promise<void> {
-  await expect(column(page, 'backlog').or(passphraseField(page)).first()).toBeVisible({
+  await expect(
+    passphraseField(page).or(page.getByRole('button', { name: BOARD_NAMES.lock })),
+  ).toBeVisible({
     timeout: UI_TIMEOUT_MS,
   });
   await expect(passphraseField(page).or(column(page, 'backlog')).first()).toBeVisible({
@@ -97,6 +101,7 @@ export async function openBoard(page: Page, account: Account): Promise<void> {
 export async function reopenBoard(page: Page, account: Account): Promise<void> {
   await page.reload();
   await unlockIfAsked(page, account.key.passphrase);
+  if (!(await column(page, 'backlog').isVisible())) await boardLink(page).click();
   await expect(column(page, 'backlog')).toBeVisible({ timeout: UI_TIMEOUT_MS });
 }
 
@@ -128,6 +133,7 @@ export async function orderIn(
 export async function goToTask(page: Page, title: string): Promise<void> {
   if (!(await card(page, title).isVisible())) await boardLink(page).click();
   await card(page, title).getByRole('link', { name: title }).click();
+  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: UI_TIMEOUT_MS });
 }
 
 export async function createTitled(
