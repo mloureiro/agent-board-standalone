@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
-use serde_json::{Value, json};
+use serde::Serialize;
 
 use crate::app::Running;
 use crate::backup::{ApiHold, Backups, Outcome};
@@ -27,6 +27,16 @@ impl ApiHold for ServerHold {
         self.handle.set_hold(false);
         resumed
     }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+pub struct BackupView {
+    #[serde(rename = "inProgress")]
+    pub in_progress: bool,
+    #[serde(rename = "lastBackup")]
+    pub last_backup: Option<String>,
+    #[serde(rename = "lastError")]
+    pub last_error: Option<String>,
 }
 
 pub struct Desk {
@@ -56,12 +66,12 @@ impl Desk {
         }
     }
 
-    pub fn view(&self) -> Value {
-        json!({
-            "inProgress": self.in_progress,
-            "lastBackup": self.backups.as_ref().ok().and_then(Backups::last_manual),
-            "lastError": self.last_error,
-        })
+    pub fn view(&self) -> BackupView {
+        BackupView {
+            in_progress: self.in_progress,
+            last_backup: self.backups.as_ref().ok().and_then(Backups::last_manual),
+            last_error: self.last_error.clone(),
+        }
     }
 
     pub fn start(

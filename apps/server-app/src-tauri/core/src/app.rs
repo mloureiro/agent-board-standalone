@@ -18,6 +18,7 @@ use crate::spec;
 use crate::supervisor::{Plan, StartGate};
 use crate::uninstall;
 use crate::upgrade::Upgrade;
+use crate::versions::Versions;
 use crate::worker_paths::WorkerPaths;
 use crate::worker_setup::{CLI_RELATIVE, WorkerSetup};
 
@@ -75,6 +76,8 @@ pub struct Running {
     pub plan: Plan,
     pub worker: WorkerSetup,
     pub api_gate: Option<StartGate>,
+    pub versions: Versions,
+    pub open_program: Option<PathBuf>,
     _lock: InstanceLock,
 }
 
@@ -174,6 +177,8 @@ pub fn start(host: &Host) -> io::Result<Start> {
         plan,
         worker,
         api_gate,
+        versions: Versions::read(&host.resources_dir()),
+        open_program: host.overrides.open_program.clone(),
         _lock: lock,
     })))
 }

@@ -10,6 +10,9 @@ export interface FakeApi {
 
 export interface FakeApiBehaviour {
   holdNever?: boolean;
+  holdDelayMs?: number;
+  pairCode?: string;
+  pairRefusal?: string;
 }
 
 export async function fakeControlSocket(
@@ -25,7 +28,21 @@ export async function fakeControlSocket(
     const command = (request.url ?? '').slice(1);
     commands.push(command);
     const answer = (): void => {
-      const body = command === 'status' ? '{"ok":true,"state":"running"}' : '{"ok":true}';
+      if (command === 'pair-code' && behaviour.pairRefusal !== undefined) {
+        const refusal = JSON.stringify({ error: behaviour.pairRefusal });
+        response.writeHead(409, {
+          'content-type': 'application/json',
+          'content-length': Buffer.byteLength(refusal),
+        });
+        response.end(refusal);
+        return;
+      }
+      const body =
+        command === 'status'
+          ? '{"ok":true,"state":"running"}'
+          : command === 'pair-code'
+            ? JSON.stringify({ code: behaviour.pairCode })
+            : '{"ok":true}';
       response.writeHead(200, {
         'content-type': 'application/json',
         'content-length': Buffer.byteLength(body),
@@ -33,6 +50,10 @@ export async function fakeControlSocket(
       response.end(body);
     };
     if (command === 'hold' && behaviour.holdNever) return;
+    if (command === 'hold' && behaviour.holdDelayMs !== undefined) {
+      setTimeout(answer, behaviour.holdDelayMs);
+      return;
+    }
     answer();
   });
   await new Promise<void>((resolve) => server.listen(socket, resolve));

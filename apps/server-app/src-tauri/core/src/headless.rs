@@ -1,21 +1,19 @@
 use std::io::{BufRead, Write};
-use std::sync::Arc;
 use std::sync::mpsc::{self, RecvTimeoutError};
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
 use serde_json::{Value, json};
 
+use crate::actions::Action;
 use crate::app::Running;
-use crate::backup::Outcome;
-use crate::backup_desk::Desk;
-use crate::opener::{self, Opener, SystemOpener};
-use crate::services::Services;
+use crate::backup_desk::BackupView;
+use crate::console::{Console, Event};
+use crate::handover::{CommandRunner, SystemRunner};
+use crate::opener::{Opener, SystemOpener};
 use crate::signals;
 use crate::status::Status;
-use crate::worker_actions;
-
-const NOT_IMPLEMENTED: [&str; 2] = ["open-board", "pair-device"];
 
 const POLL: Duration = Duration::from_millis(25);
 
@@ -24,7 +22,7 @@ pub fn emit(out: &mut impl Write, event: &Value) {
     let _ = out.flush();
 }
 
-pub fn state(running: &Running, status: &Status, backup: &Value) -> Value {
+pub fn state(running: &Running, status: &Status, backup: &BackupView) -> Value {
     let settings = match &running.settings {
         Ok(settings) => json!({
             "status": "loaded",
@@ -52,21 +50,29 @@ pub fn state(running: &Running, status: &Status, backup: &Value) -> Value {
 
 pub fn serve(running: &Running, input: impl BufRead + Send + 'static, out: &mut impl Write) {
     signals::install();
-    serve_with(running, input, out, &SystemOpener, &signals::received);
+    serve_with(
+        running,
+        input,
+        out,
+        Arc::new(SystemOpener::new(running.open_program.clone())),
+        Arc::new(SystemRunner::new(running.open_program.clone())),
+        &signals::received,
+    );
 }
 
 enum Input {
     Line(String),
     Closed,
     Status,
-    Backup(Outcome),
+    Reply(Value),
 }
 
 pub fn serve_with(
     running: &Running,
     input: impl BufRead + Send + 'static,
     out: &mut impl Write,
-    opener: &dyn Opener,
+    opener: Arc<dyn Opener>,
+    runner: Arc<dyn CommandRunner>,
     interrupted: &dyn Fn() -> Option<i32>,
 ) {
     let (sender, inbox) = mpsc::channel();
@@ -80,13 +86,18 @@ pub fn serve_with(
         }
         let _ = lines.send(Input::Closed);
     });
-    let reports = sender.clone();
-    let changes = sender;
-    let mut desk = Desk::new(running);
-    let services = Services::start(
+    let changes = Mutex::new(sender);
+    let console = Console::start(
         running,
-        Arc::new(move || {
-            let _ = changes.send(Input::Status);
+        opener,
+        runner,
+        Arc::new(move |event| {
+            let message = match event {
+                Event::Changed => Input::Status,
+                Event::Reply(reply) => Input::Reply(reply),
+                Event::Menu => return,
+            };
+            let _ = changes.lock().unwrap().send(message);
         }),
     );
 
@@ -104,123 +115,45 @@ pub fn serve_with(
         };
         let line = match received {
             Input::Status => {
-                emit(out, &state(running, &services.status(), &desk.view()));
+                emit(
+                    out,
+                    &state(running, &console.status(), &console.backup_view()),
+                );
                 continue;
             }
-            Input::Backup(outcome) => {
-                desk.finish(&outcome);
-                if outcome.resume_failed {
-                    services.supervisor().restart_server();
-                }
-                emit(out, &backed_up(&outcome));
-                emit(out, &state(running, &services.status(), &desk.view()));
+            Input::Reply(reply) => {
+                emit(out, &reply);
                 continue;
             }
             Input::Closed => break,
             Input::Line(line) => line,
         };
         let action = line.trim();
-        let name = action.split_whitespace().next().unwrap_or("");
-        match name {
+        match action.split_whitespace().next().unwrap_or("") {
             "" => {}
-            "state" => emit(out, &state(running, &services.status(), &desk.view())),
-            "backup-now" => {
-                let report = reports.clone();
-                match desk.start(services.supervisor().handle(), move |outcome| {
-                    let _ = report.send(Input::Backup(outcome));
-                }) {
-                    Ok(()) => emit(out, &state(running, &services.status(), &desk.view())),
-                    Err(message) => emit(
-                        out,
-                        &json!({
-                            "type": "action",
-                            "action": "backup-now",
-                            "ok": false,
-                            "message": message,
-                        }),
-                    ),
-                }
-            }
-            "restart-server" => {
-                services.supervisor().restart_server();
-                emit(
-                    out,
-                    &json!({ "type": "action", "action": "restart-server", "ok": true }),
-                );
-            }
-            "open-logs" => emit(
+            "state" => emit(
                 out,
-                &opened(
-                    "open-logs",
-                    opener::open_logs_folder(&running.paths, opener),
-                ),
+                &state(running, &console.status(), &console.backup_view()),
             ),
-            "open-settings" => emit(
-                out,
-                &opened(
-                    "open-settings",
-                    opener::open_settings_file(&running.paths, opener),
-                ),
-            ),
-            "connect-worker" => {
-                let mut parts = action.split_whitespace().skip(1);
-                let event = match (parts.next(), parts.next(), parts.next()) {
-                    (Some(token), Some(data_key), None) => {
-                        worker_actions::connect_worker(&services.worker, token, data_key)
-                    }
-                    _ => json!({
-                        "type": "action",
-                        "action": "connect-worker",
-                        "ok": false,
-                        "message": "connect-worker needs a token and a data key",
-                    }),
-                };
-                emit(out, &event);
-            }
-            "disconnect-worker" => emit(out, &worker_actions::disconnect_worker(&services.worker)),
-            "restart-worker" => emit(out, &worker_actions::restart_worker(&services.worker)),
-            "check-worker" => emit(out, &worker_actions::check_worker(&services.worker, opener)),
+            "menu" => emit(out, &console.menu().to_json()),
             "quit" => break,
-            deferred if NOT_IMPLEMENTED.contains(&deferred) => emit(
-                out,
-                &json!({
-                    "type": "error",
-                    "action": deferred,
-                    "message": format!("{deferred} is not implemented in this build"),
-                }),
-            ),
-            other => emit(
-                out,
-                &json!({ "type": "error", "message": format!("unknown action: {other}") }),
-            ),
+            _ => match Action::parse(action) {
+                Ok(action) => {
+                    if let Some(reply) = console.dispatch(action) {
+                        emit(out, &reply);
+                    }
+                }
+                Err(reply) => emit(out, &reply),
+            },
         }
     }
-    desk.cancel();
-    let last = services.stop();
+    let last = console.stop();
     let changed = inbox
         .try_iter()
         .any(|received| matches!(received, Input::Status));
     if changed {
-        emit(out, &state(running, &last, &desk.view()));
+        emit(out, &state(running, &last, &console.backup_view()));
     }
     running.app_log.info("quit");
     emit(out, &json!({ "type": "quit" }));
-}
-
-fn opened(action: &str, result: std::io::Result<()>) -> Value {
-    match result {
-        Ok(()) => json!({ "type": "action", "action": action, "ok": true }),
-        Err(error) => {
-            json!({ "type": "action", "action": action, "ok": false, "message": error.to_string() })
-        }
-    }
-}
-
-fn backed_up(outcome: &Outcome) -> Value {
-    match &outcome.result {
-        Ok(name) => json!({ "type": "action", "action": "backup-now", "ok": true, "name": name }),
-        Err(message) => {
-            json!({ "type": "action", "action": "backup-now", "ok": false, "message": message })
-        }
-    }
 }

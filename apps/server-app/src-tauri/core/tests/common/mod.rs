@@ -64,3 +64,11 @@ impl Bed {
 pub fn exists(path: &Path) -> bool {
     fs::symlink_metadata(path).is_ok()
 }
+
+pub fn repo_json(relative: &str) -> serde_json::Value {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../..");
+    let text = fs::read_to_string(root.join(relative)).unwrap_or_else(|_| {
+        panic!("{relative} is missing: run `pnpm --filter @agent-board/contract run build`")
+    });
+    serde_json::from_str(&text).unwrap()
+}
