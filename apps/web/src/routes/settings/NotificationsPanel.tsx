@@ -2,15 +2,11 @@ import { Alert, Checkbox, Stack, Text } from '@mantine/core';
 import { useState, type ReactNode } from 'react';
 
 import { currentBridge } from '../../bridge/index.js';
+import { useNotificationPermission, type Permission } from '../../components/index.js';
 import { NOTIFICATIONS_SETTING, settingAt, useSettings } from '../../pages/index.js';
 import { notOffered } from '../../servers/index.js';
 
 export const NO_SETTINGS = notOffered('settings-document');
-
-export type Permission = 'granted' | 'denied' | 'default' | 'unsupported';
-
-export const permissionOf = (): Permission =>
-  typeof Notification === 'undefined' ? 'unsupported' : Notification.permission;
 
 const PERMISSION_TEXT: Readonly<Record<Permission, string | null>> = {
   granted: null,
@@ -21,7 +17,7 @@ const PERMISSION_TEXT: Readonly<Record<Permission, string | null>> = {
 
 export function NotificationsPanel(): ReactNode {
   const data = useSettings();
-  const [permission, setPermission] = useState<Permission>(permissionOf);
+  const [permission, setPermission] = useNotificationPermission();
   const [error, setError] = useState<string | null>(null);
   const [requested, setRequested] = useState<boolean | null>(null);
   if (data === null) return null;

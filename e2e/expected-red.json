@@ -77,20 +77,7 @@
     ],
     "browser/sealing-at-rest.spec.ts": "*",
     "browser/settings.spec.ts": [
-      {
-        "title": "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] a task newly in Needs me fires a notification while the page is unfocused",
-        "projects": ["chromium-desktop"]
-      },
-      {
-        "title": "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] the on and off setting is read back from the server in a new context",
-        "projects": ["chromium-desktop"]
-      },
-      {
-        "title": "[web-069] [web-070] [web-073] Settings › Notifications › [web-073] a context without the permission grant does not fire",
-        "projects": ["chromium-desktop"]
-      },
-      "[web-075] Settings › Account › [web-075] deleting the account signs out and the user cannot sign back in to the old data",
-      "[web-075] Settings › Account › [web-075] importing the exported file into a fresh account restores its tasks"
+      "[web-075] Settings › Account › [web-075] deleting the account signs out and the user cannot sign back in to the old data"
     ],
     "browser/sign-in.spec.ts": [
       {
