@@ -81,13 +81,14 @@ describe('route table totals', () => {
     }
   });
 
-  it('[contract-003] hand-off finish, pair, sign-in finishes, register-key and machines/issue carry issuesCredential, and no other route does', () => {
+  it('[contract-003] hand-off approve and finish, pair, sign-in finishes, register-key and machines/issue carry issuesCredential, and no other route does', () => {
     expect(
       routes
         .filter((entry) => entry.issuesCredential)
         .map((entry) => entry.name)
         .sort(),
     ).toEqual([
+      'auth.handoff.approve',
       'auth.handoff.finish',
       'auth.oidc.finish',
       'auth.passkey.login',

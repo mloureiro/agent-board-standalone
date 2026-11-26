@@ -1,4 +1,5 @@
-pub const CREDENTIAL_ROUTES: [&str; 10] = [
+pub const CREDENTIAL_ROUTES: [&str; 11] = [
+    "/api/auth/handoff/approve",
     "/api/auth/handoff/finish",
     "/api/pair",
     "/api/machine/register-key",
