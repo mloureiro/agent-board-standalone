@@ -35,6 +35,7 @@ export async function watchEvents(options: WatchOptions): Promise<void> {
   const idleMs = options.idleMs ?? DEFAULT_IDLE_MS;
   const backoff = options.backoffMs ?? DEFAULT_BACKOFF_MS;
   let failures = 0;
+  let reconnectedAtOnce = false;
 
   while (!signal.aborted) {
     const attempt = new AbortController();
@@ -61,12 +62,20 @@ export async function watchEvents(options: WatchOptions): Promise<void> {
         if (item.type === 'message' && item.message.event !== PING_EVENT) onMessage(item.message);
       }
     };
-    await connect().catch(() => undefined);
+    const endedByServer = await connect().then(
+      () => !attempt.signal.aborted,
+      () => false,
+    );
     clearTimeout(idle);
     signal.removeEventListener('abort', stop);
     failures += 1;
     if (signal.aborted) return;
     onState?.('down');
+    if (endedByServer && !reconnectedAtOnce) {
+      reconnectedAtOnce = true;
+      continue;
+    }
+    reconnectedAtOnce = false;
     const delay = backoff[Math.min(failures, backoff.length) - 1] ?? backoff.at(-1) ?? 0;
     await pause(delay, signal);
   }
