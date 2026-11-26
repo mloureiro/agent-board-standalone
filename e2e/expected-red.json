@@ -63,12 +63,25 @@
       },
       "accessibility of the sign-in page › [web-080] the sign-in page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme"
     ],
-    "browser/board.spec.ts": "*",
+    "browser/board.spec.ts": [
+      "board › [web-029] dragging moves a card from Backlog to Todo and the order persists after a reload",
+      "board › [web-029] cards reorder within Backlog and the order persists after a reload",
+      "board › [web-029] dropping a card on Running or Waiting is refused",
+      "board › [web-029] a touch drag moves a card between columns on a phone @phone",
+      "board › [web-032] a banner names a machine whose CLI is no longer accepted",
+      "board with a running card › [web-035] a running card shows context usage as a thin line"
+    ],
     "browser/connection.spec.ts": "*",
     "browser/migrate.spec.ts": [
       "the migrated board in the browser › [migrate-003] the owner passphrase unlocks the migrated board and every task opens"
     ],
-    "browser/new-task.spec.ts": "*",
+    "browser/new-task.spec.ts": [
+      "new task form › [web-061] the form takes prompt, project, icon, directory, title, labels, priority, model, effort, lane, agent and auto-done",
+      "drafts › [web-064] unsent text in the new-task prompt, the reply box and a question Other field survives navigation, a reload and a tab switch",
+      "drafts › [web-064] drafts clear on send",
+      "drafts › [web-064] drafts clear on lock",
+      "drafts after sign-out › [web-064] drafts clear on sign-out"
+    ],
     "browser/parity.spec.ts": [
       "redirect sign-in › [P-05] SAML redirect sign-in finishes in the tab that started it",
       "open client sessions › [P-10] after sign-out elsewhere the event stream ends, the reconnect gets 401 and the client shows sign-in",
