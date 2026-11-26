@@ -1,8 +1,5 @@
 {
   "files": {
-    "blackbox/events-projects.test.ts": [
-      "board projects › [cli-039] board projects lists the server's projects"
-    ],
     "blackbox/matrix-refusal.test.ts": "*",
     "blackbox/schedules.test.ts": [
       "[api-077] an after schedule › [api-077] fires once more for running to done on a second run"
@@ -21,7 +18,6 @@
     ],
     "browser/board.spec.ts": [
       "board › [web-029] a touch drag moves a card between columns on a phone @phone",
-      "board › [web-032] a banner names a machine whose CLI is no longer accepted",
       "board with a running card › [web-035] a running card shows context usage as a thin line"
     ],
     "browser/new-task.spec.ts": [
@@ -69,10 +65,6 @@
       }
     ],
     "browser/sealing-at-rest.spec.ts": "*",
-    "browser/settings.spec.ts": [
-      "[web-075] Settings › Account › [web-075] deleting the account signs out and the user cannot sign back in to the old data",
-      "[web-075] Settings › Account › [web-075] importing the exported file into a fresh account restores its tasks"
-    ],
     "browser/sign-in.spec.ts": [
       {
         "title": "sign-in page › [web-014] SAML returns to the client return page and lands signed in, in the same tab",

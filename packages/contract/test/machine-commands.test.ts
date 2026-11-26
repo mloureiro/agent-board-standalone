@@ -172,6 +172,7 @@ const cases: Case[] = [
     },
     response: { inserted: 1, assigned: 1 },
   },
+  { command: 'list-projects', request: {}, response: { projects: [] } },
   {
     command: 'add-schedule',
     request: { id: schedule, title: sealed, input: sealed, everyMs: 60_000 },
@@ -266,6 +267,7 @@ const KEPT_AND_NEW = [
   'get-title-rules',
   'heartbeat',
   'list-machines',
+  'list-projects',
   'list-runs',
   'list-schedules',
   'list-tasks',
@@ -305,11 +307,11 @@ describe('machine commands: handshake, documents, directories, schedules, user-a
   it('[contract-003] the machine command list is exactly:', () => {
     const names = machineRoutes.map((entry) => entry.name.slice('machine.'.length));
     const rest = names.filter((name) => name !== 'transcript' && name !== 'events');
-    expect(rest).toHaveLength(56);
+    expect(rest).toHaveLength(57);
     expect([...rest].sort()).toEqual([...KEPT_AND_NEW].sort());
     expect(names).toContain('transcript');
     expect(names).toContain('events');
-    expect(machineRoutes).toHaveLength(58);
+    expect(machineRoutes).toHaveLength(59);
   });
 
   it('[contract-003] every machine command has request, response and errors', () => {
@@ -446,6 +448,14 @@ describe('machine commands: handshake, documents, directories, schedules, user-a
     expect(parse(response, { inserted: 0, assigned: 0 }).success).toBe(true);
     expect(route('get-legacy-dirs').feature).toBe('legacy-dirs');
     expect(route('convert-legacy-dirs').feature).toBe('legacy-dirs');
+  });
+
+  it('[contract-003] the project list is a feature-marked machine route returning wire projects', () => {
+    const { request, response } = route('list-projects');
+    expect(parse(request, {}).success).toBe(true);
+    expect(parse(request, { all: true }).success).toBe(false);
+    expect(parse(response, { projects: [] }).success).toBe(true);
+    expect(route('list-projects').feature).toBe('machine-projects');
   });
 
   it('[contract-003] a schedule carries directoryId and projectId, never workdir', () => {

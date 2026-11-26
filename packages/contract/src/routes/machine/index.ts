@@ -3,6 +3,7 @@ export * from './documents.js';
 export * from './events.js';
 export * from './handshake.js';
 export * from './notes.js';
+export * from './projects.js';
 export * from './prs.js';
 export * from './runs.js';
 export * from './schedules.js';

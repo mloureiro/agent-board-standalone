@@ -42,13 +42,13 @@ const registration = {
 
 describe('route table totals', () => {
   it('[contract-003] every route of the table is public, client or machine and its path is unique', () => {
-    expect(routes).toHaveLength(148);
+    expect(routes).toHaveLength(149);
     for (const entry of routes) expect(['public', 'client', 'machine']).toContain(entry.auth);
     const paths = routes.map((entry) => entry.path);
     expect(new Set(paths).size).toBe(paths.length);
     const counts = { public: 0, client: 0, machine: 0 };
     for (const entry of routes) counts[entry.auth] += 1;
-    expect(counts).toEqual({ public: 15, client: 75, machine: 58 });
+    expect(counts).toEqual({ public: 15, client: 75, machine: 59 });
   });
 
   it('[contract-003] public and auth routes sit under /api/auth, /api/version, /api/pair or /healthz', () => {

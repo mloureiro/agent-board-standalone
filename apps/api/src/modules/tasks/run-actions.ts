@@ -58,7 +58,11 @@ export const heartbeatTask = async (
   id: string,
   beat: { lane: string; borrowed: boolean },
   caller: TaskCaller,
-): Promise<void> => {
+): Promise<boolean> => {
+  const [before] = await tx
+    .select({ lane: task.lane, borrowed: task.borrowed })
+    .from(task)
+    .where(eq(task.id, id));
   const beaten = await tx
     .update(task)
     .set({ lane: beat.lane, borrowed: beat.borrowed, lastActiveAt: new Date() })
@@ -71,7 +75,11 @@ export const heartbeatTask = async (
       ),
     )
     .returning({ id: task.id });
-  if (beaten.length === 0) await getTask(tx, id);
+  if (beaten.length === 0) {
+    await getTask(tx, id);
+    return false;
+  }
+  return before?.lane !== beat.lane || before.borrowed !== beat.borrowed;
 };
 
 export const pauseTask = async (

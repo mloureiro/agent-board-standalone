@@ -14,3 +14,4 @@ export {
   type ImportOptions,
   type OwnerCounts,
 } from './board.js';
+export { accountSummary, deleteAccount } from './summary.js';
