@@ -68,10 +68,10 @@ describe.each(TARGETS)('tenancy on $name', (target) => {
       expect(after[0]?.owner).toBe('catalog-reader');
     });
 
-    it('[api-044] every tenant table has row-level security and a policy, and a request sees only its own rows', async () => {
+    it('[api-044] every tenant table has forced row-level security and a policy, and a request sees only its own rows', async () => {
       const tables = await catalog(
         opened.database,
-        sql`select c.relname as name, c.relrowsecurity as secured,
+        sql`select c.relname as name, c.relrowsecurity as secured, c.relforcerowsecurity as forced,
                    (select count(*)::int from pg_policy p where p.polrelid = c.oid) as policies
               from pg_class c join pg_namespace n on n.oid = c.relnamespace
              where n.nspname = 'public' and c.relkind = 'r' order by c.relname`,
@@ -81,9 +81,11 @@ describe.each(TARGETS)('tenancy on $name', (target) => {
       for (const table of tables) {
         if (table.name === 'auth_flow') {
           expect(table.secured).toBe(false);
+          expect(table.forced).toBe(false);
           continue;
         }
         expect(table.secured, String(table.name)).toBe(true);
+        expect(table.forced, String(table.name)).toBe(true);
         expect(Number(table.policies), String(table.name)).toBeGreaterThan(0);
       }
 

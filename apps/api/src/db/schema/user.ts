@@ -5,7 +5,7 @@ import { check, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import type { z } from 'zod';
 
 import { sessionMethod } from './enums.js';
-import { tenantPolicy } from './tenancy.js';
+import { systemPolicy, tenantPolicy } from './tenancy.js';
 
 export const appUser = pgTable(
   'app_user',
@@ -35,5 +35,6 @@ export const appUser = pgTable(
       sql`char_length(${t.identityIssuer}) between 1 and 2048 and char_length(${t.identitySubject}) between 1 and 2048 or ${t.identityIssuer} is null`,
     ),
     tenantPolicy('username'),
+    systemPolicy(),
   ],
 ).enableRLS();

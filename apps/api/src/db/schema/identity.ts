@@ -16,7 +16,7 @@ import {
 import { authFlowKind, deviceKind, sessionKind, sessionMethod } from './enums.js';
 import { machine } from './machines.js';
 import { owner } from './owner.js';
-import { tenantPolicy } from './tenancy.js';
+import { systemPolicy, tenantPolicy } from './tenancy.js';
 import { appUser } from './user.js';
 
 export const session = pgTable(
@@ -36,6 +36,7 @@ export const session = pgTable(
     index('session_owner_idx').on(t.owner),
     index('session_expires_idx').on(t.expiresAt),
     tenantPolicy(),
+    systemPolicy(),
   ],
 ).enableRLS();
 
@@ -60,6 +61,7 @@ export const passkey = pgTable(
     check('passkey_transports_count', sql`cardinality(${t.transports}) <= 16`),
     index('passkey_owner_idx').on(t.owner),
     tenantPolicy(),
+    systemPolicy(),
   ],
 ).enableRLS();
 
@@ -120,6 +122,7 @@ export const clientKey = pgTable(
     }).onDelete('cascade'),
     index('client_key_owner_idx').on(t.owner),
     tenantPolicy(),
+    systemPolicy(),
   ],
 ).enableRLS();
 
@@ -141,5 +144,6 @@ export const requestNonce = pgTable(
     }).onDelete('cascade'),
     index('request_nonce_seen_idx').on(t.seenAt),
     tenantPolicy(),
+    systemPolicy(),
   ],
 ).enableRLS();

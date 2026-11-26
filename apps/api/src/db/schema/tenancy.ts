@@ -24,6 +24,15 @@ export const tenantPolicy = (column: string = 'owner') =>
     withCheck: sql`${sql.identifier(column)} = ${currentOwner}`,
   });
 
+export const systemPolicy = () =>
+  pgPolicy('system', {
+    as: 'permissive',
+    for: 'all',
+    to: 'current_user',
+    using: sql`true`,
+    withCheck: sql`true`,
+  });
+
 export const envelopeCondition = (column: SQL | AnyPgColumn, maxLength: number): SQL =>
   sql`${column} ~ ${sql.raw(`'${ENVELOPE_PATTERN}'`)} and char_length(${column}) <= ${sql.raw(String(maxLength))}`;
 
