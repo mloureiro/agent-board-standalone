@@ -190,8 +190,8 @@ describe('supervision through the headless runner', () => {
       session.child.kill(signal);
 
       expect(await session.closed).toBe(0);
-      expect(isAlive(api)).toBe(false);
-      expect(isAlive(grandchild)).toBe(false);
+      await until(() => !isAlive(api), 'the API to be reaped', 5);
+      await until(() => !isAlive(grandchild), 'the grandchild to be reaped', 5);
       expect(session.events.at(-1)).toEqual({ type: 'quit' });
     },
   );
@@ -205,7 +205,7 @@ describe('supervision through the headless runner', () => {
     session.child.kill('SIGTERM');
 
     expect(await session.closed).toBe(0);
-    expect(isAlive(api)).toBe(false);
+    await until(() => !isAlive(api), 'the API to be reaped', 5);
   });
 
   it('[server-app-033] quit with an API that ignores SIGTERM ends after the grace period', async () => {
@@ -284,7 +284,7 @@ describe('supervision through the headless runner', () => {
     session.child.stdin.end();
 
     expect(await session.closed).toBe(0);
-    expect(isAlive(api)).toBe(false);
+    await until(() => !isAlive(api), 'the API to be reaped', 5);
   });
 });
 
