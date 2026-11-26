@@ -4,6 +4,7 @@ export const RELEASE_REPOSITORY = 'mloureiro/agent-board-standalone';
 export const RELEASE_TAG_PREFIX = 'cli-v';
 export const RELEASES_URL_ENV = 'AGENT_BOARD_RELEASES_URL';
 export const CHECKSUMS_ASSET = 'SHA256SUMS';
+export const SIGNATURE_ASSET = 'SHA256SUMS.minisig';
 export const UPDATE_TARGETS = ['linux-x64', 'linux-arm64', 'darwin-arm64'] as const;
 
 export type UpdateTarget = (typeof UPDATE_TARGETS)[number];

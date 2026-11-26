@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 
-import { CLI_ROOT } from './bundle.ts';
+import { CLI_ROOT, updateKeyDefine } from './bundle.ts';
 import { RELEASE_TARGETS, assetFile, hostTarget, type ReleaseTarget } from './targets.ts';
 
 export const RELEASE_DIR = path.join(CLI_ROOT, 'dist', 'release');
@@ -11,9 +11,21 @@ export const RELEASE_DIR = path.join(CLI_ROOT, 'dist', 'release');
 export function compile(target: ReleaseTarget, outDir = RELEASE_DIR): string {
   mkdirSync(outDir, { recursive: true });
   const outfile = path.join(outDir, assetFile(target));
+  const defines = Object.entries(updateKeyDefine()).flatMap(([name, value]) => [
+    '--define',
+    `${name}=${value}`,
+  ]);
   execFileSync(
     'bun',
-    ['build', '--compile', `--target=bun-${target}`, 'src/main.ts', '--outfile', outfile],
+    [
+      'build',
+      '--compile',
+      `--target=bun-${target}`,
+      ...defines,
+      'src/main.ts',
+      '--outfile',
+      outfile,
+    ],
     { cwd: CLI_ROOT, stdio: 'inherit' },
   );
   return outfile;

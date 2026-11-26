@@ -12,8 +12,17 @@ jobs:
   binaries:
     name: build the CLI binaries
     runs-on: ubuntu-latest
+    outputs:
+      signed: ${{ steps.key.outputs.signed }}
     steps:
       - uses: actions/checkout@v4
+      - id: key
+        run: |
+          if [ -f apps/cli/update-key.pub ]; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -61,12 +70,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
+          SIGNED: ${{ needs.binaries.outputs.signed }}
         run: |
+          notes="CLI release $TAG. Install with apps/cli/scripts/install.sh or run board self-update."
+          set -- --verify-tag --title "$TAG"
+          if [ "$SIGNED" = "true" ]; then
+            notes="$notes Draft until signed: run pnpm --filter @agent-board/cli release:sign $TAG on the machine holding the minisign key."
+            set -- "$@" --draft
+          fi
           gh release create "$TAG" \
             release/board-linux-x64 \
             release/board-linux-arm64 \
             release/board-darwin-arm64 \
             release/SHA256SUMS \
-            --verify-tag \
-            --title "$TAG" \
-            --notes "CLI release $TAG. Install with apps/cli/scripts/install.sh or run board self-update."
+            "$@" \
+            --notes "$notes"

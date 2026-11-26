@@ -11,6 +11,7 @@
     "build:binary": "node scripts/compile.ts",
     "smoke": "node scripts/smoke.ts",
     "release": "node scripts/release.ts",
+    "release:sign": "node scripts/release-sign.ts",
     "spike:bun": "bun spike/bun-sealing.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
