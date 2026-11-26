@@ -1,7 +1,7 @@
 import type { UiTaskListItem, WireTask, WireTaskPr } from '@agent-board/contract';
-import { asc, desc, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 
-import { note, taskPr } from '../../db/schema/index.js';
+import { note, taskPr, transcriptEvent, transcriptRun } from '../../db/schema/index.js';
 import type { ScopedDatabase } from '../database/index.js';
 import type { TaskRow } from './types.js';
 import { toUiTask, toWireTask } from './wire.js';
@@ -30,6 +30,59 @@ const prsOf = async (
       { id: pr.id, pr: pr.pr, state: pr.state },
     ]);
   return grouped;
+};
+
+type RunContext = NonNullable<UiTaskListItem['context']>;
+
+const contextsOf = async (
+  tx: ScopedDatabase,
+  rows: readonly TaskRow[],
+): Promise<Map<string, RunContext>> => {
+  const found = new Map<string, RunContext>();
+  const newest = await tx
+    .selectDistinctOn([transcriptRun.taskId], {
+      taskId: transcriptRun.taskId,
+      runId: transcriptRun.id,
+    })
+    .from(transcriptRun)
+    .where(
+      inArray(
+        transcriptRun.taskId,
+        rows.map((row) => row.id),
+      ),
+    )
+    .orderBy(transcriptRun.taskId, desc(transcriptRun.startedAt));
+  if (newest.length === 0) return found;
+  const latest = await tx
+    .selectDistinctOn([transcriptEvent.runId], {
+      runId: transcriptEvent.runId,
+      seq: transcriptEvent.seq,
+      at: transcriptEvent.at,
+      data: transcriptEvent.data,
+    })
+    .from(transcriptEvent)
+    .where(
+      and(
+        eq(transcriptEvent.kind, 'context'),
+        inArray(
+          transcriptEvent.runId,
+          newest.map((run) => run.runId),
+        ),
+      ),
+    )
+    .orderBy(transcriptEvent.runId, desc(transcriptEvent.seq));
+  const byRun = new Map(latest.map((event) => [event.runId, event]));
+  for (const run of newest) {
+    const event = byRun.get(run.runId);
+    if (event !== undefined)
+      found.set(run.taskId, {
+        at: event.at.toISOString(),
+        runId: event.runId,
+        seq: event.seq,
+        data: event.data,
+      });
+  }
+  return found;
 };
 
 export const presentWireTasks = async (
@@ -71,6 +124,7 @@ export const presentListItems = async (
     )
     .orderBy(note.taskId, desc(note.createdAt));
   const byTask = new Map(latest.map((row) => [row.taskId, row]));
+  const contexts = await contextsOf(tx, rows);
   return tasks.map((entry) => {
     const last = byTask.get(entry.id);
     return {
@@ -84,7 +138,7 @@ export const presentListItems = async (
               author: last.author,
               kind: last.kind,
             },
-      context: null,
+      context: contexts.get(entry.id) ?? null,
     };
   });
 };

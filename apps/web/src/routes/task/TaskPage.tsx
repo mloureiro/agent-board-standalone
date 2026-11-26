@@ -6,6 +6,8 @@ import { LinkRulesProvider, Markdown, usePageTitle } from '../../components/inde
 import { ProposalStartDialog } from '../board/ProposalStartDialog.js';
 import { useNow } from '../board/clock.js';
 import { ActionPanel } from './ActionPanel.js';
+import { ContextBar } from './ContextBar.js';
+import { CONTEXT_FEATURE } from '../board/context-model.js';
 import { canEditPrompt, canFork, polishState, type PolishRewrite } from './action-model.js';
 import { PullRequests, WatchesList } from './Attachments.js';
 import { Configuration, DirectorySection } from './Configuration.js';
@@ -115,6 +117,9 @@ function TaskBody(props: { readonly id: string; readonly data: TaskData }): Reac
           {alert}
         </Alert>
       ))}
+      {data.features.includes(CONTEXT_FEATURE) ? (
+        <ContextBar data={data} taskId={id} live={LIVE_STATUSES.includes(view.task.status)} />
+      ) : null}
       <Configuration view={view} actions={actions} projects={data.projects} />
       <DirectorySection view={view} directories={data.directories} actions={actions} />
       <PullRequests prs={view.prs} actions={actions} />

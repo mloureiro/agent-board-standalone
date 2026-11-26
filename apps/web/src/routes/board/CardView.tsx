@@ -11,6 +11,7 @@ import { cardUid, type BoardCard } from './card-model.js';
 import { canDragFrom, canDropOn } from './columns.js';
 import { useCardDrag } from './drag.js';
 import { agoText, parseTime } from './format.js';
+import { ContextLine } from './ContextLine.js';
 
 export const COARSE_QUERY = '(pointer: coarse)';
 
@@ -166,6 +167,7 @@ function CardViewBase(props: CardViewProps): ReactNode {
               {liveness}
             </Text>
           )}
+          {card.context === null ? null : <ContextLine usage={card.context} />}
           {card.note === null ? null : (
             <Text size="xs" c="dimmed" lineClamp={1}>
               {card.note}

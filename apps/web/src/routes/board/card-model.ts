@@ -1,6 +1,8 @@
 import type { UiTaskListItem } from '@agent-board/contract';
 import { bindings, open, seal, type Binding, type Keys, type Origin } from '@agent-board/sealing';
 
+import { readContext, type ContextUsage } from './context-model.js';
+
 export const UNREADABLE_TITLE = 'Unreadable task';
 
 export interface BoardCard {
@@ -11,6 +13,7 @@ export interface BoardCard {
   readonly labels: readonly string[];
   readonly note: string | null;
   readonly watches: number;
+  readonly context: ContextUsage | null;
 }
 
 export interface InputShape {
@@ -90,9 +93,13 @@ function countWatches(text: string | null): number {
   }
 }
 
-export async function decryptCard(keys: Keys, task: UiTaskListItem): Promise<BoardCard> {
+export async function decryptCard(
+  keys: Keys,
+  task: UiTaskListItem,
+  withContext = false,
+): Promise<BoardCard> {
   const author = task.lastNote?.author;
-  const [title, icon, labels, watches, note] = await Promise.all([
+  const [title, icon, labels, watches, note, context] = await Promise.all([
     attemptTaskField(keys, 'title', task, task.title),
     attemptTaskField(keys, 'icon', task, task.icon),
     attemptTaskField(keys, 'labels', task, task.labels),
@@ -109,6 +116,9 @@ export async function decryptCard(keys: Keys, task: UiTaskListItem): Promise<Boa
           }),
           task.lastNote.preview,
         ),
+    withContext && task.status === 'running'
+      ? readContext(keys, task.id, task.context)
+      : Promise.resolve(null),
   ]);
   return {
     task,
@@ -117,6 +127,7 @@ export async function decryptCard(keys: Keys, task: UiTaskListItem): Promise<Boa
     labels: parseLabels(labels),
     note,
     watches: countWatches(watches),
+    context,
   };
 }
 

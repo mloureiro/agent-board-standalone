@@ -6,11 +6,9 @@ when it starts to pass. Each entry says why it is red and what turns it green. R
 
 ## Waiting on a feature that is not built
 
-| Row      | Test                                                                        | Why red                                                                                                                                                     | What turns it green                   |
-| -------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| web-035  | `browser/board.spec.ts` "a running card shows context usage as a thin line" | The web client has no context-usage line; the contract has no `context-usage` feature (parked A9). The CLI records context as a `context` transcript event. | A contract feature and the card line. |
-| web-060  | `browser/transcript.spec.ts` "the context bar shows percentage used…"       | Same as web-035: no context bar in the transcript drawer.                                                                                                   | Same.                                 |
-| repo-003 | `blackbox/matrix-refusal.test.ts` (whole file)                              | Runs only when the matrix job tests N against N-1 and expects a refusal; no `<part>-v*` release tag exists yet, so there is no N-1 build.                   | The first release tags.               |
+| Row      | Test                                           | Why red                                                                                                                                   | What turns it green     |
+| -------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| repo-003 | `blackbox/matrix-refusal.test.ts` (whole file) | Runs only when the matrix job tests N against N-1 and expects a refusal; no `<part>-v*` release tag exists yet, so there is no N-1 build. | The first release tags. |
 
 ## The test and the documented behaviour disagree
 

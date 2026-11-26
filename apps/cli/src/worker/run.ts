@@ -60,7 +60,7 @@ export const OUTPUT_DRAIN_MS = 3_000;
 export const LEFT_RUNNING_GRACE_MS = 30_000;
 export const LANE_PAUSE_GRACE_MS = 2 * 60_000;
 export const CLOCK_JUMP_MS = 60_000;
-export const CONTEXT_FEATURE = 'transcripts';
+export const CONTEXT_FEATURE = 'context-usage';
 
 export type ClaudeStarter = (
   args: readonly string[],

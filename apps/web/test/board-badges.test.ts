@@ -17,7 +17,16 @@ const cardOf = async (
   extra: Partial<Omit<BoardCard, 'task'>> = {},
 ): Promise<BoardCard> => {
   const seeded = await world.seed({ id: `t${world.tasks.length}`, title: 'x', overrides });
-  return { task: seeded, title: 'x', icon: null, labels: [], note: null, watches: 0, ...extra };
+  return {
+    task: seeded,
+    title: 'x',
+    icon: null,
+    labels: [],
+    note: null,
+    watches: 0,
+    context: null,
+    ...extra,
+  };
 };
 
 const labelsOf = (card: BoardCard, usageHoldUntil: number | null = null): string[] =>

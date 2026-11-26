@@ -7,12 +7,6 @@
         "projects": ["chromium-desktop"]
       }
     ],
-    "browser/board.spec.ts": [
-      {
-        "title": "board with a running card › [web-035] a running card shows context usage as a thin line",
-        "projects": ["chromium-desktop", "webkit-desktop"]
-      }
-    ],
     "browser/new-task.spec.ts": [
       "new task form › [web-061] the form takes prompt, project, icon, directory, title, labels, priority, model, effort, lane, agent and auto-done",
       "drafts › [web-064] drafts clear on send"
@@ -25,8 +19,7 @@
       "task page on a running worker › [web-050] on a running task Stop & send interrupts the run and delivers the message"
     ],
     "browser/transcript.spec.ts": [
-      "transcript drawer and context bar › [web-059] the drawer lists every run of a task and shows thinking",
-      "transcript drawer and context bar › [web-060] the context bar shows percentage used, the window and the auto-compact marker"
+      "transcript drawer and context bar › [web-059] the drawer lists every run of a task and shows thinking"
     ]
   }
 }

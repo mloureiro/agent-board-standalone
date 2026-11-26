@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  FEATURES,
   compat,
   formatClientHeader,
   parseClientHeader,
@@ -78,6 +79,20 @@ describe('compat', () => {
       expect(result.missing).toEqual(row.missing);
       if (row.message) expect(result.message).toMatch(row.message);
     }
+  });
+
+  it('[contract-002] a 1.0 server without context-usage stays compatible with a 1.1 client, and a 1.0 client with a 1.1 server', () => {
+    const v10 = FEATURES.filter((feature) => feature !== 'context-usage');
+    expect(FEATURES).toContain('context-usage');
+    const older = server({ version: '1.0.0', features: v10 });
+    const newer = server({ version: '1.1.0', features: [...FEATURES] });
+    const noNeeds = compat(client({ version: '1.1.0' }), older);
+    expect(noNeeds.kind).toBe('compatible');
+    expect(noNeeds.missing).toBeUndefined();
+    expect(compat(client({ version: '1.0.0' }), newer).kind).toBe('compatible');
+    expect(compat(client({ version: '1.1.0' }), older, ['context-usage']).missing).toEqual([
+      'context-usage',
+    ]);
   });
 
   it('[contract-002] two clients or two servers throw', () => {

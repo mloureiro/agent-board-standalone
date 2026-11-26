@@ -43,6 +43,7 @@ describe('GET /api/version', () => {
     });
     expect(document.features.length).toBeGreaterThan(0);
     for (const feature of document.features) expect(FEATURES).toContain(feature);
+    expect(document.features).toContain('context-usage');
     expect(answer.headers['access-control-allow-origin']).toBe('*');
   });
 

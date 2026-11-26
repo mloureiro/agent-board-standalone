@@ -173,6 +173,36 @@ describe('transcripts', () => {
   });
 });
 
+describe('context on the task list', () => {
+  it('[api-082] fills each listed task with the latest context reading of its newest run, and null without one', async () => {
+    const { token } = await enrolled();
+    const withContext = uniqueName('task');
+    const withoutContext = uniqueName('task');
+    await seedTask(board, { id: withContext });
+    await seedTask(board, { id: withoutContext });
+    const oldRun = uniqueName('run');
+    const newRun = uniqueName('run');
+    const oldReading = { ...event(1, 'context'), data: envelope(40, 'A') };
+    const first = { ...event(1, 'context'), data: envelope(40, 'B') };
+    const last = { ...event(4, 'context'), data: envelope(40, 'C') };
+    await upload(token, withContext, oldRun, [oldReading], {
+      startedAt: '2026-01-01T00:00:00.000Z',
+    });
+    await upload(token, withContext, newRun, [first, event(2), last], {
+      startedAt: '2026-01-02T00:00:00.000Z',
+    });
+
+    const listed = await call(board, 'client.tasks.list', {} as never);
+    const byId = new Map(listed.body.tasks.map((entry) => [entry.id, entry]));
+    expect(byId.get(withContext)?.context).toMatchObject({
+      runId: newRun,
+      seq: 4,
+      data: last.data,
+    });
+    expect(byId.get(withoutContext)?.context).toBeNull();
+  });
+});
+
 describe('machine tokens', () => {
   it('[api-083] issuing returns the token once and stores only its hash', async () => {
     const name = uniqueName('issue');

@@ -20,6 +20,7 @@ export const FEATURE_LABELS = {
   forks: 'forks',
   watches: 'watches',
   'run-inbox': 'the run inbox',
+  'context-usage': 'context usage',
 } as const;
 
 export type Feature = keyof typeof FEATURE_LABELS;
