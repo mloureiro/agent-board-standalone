@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import {
   chmodSync,
   copyFileSync,
@@ -32,8 +33,8 @@ export function writeSecretFile(file: string, content: string): void {
 
 export function writeAtomic(file: string, content: string, mode: number): void {
   ensureDir(path.dirname(file));
-  const staging = `${file}.tmp-${process.pid}`;
-  writeFileSync(staging, content, { mode });
+  const staging = `${file}.tmp-${process.pid}-${randomBytes(6).toString('hex')}`;
+  writeFileSync(staging, content, { mode, flag: 'wx' });
   chmodSync(staging, mode);
   renameSync(staging, file);
 }
