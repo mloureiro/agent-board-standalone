@@ -205,6 +205,21 @@ describe('directory', () => {
     expect(within(section).getByText('/old/place')).toBeInTheDocument();
   });
 
+  it('[web-039] shows the legacy directory of a task made by a schedule, sealed under the schedule', async () => {
+    const task = await world.seed({
+      id: ID,
+      title: 'Legacy occurrence',
+      status: 'todo',
+      overrides: { scheduleId: 'sched1' },
+    });
+    task.legacyDirectory = await sealed(bindings.workdir({ schedule: 'sched1' }), '/old/place');
+    openTask();
+
+    const section = await screen.findByRole('region', { name: 'Directory' });
+    expect(within(section).getByText('/old/place')).toBeInTheDocument();
+    expect(screen.queryByText('The working directory could not be read.')).toBeNull();
+  });
+
   it('[web-039] clearing the directory without a session happens at once', async () => {
     await world.seed({
       id: ID,

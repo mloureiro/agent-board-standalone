@@ -141,6 +141,12 @@ async function entryOf(keys: Keys, taskId: string, note: UiThreadNote): Promise<
   return { note, body, questions, answers, suggestion };
 }
 
+async function openLegacyDirectory(keys: Keys, task: UiTask): Promise<string | null> {
+  const own = await attempt(keys, bindings.workdir({ task: task.id }), task.legacyDirectory);
+  if (own !== null || task.scheduleId === null) return own;
+  return attempt(keys, bindings.workdir({ schedule: task.scheduleId }), task.legacyDirectory);
+}
+
 export async function decryptTask(keys: Keys, detail: UiTaskDetail): Promise<TaskView> {
   const { task } = detail;
   const [
@@ -160,7 +166,7 @@ export async function decryptTask(keys: Keys, detail: UiTaskDetail): Promise<Tas
     attemptTaskField(keys, 'icon', task, task.icon),
     attemptTaskField(keys, 'labels', task, task.labels),
     openPrompt(keys, task),
-    attempt(keys, bindings.workdir({ task: task.id }), task.legacyDirectory),
+    openLegacyDirectory(keys, task),
     Promise.all(task.prs.map((pr) => attempt(keys, bindings.pr(task.id), pr.pr))),
     attempt(keys, bindings.watches(task.id), task.watches),
     Promise.all(detail.thread.map((note) => entryOf(keys, task.id, note))),
