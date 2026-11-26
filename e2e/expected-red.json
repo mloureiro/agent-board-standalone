@@ -16,27 +16,19 @@
       "user commands without a worker › [cli-029] board reply --resume sends the task back to the top of Todo"
     ],
     "browser/accessibility.spec.ts": [
-      "accessibility of the primary pages › [web-080] the task page passes axe with WCAG 2 AA rules in light and dark and follows the system scheme",
       {
         "title": "accessibility of the primary pages › [web-080] the task page is operable by keyboard alone with a visible focus indicator @chromium",
         "projects": ["chromium-desktop"]
       }
     ],
     "browser/board.spec.ts": [
-      "board › [web-029] dragging moves a card from Backlog to Todo and the order persists after a reload",
-      "board › [web-029] cards reorder within Backlog and the order persists after a reload",
-      "board › [web-029] dropping a card on Running or Waiting is refused",
       "board › [web-029] a touch drag moves a card between columns on a phone @phone",
       "board › [web-032] a banner names a machine whose CLI is no longer accepted",
       "board with a running card › [web-035] a running card shows context usage as a thin line"
     ],
-    "browser/connection.spec.ts": "*",
     "browser/new-task.spec.ts": [
       "new task form › [web-061] the form takes prompt, project, icon, directory, title, labels, priority, model, effort, lane, agent and auto-done",
-      "drafts › [web-064] unsent text in the new-task prompt, the reply box and a question Other field survives navigation, a reload and a tab switch",
-      "drafts › [web-064] drafts clear on send",
-      "drafts › [web-064] drafts clear on lock",
-      "drafts after sign-out › [web-064] drafts clear on sign-out"
+      "drafts › [web-064] drafts clear on send"
     ],
     "browser/parity.spec.ts": [
       {
@@ -77,7 +69,8 @@
     ],
     "browser/sealing-at-rest.spec.ts": "*",
     "browser/settings.spec.ts": [
-      "[web-075] Settings › Account › [web-075] deleting the account signs out and the user cannot sign back in to the old data"
+      "[web-075] Settings › Account › [web-075] deleting the account signs out and the user cannot sign back in to the old data",
+      "[web-075] Settings › Account › [web-075] importing the exported file into a fresh account restores its tasks"
     ],
     "browser/sign-in.spec.ts": [
       {

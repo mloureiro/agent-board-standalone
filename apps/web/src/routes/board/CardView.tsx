@@ -85,6 +85,7 @@ function CardViewBase(props: CardViewProps): ReactNode {
               <Anchor
                 component={Link}
                 to={`/tasks/${task.id}`}
+                draggable={false}
                 fw={600}
                 size="sm"
                 lh={1.3}

@@ -31,6 +31,8 @@ export interface KeysValue {
 
 const IDLE: KeysState = { status: 'idle' };
 
+const AWAY_STATES: ReadonlySet<string> = new Set(['unreachable', 'timeout', 'server-error']);
+
 const KeysContext = createContext<{ of(serverId: string | null): KeysValue } | null>(null);
 
 export const useKeysOf = (serverId: string | null): KeysValue => {
@@ -44,6 +46,7 @@ export const useKeys = (): KeysValue => useKeysOf(useServers().active?.id ?? nul
 function Inspector(props: {
   readonly serverId: string;
   readonly up: boolean;
+  readonly away: boolean;
   readonly nonce: number;
   readonly inspect: KeyInspector;
   readonly clientOf: (serverId: string) => ServerClient | null;
@@ -55,7 +58,7 @@ function Inspector(props: {
   latest.current = props;
   useEffect(() => {
     if (!up) {
-      latest.current.onState(serverId, IDLE);
+      if (!latest.current.away) latest.current.onState(serverId, IDLE);
       return undefined;
     }
     const client = latest.current.clientOf(serverId);
@@ -160,6 +163,7 @@ export function KeysProvider(props: {
           key={server.id}
           serverId={server.id}
           up={connectionOf(server.id).state === 'up'}
+          away={AWAY_STATES.has(connectionOf(server.id).state)}
           nonce={nonces[server.id] ?? 0}
           inspect={inspect}
           clientOf={clientOf}

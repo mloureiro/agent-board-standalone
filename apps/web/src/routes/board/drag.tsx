@@ -18,6 +18,18 @@ export const TOUCH_HOLD_MS = 250;
 export const TOUCH_TOLERANCE_PX = 8;
 export const MOUSE_DISTANCE_PX = 6;
 
+const CLICK_AFTER_DROP_MS = 100;
+
+function swallowNextClick(): void {
+  const swallow = (event: MouseEvent): void => {
+    if (!(event.target instanceof Element) || event.target.closest('article') === null) return;
+    event.preventDefault();
+    event.stopPropagation();
+  };
+  window.addEventListener('click', swallow, true);
+  setTimeout(() => window.removeEventListener('click', swallow, true), CLICK_AFTER_DROP_MS);
+}
+
 class PointerTypeSensor extends PointerSensor {
   constructor(props: ConstructorParameters<typeof PointerSensor>[0]) {
     const touch = (props.event as PointerEvent).pointerType === 'touch';
@@ -65,6 +77,7 @@ export function BoardDnd(props: {
 
   const onDragEnd = (event: DragEndEvent): void => {
     dragging.current = false;
+    swallowNextClick();
     const { active, over } = event;
     const data = over?.data.current as
       | { type: 'card'; status: TaskStatus; id: string }
@@ -94,6 +107,7 @@ export function BoardDnd(props: {
       onDragEnd={onDragEnd}
       onDragCancel={() => {
         dragging.current = false;
+        swallowNextClick();
       }}
     >
       {props.children}
