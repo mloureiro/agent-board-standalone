@@ -1,4 +1,4 @@
-import { chmodSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, readFileSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
@@ -98,6 +98,19 @@ describe('server and config files', () => {
     );
     expect(readProfileConfig(at('config'))).toEqual({ machine: 'm1', credentials: 'keychain' });
     expect(readProfileConfig(at('missing'))).toEqual({});
+  });
+});
+
+describe('secret file staging', () => {
+  it('[cli-006] never writes through a link planted at the old fixed staging name', () => {
+    const { path: at } = fresh();
+    const file = at('env');
+    const stolen = at('stolen');
+    writeFileSync(stolen, '');
+    symlinkSync(stolen, `${file}.tmp-${process.pid}`);
+    writeSecretFile(file, 'AGENT_BOARD_TOKEN=secret\n');
+    expect(readFileSync(file, 'utf8')).toBe('AGENT_BOARD_TOKEN=secret\n');
+    expect(readFileSync(stolen, 'utf8')).toBe('');
   });
 });
 
