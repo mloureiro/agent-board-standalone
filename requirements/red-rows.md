@@ -39,6 +39,8 @@ when it starts to pass. Each entry says why it is red and what turns it green. R
 | web-064       | `browser/new-task.spec.ts` "drafts clear on send"                                                                               | After the answer the stub resumes without asking again, so the question form the test types into is gone. |
 | web-014, P-05 | `browser/sign-in.spec.ts` SAML return and SAML error; `browser/parity.spec.ts` SAML redirect (WebKit only)                      | SAML sign-in passes in Chromium and fails in WebKit; not yet diagnosed.                                   |
 | web-029       | `browser/board.spec.ts` "a touch drag moves a card between columns on a phone" (phones)                                         | Touch drag does not move the card under the emulated phones; not yet diagnosed.                           |
+| web-029       | `browser/board.spec.ts` "cards reorder within Backlog and the order persists after a reload" (WebKit desktop)                   | Passes in Chromium and locally in WebKit; fails on the Linux WebKit runner; not yet diagnosed.            |
+| web-098       | `browser/responsive.spec.ts` "the project filter journey completes at the phone viewport" (WebKit desktop only)                 | Passes on both phones and Chromium; a click times out on the Linux WebKit runner; not yet diagnosed.      |
 
 ## Unproven locally
 
