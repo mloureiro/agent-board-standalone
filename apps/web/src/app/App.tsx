@@ -16,6 +16,7 @@ import {
   NotFoundPage,
   SchedulesPage,
   SettingsPage,
+  TaskLink,
   TaskPage,
 } from '../routes/index.js';
 import {
@@ -125,6 +126,7 @@ export function App(props: AppProps): ReactNode {
                           <Route path="closed" element={<ClosedPage />} />
                           <Route path="settings" element={<SettingsPage />} />
                           <Route path="tasks/:id" element={<TaskPage />} />
+                          <Route path="t/:id" element={<TaskLink />} />
                           <Route path="*" element={<NotFoundPage />} />
                         </Route>
                       </Routes>

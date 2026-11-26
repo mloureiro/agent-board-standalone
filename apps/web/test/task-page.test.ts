@@ -63,6 +63,14 @@ describe('header and breadcrumb', () => {
     expect(screen.getByText('Created by you')).toBeInTheDocument();
   });
 
+  it('[web-037] a task link in the CLI form /t/<id> opens the task page', async () => {
+    await world.seed({ id: ID, title: 'Ship the badge', status: 'todo' });
+    vi.stubGlobal('fetch', world.fetch);
+    renderApp({ path: `/t/${ID}`, check: world.check, clock: frozenClock });
+
+    expect(await screen.findByRole('heading', { name: 'Ship the badge' })).toBeInTheDocument();
+  });
+
   it('[web-037] titles the page after the task', async () => {
     await world.seed({ id: ID, title: 'Ship the badge', status: 'todo' });
     openTask();
