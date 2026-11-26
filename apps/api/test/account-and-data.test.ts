@@ -471,3 +471,92 @@ describe.each(TARGETS)('account export and import on $name', (target) => {
     });
   });
 });
+
+describe.each(TARGETS)('account summary and delete on $name', (target) => {
+  describe.skipIf(!target.enabled)('', () => {
+    const owner = 'leaver';
+    let opened: OpenedTarget;
+    let app: FastifyInstance;
+    const events = createMemoryEvents();
+
+    const post = async (url: string, payload: unknown) => {
+      const answer = await app.inject({
+        method: 'POST',
+        url,
+        headers: CLIENT_HEADERS,
+        payload: JSON.stringify(payload),
+      });
+      return { status: answer.statusCode, body: answer.json() as Record<string, unknown> };
+    };
+
+    beforeAll(async () => {
+      opened = await target.open();
+      await importFrom(opened.database, [
+        ...syntheticRecords({ owner }),
+        ...syntheticRecords({ owner: 'bystander' }),
+      ]);
+      app = await bootOn(opened.database, owner, undefined, events);
+    });
+
+    afterAll(async () => {
+      await app.close();
+      await opened.cleanup();
+    });
+
+    it('[api-099] the summary counts what the account holds', async () => {
+      const answer = await app.inject({
+        method: 'GET',
+        url: '/api/client/account/summary',
+        headers: CLIENT_HEADERS,
+      });
+      const expected = countsOf(syntheticRecords({ owner }));
+      expect(answer.statusCode).toBe(200);
+      expect(answer.json()).toMatchObject({
+        tasks: expected.task,
+        schedules: expected.schedule,
+        machines: expected.machine,
+        notes: expected.note,
+        taskPrs: expected.task_pr,
+        projects: expected.project,
+        directories: expected.directory,
+        transcriptRuns: expected.transcript_run,
+        transcriptEvents: expected.transcript_event,
+      });
+    });
+
+    it('[api-099] delete refuses a username that is not the signed-in one', async () => {
+      const answer = await post('/api/client/account/delete', { username: 'someone-else' });
+      expect(answer.status).toBe(403);
+      expect(await holds(opened.database, owner)).toBe(true);
+    });
+
+    it('[api-099] delete removes every row of the owner and none of another owner', async () => {
+      const others = await taskIds(opened.database, 'bystander');
+      expect(others.length).toBeGreaterThan(0);
+      const seen: string[] = [];
+      await events.subscribe(owner, (message) => seen.push(message.kind));
+      const answer = await post('/api/client/account/delete', { username: owner });
+      expect(answer.status).toBe(200);
+      expect(seen).toContain('revoked');
+      expect(await holds(opened.database, owner)).toBe(false);
+      for (const table of [
+        schema.task,
+        schema.schedule,
+        schema.note,
+        schema.machine,
+        schema.project,
+        schema.directory,
+        schema.document,
+        schema.transcriptRun,
+        schema.transcriptEvent,
+        schema.clientKey,
+        schema.session,
+      ])
+        expect(
+          await opened.database.withOwner(owner, (tx) => tx.$count(table)),
+          String(table),
+        ).toBe(0);
+      expect(await taskIds(opened.database, 'bystander')).toEqual(others);
+    });
+  });
+});

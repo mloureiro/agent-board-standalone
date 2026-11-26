@@ -66,10 +66,6 @@
       }
     ],
     "browser/sealing-at-rest.spec.ts": "*",
-    "browser/settings.spec.ts": [
-      "[web-075] Settings › Account › [web-075] deleting the account signs out and the user cannot sign back in to the old data",
-      "[web-075] Settings › Account › [web-075] importing the exported file into a fresh account restores its tasks"
-    ],
     "browser/sign-in.spec.ts": [
       {
         "title": "sign-in page › [web-014] SAML returns to the client return page and lands signed in, in the same tab",
