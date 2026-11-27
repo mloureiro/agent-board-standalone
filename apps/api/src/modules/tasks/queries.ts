@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, getTableColumns, inArray, sql } from 'drizzle-orm';
 
 import { task } from '../../db/schema/index.js';
 import { ApiError } from '../../errors.js';
@@ -34,9 +34,11 @@ export const lockTask = async (tx: ScopedDatabase, id: string): Promise<TaskRow>
   return row;
 };
 
+const columnsWithoutInput = { ...getTableColumns(task), input: sql<string>`''` };
+
 export const listTasks = (tx: ScopedDatabase, options: TaskListOptions = {}): Promise<TaskRow[]> =>
   tx
-    .select()
+    .select(options.withoutInput ? columnsWithoutInput : getTableColumns(task))
     .from(task)
     .where(
       and(

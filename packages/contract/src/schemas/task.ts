@@ -87,6 +87,12 @@ export const wireTask = z
   .strict();
 
 export type WireTask = z.infer<typeof wireTask>;
+
+export const wireTaskListItem = wireTask
+  .extend({ input: sealedField('input').optional() })
+  .strict();
+
+export type WireTaskListItem = z.infer<typeof wireTaskListItem>;
 export type WireTaskPr = z.infer<typeof wireTaskPr>;
 
 export const taskDraft = z

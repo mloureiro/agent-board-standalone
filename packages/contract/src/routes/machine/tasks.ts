@@ -2,15 +2,28 @@ import { z } from 'zod';
 
 import { fencedTaskRef, taskRef } from '../../schemas/common.js';
 import { machineName, projectId } from '../../schemas/ids.js';
-import { promptEdit, taskConfig, taskDraft, taskPatch, wireTask } from '../../schemas/task.js';
+import {
+  promptEdit,
+  taskConfig,
+  taskDraft,
+  taskPatch,
+  wireTask,
+  wireTaskListItem,
+} from '../../schemas/task.js';
 import { machineCommand } from '../route.js';
 
 const hasKeyBesides = (excluded: readonly string[]) => (request: Record<string, unknown>) =>
   Object.entries(request).some(([key, value]) => value !== undefined && !excluded.includes(key));
 
 export const listTasksRoute = machineCommand('list-tasks', {
-  request: z.object({ all: z.boolean().optional(), projectId: projectId.optional() }).strict(),
-  response: z.object({ tasks: z.array(wireTask) }).strict(),
+  request: z
+    .object({
+      all: z.boolean().optional(),
+      projectId: projectId.optional(),
+      withoutInput: z.boolean().optional(),
+    })
+    .strict(),
+  response: z.object({ tasks: z.array(wireTaskListItem) }).strict(),
 });
 
 export const getTaskRoute = machineCommand('get-task', {

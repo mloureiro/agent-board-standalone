@@ -8,6 +8,16 @@ import { toUiTask, toWireTask } from './wire.js';
 
 type UiTask = ReturnType<typeof toUiTask>;
 
+export const leaveOutInput = <T extends { input?: string | undefined }>(
+  items: readonly T[],
+  leave: boolean,
+): (Omit<T, 'input'> & { input?: string | undefined })[] =>
+  items.map((item) => {
+    const copy: Omit<T, 'input'> & { input?: string | undefined } = { ...item };
+    if (leave) delete copy.input;
+    return copy;
+  });
+
 const prsOf = async (
   tx: ScopedDatabase,
   rows: readonly TaskRow[],

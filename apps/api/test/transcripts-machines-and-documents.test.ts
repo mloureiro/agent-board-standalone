@@ -219,6 +219,33 @@ describe('context on the task list', () => {
   });
 });
 
+describe('task lists without prompts', () => {
+  it('[api-126] the client and machine lists leave each sealed prompt out on request, and the single-task fetches still carry it', async () => {
+    const { token } = await enrolled();
+    const id = uniqueName('task');
+    const input = envelope();
+    await seedTask(board, { id, input });
+    const find = <T extends { id: string }>(tasks: readonly T[]): T | undefined =>
+      tasks.find((entry) => entry.id === id);
+
+    const full = await call(board, 'client.tasks.list', {} as never);
+    expect(find(full.body.tasks)?.input).toBe(input);
+    const lean = await call(board, 'client.tasks.list', { withoutInput: 'true' } as never);
+    expect(lean.status).toBe(200);
+    expect(find(lean.body.tasks)).toBeDefined();
+    expect(find(lean.body.tasks)).not.toHaveProperty('input');
+
+    const machineFull = await call(board, 'machine.list-tasks', {}, { token });
+    expect(find(machineFull.body.tasks)?.input).toBe(input);
+    const machineLean = await call(board, 'machine.list-tasks', { withoutInput: true }, { token });
+    expect(machineLean.status).toBe(200);
+    expect(find(machineLean.body.tasks)).not.toHaveProperty('input');
+
+    expect((await call(board, 'client.tasks.get', { id })).body.task.input).toBe(input);
+    expect((await call(board, 'machine.get-task', { id }, { token })).body.input).toBe(input);
+  });
+});
+
 describe('machine tokens', () => {
   it('[api-083] issuing returns the token once and stores only its hash', async () => {
     const name = uniqueName('issue');
