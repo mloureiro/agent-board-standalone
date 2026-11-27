@@ -22,6 +22,7 @@ import {
 
 export type TaskDetail = RouteOutput<'client.tasks.get'>;
 export type WireTaskView = TaskDetail['task'];
+export type ListedTask = RouteOutput<'client.tasks.list'>['tasks'][number];
 type ThreadNote = TaskDetail['thread'][number];
 
 export const GRANT_HINT = 'Settings › Machines';
@@ -414,7 +415,7 @@ export async function createProject(
 export async function findTaskByTitle(
   fixture: Pick<Fixture, 'user' | 'key'>,
   title: string,
-): Promise<WireTaskView | null> {
+): Promise<ListedTask | null> {
   const { tasks } = await fixture.user.ok('client.tasks.list', {});
   for (const task of tasks) {
     const opened = await fixture.key.open(bindings.title({ task: task.id }), task.title);

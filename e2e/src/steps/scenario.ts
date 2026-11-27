@@ -485,7 +485,10 @@ export async function runScenario(input: ScenarioInput): Promise<ScenarioResult>
     const directories = await user.ok('client.directories.list', {});
     return [
       ...detail.thread.flatMap((entry) => (entry.author === 'server' ? [] : [entry.body])),
-      ...listed.tasks.flatMap((task) => [task.title, task.input]),
+      ...listed.tasks.flatMap((task) => [
+        task.title,
+        ...(task.input === undefined ? [] : [task.input]),
+      ]),
       ...schedules.schedules.flatMap((schedule) => [schedule.title, schedule.input]),
       ...directories.directories.map((entry) => entry.path),
     ];

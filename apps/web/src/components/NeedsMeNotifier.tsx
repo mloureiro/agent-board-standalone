@@ -3,7 +3,7 @@ import {
   getClientTaskRoute,
   listClientTasksRoute,
 } from '@agent-board/contract';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import { currentBridge } from '../bridge/index.js';
@@ -11,6 +11,8 @@ import { useNotificationPermission } from './notification-permission.js';
 import { NOTIFICATIONS_SETTING, settingAt, usePage, useSettings } from '../pages/index.js';
 import { useEnvironment } from '../session/index.js';
 import { attemptTaskField } from '../routes/board/card-model.js';
+import { useEventStream } from '../routes/board/board-data.js';
+import { useServers } from '../servers/index.js';
 
 export const ATTENTION_POLL_MS = 3_000;
 
@@ -41,10 +43,20 @@ export function NeedsMeNotifier(): ReactNode {
     void native.setNotifications(serverId, enabled).catch(() => undefined);
   }, [native, serverId, settingsLoaded, enabled]);
 
+  const { clientOf } = useServers();
+  const queryClient = useQueryClient();
+  const queryKey = [...(page?.base ?? []), 'needs-me'];
+  const watching = page !== null && enabled;
+  const stream = useEventStream(
+    serverId ?? '',
+    watching && serverId !== null ? clientOf(serverId) : null,
+    () => void queryClient.invalidateQueries({ queryKey }),
+  );
+
   const waiting = useQuery({
-    queryKey: [...(page?.base ?? []), 'needs-me'],
-    enabled: page !== null && enabled,
-    refetchInterval: ATTENTION_POLL_MS,
+    queryKey,
+    enabled: watching,
+    refetchInterval: stream === 'open' ? false : ATTENTION_POLL_MS,
     refetchIntervalInBackground: true,
     queryFn: async (): Promise<Waiting[]> => {
       if (page === null) return [];

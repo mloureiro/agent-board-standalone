@@ -8,6 +8,7 @@ import { usePageTitle } from '../../components/index.js';
 import { usePage } from '../../pages/index.js';
 import { useProjectFilter } from '../../projects/project-filter.js';
 import { useNow } from '../board/clock.js';
+import { leanList } from '../board/board-data.js';
 import { decryptCard, type BoardCard } from '../board/card-model.js';
 import { agoText, parseTime } from '../board/format.js';
 
@@ -30,6 +31,7 @@ export function ClosedPage(): ReactNode {
     queryFn: async (): Promise<BoardCard[]> => {
       if (page === null) return [];
       const answer = await page.call(listClientTasksRoute, {
+        ...leanList(page.features),
         closed: 'true',
         ...(projectId === null || !page.features.includes('projects')
           ? {}

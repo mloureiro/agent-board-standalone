@@ -9,6 +9,7 @@ import {
 } from '../../directories/index.js';
 import { checkedProject } from '../tasks/list.js';
 import type { Context } from '../context.js';
+import { withoutInputs } from '../../transport/session.js';
 import { refuseInRun, session } from '../tasks/support.js';
 
 export async function runProjects(
@@ -32,7 +33,7 @@ export async function runProjects(
     const row = counts.get(project) ?? { tasks: 0, directories: 0 };
     counts.set(project, { ...row, [key]: row[key] + 1 });
   };
-  for (const task of (await s.query(listTasksRoute, { all: true })).tasks) {
+  for (const task of (await s.query(listTasksRoute, { all: true, ...withoutInputs(s) })).tasks) {
     bump(task.projectId, 'tasks');
   }
   if (s.supports('directories')) {

@@ -11,6 +11,7 @@ import {
   requireKnown,
   TASK_VOCABULARY,
   type Vocabulary,
+  leaveOutInput,
   listTasks,
   moveTask,
   presentListItems,
@@ -35,13 +36,20 @@ export const createTaskHandlers =
     return {
       'machine.list-tasks': ({ input, principal, request }) =>
         database.withOwner(principal.owner, async (tx) => ({
-          tasks: onlyKnown(
-            vocabulary,
-            contractOf(request),
-            await presentWireTasks(
-              tx,
-              await listTasks(tx, { all: input.all, projectId: input.projectId }),
+          tasks: leaveOutInput(
+            onlyKnown(
+              vocabulary,
+              contractOf(request),
+              await presentWireTasks(
+                tx,
+                await listTasks(tx, {
+                  all: input.all,
+                  projectId: input.projectId,
+                  withoutInput: input.withoutInput,
+                }),
+              ),
             ),
+            input.withoutInput === true,
           ),
         })),
 
@@ -89,13 +97,20 @@ export const createTaskHandlers =
 
       'client.tasks.list': ({ input, principal, request }) =>
         database.withOwner(principal.owner, async (tx) => ({
-          tasks: onlyKnown(
-            vocabulary,
-            contractOf(request),
-            await presentListItems(
-              tx,
-              await listTasks(tx, { all: isTrue(input.closed), projectId: input.project }),
+          tasks: leaveOutInput(
+            onlyKnown(
+              vocabulary,
+              contractOf(request),
+              await presentListItems(
+                tx,
+                await listTasks(tx, {
+                  all: isTrue(input.closed),
+                  projectId: input.project,
+                  withoutInput: isTrue(input.withoutInput),
+                }),
+              ),
             ),
+            isTrue(input.withoutInput),
           ),
         })),
 

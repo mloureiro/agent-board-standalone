@@ -98,9 +98,11 @@ export class BoardWorld extends FakeBoard {
   features: string[] = [];
   listStatus = 200;
   eventsStatus = 200;
+  eventStreamsOpened = 0;
   readonly moves: Record<string, unknown>[] = [];
   readonly configures: Record<string, unknown>[] = [];
   readonly doneIds: string[] = [];
+  readonly listQueries: string[] = [];
   private streams: ReadableStreamDefaultController<Uint8Array>[] = [];
   private readonly encoder = new TextEncoder();
 
@@ -178,6 +180,7 @@ export class BoardWorld extends FakeBoard {
         return json(this.eventsStatus, { error: { code: 'x', message: 'down' } });
       const stream = new ReadableStream<Uint8Array>({
         start: (controller) => {
+          this.eventStreamsOpened += 1;
           this.streams.push(controller);
           controller.enqueue(this.encoder.encode(': open\n\n'));
         },
@@ -188,8 +191,17 @@ export class BoardWorld extends FakeBoard {
       });
     }
     if (method === 'GET' && path === listClientTasksRoute.path) {
+      this.listQueries.push(this.current.pathWithQuery);
+      const lean =
+        new URL(this.current.pathWithQuery, 'http://localhost').searchParams.get('withoutInput') ===
+        'true';
+      const withoutInput = (task: UiTaskListItem): UiTaskListItem => {
+        const copy = { ...task };
+        delete copy.input;
+        return copy;
+      };
       return this.listStatus === 200
-        ? json(200, { tasks: this.tasks })
+        ? json(200, { tasks: lean ? this.tasks.map(withoutInput) : this.tasks })
         : json(this.listStatus, { error: { code: 'unavailable', message: 'down' } });
     }
     if (method === 'GET' && path === listClientMachinesRoute.path) {

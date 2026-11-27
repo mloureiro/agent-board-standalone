@@ -14,7 +14,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useServers } from '../servers/index.js';
 import { usePage } from '../pages/use-page.js';
-import { boardKey } from '../routes/board/board-data.js';
+import { boardKey, leanList } from '../routes/board/board-data.js';
 import { fetchProjectEntries, type ProjectEntry } from './fetch-projects.js';
 
 export interface ProjectActions {
@@ -84,8 +84,13 @@ export function useProjects(): ProjectsData | null {
       await changed();
     },
     inUse: async (id) => {
-      const open = await page.call(listClientTasksRoute, { project: id });
-      const closed = await page.call(listClientTasksRoute, { project: id, closed: 'true' });
+      const lean = leanList(page.features);
+      const open = await page.call(listClientTasksRoute, { ...lean, project: id });
+      const closed = await page.call(listClientTasksRoute, {
+        ...lean,
+        project: id,
+        closed: 'true',
+      });
       if (open.tasks.length > 0 || closed.tasks.length > 0) return true;
       if (page.features.includes('schedules')) {
         const schedules = await page.call(listClientSchedulesRoute, { project: id });

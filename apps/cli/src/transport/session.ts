@@ -14,6 +14,9 @@ import { sendRequest, type HttpDeps } from './request.js';
 import { openStream } from './stream.js';
 import type { ServerInfo } from './server-info.js';
 
+export const withoutInputs = (s: Pick<Session, 'supports'>): { withoutInput?: true } =>
+  s.supports('lean-task-list') ? { withoutInput: true } : {};
+
 export interface Session {
   readonly url: string;
   readonly info: ServerInfo;

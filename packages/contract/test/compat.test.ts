@@ -95,6 +95,18 @@ describe('compat', () => {
     ]);
   });
 
+  it('[contract-002] a 1.1 server without lean-task-list stays compatible with a 1.2 client, and a 1.1 client with a 1.2 server', () => {
+    const v11 = FEATURES.filter((feature) => feature !== 'lean-task-list');
+    expect(FEATURES).toContain('lean-task-list');
+    const older = server({ version: '1.1.0', features: v11 });
+    const newer = server({ version: '1.2.0', features: [...FEATURES] });
+    expect(compat(client({ version: '1.2.0' }), older).kind).toBe('compatible');
+    expect(compat(client({ version: '1.1.0' }), newer).kind).toBe('compatible');
+    expect(compat(client({ version: '1.2.0' }), older, ['lean-task-list']).missing).toEqual([
+      'lean-task-list',
+    ]);
+  });
+
   it('[contract-002] two clients or two servers throw', () => {
     expect(() => compat(client(), client())).toThrow(TypeError);
     expect(() => compat(server(), server())).toThrow(TypeError);

@@ -1,8 +1,6 @@
-import type { UiTaskListItem, WireTask, WireTaskPr } from '@agent-board/contract';
+import type { UiTask, WireTask, WireTaskPr } from '@agent-board/contract';
 
 import type { TaskRow } from './types.js';
-
-type UiTask = Omit<UiTaskListItem, 'lastNote' | 'context'>;
 
 export const toWireTask = (row: TaskRow, prs: WireTaskPr[] = []): WireTask => ({
   id: row.id,

@@ -56,6 +56,7 @@ export const uiRunContext = z
 
 export const uiTaskListItem = uiTask
   .extend({
+    input: sealedField('input').optional(),
     lastNote: z
       .object({
         createdAt: isoTime,
