@@ -3,10 +3,10 @@ use crate::confirm::NativeConfirm;
 use crate::fetches::Fetches;
 use crate::keychain::Keychain;
 use crate::removals::Removals;
-use agent_board_client_core::bridge::Bridge;
-use agent_board_client_core::files::DirStore;
-use agent_board_client_core::handshake::ClientInfo;
-use agent_board_client_core::http::ReqwestHttp;
+use rumo_client_core::bridge::Bridge;
+use rumo_client_core::files::DirStore;
+use rumo_client_core::handshake::ClientInfo;
+use rumo_client_core::http::ReqwestHttp;
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
 

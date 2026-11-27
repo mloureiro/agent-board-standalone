@@ -1,4 +1,4 @@
-import { CONTRACT_HEADER, CLIENT_HEADER } from '@agent-board/contract';
+import { CONTRACT_HEADER, CLIENT_HEADER } from '@rumo/contract';
 import { describe, expect, it, vi } from 'vitest';
 
 import {

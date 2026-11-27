@@ -26,7 +26,7 @@ Rules ([ADR-0001](adr/0001-dependency-rule-and-versioning.md)):
 - **Data dependencies are allowed.** A part may read a data file another part publishes. The contract publishes
   JSON case tables (address cases, handover cases, the client app's bundle id) that the Tauri wrappers read as
   vectors in `cargo test` (contract-007, contract-012).
-- **Workspace links carry a range.** A consumer declares `"@agent-board/contract": "workspace:^<major>.<minor>.0"`.
+- **Workspace links carry a range.** A consumer declares `"@rumo/contract": "workspace:^<major>.<minor>.0"`.
   An install fails when the local package no longer satisfies the range, so a breaking change of a shared package
   is visible in the consumer's own diff.
 - **Release bundles compose artifacts.** A release bundle may carry the pinned release artifact of another part. The
@@ -255,7 +255,7 @@ When `REQUEST_SIGNATURE=on`, every client and machine request is signed by a key
     token clears it.
   - No-login: `POST /api/pair` with a one-time code, the public key and a label. The code is `XXXX-XXXX`, valid
     10 minutes and single use. It is created over the control channel: the server app's "Pair a device…", or
-    `agent-board-api pair`, which is a client of `CONTROL_SOCKET` and never opens the database.
+    `rumo-api pair`, which is a client of `CONTROL_SOCKET` and never opens the database.
 - Settings › Devices lists the bound keys and revokes them (web-104).
 
 ### Static files: the API serves the browser client
@@ -338,7 +338,7 @@ sealed. The migration tool holds no key, so it cannot create `directory` rows (a
 1. The import stores each machine's `dirs` document in `legacy_dirs` and each task's and schedule's sealed
    directory in `legacy_directory`, as stored. `directory_id` stays null.
 2. The machine's `version` answer reports `legacyDirs: true` while its document exists.
-3. On `board init`, at listener start and before any `set-dirs`, a CLI that sees the flag runs the conversion: it
+3. On `rumo init`, at listener start and before any `set-dirs`, a CLI that sees the flag runs the conversion: it
    reads the document (`get-legacy-dirs`), opens it with the data key, opens the `legacy_directory` of its own
    machine's tasks and schedules and of unassigned ones, and sends `convert-legacy-dirs` with the new directory
    rows (sealed paths, default project) and the (task or schedule, directory) pairs whose paths match.
@@ -352,7 +352,7 @@ sealed. The migration tool holds no key, so it cannot create `directory` rows (a
 - `BoardExport` (contract-013) is a versioned JSON Lines format: a header with format version and source, then
   one record per row, grouped by owner and table. Sealed values are carried as stored.
 - Account export and import (api-099, api-100) use it for one owner.
-- `agent-board-api import --file <path>` imports a whole board, every owner, in one transaction, refusing a target
+- `rumo-api import --file <path>` imports a whole board, every owner, in one transaction, refusing a target
   that already holds any of the owners. In no-login mode it also refuses an export whose owner is not
   `NO_LOGIN_USER`, because content keys are derived from the owner name and a different name would open nothing.
   It prints per-table, per-owner counts (api-123). The migration tool targets this command.
@@ -360,40 +360,40 @@ sealed. The migration tool holds no key, so it cannot create `directory` rows (a
 ## 4. CLI
 
 TypeScript, commander, Bun-compiled binary for linux-x64, linux-arm64 and darwin-arm64, also runnable on Node
-(cli-063). It replaces `board` with every command in the census (cli-012).
+(cli-063). It replaces `rumo` with every command in the census (cli-012).
 
 ### Profiles
 
 ([ADR-0011](adr/0011-cli-profiles.md))
 
-| Item             | Rule                                                                                                                       |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Selection        | Global `--profile <name>` or `AGENT_BOARD_PROFILE`; default profile `default`                                              |
-| Name             | `^[a-z0-9][a-z0-9-]{0,31}$`                                                                                                |
-| Config           | `$XDG_CONFIG_HOME/agent-board/profiles/<name>/` (`~/.config/…` when unset): `config.yaml`, `server.json`, `env` (mode 600) |
-| State            | `$XDG_STATE_HOME/agent-board/profiles/<name>/` (`~/.local/state/…` when unset)                                             |
-| Run (locks, pid) | `<state>/run/`                                                                                                             |
-| Overrides        | `AGENT_BOARD_CONFIG_DIR`, `AGENT_BOARD_STATE_DIR`, `AGENT_BOARD_RUN_DIR` replace the three directories                     |
-| launchd labels   | `agent-board.<profile>.dispatch`, `.listen`, `.watch`                                                                      |
-| systemd units    | `agent-board-<profile>-dispatch.service` and `.timer`, `-listen.service`, `-watch.service`                                 |
-| Keychain service | `agent-board.cli.<profile>` (cli-008)                                                                                      |
+| Item             | Rule                                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Selection        | Global `--profile <name>` or `RUMO_PROFILE`; default profile `default`                                              |
+| Name             | `^[a-z0-9][a-z0-9-]{0,31}$`                                                                                         |
+| Config           | `$XDG_CONFIG_HOME/rumo/profiles/<name>/` (`~/.config/…` when unset): `config.yaml`, `server.json`, `env` (mode 600) |
+| State            | `$XDG_STATE_HOME/rumo/profiles/<name>/` (`~/.local/state/…` when unset)                                             |
+| Run (locks, pid) | `<state>/run/`                                                                                                      |
+| Overrides        | `RUMO_CONFIG_DIR`, `RUMO_STATE_DIR`, `RUMO_RUN_DIR` replace the three directories                                   |
+| launchd labels   | `rumo.<profile>.dispatch`, `.listen`, `.watch`                                                                      |
+| systemd units    | `rumo-<profile>-dispatch.service` and `.timer`, `-listen.service`, `-watch.service`                                 |
+| Keychain service | `rumo.cli.<profile>` (cli-008)                                                                                      |
 
-A second `board setup` under another profile installs beside the first (cli-051). The server app sets the three
+A second `rumo setup` under another profile installs beside the first (cli-051). The server app sets the three
 directory overrides under its own root and installs no launchd units, so it never collides with a CLI install
 (server-app-007).
 
 ### Install and doctor
 
-`board setup` renders the worker units for the selected profile from the contract's unit recipe: systemd user units
-(`agent-board-<profile>-dispatch.service` and `.timer`, `-listen.service`, `-watch.service`) on Linux and launchd agents
-(`agent-board.<profile>.dispatch`, `.listen`, `.watch`) on macOS. `board uninstall` revokes the machine token before it
-removes the units. `board doctor` checks one profile and reports each check under an id of the contract's
+`rumo setup` renders the worker units for the selected profile from the contract's unit recipe: systemd user units
+(`rumo-<profile>-dispatch.service` and `.timer`, `-listen.service`, `-watch.service`) on Linux and launchd agents
+(`rumo.<profile>.dispatch`, `.listen`, `.watch`) on macOS. `rumo uninstall` revokes the machine token before it
+removes the units. `rumo doctor` checks one profile and reports each check under an id of the contract's
 `DOCTOR_CHECK_IDS`. Two ids keep an old file name: `web.json` reports `server.json` and `config.json` reports
 `config.yaml`. The contract is frozen, so the CLI maps its checks to those ids instead of renaming them.
 
 ### User commands
 
-`board answer`, `dismiss`, `reply`, `send`, `stop`, `take-back`, `rerun`, `close`, `reopen`, `fork`,
+`rumo answer`, `dismiss`, `reply`, `send`, `stop`, `take-back`, `rerun`, `close`, `reopen`, `fork`,
 `transcript` (cli-028–034) call the user-authored machine commands. They refuse inside a run (cli-009,
 cli-084) and print the grant needed when the server answers `grant-required`.
 
@@ -410,7 +410,7 @@ One `Transport` per server entry (web-101):
 | -------------- | -------------------------------------------------- | ---------------------------------- |
 | `sameOrigin`   | Plain browser and the entry's origin is the page's | Cookie                             |
 | `crossOrigin`  | Plain browser, another origin                      | `abc_` token from the namespace    |
-| `native`       | `window.agentBoardBridge` exists (a wrapper)       | Held natively; added by the bridge |
+| `native`       | `window.rumoBridge` exists (a wrapper)             | Held natively; added by the bridge |
 
 `Transport` has `request(method, path, { query, body, signal })` and `stream(path, signal)`, which yields parsed
 SSE events. The bridge interface is defined by the browser client in `apps/web/src/bridge/types.ts`; the wrappers
@@ -423,7 +423,7 @@ implement it, so the dependency points from wrapper to client.
 - The server list (id, name, address) is per-device configuration in `localStorage` (web-096). In the wrappers
   the list is kept natively and reached through the bridge, because the handover and the per-server windows need it
   before any page loads.
-- Each server id owns a namespace: an IndexedDB database `agent-board:<serverId>` holding its keys, signing key
+- Each server id owns a namespace: an IndexedDB database `rumo:<serverId>` holding its keys, signing key
   and client token (cross-origin only), and `localStorage` keys prefixed `ab:<serverId>:` for drafts and volatile
   state. Two entries for the same address have two ids and share nothing (web-085, web-102).
 - **The query cache lives in memory only.** It is never persisted to web storage, so no decrypted value outlives the
@@ -477,7 +477,7 @@ The bundled page reaches its servers only through named Rust commands:
   ([ADR-0008](adr/0008-hidden-windows-live-view.md)). If throttling cannot be turned off on a macOS version, the
   app falls back to generic notifications from the attention route.
 - Handover from the server app ([ADR-0007](adr/0007-handover-deep-link.md)):
-  `agentboard://open?v=1&url=<encoded server URL>`, delivered with `open -b <client app bundle id>`. The server app
+  `rumo://open?v=1&url=<encoded server URL>`, delivered with `open -b <client app bundle id>`. The server app
   falls back to the default browser when that command fails. Only loopback URLs without credentials are accepted
   (client-app-014).
 
@@ -511,7 +511,7 @@ The bundled page reaches its servers only through named Rust commands:
 ([ADR-0015](adr/0015-migration-tool.md))
 
 ```
-source board ──read-only──▶ reader (per source version) ──▶ BoardExport file ──▶ agent-board-api import
+source board ──read-only──▶ reader (per source version) ──▶ BoardExport file ──▶ rumo-api import
 ```
 
 - **Sources:** a hosted Postgres database (admin URL, read-only transaction) or a local server's PGlite data
@@ -529,8 +529,8 @@ source board ──read-only──▶ reader (per source version) ──▶ Boar
 - **Order for the server app.** Quit the server app (a PGlite folder has one process at a time), set `userName`,
   run the migration into its data folder through the bundled API executable, then start the app and enrol the
   worker with its existing token and data key. A data folder in which the owner already exists is refused.
-- Machine token hashes are copied, so a worker running the new CLI keeps its token (migrate-004). Today's `board`
-  binaries are out of scope; each worker host installs the new CLI and runs `board init` with its existing token
+- Machine token hashes are copied, so a worker running the new CLI keeps its token (migrate-004). Today's `rumo`
+  binaries are out of scope; each worker host installs the new CLI and runs `rumo init` with its existing token
   and data key.
 - **Test data** is synthetic: a script runs a reference board in a throwaway environment with a made-up user and
   passphrase, and the resulting database and vectors are committed. Real data never enters the repository or CI;
@@ -589,7 +589,7 @@ source board ──read-only──▶ reader (per source version) ──▶ Boar
 | ------------------------------------------- | --------------------------------------------------------------------------- | -------------------------- |
 | api-025, ST-16                              | Client token for bundled and cross-origin clients; cookie stays same-origin | §3 Sessions, ADR-0004      |
 | client-app-037                              | Rust performs the hand-off finish and sends every request                   | §6 Native bridge, ADR-0004 |
-| contract-012                                | Deep link `agentboard://open?v=1&url=…` via `open -b`                       | §6 Client app, ADR-0007    |
+| contract-012                                | Deep link `rumo://open?v=1&url=…` via `open -b`                             | §6 Client app, ADR-0007    |
 | client-app-016                              | Live view, throttling off, attention-route fallback                         | §6 Client app, ADR-0008    |
 | client-app header (window model, isolation) | One window per server plus "All servers"; namespace per server id           | §5, ADR-0005               |
 | server-app header (front)                   | No front; the API serves the browser client                                 | §3 Static files, ADR-0006  |

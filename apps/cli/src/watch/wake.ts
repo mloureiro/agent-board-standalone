@@ -1,11 +1,11 @@
-import { addNoteRoute, wakeRoute } from '@agent-board/contract';
+import { addNoteRoute, wakeRoute } from '@rumo/contract';
 
 import { sealedNote } from '../commands/tasks/notes.js';
 import type { Session } from '../transport/session.js';
 import type { WatchEvent } from './store.js';
 
-export const WAKE_MARKER = 'agent-board: wait over:';
-export const WATCH_MARKER = 'agent-board: watch';
+export const WAKE_MARKER = 'rumo: wait over:';
+export const WATCH_MARKER = 'rumo: watch';
 
 export function eventText(event: Pick<WatchEvent, 'name' | 'kind' | 'text'>): string {
   const head =

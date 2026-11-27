@@ -60,7 +60,7 @@ function user(prompt: string): string {
 
 function installFakeBoard(tmp: Tmp, binDir: string): void {
   mkdirSync(binDir, { recursive: true });
-  const script = path.join(binDir, 'board');
+  const script = path.join(binDir, 'rumo');
   writeFileSync(
     script,
     `#!/bin/sh\necho "$@" >> "${tmp.path('board.log')}"\nif [ "$1" = ask ] && [ "$3" = --file ]; then cp "$4" "${tmp.path('questions.json')}"; fi\necho "board ran: $@"\n`,
@@ -95,7 +95,7 @@ function startProcess(
       PATH: pathVariable,
       STUB_CLAUDE_LOG: logPath,
       HOME: tmp.home,
-      AGENT_BOARD_TASK: 'stub-task',
+      RUMO_TASK: 'stub-task',
     },
   });
   runs.push(run);
@@ -288,7 +288,7 @@ describe('stub claude', () => {
   });
 
   it('board runs the board found first on PATH with the run environment', async () => {
-    const session = start('#stub: board add --title "Follow up" --expect x', {
+    const session = start('#stub: rumo add --title "Follow up" --expect x', {
       fakeBoard: true,
       closeStdin: true,
     });
@@ -296,13 +296,13 @@ describe('stub claude', () => {
     expect(readFileSync(session.tmp.path('board.log'), 'utf8').trim()).toBe(
       'add --title Follow up --expect x',
     );
-    expect(session.log().find((entry) => entry.kind === 'board')).toMatchObject({ code: 0 });
+    expect(session.log().find((entry) => entry.kind === 'rumo')).toMatchObject({ code: 0 });
     expect(JSON.stringify(session.events())).toContain(
       'board ran: add --title Follow up --expect x',
     );
   });
 
-  it('ask runs board ask with the questions file, then waits for stdin', async () => {
+  it('ask runs rumo ask with the questions file, then waits for stdin', async () => {
     const session = start('#stub: ask [{"question":"Which?","options":["a","b"]}]', {
       fakeBoard: true,
     });

@@ -6,7 +6,7 @@ use std::path::PathBuf;
 fn repo_file(relative: &str) -> String {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../..");
     std::fs::read_to_string(root.join(relative)).unwrap_or_else(|_| {
-        panic!("{relative} is missing: run `pnpm --filter @agent-board/contract run build`")
+        panic!("{relative} is missing: run `pnpm --filter @rumo/contract run build`")
     })
 }
 
@@ -14,15 +14,15 @@ pub fn repo_json(relative: &str) -> Value {
     serde_json::from_str(&repo_file(relative)).unwrap()
 }
 
-use agent_board_client_core::bridge::{Bridge, Scope};
-use agent_board_client_core::handshake::ClientInfo;
-use agent_board_client_core::headers::Header;
-use agent_board_client_core::ids::ServerId;
-use agent_board_client_core::ports::{
+use futures_util::{StreamExt, stream};
+use rumo_client_core::bridge::{Bridge, Scope};
+use rumo_client_core::handshake::ClientInfo;
+use rumo_client_core::headers::Header;
+use rumo_client_core::ids::ServerId;
+use rumo_client_core::ports::{
     Clock, Confirm, FileStore, Http, HttpRequest, HttpResponse, Limits, PortError, SecretStore,
 };
-use agent_board_client_core::servers::{ServerEntry, Servers};
-use futures_util::{StreamExt, stream};
+use rumo_client_core::servers::{ServerEntry, Servers};
 use std::collections::{BTreeMap, VecDeque};
 use std::sync::{Arc, Mutex};
 

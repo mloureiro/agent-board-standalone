@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import 'fake-indexeddb/auto';
-import { ADDRESS_PROBLEM_MESSAGES, BLANK_NAME_MESSAGE, serverNamespace } from '@agent-board/web';
+import { ADDRESS_PROBLEM_MESSAGES, BLANK_NAME_MESSAGE, serverNamespace } from '@rumo/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { assembleFrontend } from '../scripts/assemble.js';
@@ -129,23 +129,23 @@ describe('bundling', () => {
 });
 
 describe('bridge', () => {
-  it('[client-app-002] the bridge exposes exactly the AgentBoardBridge members and cannot be replaced', async () => {
+  it('[client-app-002] the bridge exposes exactly the RumoBridge members and cannot be replaced', async () => {
     installInternals(() => undefined);
     await import('../src/bridge/install.js');
-    const bridge = window.agentBoardBridge;
+    const bridge = window.rumoBridge;
     expect(bridge).toBeDefined();
     expect(Object.keys(bridge ?? {}).sort()).toEqual(BRIDGE_MEMBERS);
     expect(bridge?.kind).toBe('client-app');
     expect(Object.isFrozen(bridge)).toBe(true);
 
     expect(() => {
-      Object.defineProperty(window, 'agentBoardBridge', { value: {} });
+      Object.defineProperty(window, 'rumoBridge', { value: {} });
     }).toThrow();
     expect(() => {
-      (window as { agentBoardBridge?: unknown }).agentBoardBridge = {};
+      (window as { rumoBridge?: unknown }).rumoBridge = {};
     }).toThrow();
-    expect(Reflect.deleteProperty(window, 'agentBoardBridge')).toBe(false);
-    expect(window.agentBoardBridge).toBe(bridge);
+    expect(Reflect.deleteProperty(window, 'rumoBridge')).toBe(false);
+    expect(window.rumoBridge).toBe(bridge);
     expect(() => {
       (bridge as unknown as { serverFetch: unknown }).serverFetch = () => undefined;
     }).toThrow();
@@ -352,7 +352,7 @@ async function seedNamespace(id: string): Promise<void> {
 async function namespaceExists(id: string): Promise<boolean> {
   const databases = await indexedDB.databases();
   return (
-    databases.some((database) => database.name === `agent-board:${id}`) ||
+    databases.some((database) => database.name === `rumo:${id}`) ||
     localStorage.getItem(`ab:${id}:theme`) !== null
   );
 }
@@ -516,7 +516,7 @@ describe('server list page', () => {
       failures: [
         { name: 'Alpha', text: 'Alpha could not be opened: the server did not answer' },
         {
-          name: 'Agent Board',
+          name: 'Rumo',
           text: 'That link uses a handover version this app does not understand.',
         },
       ],

@@ -10,7 +10,7 @@ pub const INHERITED: [&str; 7] = [
     "LANG",
     "SSH_AUTH_SOCK",
 ];
-pub const CREDENTIALS_COMMAND_ENV: &str = "AGENT_BOARD_CREDENTIALS_COMMAND";
+pub const CREDENTIALS_COMMAND_ENV: &str = "RUMO_CREDENTIALS_COMMAND";
 pub const TICK_RESULT_FILE: &str = "dispatch-result.json";
 
 const FALLBACK_TAIL: [&str; 7] = [
@@ -60,11 +60,11 @@ impl WorkerPaths {
     }
 
     pub fn cli_link(&self) -> PathBuf {
-        self.bin().join("board-cli")
+        self.bin().join("rumo-cli")
     }
 
     pub fn wrapper(&self) -> PathBuf {
-        self.bin().join("board")
+        self.bin().join("rumo")
     }
 
     pub fn credentials_script(&self, pending: bool) -> PathBuf {
@@ -113,17 +113,17 @@ pub fn worker_env(
     get: &dyn Fn(&str) -> Option<String>,
 ) -> Vec<(String, String)> {
     let mut env = vec![
-        ("AGENT_BOARD_PROFILE".to_string(), PROFILE.to_string()),
+        ("RUMO_PROFILE".to_string(), PROFILE.to_string()),
         (
-            "AGENT_BOARD_CONFIG_DIR".to_string(),
+            "RUMO_CONFIG_DIR".to_string(),
             paths.config().display().to_string(),
         ),
         (
-            "AGENT_BOARD_STATE_DIR".to_string(),
+            "RUMO_STATE_DIR".to_string(),
             paths.state().display().to_string(),
         ),
         (
-            "AGENT_BOARD_RUN_DIR".to_string(),
+            "RUMO_RUN_DIR".to_string(),
             paths.run().display().to_string(),
         ),
         (

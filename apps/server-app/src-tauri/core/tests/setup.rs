@@ -5,16 +5,16 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use agent_board_server_core::app::{self, Host, Start};
-use agent_board_server_core::cli::{Invocation, SetupCommand, parse};
-use agent_board_server_core::credentials::{CredentialStore, FileStore, SIGNUP_TOKEN};
-use agent_board_server_core::login_item::Build;
-use agent_board_server_core::overrides::Overrides;
-use agent_board_server_core::paths::AppPaths;
-use agent_board_server_core::setup::{
+use common::Bed;
+use rumo_server_core::app::{self, Host, Start};
+use rumo_server_core::cli::{Invocation, SetupCommand, parse};
+use rumo_server_core::credentials::{CredentialStore, FileStore, SIGNUP_TOKEN};
+use rumo_server_core::login_item::Build;
+use rumo_server_core::overrides::Overrides;
+use rumo_server_core::paths::AppPaths;
+use rumo_server_core::setup::{
     APPLY, REFUSED_EXIT_CODE, REMOTE_OFF, SetupPlace, SignIn, base64url, run_command,
 };
-use common::Bed;
 use serde_json::Value;
 
 const SERVICE: &str = "test.service";

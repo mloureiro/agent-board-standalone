@@ -3,12 +3,12 @@ mod common;
 use std::fs;
 use std::path::Path;
 
-use agent_board_server_core::app::{self, Host, Start};
-use agent_board_server_core::login_item::{self, Build, LABEL, Outcome, plist, plist_path};
-use agent_board_server_core::overrides::Overrides;
 use common::{Bed, RecordingLaunchctl, exists};
+use rumo_server_core::app::{self, Host, Start};
+use rumo_server_core::login_item::{self, Build, LABEL, Outcome, plist, plist_path};
+use rumo_server_core::overrides::Overrides;
 
-const EXECUTABLE: &str = "/Applications/Agent Board Server.app/Contents/MacOS/agent-board-server";
+const EXECUTABLE: &str = "/Applications/Rumo Server.app/Contents/MacOS/rumo-server";
 
 #[test]
 fn server_app_061_a_release_build_on_the_default_root_writes_the_launch_agent() {
@@ -25,9 +25,9 @@ fn server_app_061_a_release_build_on_the_default_root_writes_the_launch_agent() 
     assert_eq!(outcome, Outcome::Written);
 
     let text = fs::read_to_string(plist_path(&bed.agents)).unwrap();
-    assert_eq!(LABEL, "dev.mloureiro.agent-board-server");
-    assert!(plist_path(&bed.agents).ends_with("dev.mloureiro.agent-board-server.plist"));
-    assert!(text.contains("<key>Label</key>\n  <string>dev.mloureiro.agent-board-server</string>"));
+    assert_eq!(LABEL, "dev.mloureiro.rumo-server");
+    assert!(plist_path(&bed.agents).ends_with("dev.mloureiro.rumo-server.plist"));
+    assert!(text.contains("<key>Label</key>\n  <string>dev.mloureiro.rumo-server</string>"));
     assert!(text.contains(&format!("<string>{EXECUTABLE}</string>")));
     assert!(text.contains("<key>RunAtLoad</key>\n  <true/>"));
     assert!(

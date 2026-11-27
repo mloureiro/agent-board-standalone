@@ -15,7 +15,7 @@ import { DATA_DIRECTORY, FIXTURES, credentialsPath, sqlPath } from './fixtures.j
 import { materializePglite } from './materialize.js';
 import { withSeededRandom } from './seeded-random.js';
 
-const USAGE = `Usage: pnpm --filter @agent-board/migrate fixtures:build --core <old checkout> [--only <fixture>] [--postgres-url <admin url> --pg-dump <pg_dump 16 or newer>]
+const USAGE = `Usage: pnpm --filter @rumo/migrate fixtures:build --core <old checkout> [--only <fixture>] [--postgres-url <admin url> --pg-dump <pg_dump 16 or newer>]
 
 Without --postgres-url the script starts a throwaway postgres:16 container with Docker and dumps with the pg_dump inside it.`;
 

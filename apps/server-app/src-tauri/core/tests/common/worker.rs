@@ -6,19 +6,19 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use agent_board_server_core::cli_run::ProcessCli;
-use agent_board_server_core::credential_flow::{Pair, write_pair};
-use agent_board_server_core::credentials::{CredentialStore, FileStore};
-use agent_board_server_core::durations::Durations;
-use agent_board_server_core::log_file::{AppLog, LogFile};
-use agent_board_server_core::paths::AppPaths;
-use agent_board_server_core::worker::Worker;
-use agent_board_server_core::worker_paths::WorkerPaths;
-use agent_board_server_core::worker_setup::WorkerSetup;
+use rumo_server_core::cli_run::ProcessCli;
+use rumo_server_core::credential_flow::{Pair, write_pair};
+use rumo_server_core::credentials::{CredentialStore, FileStore};
+use rumo_server_core::durations::Durations;
+use rumo_server_core::log_file::{AppLog, LogFile};
+use rumo_server_core::paths::AppPaths;
+use rumo_server_core::worker::Worker;
+use rumo_server_core::worker_paths::WorkerPaths;
+use rumo_server_core::worker_setup::WorkerSetup;
 use tempfile::TempDir;
 
 pub const STUB_BOARD: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/stub-board.sh");
-pub const SERVICE: &str = "dev.mloureiro.agent-board-server.test";
+pub const SERVICE: &str = "dev.mloureiro.rumo-server.test";
 
 pub fn ms(value: u64) -> Duration {
     Duration::from_millis(value)
@@ -74,14 +74,14 @@ impl Rig {
         let cli_dir = dir.path().join("resources/cli");
         fs::create_dir_all(&cli_dir).unwrap();
         fs::create_dir_all(&root).unwrap();
-        let cli = cli_dir.join("board");
+        let cli = cli_dir.join("rumo");
         fs::copy(STUB_BOARD, &cli).unwrap();
         fs::set_permissions(&cli, fs::Permissions::from_mode(0o755)).unwrap();
         fs::write(cli_dir.join("board.conf"), format!("{conf}\n")).unwrap();
         let app = dir.path().join("fake-app");
         fs::write(
             &app,
-            "#!/bin/sh\nprintf 'AGENT_BOARD_TOKEN=abm_good\\nAGENT_BOARD_DATA_KEY=abk1_good\\n'\n",
+            "#!/bin/sh\nprintf 'RUMO_TOKEN=abm_good\\nRUMO_DATA_KEY=abk1_good\\n'\n",
         )
         .unwrap();
         fs::set_permissions(&app, fs::Permissions::from_mode(0o755)).unwrap();
@@ -120,7 +120,7 @@ impl Rig {
         self.worker_gated(Arc::new(|| true))
     }
 
-    pub fn worker_gated(&self, gate: agent_board_server_core::worker::Gate) -> Worker {
+    pub fn worker_gated(&self, gate: rumo_server_core::worker::Gate) -> Worker {
         Worker::start(
             Arc::clone(&self.setup),
             Arc::new(ProcessCli::new(Arc::clone(&self.setup))),

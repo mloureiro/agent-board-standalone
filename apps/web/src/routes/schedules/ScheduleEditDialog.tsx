@@ -1,4 +1,4 @@
-import { PRIORITIES, type Priority } from '@agent-board/contract';
+import { PRIORITIES, type Priority } from '@rumo/contract';
 import {
   Alert,
   Button,

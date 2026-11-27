@@ -28,17 +28,17 @@ export function cliEnv(
   const env: Record<string, string> = {
     HOME: tmp.home,
     PATH: [STUBS_DIR, baseEnv.PATH ?? ''].filter(Boolean).join(path.delimiter),
-    AGENT_BOARD_WORKER_SPAWN: 'process',
-    AGENT_BOARD_E2E: '1',
-    AGENT_BOARD_CLOCK_OFFSET_FILE: tmp.clockFile,
+    RUMO_WORKER_SPAWN: 'process',
+    RUMO_E2E: '1',
+    RUMO_CLOCK_OFFSET_FILE: tmp.clockFile,
   };
   if (options.profileMode === 'profile') {
     env.XDG_CONFIG_HOME = tmp.path('xdg', 'config');
     env.XDG_STATE_HOME = tmp.path('xdg', 'state');
   } else {
-    env.AGENT_BOARD_CONFIG_DIR = tmp.path('cli', 'config');
-    env.AGENT_BOARD_STATE_DIR = tmp.path('cli', 'state');
-    env.AGENT_BOARD_RUN_DIR = tmp.path('cli', 'run');
+    env.RUMO_CONFIG_DIR = tmp.path('cli', 'config');
+    env.RUMO_STATE_DIR = tmp.path('cli', 'state');
+    env.RUMO_RUN_DIR = tmp.path('cli', 'run');
   }
   return { ...env, ...options.env };
 }

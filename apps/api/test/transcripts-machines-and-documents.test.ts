@@ -1,5 +1,5 @@
-import { CONTRACT, FEATURES, MIN_CLIENT, MIN_SERVER, versionAnswer } from '@agent-board/contract';
-import { tokenHash } from '@agent-board/sealing';
+import { CONTRACT, FEATURES, MIN_CLIENT, MIN_SERVER, versionAnswer } from '@rumo/contract';
+import { tokenHash } from '@rumo/sealing';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 

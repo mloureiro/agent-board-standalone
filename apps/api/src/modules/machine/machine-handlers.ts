@@ -5,7 +5,7 @@ import {
   MIN_CLIENT,
   MIN_SERVER,
   parseClientHeader,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 
 import type { HandlerTable } from '../../http/handler.js';
 import { announceChange, announceRevoked, announceTaskChange } from '../events/index.js';

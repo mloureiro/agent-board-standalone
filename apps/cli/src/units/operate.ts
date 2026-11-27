@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-import { taskId } from '@agent-board/contract';
+import { taskId } from '@rumo/contract';
 
 import type { Context } from '../commands/context.js';
 import { CliError, ReportedFailure, UsageError } from '../errors.js';
@@ -26,7 +26,7 @@ import {
 
 export const DEFAULT_LINES = '100';
 
-const SETUP_HINT = 'run `board setup --enable`';
+const SETUP_HINT = 'run `rumo setup --enable`';
 
 function selected(requested: readonly string[]): UnitName[] {
   const names = requested.filter(isUnitName);
@@ -34,7 +34,7 @@ function selected(requested: readonly string[]): UnitName[] {
 }
 
 export async function runRestart(ctx: Context, requested: readonly string[]): Promise<void> {
-  if (ctx.inRun) throw new CliError('`board restart` cannot run inside a board run');
+  if (ctx.inRun) throw new CliError('`rumo restart` cannot run inside a board run');
   const platform = requireUnitPlatform(ctx.rt, 'restart');
   const directory = unitDirectory(ctx.rt, platform);
   const { profile } = ctx.dirs;

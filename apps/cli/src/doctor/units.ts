@@ -1,7 +1,7 @@
 import { accessSync, constants, existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import type { DoctorCheckId, DoctorResult } from '@agent-board/contract';
+import type { DoctorCheckId, DoctorResult } from '@rumo/contract';
 
 import type { Context } from '../commands/context.js';
 import {
@@ -20,7 +20,7 @@ import {
 } from '../units/index.js';
 import { pass, problem } from './results.js';
 
-const SETUP = 'run `board setup`';
+const SETUP = 'run `rumo setup`';
 
 const COMMAND_IDS: Record<UnitName, DoctorCheckId> = {
   dispatch: 'dispatch command',
@@ -93,7 +93,7 @@ function stateProblem(unit: UnitName): DoctorResult {
     STATE_IDS[unit],
     'warn',
     `the ${unit} unit is installed but not running`,
-    'run `board setup --enable`',
+    'run `rumo setup --enable`',
   );
 }
 

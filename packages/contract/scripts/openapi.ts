@@ -121,7 +121,7 @@ export const buildOpenApi = (): object => {
   }
   return {
     openapi: '3.1.0',
-    info: { title: 'Agent Board contract', version: PART_VERSION, 'x-contract': CONTRACT },
+    info: { title: 'Rumo contract', version: PART_VERSION, 'x-contract': CONTRACT },
     tags: [{ name: 'public' }, { name: 'client' }, { name: 'machine' }],
     paths,
     components: {

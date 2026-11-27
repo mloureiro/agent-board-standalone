@@ -1,4 +1,4 @@
-import { authPasskeySignupOptionsRoute, authPasskeySignupRoute } from '@agent-board/contract';
+import { authPasskeySignupOptionsRoute, authPasskeySignupRoute } from '@rumo/contract';
 import { Alert, Button, PasswordInput, Stack, Text, TextInput } from '@mantine/core';
 import { useState, type FormEvent, type ReactNode } from 'react';
 

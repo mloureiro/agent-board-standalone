@@ -5,7 +5,7 @@ import type { Context } from '../context.js';
 import { refuseInRun } from '../tasks/support.js';
 
 export function userCommand(ctx: Context, name: string): void {
-  refuseInRun(ctx, `board ${name}`);
+  refuseInRun(ctx, `rumo ${name}`);
 }
 
 export function grantMessage(s: Session): string {

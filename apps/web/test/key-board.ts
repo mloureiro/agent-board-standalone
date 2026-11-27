@@ -1,4 +1,4 @@
-import { SIGNATURE_HEADERS, canonicalString, type UiDevice } from '@agent-board/contract';
+import { SIGNATURE_HEADERS, canonicalString, type UiDevice } from '@rumo/contract';
 import {
   contentDigest,
   importPublicKey,
@@ -6,7 +6,7 @@ import {
   verify,
   type KdfParams,
   type KeySetup,
-} from '@agent-board/sealing';
+} from '@rumo/sealing';
 
 import { FakeBoard, json, type FakeSession } from './fake-board.js';
 import { versionDocument } from './versions.js';

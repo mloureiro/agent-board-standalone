@@ -3,7 +3,7 @@ import { request } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { DATA_HEADERS } from '@agent-board/contract';
+import { DATA_HEADERS } from '@rumo/contract';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { runCli } from '../src/cli.js';
@@ -216,7 +216,7 @@ describe('control channel', () => {
     expect((await control(login.socket, 'pair-code')).status).toBe(409);
   });
 
-  it('[api-120] agent-board-api pair prints a code from the control socket', async () => {
+  it('[api-120] rumo-api pair prints a code from the control socket', async () => {
     const { env, started } = await boot();
     const printed = await captured(() => runCli(['pair'], env));
     expect(printed.code).toBe(0);

@@ -1,4 +1,4 @@
-package com.mloureiro.agentboard.boardnative
+package com.mloureiro.rumo.boardnative
 
 import android.app.Service
 import android.content.Intent

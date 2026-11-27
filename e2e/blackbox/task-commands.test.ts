@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 import { describe, expect, it } from 'vitest';
 
 import type { Board } from '../src/harness/board.js';
@@ -113,7 +113,7 @@ describe('task commands', () => {
     });
   });
 
-  it('[cli-013] board show renders a task with its thread, in text and JSON', async () => {
+  it('[cli-013] rumo show renders a task with its thread, in text and JSON', async () => {
     await withWorker(harness.board, async ({ user, key, worker }) => {
       const tag = randomUUID().slice(0, 6);
       const task = await createWorkerTask(user, key, {
@@ -182,7 +182,7 @@ describe('task commands', () => {
     });
   });
 
-  it.each([1, 4])('[cli-018] a run posts %i questions with board ask', async (count) => {
+  it.each([1, 4])('[cli-018] a run posts %i questions with rumo ask', async (count) => {
     await withWorker(harness.board, async ({ user, key, worker }) => {
       const task = await createWorkerTask(user, key, {
         prompt: `#stub: ask ${questionsJson(count)}`,
@@ -208,11 +208,11 @@ describe('task commands', () => {
       const file = writeFile(harness.board, `ask-${id}.json`, questionsJson(count));
       const task = await createWorkerTask(user, key, {
         id,
-        prompt: `#stub: board ask ${id} --file ${file}`,
+        prompt: `#stub: rumo ask ${id} --file ${file}`,
       });
       worker.listen();
       await waitForStatus(user, task.id, 'done');
-      const asked = worker.entries().filter((entry) => entry.kind === 'board');
+      const asked = worker.entries().filter((entry) => entry.kind === 'rumo');
       expect(asked).toHaveLength(1);
       expect(asked[0]?.code).not.toBe(0);
       expect(questionNotes(await openThread(user, key, task.id))).toHaveLength(0);
@@ -228,17 +228,17 @@ describe('task commands', () => {
       const task = await createWorkerTask(user, key, {
         id,
         prompt: [
-          `#stub: board ask ${id} --file ${file}`,
-          `#stub: board ask ${id} --file ${file}`,
+          `#stub: rumo ask ${id} --file ${file}`,
+          `#stub: rumo ask ${id} --file ${file}`,
         ].join('\n'),
         autoDone: false,
       });
       worker.listen();
-      await pollUntil(
-        () => worker.entries().filter((entry) => entry.kind === 'board').length >= 2,
-        { timeoutMs: 45_000, what: 'both asks to run' },
-      );
-      const [first, second] = worker.entries().filter((entry) => entry.kind === 'board');
+      await pollUntil(() => worker.entries().filter((entry) => entry.kind === 'rumo').length >= 2, {
+        timeoutMs: 45_000,
+        what: 'both asks to run',
+      });
+      const [first, second] = worker.entries().filter((entry) => entry.kind === 'rumo');
       expect(first?.code).toBe(0);
       expect(second?.code).not.toBe(0);
       expect(questionNotes(await openThread(user, key, task.id))).toHaveLength(1);
@@ -253,7 +253,7 @@ describe('task commands', () => {
     });
   });
 
-  it('[cli-024] board add proposes a follow-up in Backlog in the parent project and allowed directory', async () => {
+  it('[cli-024] rumo add proposes a follow-up in Backlog in the parent project and allowed directory', async () => {
     await withWorker(harness.board, async ({ user, key, worker }) => {
       const first = await createProject(user, key, `first ${randomUUID().slice(0, 6)}`);
       await moveDirectory(user, worker.directoryId, first);
@@ -261,7 +261,7 @@ describe('task commands', () => {
       const body = writeFile(harness.board, `${parent}.txt`, `follow-up body ${parent}`);
       await createWorkerTask(user, key, {
         id: parent,
-        prompt: `#stub: board add --title followup --file ${body} --parent ${parent}`,
+        prompt: `#stub: rumo add --title followup --file ${body} --parent ${parent}`,
         projectId: first,
         place: { machine: worker.name, directoryId: worker.directoryId },
       });
@@ -280,7 +280,7 @@ describe('task commands', () => {
     });
   });
 
-  it('[cli-024] board add --project puts the follow-up in that project and one of its allowed directories', async () => {
+  it('[cli-024] rumo add --project puts the follow-up in that project and one of its allowed directories', async () => {
     await withWorker(harness.board, async ({ user, key, worker }) => {
       const first = await createProject(user, key, `first ${randomUUID().slice(0, 6)}`);
       const second = await createProject(user, key, `second ${randomUUID().slice(0, 6)}`);
@@ -291,7 +291,7 @@ describe('task commands', () => {
       const body = writeFile(harness.board, `${parent}.txt`, `follow-up body ${parent}`);
       await createWorkerTask(user, key, {
         id: parent,
-        prompt: `#stub: board add --title followup --file ${body} --parent ${parent} --project ${second}`,
+        prompt: `#stub: rumo add --title followup --file ${body} --parent ${parent} --project ${second}`,
         projectId: first,
         place: { machine: worker.name, directoryId: worker.directoryId },
       });
@@ -308,7 +308,7 @@ describe('task commands', () => {
     });
   });
 
-  it('[cli-024] board add refuses a directory that is not allowed', async () => {
+  it('[cli-024] rumo add refuses a directory that is not allowed', async () => {
     await withWorker(harness.board, async ({ user, key, worker }) => {
       const parent = await createWorkerTask(user, key, { prompt: 'parent', when: 'backlog' });
       const body = writeFile(harness.board, `${parent.id}.txt`, 'follow-up body');
@@ -316,7 +316,7 @@ describe('task commands', () => {
       mkdirSync(unallowed, { recursive: true });
       const run = (startDir: string, title: string) =>
         worker.machine.cli(['add', '--title', title, '--file', body, '--parent', parent.id], {
-          env: { AGENT_BOARD_TASK: parent.id, AGENT_BOARD_START_DIR: startDir },
+          env: { RUMO_TASK: parent.id, RUMO_START_DIR: startDir },
         });
       const children = async () =>
         (await user.ok('client.tasks.list', {})).tasks.filter(

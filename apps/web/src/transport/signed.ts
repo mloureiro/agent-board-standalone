@@ -1,5 +1,5 @@
-import { NONCE_BYTES, SIGNATURE_HEADERS, canonicalString } from '@agent-board/contract';
-import { contentDigest, sign, toBase64Url } from '@agent-board/sealing';
+import { NONCE_BYTES, SIGNATURE_HEADERS, canonicalString } from '@rumo/contract';
+import { contentDigest, sign, toBase64Url } from '@rumo/sealing';
 
 import type { Transport } from './types.js';
 

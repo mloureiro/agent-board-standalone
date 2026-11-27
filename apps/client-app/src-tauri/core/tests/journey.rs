@@ -1,16 +1,16 @@
 mod common;
 
-use agent_board_client_core::bridge::Bridge;
-use agent_board_client_core::files::DirStore;
-use agent_board_client_core::handshake::Handshake;
-use agent_board_client_core::log::{LogEvent, line};
-use agent_board_client_core::ports::SecretStore;
-use agent_board_client_core::servers::Servers;
-use agent_board_client_core::tab_file;
-use agent_board_client_core::tabs::Tabs;
-use agent_board_client_core::tokens::{key_service, token_service};
 use common::*;
 use futures_util::StreamExt;
+use rumo_client_core::bridge::Bridge;
+use rumo_client_core::files::DirStore;
+use rumo_client_core::handshake::Handshake;
+use rumo_client_core::log::{LogEvent, line};
+use rumo_client_core::ports::SecretStore;
+use rumo_client_core::servers::Servers;
+use rumo_client_core::tab_file;
+use rumo_client_core::tabs::Tabs;
+use rumo_client_core::tokens::{key_service, token_service};
 use serde_json::json;
 use std::fs;
 use std::path::Path;
@@ -59,14 +59,14 @@ async fn client_app_036_no_store_holds_decrypted_content_after_a_journey() {
 
     let added = bridge
         .page_add_server(
-            &agent_board_client_core::bridge::Scope::AllServers(vec![]),
+            &rumo_client_core::bridge::Scope::AllServers(vec![]),
             "Alpha",
             "https://board.example.test/",
         )
         .unwrap()
         .unwrap();
     let server = added.id;
-    let scope = agent_board_client_core::bridge::Scope::Server(server);
+    let scope = rumo_client_core::bridge::Scope::Server(server);
     bridge.record_handshake(
         server,
         Handshake {
@@ -87,7 +87,7 @@ async fn client_app_036_no_store_holds_decrypted_content_after_a_journey() {
 
     let mut tabs = Tabs::new();
     tabs.open("/tasks/t-1");
-    tabs.title(1, &format!("{TITLE} · Agent Board"));
+    tabs.title(1, &format!("{TITLE} · Rumo"));
     tab_file::write(&tab_files, server, &tabs).unwrap();
     let mut logged: Vec<String> = LogEvent::ALL
         .iter()

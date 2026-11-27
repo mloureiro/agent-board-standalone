@@ -19,7 +19,7 @@ const MARKER = 'needle-Ünï-7';
 let root: string;
 
 beforeAll(() => {
-  root = mkdtempSync(path.join(os.tmpdir(), 'agent-board-e2e-scan-'));
+  root = mkdtempSync(path.join(os.tmpdir(), 'rumo-e2e-scan-'));
   mkdirSync(path.join(root, 'with', 'nested'), { recursive: true });
   mkdirSync(path.join(root, 'without'), { recursive: true });
   const bytes = markerBytes(MARKER);

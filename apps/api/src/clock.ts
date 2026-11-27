@@ -16,8 +16,8 @@ const offsetMs = (file: string): number => {
 };
 
 export const clockFromEnv = (env: Readonly<Record<string, string | undefined>>): Clock => {
-  const file = env.AGENT_BOARD_CLOCK_OFFSET_FILE;
-  if (env.AGENT_BOARD_E2E !== '1' || file === undefined || file === '') return systemClock;
+  const file = env.RUMO_CLOCK_OFFSET_FILE;
+  if (env.RUMO_E2E !== '1' || file === undefined || file === '') return systemClock;
   return { now: () => new Date(Date.now() + offsetMs(file)) };
 };
 

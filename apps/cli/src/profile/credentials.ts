@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { decodeDataKey } from '@agent-board/sealing';
+import { decodeDataKey } from '@rumo/sealing';
 
 import { CliError } from '../errors.js';
 import type { Runtime } from '../runtime.js';
@@ -15,9 +15,9 @@ import {
 import { readKeychain } from './keychain.js';
 import type { ProfileDirs } from './paths.js';
 
-export const TOKEN_KEY = 'AGENT_BOARD_TOKEN';
-export const DATA_KEY_KEY = 'AGENT_BOARD_DATA_KEY';
-export const CREDENTIALS_COMMAND_ENV = 'AGENT_BOARD_CREDENTIALS_COMMAND';
+export const TOKEN_KEY = 'RUMO_TOKEN';
+export const DATA_KEY_KEY = 'RUMO_DATA_KEY';
+export const CREDENTIALS_COMMAND_ENV = 'RUMO_CREDENTIALS_COMMAND';
 
 const COMMAND_TIMEOUT_MS = 10_000;
 const COMMAND_MAX_BYTES = 64 * 1024;
@@ -110,7 +110,7 @@ export async function loadCredentials(rt: Runtime, dirs: ProfileDirs): Promise<C
   const dataKey = overrideKey ?? stored.dataKey;
   if (token === undefined || token === '' || dataKey === undefined || dataKey === '') {
     throw new CliError(
-      `no credentials for profile "${dirs.profile}": run \`board init\` first (or set ${TOKEN_KEY} and ${DATA_KEY_KEY})`,
+      `no credentials for profile "${dirs.profile}": run \`rumo init\` first (or set ${TOKEN_KEY} and ${DATA_KEY_KEY})`,
     );
   }
   return { token: validateToken(token), dataKey: validateDataKey(dataKey), source };

@@ -1,4 +1,4 @@
-use agent_board_client_core::ports::{PortError, SecretStore};
+use rumo_client_core::ports::{PortError, SecretStore};
 use security_framework::item::{ItemClass, ItemSearchOptions, Limit};
 use security_framework::os::macos::keychain::SecKeychain;
 use security_framework::passwords::{

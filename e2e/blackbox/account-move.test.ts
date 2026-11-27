@@ -1,4 +1,4 @@
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { call, machineToken } from '../src/client/contract-client.js';

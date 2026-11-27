@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { taskId } from '@agent-board/contract';
+import { taskId } from '@rumo/contract';
 
 import type { Context } from '../commands/context.js';
 import { createRunRecords } from '../dispatch/run-record.js';
@@ -45,6 +45,6 @@ export async function runHook(ctx: Context, args: readonly string[]): Promise<vo
     }
     records.writeCwd(task, cwd);
   } catch (error) {
-    ctx.err(`board internal hook: ${error instanceof Error ? error.message : String(error)}`);
+    ctx.err(`rumo internal hook: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

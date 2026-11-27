@@ -1,7 +1,7 @@
 {
   "marketplace": "claude-plugin",
-  "_comment": "Registry for agent-board-standalone: one pnpm monorepo (API, CLI, browser client, server app, client app, Android wrapper, migration tool, shared contract and sealing packages, e2e). Personal repo, solo delivery. The models block records the model per role (Opus 5.5 for architect, QA, review and research; Sonnet 5.5 for dev and E2E).",
-  "repo": { "match": ["mloureiro/agent-board-standalone(\\.git)?$"] },
+  "_comment": "Registry for rumo: one pnpm monorepo (API, CLI, browser client, server app, client app, Android wrapper, migration tool, shared contract and sealing packages, e2e). Personal repo, solo delivery. The models block records the model per role (Opus 5.5 for architect, QA, review and research; Sonnet 5.5 for dev and E2E).",
+  "repo": { "match": ["mloureiro/rumo(\\.git)?$"] },
   "delivery": { "mode": "solo" },
   "models": {
     "architect": "claude-opus-5-5",

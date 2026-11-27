@@ -1,8 +1,8 @@
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-import { BOARD_EXPORT_FORMAT, parseBoardExportLine } from '@agent-board/contract';
-import { bindings, wrapSlot } from '@agent-board/sealing';
+import { BOARD_EXPORT_FORMAT, parseBoardExportLine } from '@rumo/contract';
+import { bindings, wrapSlot } from '@rumo/sealing';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
 import {

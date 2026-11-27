@@ -1,8 +1,8 @@
 import { isLoopbackUrl } from '../address/rule.js';
 
-export const HANDOVER_SCHEME = 'agentboard';
+export const HANDOVER_SCHEME = 'rumo';
 export const HANDOVER_VERSION = 1;
-export const CLIENT_APP_BUNDLE_ID = 'dev.mloureiro.agent-board-client';
+export const CLIENT_APP_BUNDLE_ID = 'dev.mloureiro.rumo-client';
 
 export type HandoverProblem =
   'not-handover' | 'unknown-version' | 'bad-url' | 'not-loopback' | 'credentials';

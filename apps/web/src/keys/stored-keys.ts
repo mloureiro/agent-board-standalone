@@ -1,4 +1,4 @@
-import type { Keys } from '@agent-board/sealing';
+import type { Keys } from '@rumo/sealing';
 
 import { serverNamespace } from '../storage/index.js';
 

@@ -25,7 +25,7 @@ const setup = {
 const creationOptions = {
   user: { id: 'dXNlcg', name: 'owner', displayName: 'owner' },
   challenge: 'Y2hhbGxlbmdl',
-  rp: { name: 'Agent Board' },
+  rp: { name: 'Rumo' },
   pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
 };
 

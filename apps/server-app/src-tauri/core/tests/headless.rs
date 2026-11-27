@@ -5,14 +5,14 @@ use std::io::{self, Cursor};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use agent_board_server_core::app::{self, Host, Running, Start};
-use agent_board_server_core::durations::Durations;
-use agent_board_server_core::handover::CommandRunner;
-use agent_board_server_core::headless::serve_with;
-use agent_board_server_core::login_item::Build;
-use agent_board_server_core::opener::Opener;
-use agent_board_server_core::overrides::Overrides;
 use common::Bed;
+use rumo_server_core::app::{self, Host, Running, Start};
+use rumo_server_core::durations::Durations;
+use rumo_server_core::handover::CommandRunner;
+use rumo_server_core::headless::serve_with;
+use rumo_server_core::login_item::Build;
+use rumo_server_core::opener::Opener;
+use rumo_server_core::overrides::Overrides;
 use serde_json::Value;
 
 #[derive(Default)]
@@ -285,7 +285,7 @@ fn stub_host(bed: &Bed) -> Host {
     fs::create_dir_all(resources.join("api")).unwrap();
     fs::copy(
         env!("CARGO_BIN_EXE_stub_child"),
-        resources.join("api/agent-board-api"),
+        resources.join("api/rumo-api"),
     )
     .unwrap();
     fs::write(resources.join("api/schema-version"), "stub-1\n").unwrap();
@@ -439,7 +439,7 @@ fn server_app_089_restart_server_applies_remote_access_and_the_open_first_passke
     let host = stub_host(&bed);
     let dump = bed.dir.path().join("api-env.txt");
     fs::write(
-        bed.dir.path().join("resources/api/agent-board-api.conf"),
+        bed.dir.path().join("resources/api/rumo-api.conf"),
         format!("env_dump={}\n", dump.display()),
     )
     .unwrap();

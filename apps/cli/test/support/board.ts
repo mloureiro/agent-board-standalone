@@ -1,5 +1,5 @@
-import { CONTRACT, MIN_CLIENT, MIN_SERVER, FEATURES } from '@agent-board/contract';
-import { deriveKeys, encodeDataKey, generateDataKey } from '@agent-board/sealing';
+import { CONTRACT, MIN_CLIENT, MIN_SERVER, FEATURES } from '@rumo/contract';
+import { deriveKeys, encodeDataKey, generateDataKey } from '@rumo/sealing';
 
 import { startServer, type Answer, type FakeServer, type SeenRequest } from './server.js';
 

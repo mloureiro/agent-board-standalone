@@ -12,7 +12,7 @@ describe('missingParts', () => {
       (['api', 'cli', 'web', 'migrate'] as const).map((part) => locatePart(part, {}).path),
     ).toEqual([
       'apps/api/dist/main.js',
-      'apps/cli/dist/board',
+      'apps/cli/dist/rumo',
       'apps/web/dist',
       'apps/migrate/dist/main.js',
     ]);
@@ -21,30 +21,30 @@ describe('missingParts', () => {
   it('reports each unbuilt part with the path it looked at', () => {
     expect(
       missingParts(['api', 'cli', 'web', 'migrate'], {
-        AGENT_BOARD_API_BIN: 'unbuilt/api',
-        AGENT_BOARD_CLI_BIN: 'unbuilt/board',
-        AGENT_BOARD_WEB_ROOT: 'unbuilt/web',
-        AGENT_BOARD_MIGRATE_BIN: 'unbuilt/migrate',
+        RUMO_API_BIN: 'unbuilt/api',
+        RUMO_CLI_BIN: 'unbuilt/rumo',
+        RUMO_WEB_ROOT: 'unbuilt/web',
+        RUMO_MIGRATE_BIN: 'unbuilt/migrate',
       }),
     ).toEqual([
       { part: 'api', path: 'unbuilt/api' },
-      { part: 'cli', path: 'unbuilt/board' },
+      { part: 'cli', path: 'unbuilt/rumo' },
       { part: 'web', path: 'unbuilt/web' },
       { part: 'migrate', path: 'unbuilt/migrate' },
     ]);
   });
 
   it.each([
-    ['api', 'AGENT_BOARD_API_BIN'],
-    ['cli', 'AGENT_BOARD_CLI_BIN'],
-    ['web', 'AGENT_BOARD_WEB_ROOT'],
-    ['migrate', 'AGENT_BOARD_MIGRATE_BIN'],
+    ['api', 'RUMO_API_BIN'],
+    ['cli', 'RUMO_CLI_BIN'],
+    ['web', 'RUMO_WEB_ROOT'],
+    ['migrate', 'RUMO_MIGRATE_BIN'],
   ] as const)('finds %s through %s', (part, variable) => {
     expect(missingParts([part], { [variable]: present })).toEqual([]);
   });
 
   it('reports the override path when the override does not exist', () => {
-    expect(missingParts(['api'], { AGENT_BOARD_API_BIN: '/nowhere/api.js' })).toEqual([
+    expect(missingParts(['api'], { RUMO_API_BIN: '/nowhere/api.js' })).toEqual([
       { part: 'api', path: '/nowhere/api.js' },
     ]);
   });

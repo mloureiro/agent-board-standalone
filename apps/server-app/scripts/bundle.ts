@@ -7,7 +7,7 @@ if (import.meta.main) {
   const problems = resourcesProblems(RESOURCES_DIR);
   if (problems.length > 0) {
     process.stderr.write(
-      `${problems.map((problem) => `- ${problem}`).join('\n')}\nrun \`pnpm --filter @agent-board/server-app run assemble\` first\n`,
+      `${problems.map((problem) => `- ${problem}`).join('\n')}\nrun \`pnpm --filter @rumo/server-app run assemble\` first\n`,
     );
     process.exit(1);
   }
@@ -23,7 +23,7 @@ if (import.meta.main) {
       JSON.stringify({ bundle: { resources: ['resources/**/*'] } }),
       '--',
       '--package',
-      'agent-board-server',
+      'rumo-server',
     ],
     { cwd: PART_ROOT, stdio: 'inherit' },
   );

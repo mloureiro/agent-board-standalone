@@ -1,4 +1,4 @@
-import { PRIORITIES, type Priority, type TaskStatus } from '@agent-board/contract';
+import { PRIORITIES, type Priority, type TaskStatus } from '@rumo/contract';
 import { and, eq, ne } from 'drizzle-orm';
 
 import { task } from '../../db/schema/index.js';

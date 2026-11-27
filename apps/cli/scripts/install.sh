@@ -1,19 +1,19 @@
 #!/bin/sh
 set -eu
 
-REPOSITORY="mloureiro/agent-board-standalone"
-RELEASES_URL="${AGENT_BOARD_RELEASES_URL:-https://api.github.com/repos/${REPOSITORY}/releases?per_page=30}"
-DOWNLOAD_URL="${AGENT_BOARD_DOWNLOAD_URL:-https://github.com/${REPOSITORY}/releases/download}"
-INSTALL_DIR="${BOARD_INSTALL_DIR:-$HOME/.local/bin}"
-VERSION="${AGENT_BOARD_VERSION:-}"
+REPOSITORY="mloureiro/rumo"
+RELEASES_URL="${RUMO_RELEASES_URL:-https://api.github.com/repos/${REPOSITORY}/releases?per_page=30}"
+DOWNLOAD_URL="${RUMO_DOWNLOAD_URL:-https://github.com/${REPOSITORY}/releases/download}"
+INSTALL_DIR="${RUMO_INSTALL_DIR:-$HOME/.local/bin}"
+VERSION="${RUMO_VERSION:-}"
 
 usage() {
   cat <<'TEXT'
-Install the board CLI from the newest cli-v* release of this repository.
+Install the rumo CLI from the newest cli-v* release of this repository.
 
   sh install.sh [--version x.y.z] [--dir <directory>]
 
-Environment: BOARD_INSTALL_DIR (default ~/.local/bin), AGENT_BOARD_VERSION.
+Environment: RUMO_INSTALL_DIR (default ~/.local/bin), RUMO_VERSION.
 TEXT
 }
 
@@ -59,7 +59,7 @@ fi
 printf '%s\n' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || fail "\"$VERSION\" is not an x.y.z version"
 
 TAG="cli-v${VERSION}"
-ASSET="board-${TARGET}"
+ASSET="rumo-${TARGET}"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 trap 'exit 130' INT TERM
@@ -73,14 +73,14 @@ ACTUAL="$(sha256 "$WORK/$ASSET")"
 [ "$EXPECTED" = "$ACTUAL" ] || fail "the checksum of $ASSET does not match (expected $EXPECTED, got $ACTUAL); nothing was installed"
 
 chmod 755 "$WORK/$ASSET"
-"$WORK/$ASSET" --version >/dev/null 2>&1 || fail "the downloaded board does not run on this machine; nothing was installed"
+"$WORK/$ASSET" --version >/dev/null 2>&1 || fail "the downloaded rumo does not run on this machine; nothing was installed"
 
 mkdir -p "$INSTALL_DIR"
-mv -f "$WORK/$ASSET" "$INSTALL_DIR/board.new"
-mv -f "$INSTALL_DIR/board.new" "$INSTALL_DIR/board"
-echo "installed board $VERSION ($TARGET) at $INSTALL_DIR/board"
+mv -f "$WORK/$ASSET" "$INSTALL_DIR/rumo.new"
+mv -f "$INSTALL_DIR/rumo.new" "$INSTALL_DIR/rumo"
+echo "installed rumo $VERSION ($TARGET) at $INSTALL_DIR/rumo"
 
 case ":$PATH:" in
   *":$INSTALL_DIR:"*) ;;
-  *) echo "add $INSTALL_DIR to your PATH to run \`board\`" ;;
+  *) echo "add $INSTALL_DIR to your PATH to run \`rumo\`" ;;
 esac

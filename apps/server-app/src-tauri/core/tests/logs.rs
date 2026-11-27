@@ -4,9 +4,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::{Duration, UNIX_EPOCH};
 
-use agent_board_server_core::log_file::{AppLog, LogFile, ROTATE_AT_BYTES};
-use agent_board_server_core::redact::{MASK, redact};
-use agent_board_server_core::timestamp;
+use rumo_server_core::log_file::{AppLog, LogFile, ROTATE_AT_BYTES};
+use rumo_server_core::redact::{MASK, redact};
+use rumo_server_core::timestamp;
 
 const HEX_64: &str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
@@ -49,7 +49,7 @@ fn server_app_070_a_message_stays_on_one_line() {
 #[test]
 fn server_app_070_the_access_log_is_its_own_file_next_to_the_app_log() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = agent_board_server_core::paths::AppPaths::new(dir.path());
+    let paths = rumo_server_core::paths::AppPaths::new(dir.path());
     assert_eq!(paths.access_log().parent(), paths.app_log().parent());
     assert_ne!(paths.access_log(), paths.app_log());
     let access = LogFile::new(paths.access_log());

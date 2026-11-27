@@ -1,11 +1,9 @@
-use agent_board_bridge_core::bridge::{Bridge, BridgeConfig, BridgeError};
-use agent_board_bridge_core::ports::{
-    Confirm, Env, Http, HttpRequest, HttpResponse, KeyStore, Store,
-};
-use agent_board_bridge_core::sign::key_id_of;
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use p256::ecdsa::{Signature, SigningKey, VerifyingKey, signature::Signer, signature::Verifier};
 use p256::pkcs8::EncodePublicKey;
+use rumo_bridge_core::bridge::{Bridge, BridgeConfig, BridgeError};
+use rumo_bridge_core::ports::{Confirm, Env, Http, HttpRequest, HttpResponse, KeyStore, Store};
+use rumo_bridge_core::sign::key_id_of;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 

@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 const file = process.argv[process.argv.indexOf('--file') + 1];
 if (process.env.FAKE_MARKER) writeFileSync(process.env.FAKE_MARKER, process.env.DATABASE_URL ?? '');
 if (process.env.FAKE_FAIL) {
-  process.stderr.write('agent-board-api: import failed: ' + process.env.FAKE_FAIL + '\\n');
+  process.stderr.write('rumo-api: import failed: ' + process.env.FAKE_FAIL + '\\n');
   process.exit(1);
 }
 const names = { agents: 'shared_agents', links: 'link_rules', titles: 'title_rules', settings: 'setting' };

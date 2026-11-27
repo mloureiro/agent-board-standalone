@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.mloureiro.agentboard.boardnative"
+    namespace = "com.mloureiro.rumo.boardnative"
     compileSdk = 36
 
     defaultConfig {

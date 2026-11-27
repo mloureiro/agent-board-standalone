@@ -5,8 +5,8 @@ import {
   setClientLinksRoute,
   setClientSettingsRoute,
   setClientTitleRulesRoute,
-} from '@agent-board/contract';
-import { bindings, open, seal } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, open, seal } from '@rumo/sealing';
 
 import { ApiError } from '../session/index.js';
 import type { Page } from './use-page.js';

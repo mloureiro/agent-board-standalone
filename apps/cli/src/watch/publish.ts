@@ -1,5 +1,5 @@
-import { setWatchesRoute } from '@agent-board/contract';
-import { bindings, seal } from '@agent-board/sealing';
+import { setWatchesRoute } from '@rumo/contract';
+import { bindings, seal } from '@rumo/sealing';
 
 import { formatDuration, localTime } from '../domain/time.js';
 import { oneLine, plain } from '../domain/rules.js';

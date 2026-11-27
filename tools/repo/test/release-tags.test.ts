@@ -37,7 +37,7 @@ describe('planTags', () => {
       new Set(),
     );
     expect(plan?.message).toBe(
-      'api 1.0.0\nsupports @agent-board/contract ^1.0.0\nsupports @agent-board/sealing ^1.2.0',
+      'api 1.0.0\nsupports @rumo/contract ^1.0.0\nsupports @rumo/sealing ^1.2.0',
     );
   });
 });

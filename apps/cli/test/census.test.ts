@@ -58,9 +58,9 @@ describe('the census of cli-review section 1', () => {
     },
   );
 
-  it('[cli-012] board help prints the usage of a command', async () => {
+  it('[cli-012] rumo help prints the usage of a command', async () => {
     expect(await runCli(['help', 'tasks'], test_.rt)).toBe(EXIT.ok);
-    expect(test_.captured.stdout).toContain('Usage: board tasks');
+    expect(test_.captured.stdout).toContain('Usage: rumo tasks');
   });
 
   it('[cli-012] task accepts every key of the census', () => {

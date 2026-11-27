@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { CONTRACT, CONTRACT_HEADER, routeByName, sessionCookieName } from '@agent-board/contract';
+import { CONTRACT, CONTRACT_HEADER, routeByName, sessionCookieName } from '@rumo/contract';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
 import { call } from '../src/client/contract-client.js';

@@ -184,9 +184,7 @@ test.describe('client app sessions through the native bridge', () => {
       await expect
         .poll(() => localKeysWithPrefix(client.page, `ab:${serverId}:`), { timeout: UI_TIMEOUT_MS })
         .not.toEqual([]);
-      expect((await indexedDbRows(client.page, `agent-board:${serverId}`)).length).toBeGreaterThan(
-        0,
-      );
+      expect((await indexedDbRows(client.page, `rumo:${serverId}`)).length).toBeGreaterThan(0);
 
       await client.page.getByRole('button', { name: /close dialog/i }).click();
       await client.page.getByRole('button', { name: BRIDGE_NAMES.signOut }).click();
@@ -194,7 +192,7 @@ test.describe('client app sessions through the native bridge', () => {
       await expect(signInButton(client.page)).toBeVisible({ timeout: UI_TIMEOUT_MS });
 
       expect(await localKeysWithPrefix(client.page, `ab:${serverId}:`)).toEqual([]);
-      expect(await indexedDbRows(client.page, `agent-board:${serverId}`)).toEqual([]);
+      expect(await indexedDbRows(client.page, `rumo:${serverId}`)).toEqual([]);
       await client.page.reload();
       await expect(signInButton(client.page)).toBeVisible({ timeout: UI_TIMEOUT_MS });
       await signInThroughBridge(client, board, approver);
@@ -208,7 +206,7 @@ test.describe('client app sessions through the native bridge', () => {
       expect(await localKeysWithPrefix(client.page, `ab:${other.id}:`)).toEqual([
         `ab:${other.id}:draft`,
       ]);
-      expect(await indexedDbNames(client.page)).toContain(`agent-board:${other.id}`);
+      expect(await indexedDbNames(client.page)).toContain(`rumo:${other.id}`);
       expect(await dumpPageStorage(client.page)).toContain('other server marker');
     } finally {
       await approver.close();

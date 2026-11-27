@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 
-import type { TaskStatus } from '@agent-board/contract';
+import type { TaskStatus } from '@rumo/contract';
 import { and, eq } from 'drizzle-orm';
 
 import { systemClock } from '../../clock.js';

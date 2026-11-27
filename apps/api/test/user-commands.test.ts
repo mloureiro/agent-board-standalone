@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import type { RouteName } from '@agent-board/contract';
+import type { RouteName } from '@rumo/contract';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 

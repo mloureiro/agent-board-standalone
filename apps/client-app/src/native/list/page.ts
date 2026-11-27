@@ -1,5 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
-import { ADDRESS_PROBLEM_MESSAGES, BLANK_NAME_MESSAGE, serverNamespace } from '@agent-board/web';
+import { ADDRESS_PROBLEM_MESSAGES, BLANK_NAME_MESSAGE, serverNamespace } from '@rumo/web';
 
 import { h } from '../shared/dom.js';
 import {
@@ -21,7 +21,7 @@ interface Purge {
   readonly purge: string;
 }
 
-const NAMESPACE_DATABASE = /^agent-board:([0-9a-f-]{36})$/;
+const NAMESPACE_DATABASE = /^rumo:([0-9a-f-]{36})$/;
 const NAMESPACE_KEY = /^ab:([0-9a-f-]{36}):/;
 const ADDRESS_ERROR = /^address (\w+)$/;
 const BLANK_NAME_ERROR = 'the name is blank';
@@ -203,13 +203,7 @@ export async function mountList(root: HTMLElement, options: ListOptions = {}): P
   all.addEventListener('click', () => {
     void guarded(() => command('open_all_servers'));
   });
-  root.append(
-    h('header', {}, h('h1', {}, 'Agent Board'), all),
-    alerts,
-    rows,
-    addForm(),
-    formProblem,
-  );
+  root.append(h('header', {}, h('h1', {}, 'Rumo'), all), alerts, rows, addForm(), formProblem);
 
   await listen<StoreFailure>('store-deletion-failed', ({ payload }) => {
     showError(payload.message, () => {

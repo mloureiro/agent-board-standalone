@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, realpathSync } from 'node:fs';
 import net from 'node:net';
 
-import { bindings } from '@agent-board/sealing';
-import type { TaskStatus } from '@agent-board/contract';
+import { bindings } from '@rumo/sealing';
+import type { TaskStatus } from '@rumo/contract';
 
 import type { RouteOutput } from '../client/contract-client.js';
 import type { Board } from '../harness/board.js';
@@ -200,9 +200,9 @@ export async function enrolWorker(
   const makeDirectory = async (label: string, asDefault: boolean) => {
     const path = machine.tmp.path('work', label);
     mkdirSync(path, { recursive: true });
-    requireOk(await machine.cli(['dirs', 'add', path]), `board dirs add ${label}`);
+    requireOk(await machine.cli(['dirs', 'add', path]), `rumo dirs add ${label}`);
     if (asDefault) {
-      requireOk(await machine.cli(['dirs', 'set', 'default', 'true', path]), 'board dirs set');
+      requireOk(await machine.cli(['dirs', 'set', 'default', 'true', path]), 'rumo dirs set');
     }
     return { path, id: await directoryIdOf(user, key, name, path) };
   };

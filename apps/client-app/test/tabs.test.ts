@@ -291,14 +291,14 @@ describe('tab routing from the page', () => {
     const titles = (): unknown[] =>
       report.mock.calls.filter(([command]) => command === 'tab_title').map(([, args]) => args);
 
-    document.title = 'Fix login · Agent Board';
+    document.title = 'Fix login · Rumo';
     await vi.waitFor(() => expect(titles()).toEqual([{ title: 'Fix login' }]));
 
-    document.title = 'Agent Board';
+    document.title = 'Rumo';
     await vi.waitFor(() => expect(titles()).toHaveLength(2));
-    expect(titles()[1]).toEqual({ title: 'Agent Board' });
+    expect(titles()[1]).toEqual({ title: 'Rumo' });
 
-    document.title = 'Agent Board';
+    document.title = 'Rumo';
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(titles()).toHaveLength(2);
   });

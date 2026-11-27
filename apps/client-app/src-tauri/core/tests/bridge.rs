@@ -1,9 +1,9 @@
 mod common;
 
-use agent_board_client_core::headers::{page_headers, with_client_headers};
-use agent_board_client_core::ids::{InvalidServerId, ServerId};
-use agent_board_client_core::paths::{CREDENTIAL_ROUTES, Refusal, normalise};
 use common::repo_json;
+use rumo_client_core::headers::{page_headers, with_client_headers};
+use rumo_client_core::ids::{InvalidServerId, ServerId};
+use rumo_client_core::paths::{CREDENTIAL_ROUTES, Refusal, normalise};
 use std::collections::BTreeSet;
 
 fn contract_credential_routes() -> BTreeSet<String> {

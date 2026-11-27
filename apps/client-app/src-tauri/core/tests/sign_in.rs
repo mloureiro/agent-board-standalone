@@ -1,12 +1,12 @@
 mod common;
 
-use agent_board_client_core::bridge::{Bridge, BridgeError, HandoffStatus};
-use agent_board_client_core::handshake::Handshake;
-use agent_board_client_core::ports::SecretStore;
-use agent_board_client_core::servers::Servers;
-use agent_board_client_core::signing::RequestSigner;
-use agent_board_client_core::tokens::{key_service, token_service};
 use common::*;
+use rumo_client_core::bridge::{Bridge, BridgeError, HandoffStatus};
+use rumo_client_core::handshake::Handshake;
+use rumo_client_core::ports::SecretStore;
+use rumo_client_core::servers::Servers;
+use rumo_client_core::signing::RequestSigner;
+use rumo_client_core::tokens::{key_service, token_service};
 use serde_json::{Value, json};
 use std::sync::Arc;
 

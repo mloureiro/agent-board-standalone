@@ -25,7 +25,7 @@ this repository replaces (reference board 011f7be) and are the authority where t
 ## 3. Data key
 
 A data key is 32 bytes from a cryptographically secure random source. Its text form is `abk1_` followed by the
-base64url of the 32 bytes (the form the CLI reads from `AGENT_BOARD_DATA_KEY`). Decoding refuses a missing prefix, a
+base64url of the 32 bytes (the form the CLI reads from `RUMO_DATA_KEY`). Decoding refuses a missing prefix, a
 non-canonical body and any length other than 32 bytes.
 
 ## 4. Key derivation

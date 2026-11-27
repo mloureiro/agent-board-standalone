@@ -1,4 +1,4 @@
-import { LEGACY_SERVER_NOTE_BODY, isServerNoteBody } from '@agent-board/contract';
+import { LEGACY_SERVER_NOTE_BODY, isServerNoteBody } from '@rumo/contract';
 
 import type { SourceRow } from '../source/reader.js';
 import { defaultProjectId, flag, integer, iso, list, requiredIso, text } from './values.js';

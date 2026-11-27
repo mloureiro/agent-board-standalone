@@ -12,8 +12,8 @@ const MAX_PATH_BYTES: usize = 2048;
 const MAX_TASK_ID_CHARS: usize = 128;
 const HOME_PATH: &str = "/";
 const HOME_LABEL: &str = "Board";
-const BOARD_TITLE: &str = "Agent Board";
-const TITLE_SUFFIX: &str = " · Agent Board";
+const BOARD_TITLE: &str = "Rumo";
+const TITLE_SUFFIX: &str = " · Rumo";
 const ELLIPSIS: char = '…';
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

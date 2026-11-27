@@ -26,8 +26,8 @@ export function planTags(parts: PartInfo[], existingTags: ReadonlySet<string>): 
       throw new Error(`${part.name}: CHANGELOG.md has no "${heading}" heading`);
     }
     const lines = [`${part.name} ${part.version}`];
-    if (part.ranges.contract) lines.push(`supports @agent-board/contract ${part.ranges.contract}`);
-    if (part.ranges.sealing) lines.push(`supports @agent-board/sealing ${part.ranges.sealing}`);
+    if (part.ranges.contract) lines.push(`supports @rumo/contract ${part.ranges.contract}`);
+    if (part.ranges.sealing) lines.push(`supports @rumo/sealing ${part.ranges.sealing}`);
     plans.push({ tag, message: lines.join('\n') });
   }
   return plans;
@@ -49,8 +49,8 @@ function readPart(root: string, name: string, directory: string): PartInfo {
   const manifest = JSON.parse(readFileSync(`${root}/${directory}/package.json`, 'utf8'));
   const dependencies = manifest.dependencies ?? {};
   const ranges: PartInfo['ranges'] = {};
-  const contract = dependencies['@agent-board/contract'];
-  const sealing = dependencies['@agent-board/sealing'];
+  const contract = dependencies['@rumo/contract'];
+  const sealing = dependencies['@rumo/sealing'];
   if (contract) ranges.contract = contract.replace(/^workspace:/, '');
   if (sealing) ranges.sealing = sealing.replace(/^workspace:/, '');
   return {

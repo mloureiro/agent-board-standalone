@@ -162,9 +162,7 @@ describe('the real API, CLI and web build run by the app', { timeout: 120_000 },
     expect(readdirSync(join(app.root, 'worker/config')).length).toBeGreaterThan(0);
     const listed = spawnSync('find', [home], { encoding: 'utf8' }).stdout.trim().split('\n');
     expect(
-      listed.filter((entry) =>
-        /agent-board|\.config|launchd|Library/i.test(entry.slice(home.length)),
-      ),
+      listed.filter((entry) => /rumo|\.config|launchd|Library/i.test(entry.slice(home.length))),
     ).toEqual([]);
     spawnSync('rm', ['-rf', home]);
   });

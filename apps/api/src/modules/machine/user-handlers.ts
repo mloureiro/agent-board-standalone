@@ -1,4 +1,4 @@
-import type { WireTask } from '@agent-board/contract';
+import type { WireTask } from '@rumo/contract';
 
 import { contractOf } from '../../handlers/request-contract.js';
 import type { ScopedDatabase } from '../database/index.js';

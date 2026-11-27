@@ -27,8 +27,7 @@ export const registerCleanup = (app: FastifyInstance, context: ServerContext): v
       events: services.events,
       clock,
     }).catch((error: unknown) => ({ failures: [String(error)] }));
-    for (const failure of result.failures)
-      process.stderr.write(`agent-board-api: cleanup: ${failure}\n`);
+    for (const failure of result.failures) process.stderr.write(`rumo-api: cleanup: ${failure}\n`);
   };
 
   app.addHook('onReady', async () => {

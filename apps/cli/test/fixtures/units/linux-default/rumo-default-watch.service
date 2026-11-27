@@ -1,11 +1,11 @@
 [Unit]
-Description=agent-board default watch: runs the watches of this machine's tasks
+Description=rumo default watch: runs the watches of this machine's tasks
 StartLimitIntervalSec=0
 
 [Service]
 Type=simple
 Environment="PATH=/srv/tester/.local/bin:/usr/local/bin:/usr/bin:/bin"
-ExecStart=/srv/tester/.local/bin/board --profile default internal watch
+ExecStart=/srv/tester/.local/bin/rumo --profile default internal watch
 Restart=always
 RestartSec=5
 

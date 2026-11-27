@@ -1,5 +1,5 @@
-import type { MachineState } from '@agent-board/contract';
-import { MIN_CLIENT } from '@agent-board/contract';
+import type { MachineState } from '@rumo/contract';
+import { MIN_CLIENT } from '@rumo/contract';
 
 const numbers = (version: string): number[] =>
   (version.split(/[-+]/)[0] ?? '').split('.').map((part) => Number(part));

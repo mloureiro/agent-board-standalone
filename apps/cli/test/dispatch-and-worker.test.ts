@@ -11,7 +11,7 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 import { describe, expect, it } from 'vitest';
 
 import { buildContext } from '../src/commands/context.js';
@@ -41,7 +41,7 @@ import { useRig, type Rig } from './support/harness.js';
 import { tmpDir } from './support/files.js';
 
 const rig = useRig();
-const PROCESS = { AGENT_BOARD_WORKER_SPAWN: 'process' } as const;
+const PROCESS = { RUMO_WORKER_SPAWN: 'process' } as const;
 
 async function until(ready: () => boolean | Promise<boolean>, what: string, ms = 5_000) {
   const deadline = Date.now() + ms;
@@ -227,7 +227,7 @@ describe('the tick lock', () => {
   });
 
   it('[cli-082] the internal commands refuse inside a run and on another platform', async () => {
-    const inRun = await rig({ env: { ...PROCESS, AGENT_BOARD_TASK: 'taskAAAA' } });
+    const inRun = await rig({ env: { ...PROCESS, RUMO_TASK: 'taskAAAA' } });
     expect(await inRun.cli.run('internal', 'dispatch')).toBe(1);
     expect(inRun.cli.stderr()).toContain('cannot run inside a board run');
     const windows = await rig({ env: PROCESS, platform: 'win32' });
@@ -252,9 +252,9 @@ describe('dispatch tick', () => {
     expect(cli.test.detachedCalls).toHaveLength(1);
     const call = cli.test.detachedCalls[0];
     expect(call?.args.slice(-3)).toEqual(['internal', 'worker', 'taskAAAA']);
-    expect(call?.options.env.AGENT_BOARD_TASK).toBeUndefined();
+    expect(call?.options.env.RUMO_TASK).toBeUndefined();
     expect(ticksSeen(stub)).toBe(1);
-    expect((await noteTexts(stub, 'taskAAAA'))[0]).toMatch(/^agent-board: started /);
+    expect((await noteTexts(stub, 'taskAAAA'))[0]).toMatch(/^rumo: started /);
     expect(cli.stdout()).toContain('STARTED taskAAAA');
   });
 
@@ -404,8 +404,8 @@ describe('dispatch tick', () => {
       env: {
         PATH: bin,
         SOME_SECRET: 'not-passed',
-        AGENT_BOARD_MARKER: 'passed',
-        AGENT_BOARD_OTHER_SECRET: 'abm_secrettoken',
+        RUMO_MARKER: 'passed',
+        RUMO_OTHER_SECRET: 'abm_secrettoken',
       },
       exec: (file, args) => {
         calls.push({ file, args });
@@ -417,11 +417,11 @@ describe('dispatch tick', () => {
     expect(unit.cli.test.detachedCalls).toHaveLength(0);
     const call = calls.find((entry) => entry.file === 'systemd-run');
     expect(call?.args).toEqual(
-      expect.arrayContaining(['--user', '--collect', '--unit=agent-board-default-task-taskAAAA']),
+      expect.arrayContaining(['--user', '--collect', '--unit=rumo-default-task-taskAAAA']),
     );
     expect(call?.args.some((arg) => arg.startsWith('--setenv=PATH='))).toBe(true);
     expect(call?.args).toEqual(
-      expect.arrayContaining(['--setenv=AGENT_BOARD_MARKER', '--setenv=AGENT_BOARD_OTHER_SECRET']),
+      expect.arrayContaining(['--setenv=RUMO_MARKER', '--setenv=RUMO_OTHER_SECRET']),
     );
     expect(call?.args.join(' ')).not.toContain('SOME_SECRET');
     expect(call?.args.join(' ')).not.toContain('abm_secrettoken');
@@ -862,7 +862,7 @@ describe('the listener', () => {
     await done;
   });
 
-  it('[cli-085] sends the directory list and applies the board agents when it starts', async () => {
+  it('[cli-085] sends the directory list and applies the rumo agents when it starts', async () => {
     const rigged = await rig({
       env: PROCESS,
       config:
@@ -887,14 +887,14 @@ const readline = require('node:readline');
 const log = process.env.FAKE_LOG;
 const note = (entry) => fs.appendFileSync(log, JSON.stringify(entry) + '\\n');
 const rl = readline.createInterface({ input: process.stdin });
-const task = process.env.AGENT_BOARD_TASK;
+const task = process.env.RUMO_TASK;
 let first = true;
 rl.on('line', (line) => {
   const text = JSON.parse(line).message.content[0].text;
   if (first) {
     first = false;
     note({
-      kind: 'prompt', text, task, cwd: process.cwd(), start: process.env.AGENT_BOARD_START_DIR,
+      kind: 'prompt', text, task, cwd: process.cwd(), start: process.env.RUMO_START_DIR,
       pid: fs.readFileSync(process.env.FAKE_RUN + '/' + task + '.pid', 'utf8'),
       pgid: fs.readFileSync(process.env.FAKE_RUN + '/' + task + '.pgid', 'utf8'),
       argv: process.argv.slice(2), self: process.pid,

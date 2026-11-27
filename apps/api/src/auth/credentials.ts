@@ -3,8 +3,8 @@ import {
   sessionCookieName,
   tokenKind,
   type TokenKind,
-} from '@agent-board/contract';
-import { tokenHash } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { tokenHash } from '@rumo/sealing';
 import type { FastifyRequest } from 'fastify';
 
 export interface PresentedCredential {

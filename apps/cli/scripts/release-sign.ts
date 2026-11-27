@@ -34,7 +34,7 @@ const secretKey =
   process.env.MINISIGN_SECRET_KEY ?? path.join(os.homedir(), '.minisign', 'minisign.key');
 if (!existsSync(secretKey)) fail(`no minisign secret key at ${secretKey}`);
 
-const work = mkdtempSync(path.join(os.tmpdir(), 'board-release-sign-'));
+const work = mkdtempSync(path.join(os.tmpdir(), 'rumo-release-sign-'));
 try {
   run('gh', ['release', 'download', tag, '--pattern', CHECKSUMS_ASSET, '--dir', work], CLI_ROOT);
   run('minisign', ['-S', '-s', secretKey, '-m', CHECKSUMS_ASSET, '-t', tag], work);

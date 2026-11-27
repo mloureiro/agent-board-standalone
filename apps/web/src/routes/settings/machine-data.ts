@@ -3,7 +3,7 @@ import {
   listClientMachinesRoute,
   revokeClientMachineRoute,
   setGrantClientMachineRoute,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { usePage } from '../../pages/index.js';

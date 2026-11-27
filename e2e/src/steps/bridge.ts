@@ -1,4 +1,4 @@
-import { TOKEN_PATTERN, type Feature } from '@agent-board/contract';
+import { TOKEN_PATTERN, type Feature } from '@rumo/contract';
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 
 import { createBridgeHost, type BridgeHost } from '../fakes/bridge/host.js';
@@ -274,7 +274,7 @@ export async function seedNamespace(page: Page, serverId: string, value: string)
     async ([id, content]) => {
       localStorage.setItem(`ab:${id}:draft`, content as string);
       await new Promise<void>((resolve, reject) => {
-        const request = indexedDB.open(`agent-board:${id}`, 1);
+        const request = indexedDB.open(`rumo:${id}`, 1);
         request.onupgradeneeded = () => request.result.createObjectStore('keys');
         request.onsuccess = () => {
           const transaction = request.result.transaction('keys', 'readwrite');

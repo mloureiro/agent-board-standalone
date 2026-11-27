@@ -26,7 +26,7 @@ export default defineConfig({
     expected === null ? [] : wholeFiles(expected, PREFIX).map((file) => `**/${PREFIX}${file}`),
   retries: 0,
   fullyParallel: false,
-  outputDir: process.env.E2E_OUTPUT_DIR ?? path.join(os.tmpdir(), 'agent-board-e2e-results'),
+  outputDir: process.env.E2E_OUTPUT_DIR ?? path.join(os.tmpdir(), 'rumo-e2e-results'),
   reporter: reportFile ? [['json', { outputFile: reportFile }], ['list']] : [['list']],
   use: { screenshot: 'only-on-failure' },
   projects: [

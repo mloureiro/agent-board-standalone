@@ -32,7 +32,7 @@ describe('client-app release workflow', () => {
     expect(build).toContain('x86_64-apple-darwin');
 
     const builds =
-      build.replace(/\s+/g, ' ').match(/tauri build .*?-- --package agent-board-client/g) ?? [];
+      build.replace(/\s+/g, ' ').match(/tauri build .*?-- --package rumo-client/g) ?? [];
     expect(builds).toHaveLength(2);
     for (const line of builds) expect(line).toContain('--target universal-apple-darwin');
     const [releaseBuild, debugBuild] = builds;
@@ -67,9 +67,9 @@ describe('client-app release workflow', () => {
     const cargo = await text('src-tauri', 'Cargo.toml');
 
     expect(debug).not.toHaveProperty('identifier');
-    expect(debug.productName).toBe('Agent Board Client Debug');
-    expect(base.productName).toBe('Agent Board Client');
-    expect(base.identifier).toBe('dev.mloureiro.agent-board-client');
+    expect(debug.productName).toBe('Rumo Client Debug');
+    expect(base.productName).toBe('Rumo Client');
+    expect(base.identifier).toBe('dev.mloureiro.rumo-client');
     expect(cargo).toMatch(/^devtools = \["tauri\/devtools"\]$/m);
     expect(cargo).toMatch(/^custom-protocol = /m);
   });

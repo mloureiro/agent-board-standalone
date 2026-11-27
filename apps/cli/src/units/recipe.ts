@@ -7,7 +7,7 @@ import {
   WORKER_UNITS_SCHEMA,
   workerUnits,
   type WorkerUnits,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 
 export type UnitPlatform = 'darwin' | 'linux';
 

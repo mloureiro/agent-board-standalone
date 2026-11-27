@@ -1,4 +1,4 @@
-import { editClientTaskRoute, forkClientTaskRoute } from '@agent-board/contract';
+import { editClientTaskRoute, forkClientTaskRoute } from '@rumo/contract';
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

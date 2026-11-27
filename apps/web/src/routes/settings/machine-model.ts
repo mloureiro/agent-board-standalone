@@ -1,5 +1,5 @@
-import type { MachineState, RouteResponse, listClientMachinesRoute } from '@agent-board/contract';
-import { bindings, type Keys } from '@agent-board/sealing';
+import type { MachineState, RouteResponse, listClientMachinesRoute } from '@rumo/contract';
+import { bindings, type Keys } from '@rumo/sealing';
 
 import { attempt } from '../board/card-model.js';
 

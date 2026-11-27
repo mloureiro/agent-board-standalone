@@ -11,8 +11,8 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 
-import { doctorReport, type DoctorResult, type Feature } from '@agent-board/contract';
-import { RECOVERY_KEY_BYTES, wrapSlot } from '@agent-board/sealing';
+import { doctorReport, type DoctorResult, type Feature } from '@rumo/contract';
+import { RECOVERY_KEY_BYTES, wrapSlot } from '@rumo/sealing';
 import { afterAll, beforeAll, beforeEach, type TestContext } from 'vitest';
 
 import { noLoginUser, type BoardUser } from '../fixtures/users.js';
@@ -233,8 +233,8 @@ export function overrideDirs(tmp: Tmp): { config: string; state: string; run: st
 
 export function profileDirs(tmp: Tmp, profile: string): { config: string; state: string } {
   return {
-    config: tmp.path('xdg', 'config', 'agent-board', 'profiles', profile),
-    state: tmp.path('xdg', 'state', 'agent-board', 'profiles', profile),
+    config: tmp.path('xdg', 'config', 'rumo', 'profiles', profile),
+    state: tmp.path('xdg', 'state', 'rumo', 'profiles', profile),
   };
 }
 
@@ -289,7 +289,7 @@ export function installedFiles(tmp: Tmp): string[] {
   return [
     ...filesOf(tmp.home).map((file) => path.join('home', file)),
     ...filesOf(xdgConfig)
-      .filter((file) => !file.startsWith(`agent-board${path.sep}`))
+      .filter((file) => !file.startsWith(`rumo${path.sep}`))
       .map((file) => path.join('xdg', 'config', file)),
   ];
 }

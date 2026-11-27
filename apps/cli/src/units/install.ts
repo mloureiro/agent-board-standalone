@@ -44,7 +44,7 @@ export function renderUnitFiles(ctx: Context, platform: UnitPlatform): UnitFile[
   }
   const flock = findProgram(rt, 'flock');
   if (flock === undefined) {
-    throw new CliError('flock is not on PATH; install util-linux and run `board setup` again');
+    throw new CliError('flock is not on PATH; install util-linux and run `rumo setup` again');
   }
   return renderSystemd({ profile: dirs.profile, recipe, runDir: dirs.run, flock, env: rt.env });
 }
@@ -177,7 +177,7 @@ async function setupLaunchd(ctx: Context, units: UnitFile[], options: SetupOptio
   for (const [at, unit] of UNIT_NAMES.entries()) {
     if (changed[at] !== true || loaded[at] !== true) continue;
     await load(unit, files[at] ?? '');
-    ctx.out(`loaded agent-board.${profile}.${unit} again, to run the new agent file`);
+    ctx.out(`loaded rumo.${profile}.${unit} again, to run the new agent file`);
   }
   if (loaded.every(Boolean)) {
     ctx.out(
@@ -192,7 +192,7 @@ async function setupLaunchd(ctx: Context, units: UnitFile[], options: SetupOptio
 }
 
 export async function runSetup(ctx: Context, options: SetupOptions): Promise<void> {
-  if (ctx.inRun) throw new CliError('`board setup` cannot run inside a board run');
+  if (ctx.inRun) throw new CliError('`rumo setup` cannot run inside a board run');
   const platform = requireUnitPlatform(ctx.rt, 'setup');
   const units = renderUnitFiles(ctx, platform);
   const directory = unitDirectory(ctx.rt, platform);
@@ -203,7 +203,7 @@ export async function runSetup(ctx: Context, options: SetupOptions): Promise<voi
   const problem = installProblem(ctx.rt);
   if (problem !== null) {
     if (options.force !== true) {
-      throw new CliError(`${problem}; run \`board setup\` from the installed one, or add --force`);
+      throw new CliError(`${problem}; run \`rumo setup\` from the installed one, or add --force`);
     }
     ctx.out(`warning: ${problem}`);
   }

@@ -9,7 +9,7 @@ import {
   TASK_CREATORS,
   TASK_STATUSES,
   WIRE_NOTE_AUTHORS,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 import { pgEnum } from 'drizzle-orm/pg-core';
 
 export const SESSION_METHODS = ['passkey', 'oidc', 'saml'] as const;

@@ -1,4 +1,4 @@
-import { maxEnvelopeLength } from '@agent-board/contract';
+import { maxEnvelopeLength } from '@rumo/contract';
 import { sql } from 'drizzle-orm';
 import { check, integer, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
 

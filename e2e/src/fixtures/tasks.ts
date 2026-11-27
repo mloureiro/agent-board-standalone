@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 
 import type { CallOptions, RouteOutput, ServerRef } from '../client/contract-client.js';
 import type { UnlockedKey } from './keys.js';

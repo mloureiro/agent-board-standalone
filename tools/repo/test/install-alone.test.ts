@@ -20,7 +20,7 @@ function workspaceNames(): string[] {
     const manifest = JSON.parse(readFileSync(join(directory, 'package.json'), 'utf8')) as {
       name: string;
     };
-    return manifest.name.replace('@agent-board/', '');
+    return manifest.name.replace('@rumo/', '');
   });
 }
 
@@ -45,10 +45,10 @@ describe('install alone', () => {
     const job = jobBlock('install-alone');
     expect(job).toContain('package: ${{ fromJSON(needs.changes.outputs.install_alone) }}');
     expect(job).toContain(
-      'run: pnpm install --frozen-lockfile --filter "@agent-board/${{ matrix.package }}..."',
+      'run: pnpm install --frozen-lockfile --filter "@rumo/${{ matrix.package }}..."',
     );
-    expect(job).toContain('--filter "@agent-board/${{ matrix.package }}" run typecheck');
-    expect(job).toContain('--filter "@agent-board/${{ matrix.package }}" test');
+    expect(job).toContain('--filter "@rumo/${{ matrix.package }}" run typecheck');
+    expect(job).toContain('--filter "@rumo/${{ matrix.package }}" test');
   });
 
   it('[repo-002] the planner publishes its list as the job matrix input', () => {

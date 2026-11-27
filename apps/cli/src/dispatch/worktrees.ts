@@ -1,4 +1,4 @@
-import { getTaskRoute } from '@agent-board/contract';
+import { getTaskRoute } from '@rumo/contract';
 
 import type { OpenTask } from '../commands/tasks/open.js';
 import { ApiError } from '../transport/errors.js';

@@ -1,4 +1,4 @@
-import { authHandoffFinishRoute } from '@agent-board/contract';
+import { authHandoffFinishRoute } from '@rumo/contract';
 import { Anchor, Code, Stack, Text } from '@mantine/core';
 import { useEffect, useRef, type ReactNode } from 'react';
 
@@ -9,7 +9,7 @@ import type { ServerClient } from '../transport/client.js';
 import { callRoute } from './api.js';
 import { signingKeyIf } from './sign-in-key.js';
 import type { PendingSigningKey } from '../signing/index.js';
-import type { AgentBoardBridge } from '../bridge/types.js';
+import type { RumoBridge } from '../bridge/types.js';
 
 export const HANDOFF_POLL_MS = 2_000;
 export const HANDOFF_EXPIRY_MS = 10 * 60_000;
@@ -23,7 +23,7 @@ export interface StartedHandoff {
 }
 
 export type HandoffChannel =
-  | { readonly kind: 'native'; readonly bridge: AgentBoardBridge }
+  | { readonly kind: 'native'; readonly bridge: RumoBridge }
   | { readonly kind: 'same-origin' | 'cross-origin'; readonly client: ServerClient };
 
 export const HANDOFF_EXPIRED = 'This sign-in expired or was refused. Start again.';

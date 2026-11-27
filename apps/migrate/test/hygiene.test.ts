@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { isBlindIndex, isEnvelope, isWrappedKey } from '@agent-board/sealing';
+import { isBlindIndex, isEnvelope, isWrappedKey } from '@rumo/sealing';
 import { DATA_DIRECTORY, FIXTURES, README_PATH } from '../fixtures/fixtures.js';
 
 const files = [

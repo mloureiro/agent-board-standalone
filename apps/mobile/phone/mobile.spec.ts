@@ -66,7 +66,7 @@ test.describe('bundled client on a phone with the mobile bridge', () => {
     board.answer('GET', '/api/version', { status: 200, body: versionDocument() });
     await board.install(context);
     await open(page);
-    expect(await page.evaluate(() => window.agentBoardBridge?.kind)).toBe('mobile');
+    expect(await page.evaluate(() => window.rumoBridge?.kind)).toBe('mobile');
     await page.getByRole('button', { name: 'Servers' }).click();
     await page.getByRole('button', { name: 'Add server' }).click();
     await page.getByLabel(/^name/i).fill('Home');

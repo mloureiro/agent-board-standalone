@@ -15,7 +15,7 @@ function tmpBase(): string {
 }
 
 export function createTmp(label = 'board', env: NodeJS.ProcessEnv = process.env): Tmp {
-  const root = mkdtempSync(path.join(tmpBase(), `agent-board-e2e-${label}-`));
+  const root = mkdtempSync(path.join(tmpBase(), `rumo-e2e-${label}-`));
   const home = path.join(root, 'home');
   mkdirSync(home, { recursive: true });
   return {

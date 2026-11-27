@@ -1,4 +1,4 @@
-import type { AgentBoardBridge, BridgeServerEntry } from '@agent-board/web';
+import type { RumoBridge, BridgeServerEntry } from '@rumo/web';
 
 import { call } from './invoke.js';
 import { serverFetch } from './stream.js';
@@ -14,7 +14,7 @@ export class HandoffPendingError extends Error {
   }
 }
 
-export function createBridge(): AgentBoardBridge {
+export function createBridge(): RumoBridge {
   return Object.freeze({
     kind: 'client-app',
     serverFetch: (serverId, method, path, headers, body) =>
@@ -45,5 +45,5 @@ export function createBridge(): AgentBoardBridge {
       }),
     removeServer: (serverId) => call<boolean>('page_remove_server', { serverId }),
     renameServer: (serverId, name) => call('rename_server', { serverId, name }),
-  } satisfies AgentBoardBridge);
+  } satisfies RumoBridge);
 }

@@ -1,4 +1,4 @@
-import type { UiAccountSummary } from '@agent-board/contract';
+import type { UiAccountSummary } from '@rumo/contract';
 import { and, eq } from 'drizzle-orm';
 
 import {

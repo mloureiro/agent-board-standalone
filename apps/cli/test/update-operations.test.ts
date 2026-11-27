@@ -10,7 +10,7 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 
-import { doctorReport } from '@agent-board/contract';
+import { doctorReport } from '@rumo/contract';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { runAutoUpdate } from '../src/update/auto.js';
@@ -286,13 +286,13 @@ describe('rollback', () => {
 
 describe('auto-update and the update hint', () => {
   function withClock(releasesUrl: string): { m: UpdateMachine; shift: (seconds: number) => void } {
-    const directory = mkdtempSync(path.join(os.tmpdir(), 'board-cli-clock-'));
+    const directory = mkdtempSync(path.join(os.tmpdir(), 'rumo-cli-clock-'));
     clocks.push(directory);
     const file = path.join(directory, 'offset');
     writeFileSync(file, '0');
     const m = machine({
       releasesUrl,
-      env: { AGENT_BOARD_E2E: '1', AGENT_BOARD_CLOCK_OFFSET_FILE: file },
+      env: { RUMO_E2E: '1', RUMO_CLOCK_OFFSET_FILE: file },
     });
     return {
       m,
@@ -357,7 +357,7 @@ describe('auto-update and the update hint', () => {
     expect(m.stderr()).toBe('');
 
     showUpdateHint(env, true, false);
-    expect(m.stderr()).toMatch(/board 1\.0\.0 is available .*board self-update/);
+    expect(m.stderr()).toMatch(/rumo 1\.0\.0 is available .*rumo self-update/);
     m.test.captured.stderr = '';
     showUpdateHint(env, true, false);
     expect(m.stderr()).toBe('');
@@ -384,6 +384,6 @@ describe('auto-update and the update hint', () => {
     expect(await runCli(['internal', 'migration-plan'], rt)).toBe(0);
     expect(m.stderr()).toBe('');
     expect(await runCli(['version'], rt)).toBe(0);
-    expect(m.stderr()).toMatch(/board 1\.0\.0 is available/);
+    expect(m.stderr()).toMatch(/rumo 1\.0\.0 is available/);
   });
 });

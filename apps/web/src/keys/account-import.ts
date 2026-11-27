@@ -6,8 +6,8 @@ import {
   setupClientKeysRoute,
   type AccountTable,
   type BoardExportRecord,
-} from '@agent-board/contract';
-import type { KeySetup } from '@agent-board/sealing';
+} from '@rumo/contract';
+import type { KeySetup } from '@rumo/sealing';
 
 import { callRoute } from '../auth/api.js';
 import type { ServerClient } from '../transport/client.js';

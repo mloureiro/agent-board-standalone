@@ -16,7 +16,7 @@ export const PARTS = [
   { name: 'tools', directory: 'tools/repo', allowed: [] },
 ];
 
-const PACKAGE_SCOPE = '@agent-board/';
+const PACKAGE_SCOPE = '@rumo/';
 const PACKAGE_ALIASES = { 'repo-tools': 'tools' };
 
 function partOfPath(root, absolutePath) {

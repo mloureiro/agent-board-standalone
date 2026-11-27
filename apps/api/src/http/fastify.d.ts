@@ -1,4 +1,4 @@
-import type { AnyRoute } from '@agent-board/contract';
+import type { AnyRoute } from '@rumo/contract';
 
 import type { Principal } from '../auth/index.js';
 import type { HoldGate } from '../modules/control/hold-gate.js';

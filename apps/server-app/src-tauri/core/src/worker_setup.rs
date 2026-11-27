@@ -9,7 +9,7 @@ use crate::worker_paths::{WorkerPaths, worker_env};
 
 pub type EnvGetter = Arc<dyn Fn(&str) -> Option<String> + Send + Sync>;
 
-pub const CLI_RELATIVE: &str = "cli/board";
+pub const CLI_RELATIVE: &str = "cli/rumo";
 
 #[derive(Clone)]
 pub struct WorkerSetup {

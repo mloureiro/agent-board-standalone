@@ -1,4 +1,4 @@
-import type { UiTaskListItem, WireTask, WireTaskPr } from '@agent-board/contract';
+import type { UiTaskListItem, WireTask, WireTaskPr } from '@rumo/contract';
 import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 
 import { note, taskPr, transcriptEvent, transcriptRun } from '../../db/schema/index.js';

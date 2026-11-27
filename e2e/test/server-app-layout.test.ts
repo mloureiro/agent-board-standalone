@@ -16,7 +16,7 @@ import {
 import { E2E_ROOT } from '../src/harness/paths.js';
 
 const fakeApi = path.join(E2E_ROOT, 'test', 'fixtures', 'fake-api.ts');
-const originalBin = process.env.AGENT_BOARD_API_BIN;
+const originalBin = process.env.RUMO_API_BIN;
 
 describe('serverAppEnv', () => {
   it('runs no-login as the settings user with PGlite under the root', () => {
@@ -51,12 +51,12 @@ describe('startServerAppLayout', () => {
   afterEach(async () => {
     await layout?.stop();
     layout = null;
-    if (originalBin === undefined) delete process.env.AGENT_BOARD_API_BIN;
-    else process.env.AGENT_BOARD_API_BIN = originalBin;
+    if (originalBin === undefined) delete process.env.RUMO_API_BIN;
+    else process.env.RUMO_API_BIN = originalBin;
   });
 
   it('starts the API from a cleared environment and puts the CLI overrides under one root', async () => {
-    process.env.AGENT_BOARD_API_BIN = fakeApi;
+    process.env.RUMO_API_BIN = fakeApi;
     process.env.OIDC_ISSUER = 'must-not-leak';
     try {
       layout = await startServerAppLayout({ remoteHosts: ['box.example.test'] });
@@ -80,9 +80,9 @@ describe('startServerAppLayout', () => {
     expect(layout.api.env.DATABASE_URL).toBe(`pglite://${path.join(layout.root, 'db')}`);
 
     const overrides = [
-      layout.cliEnv.AGENT_BOARD_CONFIG_DIR,
-      layout.cliEnv.AGENT_BOARD_STATE_DIR,
-      layout.cliEnv.AGENT_BOARD_RUN_DIR,
+      layout.cliEnv.RUMO_CONFIG_DIR,
+      layout.cliEnv.RUMO_STATE_DIR,
+      layout.cliEnv.RUMO_RUN_DIR,
     ];
     expect(overrides).toHaveLength(3);
     for (const directory of overrides) {
@@ -92,7 +92,7 @@ describe('startServerAppLayout', () => {
   });
 
   it('restarts the API on the same port and root', async () => {
-    process.env.AGENT_BOARD_API_BIN = fakeApi;
+    process.env.RUMO_API_BIN = fakeApi;
     layout = await startServerAppLayout();
     const { url, root } = layout;
     await layout.restartApi();

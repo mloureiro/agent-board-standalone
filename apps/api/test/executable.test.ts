@@ -122,6 +122,6 @@ describe('the built executable', () => {
     expect(unknown.stderr).toContain('frobnicate');
     const usage = await run(['import'], BASE);
     expect(usage.code).toBe(2);
-    expect(usage.stderr).toContain('usage: agent-board-api import');
+    expect(usage.stderr).toContain('usage: rumo-api import');
   });
 });

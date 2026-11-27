@@ -35,7 +35,7 @@ function describeRun(run: FeedRun | null): string {
 function runList(ctx: Context): void {
   const { feeds, broken } = feedsOf(ctx);
   if (feeds.length === 0 && Object.keys(broken).length === 0) {
-    ctx.out('no feeds; add one with "board feeds add <name> <file|->"');
+    ctx.out('no feeds; add one with "rumo feeds add <name> <file|->"');
     return;
   }
   for (const feed of feeds) {
@@ -53,7 +53,7 @@ function runList(ctx: Context): void {
 }
 
 async function readEntry(ctx: Context, source: string | undefined): Promise<unknown> {
-  if (source === undefined) throw new UsageError('usage: board feeds add <name> <file|->');
+  if (source === undefined) throw new UsageError('usage: rumo feeds add <name> <file|->');
   const text =
     source === '-'
       ? await ctx.rt.readStdin()
@@ -78,7 +78,7 @@ async function runAdd(
   const local = readLocalDirectories(ctx.dirs.config);
   if (local.configured && coveringDirectory(local.entries, normalizePath(feed.dir)) === undefined) {
     throw new UsageError(
-      `${plain(feed.dir)} is not a listed directory; run "board dirs add" there first`,
+      `${plain(feed.dir)} is not a listed directory; run "rumo dirs add" there first`,
     );
   }
   await resolveProgram(ctx, feed.integration).catch((error: unknown) => {
@@ -108,7 +108,7 @@ async function publish(ctx: Context): Promise<void> {
 }
 
 function requireFeed(ctx: Context, name: string | undefined) {
-  if (name === undefined) throw new UsageError('usage: board feeds <rm|run|pause|resume> <name>');
+  if (name === undefined) throw new UsageError('usage: rumo feeds <rm|run|pause|resume> <name>');
   const found = feedsOf(ctx).feeds.find((feed) => feed.name === name);
   if (found === undefined) {
     const names = feedsOf(ctx).feeds.map((feed) => feed.name);
@@ -125,13 +125,13 @@ export async function runFeeds(ctx: Context, action: readonly string[]): Promise
     runList(ctx);
     return;
   }
-  refuseInRun(ctx, `board feeds ${verb}`);
+  refuseInRun(ctx, `rumo feeds ${verb}`);
   if (verb === 'add') {
-    if (extra.length > 1) throw new UsageError('usage: board feeds add <name> <file|->');
+    if (extra.length > 1) throw new UsageError('usage: rumo feeds add <name> <file|->');
     await runAdd(ctx, name, extra[0]);
     return;
   }
-  if (extra.length > 0) throw new UsageError(`usage: board feeds ${verb} <name>`);
+  if (extra.length > 0) throw new UsageError(`usage: rumo feeds ${verb} <name>`);
   const feed = requireFeed(ctx, name);
   if (verb === 'rm') {
     if (ctx.dryRun) {

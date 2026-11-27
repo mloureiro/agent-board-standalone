@@ -1,12 +1,12 @@
 mod common;
 
-use agent_board_client_core::files::DirStore;
-use agent_board_client_core::log::{LogEvent, line};
-use agent_board_client_core::orphans::tab_file_name;
-use agent_board_client_core::ports::{FileStore, PortError};
-use agent_board_client_core::tab_file::{self, VERSION};
-use agent_board_client_core::tabs::{Effect, HOME, MAX_TABS, Tabs};
 use common::*;
+use rumo_client_core::files::DirStore;
+use rumo_client_core::log::{LogEvent, line};
+use rumo_client_core::orphans::tab_file_name;
+use rumo_client_core::ports::{FileStore, PortError};
+use rumo_client_core::tab_file::{self, VERSION};
+use rumo_client_core::tabs::{Effect, HOME, MAX_TABS, Tabs};
 use serde_json::{Value, json};
 
 struct Unreadable;
@@ -176,8 +176,8 @@ fn client_app_036_tab_file_holds_paths_and_selection_only() {
     let mut tabs = Tabs::new();
     tabs.open("/tasks/t-1?transcript=1");
     tabs.open("/backlog");
-    tabs.title(1, "Secret decrypted title · Agent Board");
-    tabs.title(2, "Another private title · Agent Board");
+    tabs.title(1, "Secret decrypted title · Rumo");
+    tabs.title(2, "Another private title · Rumo");
 
     let written: Value = serde_json::from_slice(&tab_file::encode(&tabs)).unwrap();
     assert_eq!(

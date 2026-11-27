@@ -1,4 +1,4 @@
-import { EVENT_PING_MS } from '@agent-board/contract';
+import { EVENT_PING_MS } from '@rumo/contract';
 
 import { readSse, type SseMessage } from './sse.js';
 import type { Transport } from './types.js';

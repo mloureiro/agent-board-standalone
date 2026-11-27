@@ -1,4 +1,4 @@
-import { addNoteRoute } from '@agent-board/contract';
+import { addNoteRoute } from '@rumo/contract';
 
 import { UsageError } from '../../errors.js';
 import { readNoteFile } from '../../input/note-file.js';
@@ -21,7 +21,7 @@ export async function runComment(
   const misplaced = /^(--suggest(?:-file)?)(?:=|$)/.exec(words[0] ?? '')?.[1];
   if (misplaced !== undefined) {
     throw new UsageError(
-      `${misplaced} goes before the task: board comment ${misplaced} "<${misplaced === '--suggest' ? 'reply' : 'path'}>" <task> <text...>`,
+      `${misplaced} goes before the task: rumo comment ${misplaced} "<${misplaced === '--suggest' ? 'reply' : 'path'}>" <task> <text...>`,
     );
   }
   if (options.suggest !== undefined && options.suggestFile !== undefined) {

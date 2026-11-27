@@ -70,8 +70,8 @@ describe('supervision through the headless runner', () => {
 
   function start(): Session {
     const session = launch(root, {
-      AGENT_BOARD_SERVER_RESOURCES: resources.dir,
-      AGENT_BOARD_SUPERVISION_TIMINGS: FAST_TIMINGS,
+      RUMO_SERVER_RESOURCES: resources.dir,
+      RUMO_SUPERVISION_TIMINGS: FAST_TIMINGS,
     });
     sessions.push(session);
     return session;
@@ -224,7 +224,7 @@ describe('supervision through the headless runner', () => {
   });
 
   it('[server-app-030] an orphan left by a crashed app is terminated at the next start', async () => {
-    const program = join(resources.dir, 'api/agent-board-api');
+    const program = join(resources.dir, 'api/rumo-api');
     writeFileSync(join(scratch, 'orphan.conf'), 'health=none\nignore_term=1\n');
     const left = spawn(program, [], {
       detached: true,
@@ -289,7 +289,7 @@ describe('supervision through the headless runner', () => {
 });
 
 describe('supervision with the real API executable', () => {
-  const real = join(import.meta.dirname, '../../api/dist/agent-board-api');
+  const real = join(import.meta.dirname, '../../api/dist/rumo-api');
   let scratch: string;
   let session: Session | undefined;
 
@@ -297,7 +297,7 @@ describe('supervision with the real API executable', () => {
     if (binary === undefined || stub === undefined) context.skip(SKIP_REASON);
     if (!existsSync(real))
       context.skip(
-        'the API executable is not built: run `pnpm --filter @agent-board/api build:executable`',
+        'the API executable is not built: run `pnpm --filter @rumo/api build:executable`',
       );
     scratch = mkdtempSync(join(tmpdir(), 'server-app-real-'));
   });
@@ -315,11 +315,11 @@ describe('supervision with the real API executable', () => {
     const dir = join(scratch, 'resources');
     mkdirSync(join(dir, 'api'), { recursive: true });
     mkdirSync(join(dir, 'web'), { recursive: true });
-    copyFileSync(real, join(dir, 'api/agent-board-api'));
+    copyFileSync(real, join(dir, 'api/rumo-api'));
     writeFileSync(join(dir, 'web/index.html'), '<html></html>');
     writeFileSync(join(dir, 'api/schema-version'), 'real-1\n');
 
-    session = launch(root, { AGENT_BOARD_SERVER_RESOURCES: dir });
+    session = launch(root, { RUMO_SERVER_RESOURCES: dir });
     const current = session;
     await until(
       async () => {

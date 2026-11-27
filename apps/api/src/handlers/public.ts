@@ -1,4 +1,4 @@
-import { VERSION_CORS_HEADERS } from '@agent-board/contract';
+import { VERSION_CORS_HEADERS } from '@rumo/contract';
 
 import { sessionState } from '../auth/index.js';
 import type { HandlerSet } from '../http/handler.js';

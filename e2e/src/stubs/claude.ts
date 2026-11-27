@@ -125,7 +125,7 @@ interface BoardRun {
 
 function runBoard(args: readonly string[]): Promise<BoardRun> {
   return new Promise((resolve) => {
-    const child = spawn('board', [...args], {
+    const child = spawn('rumo', [...args], {
       env: process.env,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -146,9 +146,9 @@ function nextToolId(): string {
 
 async function runBoardAsTool(args: readonly string[]): Promise<void> {
   const id = nextToolId();
-  emit(toolUse(sessionId, id, 'Bash', { command: `board ${args.join(' ')}` }));
+  emit(toolUse(sessionId, id, 'Bash', { command: `rumo ${args.join(' ')}` }));
   const run = await runBoard(args);
-  log({ kind: 'board', args, code: run.code });
+  log({ kind: 'rumo', args, code: run.code });
   emit(toolResult(sessionId, id, run.output));
 }
 
@@ -174,13 +174,13 @@ async function execute(directive: Directive, state: RunState): Promise<'continue
       const file = path.join(dir, 'questions.json');
       try {
         writeFileSync(file, JSON.stringify(directive.questions));
-        await runBoardAsTool(['ask', process.env.AGENT_BOARD_TASK ?? '', '--file', file]);
+        await runBoardAsTool(['ask', process.env.RUMO_TASK ?? '', '--file', file]);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
       return (await nextMessage()) === null ? 'failed' : 'continue';
     }
-    case 'board':
+    case 'rumo':
       await runBoardAsTool(directive.args);
       return 'continue';
     case 'tool': {

@@ -8,8 +8,8 @@ import {
   unarchiveClientProjectRoute,
   updateClientProjectRoute,
   type ProjectDeleteThen,
-} from '@agent-board/contract';
-import { bindings, seal } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, seal } from '@rumo/sealing';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useServers } from '../servers/index.js';

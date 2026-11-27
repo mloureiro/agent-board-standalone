@@ -1,12 +1,12 @@
 {
-  "name": "@agent-board/api",
+  "name": "@rumo/api",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
   "type": "module",
   "main": "./src/index.ts",
   "bin": {
-    "agent-board-api": "./dist/main.js"
+    "rumo-api": "./dist/main.js"
   },
   "scripts": {
     "build": "tsx scripts/build.ts",
@@ -17,8 +17,8 @@
     "release": "tsx scripts/release.ts"
   },
   "dependencies": {
-    "@agent-board/contract": "workspace:^1.0.0",
-    "@agent-board/sealing": "workspace:^1.0.0",
+    "@rumo/contract": "workspace:^1.0.0",
+    "@rumo/sealing": "workspace:^1.0.0",
     "@electric-sql/pglite": "^0.6.0",
     "@node-saml/node-saml": "5.2.0",
     "@simplewebauthn/server": "^14.1.0",

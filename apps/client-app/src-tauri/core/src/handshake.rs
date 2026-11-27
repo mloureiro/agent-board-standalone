@@ -43,7 +43,7 @@ impl HandshakeFailure {
         match self {
             Self::Unreachable(detail) => format!("The server could not be reached ({detail})."),
             Self::Status(status) => format!("The server answered with status {status}."),
-            Self::NotABoard => "The address did not answer like an Agent Board server.".to_owned(),
+            Self::NotABoard => "The address did not answer like an Rumo server.".to_owned(),
         }
     }
 

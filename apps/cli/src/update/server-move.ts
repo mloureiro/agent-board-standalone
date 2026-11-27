@@ -1,4 +1,4 @@
-import { listMachinesRoute } from '@agent-board/contract';
+import { listMachinesRoute } from '@rumo/contract';
 
 import type { Context } from '../commands/context.js';
 import { normalizeServerUrl } from '../commands/setup/init.js';
@@ -65,7 +65,7 @@ export async function moveServer(ctx: Context, rawUrl: string): Promise<void> {
   const target = targetUrl(rawUrl);
   const source = readServerFile(dirs.config);
   if (source === null) {
-    throw new CliError(`profile "${dirs.profile}" has no server: run \`board init\` first`);
+    throw new CliError(`profile "${dirs.profile}" has no server: run \`rumo init\` first`);
   }
   const current = normalizeServerUrl(source.url);
   if (current === target) {
@@ -74,7 +74,7 @@ export async function moveServer(ctx: Context, rawUrl: string): Promise<void> {
   }
   if (readPendingMigration(dirs.state) !== null) {
     throw new CliError(
-      'a migration is pending; run `board self-update --resume` or `board self-update --rollback` first',
+      'a migration is pending; run `rumo self-update --resume` or `rumo self-update --rollback` first',
     );
   }
 
@@ -113,11 +113,11 @@ export async function moveServer(ctx: Context, rawUrl: string): Promise<void> {
   const others = await activeElsewhere(ctx);
   if ('names' in others && others.names.length > 0) {
     ctx.out(
-      `${current} still lists ${others.names.length} other machine(s) seen in the last 15 minutes: ${others.names.join(', ')}; they keep claiming tasks there until each runs "board self-update --server ${target}"`,
+      `${current} still lists ${others.names.length} other machine(s) seen in the last 15 minutes: ${others.names.join(', ')}; they keep claiming tasks there until each runs "rumo self-update --server ${target}"`,
     );
   } else if ('unknown' in others) {
     ctx.out(
-      `cannot tell whether other machines still use ${current} (${others.unknown}); run "board self-update --server ${target}" on each of them`,
+      `cannot tell whether other machines still use ${current} (${others.unknown}); run "rumo self-update --server ${target}" on each of them`,
     );
   }
 
@@ -140,7 +140,7 @@ export async function moveServer(ctx: Context, rawUrl: string): Promise<void> {
     return Promise.resolve();
   });
   ctx.out(
-    `${current} is unchanged; restart the units with \`board restart\` so they talk to ${target}`,
+    `${current} is unchanged; restart the units with \`rumo restart\` so they talk to ${target}`,
   );
-  ctx.out(`to go back: board self-update --server ${current}, or board self-update --rollback`);
+  ctx.out(`to go back: rumo self-update --server ${current}, or rumo self-update --rollback`);
 }

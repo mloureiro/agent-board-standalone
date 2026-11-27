@@ -24,7 +24,7 @@ to anyone who can reach the tunnel.
   issued machine token; by `POST /api/pair` with a one-time `XXXX-XXXX` code (10 minutes, single use) in no-login
   mode.
 - Pairing codes come from the API's control channel. The server app's "Pair a device…" asks for one;
-  `agent-board-api pair` is a client of `CONTROL_SOCKET` and never opens the database, so it works while the API
+  `rumo-api pair` is a client of `CONTROL_SOCKET` and never opens the database, so it works while the API
   runs.
 - Wrappers pair through the bridge command `pair(serverId, code, label)`, which sends the Keychain or Keystore
   public key; page code never sees the key or calls `/api/pair` itself.

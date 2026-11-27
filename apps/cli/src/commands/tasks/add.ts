@@ -1,7 +1,7 @@
 import { realpathSync } from 'node:fs';
 
-import { addTaskRoute, taskId, type TaskDraft } from '@agent-board/contract';
-import { bindings, seal } from '@agent-board/sealing';
+import { addTaskRoute, taskId, type TaskDraft } from '@rumo/contract';
+import { bindings, seal } from '@rumo/sealing';
 
 import { UsageError } from '../../errors.js';
 import {
@@ -57,7 +57,7 @@ function proposalDirectory(
   const row = found === undefined ? undefined : rows.find((candidate) => candidate.id === found.id);
   if (row === undefined) {
     throw new UsageError(
-      `${cwd} is not a listed directory on this machine, and neither is the directory this run started in: a proposal needs one. Run "board dirs add" in the directory the task belongs in, or run board add from a listed directory.`,
+      `${cwd} is not a listed directory on this machine, and neither is the directory this run started in: a proposal needs one. Run "rumo dirs add" in the directory the task belongs in, or run rumo add from a listed directory.`,
     );
   }
   return row;

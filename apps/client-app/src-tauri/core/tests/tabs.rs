@@ -1,8 +1,8 @@
-use agent_board_client_core::shortcuts::{
+use rumo_client_core::shortcuts::{
     Action, Key, MENU_CLOSE_TAB, MENU_NEXT_TAB, MENU_PREVIOUS_TAB, from_key, from_menu_id,
     menu_select_id,
 };
-use agent_board_client_core::tabs::{
+use rumo_client_core::tabs::{
     Effect, HOME, MAX_LABEL_CHARS, MAX_TABS, Page, Route, TabId, Tabs, classify, label_from_title,
 };
 
@@ -163,7 +163,7 @@ fn client_app_019_navigation_in_a_tab_is_in_place_and_board_closes_the_tab() {
     assert_eq!(tabs.route(2, "/tasks/t-1?transcript=1"), vec![]);
     assert_eq!(tabs.tabs().len(), 3);
 
-    tabs.title(2, "Fix login · Agent Board");
+    tabs.title(2, "Fix login · Rumo");
     assert_eq!(
         tabs.route(2, "/schedules"),
         vec![Effect::UpdateBar, Effect::WriteTabFile]
@@ -257,20 +257,20 @@ fn client_app_021_a_twenty_first_tab_does_not_open() {
 #[test]
 fn client_app_023_label_strips_the_suffix_caps_at_200_and_falls_back_to_a_path_label() {
     assert_eq!(
-        label_from_title("Fix login · Agent Board").as_deref(),
+        label_from_title("Fix login · Rumo").as_deref(),
         Some("Fix login")
     );
     assert_eq!(
         label_from_title("  Fix login  ").as_deref(),
         Some("Fix login")
     );
-    assert_eq!(label_from_title("Agent Board"), None);
-    assert_eq!(label_from_title(" · Agent Board"), None);
+    assert_eq!(label_from_title("Rumo"), None);
+    assert_eq!(label_from_title(" · Rumo"), None);
     assert_eq!(label_from_title("   "), None);
 
     let exact = "x".repeat(MAX_LABEL_CHARS);
     assert_eq!(label_from_title(&exact).as_deref(), Some(exact.as_str()));
-    let long = format!("{} · Agent Board", "é".repeat(MAX_LABEL_CHARS + 50));
+    let long = format!("{} · Rumo", "é".repeat(MAX_LABEL_CHARS + 50));
     let capped = label_from_title(&long).unwrap();
     assert_eq!(capped.chars().count(), MAX_LABEL_CHARS);
     assert!(capped.ends_with('…'));
@@ -278,13 +278,10 @@ fn client_app_023_label_strips_the_suffix_caps_at_200_and_falls_back_to_a_path_l
     let mut tabs = opened(&["/backlog", "/tasks/t-1"]);
     assert_eq!(tabs.tabs()[1].label, "Backlog");
     assert_eq!(tabs.tabs()[2].label, "Task");
-    assert_eq!(
-        tabs.title(2, "Fix login · Agent Board"),
-        vec![Effect::UpdateBar]
-    );
+    assert_eq!(tabs.title(2, "Fix login · Rumo"), vec![Effect::UpdateBar]);
     assert_eq!(tabs.tabs()[2].label, "Fix login");
-    assert_eq!(tabs.title(2, "Fix login · Agent Board"), vec![]);
-    assert_eq!(tabs.title(2, "Agent Board"), vec![Effect::UpdateBar]);
+    assert_eq!(tabs.title(2, "Fix login · Rumo"), vec![]);
+    assert_eq!(tabs.title(2, "Rumo"), vec![Effect::UpdateBar]);
     assert_eq!(tabs.tabs()[2].label, "Task");
     assert_eq!(tabs.title(HOME, "Anything"), vec![]);
     assert_eq!(tabs.title(99, "Anything"), vec![]);

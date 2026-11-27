@@ -1,4 +1,4 @@
-import { listClientTasksRoute } from '@agent-board/contract';
+import { listClientTasksRoute } from '@rumo/contract';
 import { Alert, Anchor, Badge, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';

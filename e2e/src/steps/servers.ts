@@ -1,4 +1,4 @@
-import type { Feature } from '@agent-board/contract';
+import type { Feature } from '@rumo/contract';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { postgresAllowedIn, startBoardPair, type BoardPair } from '../fixtures/boards.js';
@@ -264,7 +264,7 @@ export interface Namespace {
 }
 
 export function databaseNameOf(serverId: string): string {
-  return `agent-board:${serverId}`;
+  return `rumo:${serverId}`;
 }
 
 export function prefixOf(serverId: string): string {

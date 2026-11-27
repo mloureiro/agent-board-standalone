@@ -1,4 +1,4 @@
-import { updateTaskRoute } from '@agent-board/contract';
+import { updateTaskRoute } from '@rumo/contract';
 
 import { EXIT, ReportedFailure, UsageError } from '../../errors.js';
 import { parseStatus } from '../../domain/rules.js';
@@ -15,10 +15,10 @@ export async function runMove(
   options: { expect?: string; fresh?: boolean },
 ): Promise<void> {
   if (options.expect !== undefined) {
-    refuseInRun(ctx, 'board move --expect');
+    refuseInRun(ctx, 'rumo move --expect');
   }
   if (options.fresh === true) {
-    refuseInRun(ctx, 'board move --fresh');
+    refuseInRun(ctx, 'rumo move --fresh');
   }
   const status = parseStatus(statusWords.join(' '));
   if (options.fresh === true && status !== 'todo') {
@@ -27,7 +27,7 @@ export async function runMove(
   const expect = options.expect === undefined ? undefined : parseStatus(options.expect);
   if (status === 'waiting') {
     throw new UsageError(
-      `a wait needs its end: use "board wait ${input} --in <dur>" or "--check '<command>'" instead`,
+      `a wait needs its end: use "rumo wait ${input} --in <dur>" or "--check '<command>'" instead`,
     );
   }
   const s = await session(ctx);
@@ -44,7 +44,7 @@ export async function runMove(
     if (!(error instanceof ApiError)) throw error;
     if (expect !== undefined && error.status === 409) {
       const message = `${id} is not in ${expect} any more; nothing was moved`;
-      ctx.err(`board: ${message}`);
+      ctx.err(`rumo: ${message}`);
       throw new ReportedFailure(EXIT.expectMismatch);
     }
     if (error.status === 409) {

@@ -1,4 +1,4 @@
-use agent_board_client_core::page_input::{
+use rumo_client_core::page_input::{
     BODY_MAX_BYTES, HEADERS_MAX, InputError, TITLE_MAX_CHARS, fetch_input, link, pairing, sign_in,
     tab_report,
 };
@@ -57,9 +57,7 @@ fn client_app_049_fetch_inputs_are_bounded() {
 
 #[test]
 fn client_app_018_tab_commands_accept_only_known_intents_directions_and_plain_paths() {
-    use agent_board_client_core::page_input::{
-        TabIntent, tab_direction, tab_intent, tab_path, tab_title,
-    };
+    use rumo_client_core::page_input::{TabIntent, tab_direction, tab_intent, tab_path, tab_title};
     assert_eq!(tab_intent("open"), Ok(TabIntent::Open));
     assert_eq!(tab_intent("route"), Ok(TabIntent::Route));
     assert_eq!(tab_intent("new"), Ok(TabIntent::New));

@@ -1,8 +1,4 @@
-import {
-  clientAttentionRoute,
-  getClientTaskRoute,
-  listClientTasksRoute,
-} from '@agent-board/contract';
+import { clientAttentionRoute, getClientTaskRoute, listClientTasksRoute } from '@rumo/contract';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, type ReactNode } from 'react';
 

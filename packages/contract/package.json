@@ -1,5 +1,5 @@
 {
-  "name": "@agent-board/contract",
+  "name": "@rumo/contract",
   "version": "1.2.0",
   "private": true,
   "license": "MIT",

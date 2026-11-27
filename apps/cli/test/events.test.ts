@@ -58,7 +58,7 @@ async function listening(args: string[], seed?: (stub: ApiStub) => Promise<void>
   };
 }
 
-describe('board events', () => {
+describe('rumo events', () => {
   it('[cli-023] reports a created task, its moves and its changes after the first look, and exits 0 on interrupt', async () => {
     const run = await listening([]);
     await run.change(async () => {
@@ -193,9 +193,9 @@ describe('board events', () => {
   });
 
   it('[cli-023] exits 1 when the token is refused at the handshake and refuses to run inside a run', async () => {
-    const wrong = await rig({ env: { AGENT_BOARD_TOKEN: 'abm_wrongtoken' } });
+    const wrong = await rig({ env: { RUMO_TOKEN: 'abm_wrongtoken' } });
     expect(await wrong.cli.run('events')).toBe(1);
-    const inRun = await rig({ env: { AGENT_BOARD_TASK: 'taskAAAA' } });
+    const inRun = await rig({ env: { RUMO_TASK: 'taskAAAA' } });
     expect(await inRun.cli.run('events')).toBe(2);
   });
 

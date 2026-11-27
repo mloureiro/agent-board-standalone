@@ -1,8 +1,4 @@
-import {
-  boardExportRecord,
-  type AccountTable,
-  type BoardExportRecord,
-} from '@agent-board/contract';
+import { boardExportRecord, type AccountTable, type BoardExportRecord } from '@rumo/contract';
 import { and, asc, eq, gt, inArray, sql, type SQL } from 'drizzle-orm';
 
 import { appUser, directory, note, project, schedule, task } from '../../db/schema/index.js';

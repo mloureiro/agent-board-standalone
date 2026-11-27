@@ -1,5 +1,5 @@
-import type { WireTranscriptEvent } from '@agent-board/contract';
-import { bindings, open, type Keys } from '@agent-board/sealing';
+import type { WireTranscriptEvent } from '@rumo/contract';
+import { bindings, open, type Keys } from '@rumo/sealing';
 
 export const UNREADABLE_EVENT = 'Unreadable event';
 

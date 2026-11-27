@@ -12,14 +12,14 @@ describe('cliEnv', () => {
 
   it('sets the three directory overrides and no XDG variable in overrides mode', () => {
     const env = cliEnv({ tmp }, { profileMode: 'overrides' }, { PATH: '/usr/bin' });
-    expect(env.AGENT_BOARD_CONFIG_DIR).toBe(tmp.path('cli', 'config'));
-    expect(env.AGENT_BOARD_STATE_DIR).toBe(tmp.path('cli', 'state'));
-    expect(env.AGENT_BOARD_RUN_DIR).toBe(tmp.path('cli', 'run'));
+    expect(env.RUMO_CONFIG_DIR).toBe(tmp.path('cli', 'config'));
+    expect(env.RUMO_STATE_DIR).toBe(tmp.path('cli', 'state'));
+    expect(env.RUMO_RUN_DIR).toBe(tmp.path('cli', 'run'));
     expect(Object.keys(env).filter((key) => key.startsWith('XDG_'))).toEqual([]);
   });
 
   it('defaults to overrides mode', () => {
-    expect(cliEnv({ tmp }, {}, {}).AGENT_BOARD_CONFIG_DIR).toBeDefined();
+    expect(cliEnv({ tmp }, {}, {}).RUMO_CONFIG_DIR).toBeDefined();
   });
 
   it('sets the XDG variables and no override in profile mode', () => {
@@ -38,7 +38,7 @@ describe('cliEnv', () => {
     const env = cliEnv({ tmp }, {}, { PATH: '/usr/bin:/bin' });
     expect(env.PATH).toBe(`${STUBS_DIR}${path.delimiter}/usr/bin:/bin`);
     expect(path.basename(STUBS_DIR)).toBe('stubs');
-    expect(env.AGENT_BOARD_WORKER_SPAWN).toBe('process');
+    expect(env.RUMO_WORKER_SPAWN).toBe('process');
   });
 
   it('does not inherit the process environment', () => {

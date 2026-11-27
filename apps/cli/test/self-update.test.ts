@@ -32,7 +32,7 @@ async function releases(list: readonly FakeRelease[]): Promise<ReleaseServer> {
 const assetRequests = (entry: ReleaseServer): number =>
   entry.server.seen.filter((request) => request.path.startsWith('/assets')).length;
 
-describe('board self-update', () => {
+describe('rumo self-update', () => {
   it('[cli-056] downloads the newest cli-v release, verifies its checksum and swaps the binary', async () => {
     const entry = await releases([
       { version: '0.5.0' },
@@ -52,7 +52,7 @@ describe('board self-update', () => {
     expect(backup?.manifest).toMatchObject({ kind: 'update', from: '0.0.0', to: '1.0.0' });
     expect(readFileSync(path.join(backup?.dir ?? '', 'binary'), 'utf8')).toBe('the old binary');
     expect(existsSync(path.join(m.state, 'update-staging'))).toBe(false);
-    expect(readdirSync(path.dirname(m.binary))).toEqual(['board']);
+    expect(readdirSync(path.dirname(m.binary))).toEqual(['rumo']);
     expect(readPendingMigration(m.state)).toMatchObject({ from: '0.0.0', to: '1.0.0' });
   });
 
@@ -95,7 +95,7 @@ describe('board self-update', () => {
     const entry = await releases([{ version: '1.2.0' }]);
     const m = machine({ releasesUrl: entry.listUrl });
     expect(await m.run('self-update', '--check')).toBe(0);
-    expect(m.stdout()).toMatch(/board 1\.2\.0 is available/);
+    expect(m.stdout()).toMatch(/rumo 1\.2\.0 is available/);
     expect(readUpdateState(m.state).latest).toBe('1.2.0');
     expect(assetRequests(entry)).toBe(0);
     expect(m.binaryText()).toBe('the old binary');
@@ -137,7 +137,7 @@ describe('board self-update', () => {
   });
 
   it('[cli-056] refuses to run inside a board run and with clashing options', async () => {
-    const m = machine({ env: { AGENT_BOARD_TASK: 'abc12345' } });
+    const m = machine({ env: { RUMO_TASK: 'abc12345' } });
     expect(await m.run('self-update')).toBe(1);
     const other = machine();
     expect(await other.run('self-update', '--server', 'http://127.0.0.1:1', '--check')).toBe(2);

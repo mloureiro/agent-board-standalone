@@ -1,4 +1,4 @@
-import type { ScheduleSettings } from '@agent-board/contract';
+import type { ScheduleSettings } from '@rumo/contract';
 import { eq } from 'drizzle-orm';
 
 import { schedule, task } from '../../db/schema/index.js';

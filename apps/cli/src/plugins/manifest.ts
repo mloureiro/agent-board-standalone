@@ -1,6 +1,6 @@
 import { isRecord } from '../domain/values.js';
 
-export const MANIFEST_PATH = '.agent-board/marketplace.json';
+export const MANIFEST_PATH = '.rumo/marketplace.json';
 export const PROTOCOL = 1;
 
 const MAX_BYTES = 64 * 1024;

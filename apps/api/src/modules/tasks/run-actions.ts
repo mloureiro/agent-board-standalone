@@ -1,4 +1,4 @@
-import type { NoteText } from '@agent-board/contract';
+import type { NoteText } from '@rumo/contract';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 
 import { note, task } from '../../db/schema/index.js';

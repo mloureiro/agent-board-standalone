@@ -11,7 +11,7 @@ default browser otherwise (server-app-014). The message must be versioned (contr
 
 ## Decision
 
-- The message is a deep link `agentboard://open?v=1&url=<percent-encoded server URL>`. The contract exports the
+- The message is a deep link `rumo://open?v=1&url=<percent-encoded server URL>`. The contract exports the
   scheme, the version, the client app's bundle id, and `buildHandover` and `parseHandover`.
 - The contract also writes the handover cases and the bundle id as JSON. Both Tauri wrappers run those cases as
   vectors in `cargo test`, so the Rust parser and the TypeScript parser agree without sharing code.

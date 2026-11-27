@@ -10,8 +10,8 @@ export interface CompletionTree {
 }
 
 function bash(tree: CompletionTree): string {
-  return `# board completion for bash: source it, or save it in a bash-completion directory
-_board() {
+  return `# rumo completion for bash: source it, or save it in a bash-completion directory
+_rumo() {
   local cur prev words cword profile=()
   cur="\${COMP_WORDS[COMP_CWORD]}"
   prev="\${COMP_WORDS[COMP_CWORD-1]}"
@@ -44,14 +44,14 @@ _board() {
       esac ;;
   esac
 }
-complete -F _board board
+complete -F _rumo rumo
 `;
 }
 
 function zsh(tree: CompletionTree): string {
   return `#compdef board
-# board completion for zsh: save it as _board in a directory of $fpath
-_board() {
+# rumo completion for zsh: save it as _rumo in a directory of $fpath
+_rumo() {
   local -a profile
   local sub="" i
   for ((i = 2; i < CURRENT; i++)); do
@@ -78,13 +78,13 @@ _board() {
       esac ;;
   esac
 }
-compdef _board board
+compdef _rumo rumo
 `;
 }
 
 function fish(tree: CompletionTree): string {
   const verbs = SCHEDULE_VERBS.join(' ');
-  return `# board completion for fish: save it as board.fish in ~/.config/fish/completions
+  return `# rumo completion for fish: save it as board.fish in ~/.config/fish/completions
 complete -c board -f
 complete -c board -n '__fish_use_subcommand' -a '${tree.commands.join(' ')}'
 complete -c board -n '__fish_seen_subcommand_from ${tree.taskCommands.join(' ')}' -a '(board __complete tasks 2>/dev/null)'

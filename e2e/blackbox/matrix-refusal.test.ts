@@ -1,4 +1,4 @@
-import { CONTRACT, MIN_SERVER, compat, type ClientKind } from '@agent-board/contract';
+import { CONTRACT, MIN_SERVER, compat, type ClientKind } from '@rumo/contract';
 import { describe, expect, it } from 'vitest';
 
 import { anonymous, call, callRaw } from '../src/client/contract-client.js';

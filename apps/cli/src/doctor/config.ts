@@ -1,6 +1,6 @@
 import { existsSync, statSync } from 'node:fs';
 
-import type { DoctorResult } from '@agent-board/contract';
+import type { DoctorResult } from '@rumo/contract';
 
 import { agentProblem } from '../agents/definition.js';
 import { localAgents } from '../agents/shared.js';
@@ -33,7 +33,7 @@ export async function configChecks(ctx: Context): Promise<DoctorResult[]> {
   }
   const invalid = configProblem(config);
   if (invalid !== null) {
-    return [problem('config.json', 'fail', invalid, `fix it with \`board config edit\` (${file})`)];
+    return [problem('config.json', 'fail', invalid, `fix it with \`rumo config edit\` (${file})`)];
   }
   const results: DoctorResult[] = [];
   const unknown = unknownTopKeys(config);
@@ -58,7 +58,7 @@ async function pluginChecks(ctx: Context): Promise<DoctorResult[]> {
           'config.json',
           'warn',
           `plugin marketplace ${name} has no usable checkout in ${checkout}`,
-          `run \`board plugins add ${installed.url}\` again`,
+          `run \`rumo plugins add ${installed.url}\` again`,
         ),
       );
     } else if (head.out !== installed.commit) {
@@ -67,7 +67,7 @@ async function pluginChecks(ctx: Context): Promise<DoctorResult[]> {
           'config.json',
           'warn',
           `plugin marketplace ${name} is at ${head.out.slice(0, 12)}, not at its pinned ${installed.commit.slice(0, 12)}; its programs are not run`,
-          `run \`board plugins update ${name}\``,
+          `run \`rumo plugins update ${name}\``,
         ),
       );
     }
@@ -92,7 +92,7 @@ function agentChecks(ctx: Context): DoctorResult[] {
       'agents',
       'warn',
       problems.join('; '),
-      'fix them with `board agents` or `board config edit`',
+      'fix them with `rumo agents` or `rumo config edit`',
     ),
   ];
 }
@@ -104,7 +104,7 @@ function directoriesCheck(ctx: Context): DoctorResult {
       'dirs',
       'warn',
       'no directories are configured',
-      'run `board dirs add` in a repository',
+      'run `rumo dirs add` in a repository',
     );
   }
   const missing = local.entries.filter(
@@ -115,7 +115,7 @@ function directoriesCheck(ctx: Context): DoctorResult {
       'dirs',
       'warn',
       `directories that do not exist: ${missing.map((entry) => entry.path).join(', ')}`,
-      'fix them with `board dirs`',
+      'fix them with `rumo dirs`',
     );
   }
   return pass('dirs', `${local.entries.length} directory(ies) configured`);

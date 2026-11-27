@@ -1,4 +1,4 @@
-import { FEATURE_LABELS, type Feature } from '@agent-board/contract';
+import { FEATURE_LABELS, type Feature } from '@rumo/contract';
 
 import { startApi, type ApiHandle, type AuthMode } from './api.js';
 import { createDatabase, type Database, type DatabaseKind } from './database.js';

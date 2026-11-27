@@ -36,8 +36,8 @@ export function apiEnv(options: ApiOptions, port: number): Record<string, string
   const host = options.auth === 'login' ? 'localhost' : '127.0.0.1';
   const env: Record<string, string> = {
     HOME: options.tmp.home,
-    AGENT_BOARD_E2E: '1',
-    AGENT_BOARD_CLOCK_OFFSET_FILE: options.tmp.clockFile,
+    RUMO_E2E: '1',
+    RUMO_CLOCK_OFFSET_FILE: options.tmp.clockFile,
     ...databaseEnv(options.database),
     AUTH_MODE: options.auth,
     HOST: host,

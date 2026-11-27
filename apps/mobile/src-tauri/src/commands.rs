@@ -1,7 +1,7 @@
 use crate::adapters::{DialogConfirm, FileStore, PluginKeys, ReqwestHttp, SystemEnv};
-use agent_board_bridge_core::bridge::Bridge;
-use agent_board_bridge_core::servers::ServerEntry;
 use futures_util::StreamExt;
+use rumo_bridge_core::bridge::Bridge;
+use rumo_bridge_core::servers::ServerEntry;
 use serde::Serialize;
 use std::collections::HashMap;
 use tauri::ipc::{Channel, InvokeResponseBody};
@@ -17,7 +17,7 @@ pub struct FetchHead {
     headers: HashMap<String, String>,
 }
 
-fn text(error: agent_board_bridge_core::bridge::BridgeError) -> String {
+fn text(error: rumo_bridge_core::bridge::BridgeError) -> String {
     error.message()
 }
 

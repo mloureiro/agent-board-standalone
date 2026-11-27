@@ -5,8 +5,8 @@ import {
   listClientProjectsRoute,
   unarchiveClientProjectRoute,
   updateClientProjectRoute,
-} from '@agent-board/contract';
-import { bindings, open, seal, type Binding, type Keys } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, open, seal, type Binding, type Keys } from '@rumo/sealing';
 
 import { OWNER_KEYS, hours, isoAt } from './board-world.js';
 import { json } from './fake-board.js';

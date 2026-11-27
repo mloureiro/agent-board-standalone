@@ -5,7 +5,7 @@ import { PART_ROOT } from './layout.ts';
 
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
 const UNRELEASED = /^## 0\.0\.0\n+Not released\n*/m;
-const CRATES = ['agent-board-server', 'agent-board-server-core'] as const;
+const CRATES = ['rumo-server', 'rumo-server-core'] as const;
 
 const triple = (version: string): [number, number, number] => {
   const match = SEMVER.exec(version);
@@ -91,13 +91,13 @@ if (import.meta.main) {
   const version = args.find((argument) => SEMVER.test(argument));
   if (version === undefined) {
     process.stderr.write(
-      'usage: pnpm --filter @agent-board/server-app release <version> [--notes "<text>"]\n',
+      'usage: pnpm --filter @rumo/server-app release <version> [--notes "<text>"]\n',
     );
     process.exit(2);
   }
   await prepareRelease(PART_ROOT, version, optionOf(args, '--notes') ?? '');
   process.stdout.write(
     `server-app ${version} prepared: package.json, src/version.ts, the Cargo manifests, Cargo.lock and CHANGELOG.md are updated.\n` +
-      `Review and commit them, build the app, run \`pnpm --filter @agent-board/server-app release:check ${version}\`, then run \`pnpm release:tags\` to create the server-app-v${version} tag.\n`,
+      `Review and commit them, build the app, run \`pnpm --filter @rumo/server-app release:check ${version}\`, then run \`pnpm release:tags\` to create the server-app-v${version} tag.\n`,
   );
 }

@@ -9,7 +9,7 @@ import {
   type WireSchedule,
   type WireTask,
   type WireTaskListItem,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 import {
   bindings,
   decodeDataKey,
@@ -18,7 +18,7 @@ import {
   seal,
   type Binding,
   type Keys,
-} from '@agent-board/sealing';
+} from '@rumo/sealing';
 
 import { startBoard, OWNER, MACHINE, TEST_TOKEN, type FakeBoardOptions } from './board.js';
 import type { Answer, SeenRequest } from './server.js';
@@ -823,7 +823,7 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
     'set-agents': (body) => {
       const expected = body.expectedVersion as number;
       if ((boardAgents?.version ?? 0) !== expected) {
-        throw new Refusal(409, 'version-conflict', 'the board agents changed');
+        throw new Refusal(409, 'version-conflict', 'the rumo agents changed');
       }
       boardAgents = { version: body.version as number, document: body.document as string };
       published.agents.push(boardAgents);

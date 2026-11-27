@@ -5,7 +5,7 @@ import {
   exportClientAccountRoute,
   getClientKeysRoute,
   type AccountTable,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 
 import type { Page } from '../../pages/index.js';
 
@@ -16,7 +16,7 @@ const DOCUMENT_KINDS: Partial<Record<AccountTable, 'agents' | 'links' | 'titles'
   setting: 'settings',
 };
 
-export const EXPORT_FILE = 'agent-board-export.ndjson';
+export const EXPORT_FILE = 'rumo-export.ndjson';
 export const EXPORT_MEDIA_TYPE = 'application/x-ndjson';
 
 const recordOf = (owner: string, table: AccountTable, row: Record<string, unknown>) => {

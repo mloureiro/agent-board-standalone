@@ -1,4 +1,4 @@
-import type { keySlots } from '@agent-board/contract';
+import type { keySlots } from '@rumo/contract';
 import { sql } from 'drizzle-orm';
 import { check, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 

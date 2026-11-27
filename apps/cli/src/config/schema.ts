@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { PRIORITIES, directoryId, laneName, projectId } from '@agent-board/contract';
+import { PRIORITIES, directoryId, laneName, projectId } from '@rumo/contract';
 
 import { agentsProblem } from '../agents/definition.js';
 import { isRecord, isStringList, nearest } from '../domain/values.js';

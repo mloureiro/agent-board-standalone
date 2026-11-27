@@ -6,8 +6,8 @@ use crate::credentials::{
     WORKER_DATA_KEY, WORKER_TOKEN, open_store,
 };
 
-pub const TOKEN_VARIABLE: &str = "AGENT_BOARD_TOKEN";
-pub const DATA_KEY_VARIABLE: &str = "AGENT_BOARD_DATA_KEY";
+pub const TOKEN_VARIABLE: &str = "RUMO_TOKEN";
+pub const DATA_KEY_VARIABLE: &str = "RUMO_DATA_KEY";
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct Pair {

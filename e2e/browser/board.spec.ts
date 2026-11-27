@@ -1,4 +1,4 @@
-import { MIN_CLIENT } from '@agent-board/contract';
+import { MIN_CLIENT } from '@rumo/contract';
 import { expect, test } from '@playwright/test';
 
 import { enrolledMachine } from '../src/fixtures/machines.js';

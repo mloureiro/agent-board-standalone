@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 import { describe, expect, it } from 'vitest';
 
 import type { RouteOutput } from '../src/client/contract-client.js';
@@ -26,7 +26,7 @@ async function openTitle(key: UnlockedKey, task: WireTask): Promise<string> {
   return key.open(bindings.title({ task: task.id }), task.title);
 }
 
-describe('[cli-036] board schedule', () => {
+describe('[cli-036] rumo schedule', () => {
   const harness = useBoard({
     parts: ['api', 'cli'],
     features: ['schedules', 'projects', 'directories'],

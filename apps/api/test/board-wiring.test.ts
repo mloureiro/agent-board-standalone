@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { routes } from '@agent-board/contract';
+import { routes } from '@rumo/contract';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { SESSION_TOKEN } from './helpers.js';

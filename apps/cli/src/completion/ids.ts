@@ -1,4 +1,4 @@
-import { listSchedulesRoute, listTasksRoute } from '@agent-board/contract';
+import { listSchedulesRoute, listTasksRoute } from '@rumo/contract';
 
 import type { Context } from '../commands/context.js';
 import { openSession, withoutInputs } from '../transport/session.js';

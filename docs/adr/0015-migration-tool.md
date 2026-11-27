@@ -13,7 +13,7 @@ the API's code, and it holds no data key.
 ## Decision
 
 - Pipeline: reader (one per detected source version) → `BoardExport` file (format in the contract) →
-  `agent-board-api import`.
+  `rumo-api import`.
 - Postgres sources are read through the admin URL in a read-only transaction. PGlite folders are opened with the
   PGlite build matching their `PG_VERSION`, installed under npm aliases; an unknown version is refused with its
   name.
@@ -36,7 +36,7 @@ the API's code, and it holds no data key.
 - Test fixtures are synthetic: a script runs a reference board in a throwaway environment with a made-up user and
   passphrase; its database and sealing vectors are committed. Real data never enters the repository or CI. The
   rehearsal on a copy of real data is a manual step on the owner's machine, written in `docs/manual/migrate.md`.
-- Old `board` binaries are out of scope: a worker host installs the new CLI and runs `board init` with its existing
+- Old `board` binaries are out of scope: a worker host installs the new CLI and runs `rumo init` with its existing
   token and data key, which stay valid.
 
 ## Consequences

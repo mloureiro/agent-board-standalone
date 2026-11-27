@@ -8,9 +8,9 @@ import { SourceError } from './source/reader.js';
 import { formatInspectReport, inspectSource } from './source/inspect.js';
 
 const USAGE = `Usage:
-  agent-board-migrate inspect --source <postgres-url | pglite-dir>
-  agent-board-migrate export --source <postgres-url | pglite-dir> --out <file> [--dry-run]
-  agent-board-migrate run --source <postgres-url | pglite-dir> --api <agent-board-api path>
+  rumo-migrate inspect --source <postgres-url | pglite-dir>
+  rumo-migrate export --source <postgres-url | pglite-dir> --out <file> [--dry-run]
+  rumo-migrate run --source <postgres-url | pglite-dir> --api <rumo-api path>
                           --target-db <postgres-url | pglite://dir> [--out <file>] [--keep-export] [--dry-run]
 `;
 

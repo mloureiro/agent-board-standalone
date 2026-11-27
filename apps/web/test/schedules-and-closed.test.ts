@@ -2,8 +2,8 @@ import {
   removeClientScheduleRoute,
   setPausedClientScheduleRoute,
   updateClientScheduleRoute,
-} from '@agent-board/contract';
-import { bindings, open } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, open } from '@rumo/sealing';
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

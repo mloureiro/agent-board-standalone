@@ -1,6 +1,6 @@
 use std::ffi::OsString;
 
-pub const USAGE: &str = "usage: agent-board-server [--headless | --uninstall [--delete-data] | setup status | setup remote (--public-url https://<host> | --off) | setup first-passkey [--done]]";
+pub const USAGE: &str = "usage: rumo-server [--headless | --uninstall [--delete-data] | setup status | setup remote (--public-url https://<host> | --off) | setup first-passkey [--done]]";
 pub const USAGE_EXIT_CODE: i32 = 2;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

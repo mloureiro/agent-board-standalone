@@ -1,6 +1,6 @@
-use agent_board_client_core::ids::ServerId;
-use agent_board_client_core::tab_file;
-use agent_board_client_core::tabs::{Effect, LayoutView, Tabs};
+use rumo_client_core::ids::ServerId;
+use rumo_client_core::tab_file;
+use rumo_client_core::tabs::{Effect, LayoutView, Tabs};
 use std::collections::HashMap;
 use std::sync::mpsc::{Sender, channel};
 use std::sync::{Mutex, MutexGuard};

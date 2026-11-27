@@ -1,4 +1,4 @@
-import { sessionCookieName } from '@agent-board/contract';
+import { sessionCookieName } from '@rumo/contract';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import {

@@ -1,12 +1,12 @@
 {
-  "name": "@agent-board/migrate",
+  "name": "@rumo/migrate",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
-    "migrate": "node bin/agent-board-migrate.js",
+    "migrate": "node bin/rumo-migrate.js",
     "build": "tsx scripts/build.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
@@ -14,8 +14,8 @@
     "release": "tsx scripts/release.ts"
   },
   "dependencies": {
-    "@agent-board/contract": "workspace:^1.0.0",
-    "@agent-board/sealing": "workspace:^1.0.0",
+    "@rumo/contract": "workspace:^1.0.0",
+    "@rumo/sealing": "workspace:^1.0.0",
     "pg": "^8.23.1",
     "pglite-0-5-16": "npm:@electric-sql/pglite@0.5.16",
     "pglite-0-5-17": "npm:@electric-sql/pglite@0.5.17",
@@ -28,6 +28,6 @@
     "pglite-target": "npm:@electric-sql/pglite@0.6.0"
   },
   "bin": {
-    "agent-board-migrate": "./bin/agent-board-migrate.js"
+    "rumo-migrate": "./bin/rumo-migrate.js"
   }
 }

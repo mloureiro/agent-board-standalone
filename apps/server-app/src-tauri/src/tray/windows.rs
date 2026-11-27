@@ -1,8 +1,8 @@
 use std::sync::{Arc, Mutex};
 
-use agent_board_server_core::actions::Action;
-use agent_board_server_core::console::Console;
-use agent_board_server_core::enrol::FormView;
+use rumo_server_core::actions::Action;
+use rumo_server_core::console::Console;
+use rumo_server_core::enrol::FormView;
 use serde_json::{Value, json};
 use tauri::{
     AppHandle, Manager, State, WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent,

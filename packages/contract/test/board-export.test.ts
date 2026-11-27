@@ -20,7 +20,7 @@ const keyId = '0123456789abcdef';
 const owner = 'owner';
 
 const header = {
-  format: 'agent-board-export',
+  format: 'rumo-export',
   version: 1,
   createdAt: '2026-11-13T10:00:00.000Z',
   source: { kind: 'migrate', version: '1.0.0', from: '0.9.0' },

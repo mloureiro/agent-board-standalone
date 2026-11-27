@@ -1,4 +1,4 @@
-package com.mloureiro.agentboard.boardnative
+package com.mloureiro.rumo.boardnative
 
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
@@ -90,7 +90,7 @@ class Keystore(context: Context) {
 
     private companion object {
         const val ANDROID_KEYSTORE = "AndroidKeyStore"
-        const val PREFS = "agent-board-credentials"
+        const val PREFS = "rumo-credentials"
         const val WRAP_ALIAS = "ab-token-wrap"
         const val AES_MODE = "AES/GCM/NoPadding"
         const val IV_BYTES = 12

@@ -30,11 +30,9 @@ export interface DispatchOptions {
 }
 
 export function requireWorkerPlatform(ctx: Context, command: string): void {
-  if (ctx.inRun) throw new CliError(`\`board internal ${command}\` cannot run inside a board run`);
+  if (ctx.inRun) throw new CliError(`\`rumo internal ${command}\` cannot run inside a board run`);
   if (!isUnitPlatform(ctx.rt.platform)) {
-    throw new CliError(
-      `board internal ${command} needs Linux or macOS; this is ${ctx.rt.platform}`,
-    );
+    throw new CliError(`rumo internal ${command} needs Linux or macOS; this is ${ctx.rt.platform}`);
   }
 }
 

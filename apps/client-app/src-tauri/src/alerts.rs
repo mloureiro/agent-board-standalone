@@ -8,16 +8,16 @@ use crate::windows::{
     focus_server_window, focused_server, open_server_windows, server_window_label, tab_of_label,
     tabbar_label,
 };
-use agent_board_client_core::ids::ServerId;
-use agent_board_client_core::log::line;
-use agent_board_client_core::notify::{
+use rumo_client_core::ids::ServerId;
+use rumo_client_core::log::line;
+use rumo_client_core::notify::{
     Click, Decision, FocusState, NotifyPolicy, NotifyRequest, Reason, Target, expiry_banner,
     route_click,
 };
-use agent_board_client_core::ports::Clock;
-use agent_board_client_core::tabs::HOME;
-use agent_board_client_core::watch::Watch;
-use agent_board_client_core::zoom::{Effect, Step, Zoom};
+use rumo_client_core::ports::Clock;
+use rumo_client_core::tabs::HOME;
+use rumo_client_core::watch::Watch;
+use rumo_client_core::zoom::{Effect, Step, Zoom};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, EventTarget, Manager, Webview};

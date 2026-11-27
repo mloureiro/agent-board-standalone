@@ -1,4 +1,4 @@
-const TITLE_SUFFIX = ' · Agent Board';
+const TITLE_SUFFIX = ' · Rumo';
 const HOME_LABEL = /-0$/;
 const WATCHED_MUTATIONS = { childList: true, characterData: true, subtree: true } as const;
 

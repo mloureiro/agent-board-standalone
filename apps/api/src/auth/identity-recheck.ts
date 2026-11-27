@@ -1,4 +1,4 @@
-import { tokenHash } from '@agent-board/sealing';
+import { tokenHash } from '@rumo/sealing';
 
 import type { Clock } from '../clock.js';
 import type { Json } from '../db/system.js';

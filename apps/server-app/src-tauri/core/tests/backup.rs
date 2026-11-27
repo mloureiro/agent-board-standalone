@@ -5,10 +5,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use agent_board_server_core::backup::{
+use rumo_server_core::backup::{
     ApiHold, Backups, KEEP_MANUAL, Kind, check_backup_dir, copy_tree, parse_entry, stamp_to_iso,
 };
-use agent_board_server_core::log_file::{AppLog, LogFile};
+use rumo_server_core::log_file::{AppLog, LogFile};
 use tempfile::TempDir;
 
 struct Bed {

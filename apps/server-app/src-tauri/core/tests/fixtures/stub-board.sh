@@ -2,7 +2,7 @@
 SELF=$(readlink "$0" 2>/dev/null || echo "$0")
 HERE=$(dirname "$SELF")
 CONF="$HERE/board.conf"
-WORKER=$(dirname "${AGENT_BOARD_STATE_DIR:-/nonexistent/state}")
+WORKER=$(dirname "${RUMO_STATE_DIR:-/nonexistent/state}")
 LOG="$WORKER/stub.log"
 ACCEPT_TOKEN=abm_good
 ACCEPT_KEY=abk1_good
@@ -55,7 +55,7 @@ case "$command" in
       dispatch)
         note "dispatch"
         if [ "$TICK_EXIT" != 75 ]; then
-          printf '{"at":"2026-01-01T00:00:00.000Z","status":"%s","message":"%s"}\n' "$TICK_STATUS" "$TICK_MESSAGE" > "$AGENT_BOARD_STATE_DIR/dispatch-result.json"
+          printf '{"at":"2026-01-01T00:00:00.000Z","status":"%s","message":"%s"}\n' "$TICK_STATUS" "$TICK_MESSAGE" > "$RUMO_STATE_DIR/dispatch-result.json"
         fi
         exit "$TICK_EXIT"
         ;;
@@ -73,16 +73,16 @@ case "$command" in
         *) shift ;;
       esac
     done
-    creds=$("$AGENT_BOARD_CREDENTIALS_COMMAND") || { echo "the credentials command failed" >&2; exit 1; }
-    token=$(printf '%s\n' "$creds" | sed -n 's/^AGENT_BOARD_TOKEN=//p')
-    key=$(printf '%s\n' "$creds" | sed -n 's/^AGENT_BOARD_DATA_KEY=//p')
+    creds=$("$RUMO_CREDENTIALS_COMMAND") || { echo "the credentials command failed" >&2; exit 1; }
+    token=$(printf '%s\n' "$creds" | sed -n 's/^RUMO_TOKEN=//p')
+    key=$(printf '%s\n' "$creds" | sed -n 's/^RUMO_DATA_KEY=//p')
     if [ "$token" != "$ACCEPT_TOKEN" ]; then echo "the board answered 401: the token is not valid" >&2; exit 1; fi
     if [ "$key" != "$ACCEPT_KEY" ]; then echo "the data key is not the board's" >&2; exit 1; fi
-    mkdir -p "$AGENT_BOARD_CONFIG_DIR"
-    printf '{\n  "url": "%s"\n}\n' "$url" > "$AGENT_BOARD_CONFIG_DIR/server.json"
-    [ -f "$AGENT_BOARD_CONFIG_DIR/config.yaml" ] || echo "machine: $MACHINE" > "$AGENT_BOARD_CONFIG_DIR/config.yaml"
+    mkdir -p "$RUMO_CONFIG_DIR"
+    printf '{\n  "url": "%s"\n}\n' "$url" > "$RUMO_CONFIG_DIR/server.json"
+    [ -f "$RUMO_CONFIG_DIR/config.yaml" ] || echo "machine: $MACHINE" > "$RUMO_CONFIG_DIR/config.yaml"
     note "init $url"
-    echo "board: profile \"server-app\" is set up for $url as machine $MACHINE"
+    echo "rumo: profile \"server-app\" is set up for $url as machine $MACHINE"
     if [ "$INIT_CHECKS_FAIL" = 1 ]; then
       echo "FAIL worker: refused: the token was revoked"
       echo "20 checks: 19 ok, 0 warnings, 1 failures"
@@ -96,6 +96,6 @@ case "$command" in
     exit 1
     ;;
   echo-env)
-    echo "profile=$AGENT_BOARD_PROFILE config=$AGENT_BOARD_CONFIG_DIR path=$PATH"
+    echo "profile=$RUMO_PROFILE config=$RUMO_CONFIG_DIR path=$PATH"
     ;;
 esac

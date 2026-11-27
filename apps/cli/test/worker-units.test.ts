@@ -3,14 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
-import {
-  bindings,
-  deriveKeys,
-  generateDataKey,
-  isEnvelope,
-  open,
-  type Keys,
-} from '@agent-board/sealing';
+import { bindings, deriveKeys, generateDataKey, isEnvelope, open, type Keys } from '@rumo/sealing';
 import { describe, expect, it } from 'vitest';
 
 import { buildContext } from '../src/commands/context.js';
@@ -285,7 +278,7 @@ describe('the invocation of claude', () => {
     run,
     model: null,
     effort: null,
-    hookCommand: "'board' 'internal' 'hook'",
+    hookCommand: "'rumo' 'internal' 'hook'",
     home: '/srv/runner',
   } as const;
 
@@ -662,13 +655,13 @@ describe('the PreToolUse hook', () => {
   });
 
   it('[cli-080] ignores a call that names another task or run directory inside a run, and never fails', async () => {
-    const { ctx, cli } = await hookContext({ AGENT_BOARD_TASK: 'taskBBBB' });
+    const { ctx, cli } = await hookContext({ RUMO_TASK: 'taskBBBB' });
     mkdirSync(ctx.dirs.run, { recursive: true });
     await runHook(ctx, [ctx.dirs.run, TASK]);
     expect(createRunRecords(ctx.dirs.run).lastActive(TASK)).toBeNull();
     await runHook(ctx, []);
     await runHook(ctx, ['relative', TASK]);
-    expect(cli.stderr()).toContain('board internal hook');
+    expect(cli.stderr()).toContain('rumo internal hook');
   });
 
   it('[cli-080] is a command that exits 0 even when its arguments are wrong', async () => {

@@ -1,6 +1,6 @@
 import { cpSync, mkdirSync } from 'node:fs';
 
-import { isEnvelope } from '@agent-board/sealing';
+import { isEnvelope } from '@rumo/sealing';
 import { expect, test, type Page } from '@playwright/test';
 
 import { inspectDatabase, scanBytes } from '../src/fixtures/db-inspect.js';

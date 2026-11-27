@@ -11,15 +11,15 @@ Read the whole walk before starting. No step changes the old board, and every st
 stop and start over. Placeholders in angle brackets stand for values on your machine. Never paste real paths, host names,
 tokens or owner names into an issue, a commit or a pull request, and never commit anything the tool writes.
 
-| Placeholder  | Meaning                                                                                                                     |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| `<old-data>` | the old board's PGlite data folder                                                                                          |
-| `<copy>`     | a backup copy of `<old-data>` that you made in step 3                                                                       |
-| `<new-data>` | the server app's PGlite data folder (the one its settings show)                                                             |
-| `<scratch>`  | a copy of `<new-data>` that you make in step 6                                                                              |
-| `<api-exe>`  | the API executable that ships inside the server app                                                                         |
-| `<owner>`    | the owner name that `inspect` and `export --dry-run` report                                                                 |
-| `<migrate>`  | `agent-board-migrate`, or `node apps/migrate/dist/main.js` from a checkout after `pnpm --filter @agent-board/migrate build` |
+| Placeholder  | Meaning                                                                                                       |
+| ------------ | ------------------------------------------------------------------------------------------------------------- |
+| `<old-data>` | the old board's PGlite data folder                                                                            |
+| `<copy>`     | a backup copy of `<old-data>` that you made in step 3                                                         |
+| `<new-data>` | the server app's PGlite data folder (the one its settings show)                                               |
+| `<scratch>`  | a copy of `<new-data>` that you make in step 6                                                                |
+| `<api-exe>`  | the API executable that ships inside the server app                                                           |
+| `<owner>`    | the owner name that `inspect` and `export --dry-run` report                                                   |
+| `<migrate>`  | `rumo-migrate`, or `node apps/migrate/dist/main.js` from a checkout after `pnpm --filter @rumo/migrate build` |
 
 ## Before you start
 
@@ -43,7 +43,7 @@ Expected: the old board shows no running task.
 Quit the new server app from its tray menu. A PGlite folder has one process at a time, so the tool refuses a folder
 that holds a `postmaster.pid`. If the old board is also a local PGlite folder, quit the old local server too.
 
-Expected: no API process is left (`pgrep -fl agent-board-api` prints nothing).
+Expected: no API process is left (`pgrep -fl rumo-api` prints nothing).
 
 ## 3. Back up the old data folder
 
@@ -167,7 +167,7 @@ one.
 On each worker host install the new CLI and run, with the machine's existing token and data key:
 
 ```bash
-board init --url <server-url> --token-file <token-file> --data-key-file <data-key-file> --machine <machine-name>
+rumo init --url <server-url> --token-file <token-file> --data-key-file <data-key-file> --machine <machine-name>
 ```
 
 Each file holds one value and has mode 600 or 400. Delete the files afterwards. `--machine` checks that the machine
@@ -176,7 +176,7 @@ copied its hash. At first contact the CLI converts the machine's legacy director
 default project and sets `directory_id` on the tasks that match. It reports the ones that match none.
 
 Expected: the machine shows as connected in Settings, its directories appear on the matching tasks, and the unmatched
-ones are listed by the CLI. Then start the worker (`board setup` installs the listener and watcher units) and let it
+ones are listed by the CLI. Then start the worker (`rumo setup` installs the listener and watcher units) and let it
 claim one new task.
 
 ## 14. Check once more
@@ -260,8 +260,8 @@ env -i HOME="$HOME" PATH="$PATH" NODE_ENV=production HOST=127.0.0.1 PORT=<backen
 
 ### B. Migrate and verify
 
-1. Build from the release commit: `pnpm --filter @agent-board/migrate build`, `pnpm --filter @agent-board/api
-build:executable`, `pnpm --filter @agent-board/web build`, `pnpm --filter @agent-board/cli build:binary`.
+1. Build from the release commit: `pnpm --filter @rumo/migrate build`, `pnpm --filter @rumo/api
+build:executable`, `pnpm --filter @rumo/web build`, `pnpm --filter @rumo/cli build:binary`.
 2. Follow steps 4 to 9 above: `inspect`, `export --dry-run`, then `run` into an empty scratch target, then into the
    real target, each with `NO_LOGIN_USER=<owner>`. Both end with `count check passed`.
 3. Start the new API on its own folder and port. Outside the server app it needs `AUTH_MODE=no-login`,
@@ -270,7 +270,7 @@ build:executable`, `pnpm --filter @agent-board/web build`, `pnpm --filter @agent
 4. In a browser open `http://127.0.0.1:<port>/`, unlock with the old passphrase and compare: tasks per lane, a task
    with notes, a Done task with its transcript (the Transcript button), the task with the pull-request link, the
    schedule page (it can take a few seconds) and the schedule's occurrence task. No card may show "could not be read".
-5. Enrol the new CLI with the old token and data key and the same `AGENT_BOARD_CONFIG_DIR` / `AGENT_BOARD_STATE_DIR`
+5. Enrol the new CLI with the old token and data key and the same `RUMO_CONFIG_DIR` / `RUMO_STATE_DIR`
    treatment: `<new>/nb init --url http://127.0.0.1:<port> --token-file ... --data-key-file ... --machine <machine>`.
    It prints `legacy directories: N matched, 0 unmatched` (N is the tasks plus schedules that had a directory).
 6. In a listed directory run `<new>/nb schedule --new --model haiku --effort low --auto-done "<short prompt>"`, then
@@ -286,17 +286,17 @@ build:executable`, `pnpm --filter @agent-board/web build`, `pnpm --filter @agent
 ### Clean up
 
 Stop the old backend, the static server, both APIs and any worker you started (`pgrep -fl board-server`, `pgrep -fl
-agent-board-api`), then delete the scratch folders and the files that held the token and data key. Look for
+rumo-api`), then delete the scratch folders and the files that held the token and data key. Look for
 `~/.config/agent-board` created by an old `board init` that ran without `AGENT_BOARD_CONFIG_DIR` and remove it if it
 holds only the rehearsal's files.
 
 ## Leftover temporary directories
 
 A run that is killed (Ctrl-C twice, a power cut, a kill signal) can leave its temporary PGlite copy of the source and
-its scratch export behind. Both are in the system temporary directory and start with `agent-board-migrate-`:
+its scratch export behind. Both are in the system temporary directory and start with `rumo-migrate-`:
 
 ```bash
-ls "${TMPDIR:-/tmp}" | grep agent-board-migrate-
+ls "${TMPDIR:-/tmp}" | grep rumo-migrate-
 ```
 
 Delete each one with `rm -r` after checking that no migration is running. The export holds token hashes, so do not
@@ -315,5 +315,5 @@ leave it there.
 ## When the walk is over
 
 Delete `<scratch>`, `<scratch-file>`, `<scratch-file>.plan.json`, `<new-data-backup>` and any leftover
-`agent-board-migrate-*` directory once the new board has run for a while and you no longer need to go back. Keep
+`rumo-migrate-*` directory once the new board has run for a while and you no longer need to go back. Keep
 `<old-data>` until then. Nothing the walk produces belongs in the repository.

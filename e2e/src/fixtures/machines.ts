@@ -1,7 +1,7 @@
 import { chmodSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import type { RouteName } from '@agent-board/contract';
+import type { RouteName } from '@rumo/contract';
 
 import {
   call,
@@ -165,7 +165,7 @@ export async function enrolledMachine(
       ...(options.initArgs ?? []),
     ]);
     if (result.code !== 0) {
-      throw new Error(`board init exited ${result.code}\n${result.stdout}${result.stderr}`);
+      throw new Error(`rumo init exited ${result.code}\n${result.stdout}${result.stderr}`);
     }
   }
   if (options.actsAsOwner === true) await machine.setGrant(user, true);

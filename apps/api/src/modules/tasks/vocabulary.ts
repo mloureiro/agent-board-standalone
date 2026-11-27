@@ -8,7 +8,7 @@ import {
   TASK_CREATORS,
   TASK_STATUSES,
   WIRE_NOTE_AUTHORS,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 
 import { ApiError } from '../../errors.js';
 

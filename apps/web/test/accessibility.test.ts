@@ -1,5 +1,5 @@
 import axe from 'axe-core';
-import { PAGE_HEADERS } from '@agent-board/contract';
+import { PAGE_HEADERS } from '@rumo/contract';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { screen, within } from '@testing-library/react';

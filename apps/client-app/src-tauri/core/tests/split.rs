@@ -1,9 +1,7 @@
-use agent_board_client_core::layout::{self, Bounds};
-use agent_board_client_core::shortcuts::Action;
-use agent_board_client_core::tab_file;
-use agent_board_client_core::tabs::{
-    Effect, HOME, MAX_PANES, MAX_TABS, MIN_PANE_FRACTION, TabId, Tabs,
-};
+use rumo_client_core::layout::{self, Bounds};
+use rumo_client_core::shortcuts::Action;
+use rumo_client_core::tab_file;
+use rumo_client_core::tabs::{Effect, HOME, MAX_PANES, MAX_TABS, MIN_PANE_FRACTION, TabId, Tabs};
 use serde_json::{Value, json};
 
 fn opened(paths: &[&str]) -> Tabs {

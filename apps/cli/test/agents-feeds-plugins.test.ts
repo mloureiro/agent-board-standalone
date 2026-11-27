@@ -9,7 +9,7 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 import { parse, stringify } from 'yaml';
 import { describe, expect, it } from 'vitest';
 
@@ -44,9 +44,9 @@ function git(cwd: string, ...args: string[]): string {
 function pluginRepo(items: string, name = 'acme'): string {
   const repo = tmpDir();
   git(repo, 'init', '--quiet', '-b', 'main');
-  mkdirSync(path.join(repo, '.agent-board'));
+  mkdirSync(path.join(repo, '.rumo'));
   writeFileSync(
-    path.join(repo, '.agent-board', 'marketplace.json'),
+    path.join(repo, '.rumo', 'marketplace.json'),
     JSON.stringify({
       protocol: 1,
       name,
@@ -75,7 +75,7 @@ function agentFile(definition: Record<string, unknown>, name = 'agent.yaml'): st
   return tmpFile(JSON.stringify(definition), name);
 }
 
-describe('board agents', () => {
+describe('rumo agents', () => {
   it('[cli-041] adds an agent from a file, naming it from the file, and lists, shows and exports it', async () => {
     const { cli } = await rig();
     const file = agentFile(REVIEWER, 'reviewer.json');
@@ -228,10 +228,10 @@ describe('board agents', () => {
     expect(await nobody.cli.run('agents', 'add', '-')).toBe(2);
     expect(nobody.cli.stderr()).toContain('--yes');
 
-    const restricted = await rig({ env: { AGENT_BOARD_RESTRICTED: '1' } });
+    const restricted = await rig({ env: { RUMO_RESTRICTED: '1' } });
     expect(await restricted.cli.run('agents', 'add', '--yes', agentFile(REVIEWER))).toBe(2);
     expect(await restricted.cli.run('agents')).toBe(0);
-    const inRun = await rig({ env: { AGENT_BOARD_TASK: 'taskAAAA' } });
+    const inRun = await rig({ env: { RUMO_TASK: 'taskAAAA' } });
     expect(await inRun.cli.run('agents', 'rm', 'x')).toBe(2);
   });
 
@@ -323,7 +323,7 @@ describe('board agents', () => {
   });
 });
 
-describe('board plugins', () => {
+describe('rumo plugins', () => {
   const real = { exec: execFileText };
 
   it('[cli-045] installs a marketplace from git, pinned to the commit, and lists its feeds', async () => {
@@ -357,13 +357,13 @@ describe('board plugins', () => {
     git(repo, 'add', '-A');
     git(repo, 'commit', '--quiet', '-m', 'not executable');
     const manifest = JSON.parse(
-      readFileSync(path.join(repo, '.agent-board', 'marketplace.json'), 'utf8'),
+      readFileSync(path.join(repo, '.rumo', 'marketplace.json'), 'utf8'),
     ) as {
       feeds: Record<string, unknown>;
     };
     manifest.feeds.extra = { program: 'bin/extra' };
     writeFileSync(
-      path.join(repo, '.agent-board', 'marketplace.json'),
+      path.join(repo, '.rumo', 'marketplace.json'),
       JSON.stringify({ protocol: 1, name: 'acme', feeds: manifest.feeds }),
     );
     git(repo, 'commit', '--quiet', '-am', 'declare it');
@@ -435,7 +435,7 @@ describe('board plugins', () => {
   });
 });
 
-describe('board feeds', () => {
+describe('rumo feeds', () => {
   const real = { exec: execFileText };
 
   async function started(items: string) {
@@ -596,7 +596,7 @@ describe('board feeds', () => {
   });
 
   it('[cli-043] changes are refused inside a run and list stays available', async () => {
-    const { cli } = await rig({ env: { AGENT_BOARD_TASK: 'taskAAAA' } });
+    const { cli } = await rig({ env: { RUMO_TASK: 'taskAAAA' } });
     expect(await cli.run('feeds', 'run', 'prs')).toBe(2);
     expect(await cli.run('feeds')).toBe(0);
     expect(await cli.run('plugins', 'install', '/tmp')).toBe(2);

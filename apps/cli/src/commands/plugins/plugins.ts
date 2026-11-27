@@ -30,7 +30,7 @@ function known(registry: Registry, name: string): void {
 async function runList(ctx: Context): Promise<void> {
   const registry = readRegistry(ctx.dirs);
   const names = Object.keys(registry);
-  if (names.length === 0) ctx.out('no plugins; install one with "board plugins install <git url>"');
+  if (names.length === 0) ctx.out('no plugins; install one with "rumo plugins install <git url>"');
   for (const name of names) {
     const installed = registry[name];
     if (installed === undefined) continue;
@@ -52,7 +52,7 @@ async function runList(ctx: Context): Promise<void> {
 }
 
 async function runInstall(ctx: Context, url: string | undefined): Promise<void> {
-  if (url === undefined) throw new UsageError('usage: board plugins install <url>');
+  if (url === undefined) throw new UsageError('usage: rumo plugins install <url>');
   const problem = isInstallUrl(url);
   if (problem !== null) throw new UsageError(problem);
   if (url.startsWith('/') && !existsSync(url))
@@ -89,7 +89,7 @@ async function runInstall(ctx: Context, url: string | undefined): Promise<void> 
     const registry = readRegistry(ctx.dirs);
     if (marketplace.name in registry) {
       throw new UsageError(
-        `marketplace ${marketplace.name} is already installed; use "board plugins update ${marketplace.name}"`,
+        `marketplace ${marketplace.name} is already installed; use "rumo plugins update ${marketplace.name}"`,
       );
     }
     mkdirSync(path.dirname(checkoutDir(ctx.dirs, marketplace.name)), {
@@ -110,7 +110,7 @@ async function runInstall(ctx: Context, url: string | undefined): Promise<void> 
 }
 
 async function runUpdate(ctx: Context, name: string | undefined): Promise<void> {
-  if (name === undefined) throw new UsageError('usage: board plugins update <name>');
+  if (name === undefined) throw new UsageError('usage: rumo plugins update <name>');
   const registry = readRegistry(ctx.dirs);
   known(registry, name);
   const installed = registry[name];
@@ -162,13 +162,13 @@ function usedBy(ctx: Context, name: string): string[] {
 
 function runRemove(ctx: Context, name: string | undefined): void {
   if (name === undefined || !NAME.test(name))
-    throw new UsageError('usage: board plugins remove <name>');
+    throw new UsageError('usage: rumo plugins remove <name>');
   const registry = readRegistry(ctx.dirs);
   known(registry, name);
   const feeds = usedBy(ctx, name);
   if (feeds.length > 0) {
     throw new UsageError(
-      `feed(s) ${feeds.join(', ')} use ${name}; remove them first with "board feeds rm"`,
+      `feed(s) ${feeds.join(', ')} use ${name}; remove them first with "rumo feeds rm"`,
     );
   }
   if (ctx.dryRun) {
@@ -187,8 +187,8 @@ export async function runPlugins(ctx: Context, action: readonly string[]): Promi
     await runList(ctx);
     return;
   }
-  refuseInRun(ctx, `board plugins ${verb}`);
-  if (rest.length > 1) throw new UsageError(`board plugins ${verb} takes one argument`);
+  refuseInRun(ctx, `rumo plugins ${verb}`);
+  if (rest.length > 1) throw new UsageError(`rumo plugins ${verb} takes one argument`);
   if (verb === 'install') return runInstall(ctx, rest[0]);
   if (verb === 'update') return runUpdate(ctx, rest[0]);
   if (verb === 'remove') return runRemove(ctx, rest[0]);

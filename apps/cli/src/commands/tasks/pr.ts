@@ -1,5 +1,5 @@
-import { addPrRoute, removePrRoute } from '@agent-board/contract';
-import { bindings, seal } from '@agent-board/sealing';
+import { addPrRoute, removePrRoute } from '@rumo/contract';
+import { bindings, seal } from '@rumo/sealing';
 
 import { UsageError } from '../../errors.js';
 import { checkedPrUrl, prUrlIn } from '../../domain/rules.js';

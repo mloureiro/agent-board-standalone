@@ -1,12 +1,6 @@
-import {
-  CONTRACT,
-  FEATURES,
-  MIN_CLIENT,
-  type Feature,
-  type VersionDocument,
-} from '@agent-board/contract';
+import { CONTRACT, FEATURES, MIN_CLIENT, type Feature, type VersionDocument } from '@rumo/contract';
 
-import type { SessionState } from '@agent-board/contract';
+import type { SessionState } from '@rumo/contract';
 import type { ApiConfig } from '../modules/registry.js';
 import { signInMethods } from '../modules/sign-in/index.js';
 

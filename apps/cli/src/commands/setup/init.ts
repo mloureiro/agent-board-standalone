@@ -86,7 +86,7 @@ function stamp(nowMs: number): string {
 
 function machineLabel(hostname: string): string {
   const cleaned = hostname.replace(/[^A-Za-z0-9_.-]/g, '-').slice(0, LABEL_MAX);
-  return cleaned === '' ? 'board-cli' : cleaned;
+  return cleaned === '' ? 'rumo-cli' : cleaned;
 }
 
 async function bindSigningKey(
@@ -196,7 +196,7 @@ async function secretsFor(
 }
 
 export async function runInit(ctx: Context, options: InitOptions): Promise<void> {
-  if (ctx.inRun) throw new CliError('`board init` cannot run inside a board run');
+  if (ctx.inRun) throw new CliError('`rumo init` cannot run inside a board run');
   const url = normalizeServerUrl(
     await answerFor(ctx, options.url, '--url', (prompts) =>
       prompts.text('Board URL', 'https://board.example.com'),
@@ -254,7 +254,7 @@ export async function runInit(ctx: Context, options: InitOptions): Promise<void>
     );
   }
   ctx.out(
-    `board: profile "${dirs.profile}" is set up for ${url} as machine ${info.machine}${
+    `rumo: profile "${dirs.profile}" is set up for ${url} as machine ${info.machine}${
       signer === null ? '' : ` (requests are signed; key in ${SIGNING_KEY_FILE})`
     }`,
   );

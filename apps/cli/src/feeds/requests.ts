@@ -1,4 +1,4 @@
-import { ackFeedRequestsRoute } from '@agent-board/contract';
+import { ackFeedRequestsRoute } from '@rumo/contract';
 
 import { feedsOf, publishFeeds } from '../commands/feeds/run.js';
 import type { Context } from '../commands/context.js';

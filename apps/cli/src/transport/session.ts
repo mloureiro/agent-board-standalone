@@ -1,5 +1,5 @@
-import { decodeDataKey, deriveKeys, type Keys } from '@agent-board/sealing';
-import type { AnyRoute, Feature, RouteRequest, RouteResponse } from '@agent-board/contract';
+import { decodeDataKey, deriveKeys, type Keys } from '@rumo/sealing';
+import type { AnyRoute, Feature, RouteRequest, RouteResponse } from '@rumo/contract';
 
 import type { Runtime } from '../runtime.js';
 import { loadCredentials } from '../profile/credentials.js';
@@ -68,7 +68,7 @@ export async function openSession(options: SessionOptions): Promise<Session> {
   const { rt, dirs, dryRun } = options;
   const server = readServerFile(dirs.config);
   if (server === null) {
-    throw new CliError(`profile "${dirs.profile}" has no server: run \`board init\` first`);
+    throw new CliError(`profile "${dirs.profile}" has no server: run \`rumo init\` first`);
   }
   const credentials = await loadCredentials(rt, dirs);
   const signer = await loadSigner(dirs.config);

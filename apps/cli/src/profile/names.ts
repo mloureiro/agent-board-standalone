@@ -1,7 +1,7 @@
 import { UsageError } from '../errors.js';
 
 export const DEFAULT_PROFILE = 'default';
-export const PROFILE_ENV = 'AGENT_BOARD_PROFILE';
+export const PROFILE_ENV = 'RUMO_PROFILE';
 
 const PROFILE_NAME = /^[a-z0-9][a-z0-9-]{0,31}$/;
 

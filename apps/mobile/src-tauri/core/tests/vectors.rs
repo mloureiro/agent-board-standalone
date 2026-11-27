@@ -1,15 +1,15 @@
-use agent_board_bridge_core::address::check_address;
-use agent_board_bridge_core::sign::{canonical_string, content_digest, key_id_of};
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use p256::ecdsa::{Signature, VerifyingKey, signature::Verifier};
 use p256::pkcs8::DecodePublicKey;
+use rumo_bridge_core::address::check_address;
+use rumo_bridge_core::sign::{canonical_string, content_digest, key_id_of};
 use serde_json::Value;
 use std::path::PathBuf;
 
 fn repo_file(relative: &str) -> Value {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../..");
     let text = std::fs::read_to_string(root.join(relative)).unwrap_or_else(|_| {
-        panic!("{relative} is missing: run `pnpm --filter @agent-board/contract build`")
+        panic!("{relative} is missing: run `pnpm --filter @rumo/contract build`")
     });
     serde_json::from_str(&text).unwrap()
 }
@@ -105,5 +105,5 @@ fn the_declared_contract_level_is_the_contracts() {
         .unwrap()
         .parse()
         .unwrap();
-    assert_eq!(agent_board_bridge_core::bridge::CONTRACT_LEVEL, level);
+    assert_eq!(rumo_bridge_core::bridge::CONTRACT_LEVEL, level);
 }

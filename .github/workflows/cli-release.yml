@@ -29,7 +29,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - uses: oven-sh/setup-bun@v2
-      - run: pnpm install --frozen-lockfile --filter "@agent-board/cli..."
+      - run: pnpm install --frozen-lockfile --filter "@rumo/cli..."
       - env:
           TAG: ${{ github.ref_name }}
         run: |
@@ -40,16 +40,16 @@ jobs:
             exit 1
           fi
       - run: node apps/cli/scripts/compile.ts --all
-      - run: node apps/cli/scripts/smoke.ts apps/cli/dist/release/board-linux-x64
+      - run: node apps/cli/scripts/smoke.ts apps/cli/dist/release/rumo-linux-x64
       - working-directory: apps/cli/dist/release
-        run: sha256sum board-linux-x64 board-linux-arm64 board-darwin-arm64 > SHA256SUMS
+        run: sha256sum rumo-linux-x64 rumo-linux-arm64 rumo-darwin-arm64 > SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
           name: cli-release
           path: |
-            apps/cli/dist/release/board-linux-x64
-            apps/cli/dist/release/board-linux-arm64
-            apps/cli/dist/release/board-darwin-arm64
+            apps/cli/dist/release/rumo-linux-x64
+            apps/cli/dist/release/rumo-linux-arm64
+            apps/cli/dist/release/rumo-darwin-arm64
             apps/cli/dist/release/SHA256SUMS
           if-no-files-found: error
 
@@ -75,13 +75,13 @@ jobs:
           notes="CLI release $TAG. Install with apps/cli/scripts/install.sh or run board self-update."
           set -- --verify-tag --title "$TAG"
           if [ "$SIGNED" = "true" ]; then
-            notes="$notes Draft until signed: run pnpm --filter @agent-board/cli release:sign $TAG on the machine holding the minisign key."
+            notes="$notes Draft until signed: run pnpm --filter @rumo/cli release:sign $TAG on the machine holding the minisign key."
             set -- "$@" --draft
           fi
           gh release create "$TAG" \
-            release/board-linux-x64 \
-            release/board-linux-arm64 \
-            release/board-darwin-arm64 \
+            release/rumo-linux-x64 \
+            release/rumo-linux-arm64 \
+            release/rumo-darwin-arm64 \
             release/SHA256SUMS \
             "$@" \
             --notes "$notes"

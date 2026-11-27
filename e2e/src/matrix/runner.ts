@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { CONTRACT, MIN_CLIENT, MIN_SERVER } from '@agent-board/contract';
+import { CONTRACT, MIN_CLIENT, MIN_SERVER } from '@rumo/contract';
 
 import { createBoard } from '../harness/board.ts';
 import { runProcess } from '../harness/run.ts';
@@ -30,9 +30,9 @@ const PART_DIRECTORY: Record<MatrixPart, string> = {
 };
 
 const BUILT_ENTRY: Record<MatrixPart, { variable: string; entry: string }> = {
-  api: { variable: 'AGENT_BOARD_API_BIN', entry: 'apps/api/dist/main.js' },
-  cli: { variable: 'AGENT_BOARD_CLI_BIN', entry: 'apps/cli/dist/board' },
-  web: { variable: 'AGENT_BOARD_WEB_ROOT', entry: 'apps/web/dist' },
+  api: { variable: 'RUMO_API_BIN', entry: 'apps/api/dist/main.js' },
+  cli: { variable: 'RUMO_CLI_BIN', entry: 'apps/cli/dist/rumo' },
+  web: { variable: 'RUMO_WEB_ROOT', entry: 'apps/web/dist' },
 };
 
 function run(command: string, args: readonly string[], cwd: string, env: NodeJS.ProcessEnv) {
@@ -94,23 +94,23 @@ function buildPeer(part: MatrixPart, tag: string, scratch: string): Omit<BuiltPe
 
 async function readPeerLevel(part: MatrixPart, env: Record<string, string>): Promise<PeerLevel> {
   if (part === 'web') {
-    const root = env.AGENT_BOARD_WEB_ROOT as string;
+    const root = env.RUMO_WEB_ROOT as string;
     return parseWebLevel(JSON.parse(readFileSync(path.join(root, 'version.json'), 'utf8')));
   }
   if (part === 'cli') {
     const home = mkdtempSync(path.join(os.tmpdir(), 'matrix-cli-'));
     try {
-      const result = await runProcess(env.AGENT_BOARD_CLI_BIN as string, ['version', '--json'], {
+      const result = await runProcess(env.RUMO_CLI_BIN as string, ['version', '--json'], {
         env: { HOME: home, PATH: process.env.PATH ?? '' },
       });
-      if (result.code !== 0) throw new Error(`board version --json exited ${result.code}`);
+      if (result.code !== 0) throw new Error(`rumo version --json exited ${result.code}`);
       return parseCliLevel(JSON.parse(result.stdout));
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
   }
-  const previous = process.env.AGENT_BOARD_API_BIN;
-  process.env.AGENT_BOARD_API_BIN = env.AGENT_BOARD_API_BIN as string;
+  const previous = process.env.RUMO_API_BIN;
+  process.env.RUMO_API_BIN = env.RUMO_API_BIN as string;
   try {
     const board = await createBoard({
       parts: ['api'],
@@ -126,8 +126,8 @@ async function readPeerLevel(part: MatrixPart, env: Record<string, string>): Pro
       await board.stop();
     }
   } finally {
-    if (previous === undefined) delete process.env.AGENT_BOARD_API_BIN;
-    else process.env.AGENT_BOARD_API_BIN = previous;
+    if (previous === undefined) delete process.env.RUMO_API_BIN;
+    else process.env.RUMO_API_BIN = previous;
   }
 }
 
@@ -168,7 +168,7 @@ export async function main(): Promise<number> {
     else console.log(`N-1 of ${part}: ${tag}`);
   }
 
-  const scratch = mkdtempSync(path.join(os.tmpdir(), 'agent-board-matrix-'));
+  const scratch = mkdtempSync(path.join(os.tmpdir(), 'rumo-matrix-'));
   const peers = new Map<MatrixPart, BuiltPeer>();
   let code = 0;
   try {

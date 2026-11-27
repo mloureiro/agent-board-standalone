@@ -1,4 +1,4 @@
-use agent_board_bridge_core::attention::{AttentionState, notification_text, parse_attention};
+use rumo_bridge_core::attention::{AttentionState, notification_text, parse_attention};
 
 fn ids(values: &[&str]) -> Vec<String> {
     values.iter().map(|value| value.to_string()).collect()

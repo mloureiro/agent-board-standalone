@@ -10,7 +10,7 @@ afterEach(() => {
 });
 
 export function tmpFile(content: string, name = 'input.txt'): string {
-  const directory = mkdtempSync('/tmp/board-cli-test-');
+  const directory = mkdtempSync('/tmp/rumo-cli-test-');
   made.push(directory);
   const file = path.join(directory, name);
   writeFileSync(file, content);
@@ -18,7 +18,7 @@ export function tmpFile(content: string, name = 'input.txt'): string {
 }
 
 export function tmpDir(): string {
-  const directory = mkdtempSync('/tmp/board-cli-dir-');
+  const directory = mkdtempSync('/tmp/rumo-cli-dir-');
   made.push(directory);
   return directory;
 }

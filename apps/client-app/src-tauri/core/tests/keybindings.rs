@@ -1,14 +1,14 @@
 mod common;
 
-use agent_board_client_core::keybindings::{
+use common::MemoryFiles;
+use rumo_client_core::keybindings::{
     Accelerator, FILE_NAME, Keybindings, Refusal, action_ids, read,
 };
-use agent_board_client_core::ports::FileStore;
-use agent_board_client_core::shortcuts::{
+use rumo_client_core::ports::FileStore;
+use rumo_client_core::shortcuts::{
     MENU_CLOSE_PANE, MENU_CLOSE_TAB, MENU_NEXT_TAB, MENU_PREVIOUS_TAB, MENU_SPLIT_TAB,
     from_menu_id, menu_select_id,
 };
-use common::MemoryFiles;
 use serde_json::{Value, json};
 
 fn resolved(body: &Value) -> Keybindings {

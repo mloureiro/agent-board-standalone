@@ -19,7 +19,7 @@ export const previousSchemaMissing: string | undefined = [
 ]
   .map((file) => join(API_DIST, file))
   .some((file) => !existsSync(file))
-  ? 'the API build is missing: run `pnpm --filter @agent-board/api run build`'
+  ? 'the API build is missing: run `pnpm --filter @rumo/api run build`'
   : undefined;
 
 export function previousMigration(): string {

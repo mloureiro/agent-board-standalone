@@ -36,7 +36,7 @@ function refuseCombinations(options: SelfUpdateOptions): void {
 }
 
 export async function runSelfUpdate(ctx: Context, options: SelfUpdateOptions): Promise<void> {
-  if (ctx.inRun) throw new CliError('`board self-update` cannot run inside a board run');
+  if (ctx.inRun) throw new CliError('`rumo self-update` cannot run inside a board run');
   refuseCombinations(options);
   const env = updateEnv(ctx);
   if (options.server !== undefined) {
@@ -54,12 +54,12 @@ export async function runSelfUpdate(ctx: Context, options: SelfUpdateOptions): P
   const { release, newer } = await checkForUpdate(env);
   if (release === null) throw new CliError('this repository has no CLI release yet');
   if (!newer) {
-    ctx.out(`board ${PART_VERSION} is the newest release (${release.version})`);
+    ctx.out(`rumo ${PART_VERSION} is the newest release (${release.version})`);
     return;
   }
   if (options.check === true) {
     ctx.out(
-      `board ${release.version} is available (this is ${PART_VERSION}); run \`board self-update\``,
+      `rumo ${release.version} is available (this is ${PART_VERSION}); run \`rumo self-update\``,
     );
     return;
   }

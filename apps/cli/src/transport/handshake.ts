@@ -1,4 +1,4 @@
-import { decodeDataKey, deriveKeys } from '@agent-board/sealing';
+import { decodeDataKey, deriveKeys } from '@rumo/sealing';
 
 import { CliError } from '../errors.js';
 import { assertCompatible } from './compatibility.js';

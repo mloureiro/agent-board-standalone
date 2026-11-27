@@ -38,8 +38,8 @@ export async function startReleaseServer(releases: readonly FakeRelease[]): Prom
             prerelease: release.prerelease === true,
             assets: [
               {
-                name: `board-${target}`,
-                browser_download_url: `${base}/assets/${tagOf(release)}/board-${target}`,
+                name: `rumo-${target}`,
+                browser_download_url: `${base}/assets/${tagOf(release)}/rumo-${target}`,
               },
               ...(release.noChecksums === true
                 ? []
@@ -58,12 +58,12 @@ export async function startReleaseServer(releases: readonly FakeRelease[]): Prom
     const release = releases.find((entry) => tagOf(entry) === tag);
     if (release === undefined) return undefined;
     const target = release.target ?? 'linux-x64';
-    if (name === `board-${target}`) {
+    if (name === `rumo-${target}`) {
       return { stream: (response) => response.end(contentOf(release)) };
     }
     if (name === 'SHA256SUMS' && release.noChecksums !== true) {
       const sum = release.checksum ?? sha256(contentOf(release));
-      return { stream: (response) => response.end(`${sum}  board-${target}\n`) };
+      return { stream: (response) => response.end(`${sum}  rumo-${target}\n`) };
     }
     return undefined;
   });

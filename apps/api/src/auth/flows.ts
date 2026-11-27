@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 
-import { tokenHash } from '@agent-board/sealing';
+import { tokenHash } from '@rumo/sealing';
 
 import type { ServerContext } from '../context.js';
 import type { AuthFlow, AuthFlowKind, Json } from '../db/system.js';

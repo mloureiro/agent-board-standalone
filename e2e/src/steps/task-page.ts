@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import type { TaskStatus } from '@agent-board/contract';
-import { bindings } from '@agent-board/sealing';
+import type { TaskStatus } from '@rumo/contract';
+import { bindings } from '@rumo/sealing';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { UNLOCK_NAMES } from '../fixtures/browser.js';
@@ -103,7 +103,7 @@ export async function createWorld(board: Board, options: WorldOptions): Promise<
   const configured = await machine.cli(['config', 'set', 'defaultCwd', workdir]);
   if (configured.code !== 0) {
     throw new Error(
-      `board config set exited ${configured.code}\n${configured.stdout}${configured.stderr}`,
+      `rumo config set exited ${configured.code}\n${configured.stdout}${configured.stderr}`,
     );
   }
   writeSkills(machine.tmp.home, options.skills ?? []);

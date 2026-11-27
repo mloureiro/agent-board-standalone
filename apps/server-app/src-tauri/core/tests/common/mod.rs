@@ -6,9 +6,9 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use agent_board_server_core::credentials::FileStore;
-use agent_board_server_core::launchctl::Launchctl;
-use agent_board_server_core::paths::Root;
+use rumo_server_core::credentials::FileStore;
+use rumo_server_core::launchctl::Launchctl;
+use rumo_server_core::paths::Root;
 use tempfile::TempDir;
 
 #[derive(Default)]
@@ -68,7 +68,7 @@ pub fn exists(path: &Path) -> bool {
 pub fn repo_json(relative: &str) -> serde_json::Value {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../..");
     let text = fs::read_to_string(root.join(relative)).unwrap_or_else(|_| {
-        panic!("{relative} is missing: run `pnpm --filter @agent-board/contract run build`")
+        panic!("{relative} is missing: run `pnpm --filter @rumo/contract run build`")
     });
     serde_json::from_str(&text).unwrap()
 }

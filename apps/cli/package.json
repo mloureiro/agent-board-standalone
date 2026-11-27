@@ -1,5 +1,5 @@
 {
-  "name": "@agent-board/cli",
+  "name": "@rumo/cli",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -7,7 +7,7 @@
   "main": "./src/index.ts",
   "scripts": {
     "build": "node scripts/build.ts",
-    "build:bun": "bun build --compile src/main.ts --outfile dist/board-bun",
+    "build:bun": "bun build --compile src/main.ts --outfile dist/rumo-bun",
     "build:binary": "node scripts/compile.ts",
     "smoke": "node scripts/smoke.ts",
     "release": "node scripts/release.ts",
@@ -17,8 +17,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@agent-board/contract": "workspace:^1.0.0",
-    "@agent-board/sealing": "workspace:^1.0.0",
+    "@rumo/contract": "workspace:^1.0.0",
+    "@rumo/sealing": "workspace:^1.0.0",
     "@clack/prompts": "^1.9.0",
     "commander": "^15.1.0",
     "yaml": "^2.9.1"
@@ -27,6 +27,6 @@
     "esbuild": "^0.28.2"
   },
   "bin": {
-    "board": "./dist/board"
+    "rumo": "./dist/rumo"
   }
 }

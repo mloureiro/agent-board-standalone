@@ -1,4 +1,4 @@
-import type { TaskActor, TaskStatus } from '@agent-board/contract';
+import type { TaskActor, TaskStatus } from '@rumo/contract';
 
 import type { OpenNote, OpenTask } from '../commands/tasks/open.js';
 

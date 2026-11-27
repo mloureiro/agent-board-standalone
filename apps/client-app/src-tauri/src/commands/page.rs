@@ -3,12 +3,12 @@ use crate::commands::tabs;
 use crate::fetches::pump;
 use crate::state::AppState;
 use crate::{links, removals, windows};
-use agent_board_client_core::bridge::{BridgeError, Scope};
-use agent_board_client_core::headers::Header;
-use agent_board_client_core::notify::NotifyRequest;
-use agent_board_client_core::page_input::{self, TabIntent};
-use agent_board_client_core::ports::PortError;
-use agent_board_client_core::servers::ServerEntry;
+use rumo_client_core::bridge::{BridgeError, Scope};
+use rumo_client_core::headers::Header;
+use rumo_client_core::notify::NotifyRequest;
+use rumo_client_core::page_input::{self, TabIntent};
+use rumo_client_core::ports::PortError;
+use rumo_client_core::servers::ServerEntry;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -275,8 +275,8 @@ pub fn start_removal(
     app: &AppHandle,
     state: &AppState,
     outcome: Option<(
-        agent_board_client_core::removal::Removal,
-        Vec<agent_board_client_core::removal::Effect>,
+        rumo_client_core::removal::Removal,
+        Vec<rumo_client_core::removal::Effect>,
     )>,
 ) -> bool {
     let Some((removal, effects)) = outcome else {

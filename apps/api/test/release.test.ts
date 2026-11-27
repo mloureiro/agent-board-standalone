@@ -17,7 +17,7 @@ const part = (
   mkdirSync(join(root, 'src'));
   writeFileSync(
     join(root, 'package.json'),
-    `{\n  "name": "@agent-board/api",\n  "version": "${version}"\n}\n`,
+    `{\n  "name": "@rumo/api",\n  "version": "${version}"\n}\n`,
   );
   writeFileSync(
     join(root, 'src', 'version.ts'),

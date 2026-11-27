@@ -14,8 +14,8 @@ import {
   type BoardExportRecord,
   type Feature,
   type RouteName,
-} from '@agent-board/contract';
-import { bindings } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings } from '@rumo/sealing';
 import type { TestContext } from 'vitest';
 
 import {

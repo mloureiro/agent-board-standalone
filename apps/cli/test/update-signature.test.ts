@@ -30,7 +30,7 @@ describe('minisign signature', () => {
   const key = parsePublicKey(KEY);
 
   it('reads the key id the way minisign prints it', () => {
-    expect(key.keyId).toBe('048E6B0717DF8498');
+    expect(key.keyId).toBe('568D210FAE45B160');
   });
 
   it.each([
@@ -38,7 +38,7 @@ describe('minisign signature', () => {
     ['legacy Ed', LEGACY],
   ])('accepts a %s signature and returns its trusted comment', (_, signature) => {
     expect(verifySignature(key, SUMS, signature)).toEqual({
-      keyId: '048E6B0717DF8498',
+      keyId: '568D210FAE45B160',
       trustedComment: 'cli-v9.9.9',
     });
   });
@@ -52,7 +52,7 @@ describe('minisign signature', () => {
       SUMS,
       /trusted comment/,
     ],
-    ['another key', OTHER_KEY, SUMS, /made with key .* not with 048E6B0717DF8498/],
+    ['another key', OTHER_KEY, SUMS, /made with key .* not with 568D210FAE45B160/],
     ['garbage', 'not a signature at all\n', SUMS, /not a minisign signature/],
     ['a line that is not base64', replaceLine(PREHASHED, 1, 'RUS!!'), SUMS, /not base64/],
     [
@@ -120,7 +120,7 @@ describe('downloadVerified with a signature key', () => {
 
   it('installs a release whose checksums carry a valid signature', async () => {
     const { test, release } = setup({
-      'board-linux-x64': BINARY,
+      'rumo-linux-x64': BINARY,
       SHA256SUMS: SUMS.toString(),
       'SHA256SUMS.minisig': PREHASHED,
     });
@@ -131,7 +131,7 @@ describe('downloadVerified with a signature key', () => {
       test.path('staging'),
       KEY,
     );
-    expect(downloaded.signedBy).toBe('048E6B0717DF8498');
+    expect(downloaded.signedBy).toBe('568D210FAE45B160');
     expect(readFileSync(downloaded.file, 'utf8')).toBe(BINARY);
   });
 
@@ -139,16 +139,16 @@ describe('downloadVerified with a signature key', () => {
     [
       'has no signature',
       {},
-      /cli-v9.9.9 is not signed with the key this board trusts.*no SHA256SUMS.minisig/,
+      /cli-v9.9.9 is not signed with the key this rumo trusts.*no SHA256SUMS.minisig/,
     ],
     [
       'is signed by another key',
       { 'SHA256SUMS.minisig': OTHER_KEY },
-      /not signed with the key this board trusts \(048E6B0717DF8498\)/,
+      /not signed with the key this rumo trusts \(568D210FAE45B160\)/,
     ],
   ])('installs nothing when the release %s', async (_, extra, error) => {
     const { test, release } = setup({
-      'board-linux-x64': BINARY,
+      'rumo-linux-x64': BINARY,
       SHA256SUMS: SUMS.toString(),
       ...extra,
     });
@@ -160,7 +160,7 @@ describe('downloadVerified with a signature key', () => {
 
   it('installs nothing when the signature was made for another tag', async () => {
     const { test, release } = setup({
-      'board-linux-x64': BINARY,
+      'rumo-linux-x64': BINARY,
       SHA256SUMS: SUMS.toString(),
       'SHA256SUMS.minisig': PREHASHED,
     });
@@ -176,7 +176,7 @@ describe('downloadVerified with a signature key', () => {
   });
 
   it('checks the checksum alone when no key is built in', async () => {
-    const { test, release } = setup({ 'board-linux-x64': BINARY, SHA256SUMS: SUMS.toString() });
+    const { test, release } = setup({ 'rumo-linux-x64': BINARY, SHA256SUMS: SUMS.toString() });
     const downloaded = await downloadVerified(
       test.rt,
       release,

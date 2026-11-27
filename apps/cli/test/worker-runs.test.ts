@@ -2,8 +2,8 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { MAX_ACK_MESSAGES } from '@agent-board/contract';
-import { bindings, open as openEnvelope } from '@agent-board/sealing';
+import { MAX_ACK_MESSAGES } from '@rumo/contract';
+import { bindings, open as openEnvelope } from '@rumo/sealing';
 import { describe, expect, it } from 'vitest';
 
 import { buildContext } from '../src/commands/context.js';
@@ -17,7 +17,7 @@ import { useRig } from './support/harness.js';
 import { tmpDir } from './support/files.js';
 
 const rig = useRig();
-const PROCESS = { AGENT_BOARD_WORKER_SPAWN: 'process' } as const;
+const PROCESS = { RUMO_WORKER_SPAWN: 'process' } as const;
 const TASK = 'taskAAAA';
 const SESSION = '33333333-3333-4333-8333-333333333333';
 
@@ -45,7 +45,7 @@ rl.on('line', (line) => {
   }
   first = false;
   keep = text.includes('#keep');
-  note({ kind: 'prompt', text, argv: process.argv.slice(2), env: process.env.AGENT_BOARD_RESTRICTED || '', path: process.env.PATH });
+  note({ kind: 'prompt', text, argv: process.argv.slice(2), env: process.env.RUMO_RESTRICTED || '', path: process.env.PATH });
   out({ type: 'system', subtype: 'init', session_id: process.argv.includes('--resume') && !process.argv.includes('--fork-session') ? process.argv[process.argv.indexOf('--resume') + 1] : process.argv[process.argv.indexOf('--session-id') + 1], model: 'fake-model' });
   if (text.includes('#usage')) {
     out({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'text', text: 'main' }], usage: { input_tokens: 50000, output_tokens: 3 } } });
@@ -421,11 +421,9 @@ describe('what the worker passes to the agent', () => {
   });
 
   it('[cli-071] puts the CLI directory first on the path of the agent so its board is this one', async () => {
-    expect(boardFirst(['/usr/bin/node', '/opt/agent-board/board'], '/usr/bin')).toBe(
-      '/opt/agent-board:/usr/bin',
-    );
-    expect(boardFirst(['/usr/bin/node', '/opt/agent-board/main.js'], '/usr/bin')).toBe('/usr/bin');
-    expect(boardFirst(['board'], undefined)).toBe('');
+    expect(boardFirst(['/usr/bin/node', '/opt/rumo/rumo'], '/usr/bin')).toBe('/opt/rumo:/usr/bin');
+    expect(boardFirst(['/usr/bin/node', '/opt/rumo/main.js'], '/usr/bin')).toBe('/usr/bin');
+    expect(boardFirst(['rumo'], undefined)).toBe('');
   });
 });
 
@@ -537,9 +535,9 @@ describe('watch events and worktrees of a run', () => {
       exec: (file: string, args: readonly string[]) => Promise.resolve(exec(file, args)),
     };
     expect(await runWorker({ ...context, rt }, TASK, fast)).toBe(0);
-    expect(
-      calls.some((call) => call[2] === 'lock' && call.includes('agent-board task taskAAAA')),
-    ).toBe(true);
+    expect(calls.some((call) => call[2] === 'lock' && call.includes('rumo task taskAAAA'))).toBe(
+      true,
+    );
     expect(stub.tasks.get(TASK)?.status).toBe('done');
     expect(calls.some((call) => call[2] === 'unlock')).toBe(true);
   });

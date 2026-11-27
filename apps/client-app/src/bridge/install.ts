@@ -6,8 +6,8 @@ import { installRouting } from './routing.js';
 
 const TAB_LABEL_PREFIX = 'tab-';
 
-if (!Object.hasOwn(window, 'agentBoardBridge')) {
-  Object.defineProperty(window, 'agentBoardBridge', {
+if (!Object.hasOwn(window, 'rumoBridge')) {
+  Object.defineProperty(window, 'rumoBridge', {
     value: createBridge(),
     configurable: false,
     writable: false,

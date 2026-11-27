@@ -1,5 +1,5 @@
-use agent_board_bridge_core::links::external_link;
-use agent_board_bridge_core::paths::{PathRefusal, normalise_path};
+use rumo_bridge_core::links::external_link;
+use rumo_bridge_core::paths::{PathRefusal, normalise_path};
 
 #[test]
 fn accepts_api_and_healthz() {
@@ -124,7 +124,7 @@ fn links_open_externally_only_for_safe_schemes() {
 
 #[test]
 fn navigation_stays_in_the_app_opens_other_origins_outside_and_drops_the_rest() {
-    use agent_board_bridge_core::links::{Navigation, navigation};
+    use rumo_bridge_core::links::{Navigation, navigation};
     let hosts = ["tauri.localhost"];
     assert_eq!(
         navigation("http://tauri.localhost/board/1", &hosts),

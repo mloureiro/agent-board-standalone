@@ -1,4 +1,4 @@
-import { rerunRoute, setClosedRoute, takeBackRoute } from '@agent-board/contract';
+import { rerunRoute, setClosedRoute, takeBackRoute } from '@rumo/contract';
 
 import type { Context } from '../context.js';
 import { confirm, resolveTask, session, taskLink } from '../tasks/support.js';

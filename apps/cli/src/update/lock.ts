@@ -38,7 +38,7 @@ export async function withUpdateLock<T>(stateDir: string, work: () => T | Promis
       const pid = holder(file);
       if (pid !== null && pid !== process.pid && alive(pid)) {
         throw new CliError(
-          `another board update is running (process ${pid}); try again when it ends`,
+          `another rumo update is running (process ${pid}); try again when it ends`,
         );
       }
       rmSync(file, { force: true });

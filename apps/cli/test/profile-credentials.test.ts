@@ -1,7 +1,7 @@
 import { chmodSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { encodeDataKey, generateDataKey } from '@agent-board/sealing';
+import { encodeDataKey, generateDataKey } from '@rumo/sealing';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { loadCredentials } from '../src/profile/credentials.js';
@@ -25,10 +25,7 @@ function dirsOf(test: TestRuntime) {
 
 function storeEnvFile(dirs: { config: string }, mode?: number): string {
   const file = path.join(dirs.config, 'env');
-  writeSecretFile(
-    file,
-    renderEnvFile({ AGENT_BOARD_TOKEN: TOKEN, AGENT_BOARD_DATA_KEY: DATA_KEY }),
-  );
+  writeSecretFile(file, renderEnvFile({ RUMO_TOKEN: TOKEN, RUMO_DATA_KEY: DATA_KEY }));
   if (mode !== undefined) chmodSync(file, mode);
   return file;
 }
@@ -54,7 +51,7 @@ describe('credentials from the env file', () => {
 
   it('says how to recover when nothing is stored', async () => {
     env = testRuntime();
-    await expect(loadCredentials(env.rt, dirsOf(env))).rejects.toThrow(/board init/);
+    await expect(loadCredentials(env.rt, dirsOf(env))).rejects.toThrow(/rumo init/);
   });
 
   it('refuses a token without the machine prefix', async () => {
@@ -62,13 +59,13 @@ describe('credentials from the env file', () => {
     const dirs = dirsOf(env);
     writeSecretFile(
       path.join(dirs.config, 'env'),
-      renderEnvFile({ AGENT_BOARD_TOKEN: 'abc_nope', AGENT_BOARD_DATA_KEY: DATA_KEY }),
+      renderEnvFile({ RUMO_TOKEN: 'abc_nope', RUMO_DATA_KEY: DATA_KEY }),
     );
     await expect(loadCredentials(env.rt, dirs)).rejects.toThrow(/abm_/);
   });
 
   it('lets process variables override the stored values', async () => {
-    env = testRuntime({ env: { AGENT_BOARD_TOKEN: 'abm_override' } });
+    env = testRuntime({ env: { RUMO_TOKEN: 'abm_override' } });
     const dirs = dirsOf(env);
     storeEnvFile(dirs);
     const credentials = await loadCredentials(env.rt, dirs);
@@ -78,11 +75,11 @@ describe('credentials from the env file', () => {
 });
 
 describe('credentials command', () => {
-  const lines = `AGENT_BOARD_TOKEN=abm_fromcommand\nAGENT_BOARD_DATA_KEY=${DATA_KEY}\n`;
+  const lines = `RUMO_TOKEN=abm_fromcommand\nRUMO_DATA_KEY=${DATA_KEY}\n`;
 
   it('[cli-007] replaces the env file entirely, even when that file is loose', async () => {
     env = testRuntime({
-      env: { AGENT_BOARD_CREDENTIALS_COMMAND: '/tmp/creds' },
+      env: { RUMO_CREDENTIALS_COMMAND: '/tmp/creds' },
       exec: () => ({ code: 0, stdout: lines }),
     });
     const dirs = dirsOf(env);
@@ -99,8 +96,8 @@ describe('credentials command', () => {
 
   it('[cli-007] never merges: a missing line is an error even if the env file has it', async () => {
     env = testRuntime({
-      env: { AGENT_BOARD_CREDENTIALS_COMMAND: '/tmp/creds' },
-      exec: () => ({ code: 0, stdout: 'AGENT_BOARD_TOKEN=abm_fromcommand\n' }),
+      env: { RUMO_CREDENTIALS_COMMAND: '/tmp/creds' },
+      exec: () => ({ code: 0, stdout: 'RUMO_TOKEN=abm_fromcommand\n' }),
     });
     const dirs = dirsOf(env);
     storeEnvFile(dirs);
@@ -108,13 +105,13 @@ describe('credentials command', () => {
   });
 
   it('[cli-007] refuses a relative path', async () => {
-    env = testRuntime({ env: { AGENT_BOARD_CREDENTIALS_COMMAND: 'creds' } });
+    env = testRuntime({ env: { RUMO_CREDENTIALS_COMMAND: 'creds' } });
     await expect(loadCredentials(env.rt, dirsOf(env))).rejects.toThrow(/absolute path/);
   });
 
   it('[cli-007] refuses a command that fails', async () => {
     env = testRuntime({
-      env: { AGENT_BOARD_CREDENTIALS_COMMAND: '/tmp/creds' },
+      env: { RUMO_CREDENTIALS_COMMAND: '/tmp/creds' },
       exec: () => ({ code: 3, stdout: '' }),
     });
     await expect(loadCredentials(env.rt, dirsOf(env))).rejects.toThrow(/exited 3/);
@@ -123,7 +120,7 @@ describe('credentials command', () => {
 
 describe('Keychain', () => {
   it('names one service per profile', () => {
-    expect(keychainService('work')).toBe('agent-board.cli.work');
+    expect(keychainService('work')).toBe('rumo.cli.work');
   });
 
   it('reads both items when the profile is configured for it', async () => {
@@ -143,8 +140,8 @@ describe('Keychain', () => {
     const credentials = await loadCredentials(env.rt, dirs);
     expect(credentials).toEqual({ token: 'abm_keychain', dataKey: DATA_KEY, source: 'keychain' });
     expect(env.execCalls.map((call) => call.args)).toEqual([
-      ['find-generic-password', '-s', 'agent-board.cli.work', '-a', 'token', '-w'],
-      ['find-generic-password', '-s', 'agent-board.cli.work', '-a', 'data-key', '-w'],
+      ['find-generic-password', '-s', 'rumo.cli.work', '-a', 'token', '-w'],
+      ['find-generic-password', '-s', 'rumo.cli.work', '-a', 'data-key', '-w'],
     ]);
   });
 
@@ -158,7 +155,7 @@ describe('Keychain', () => {
     await writeKeychain(env.rt, 'work', 'token', 'abm_secret');
     const [call] = env.execCalls;
     expect(call?.args).toEqual(['-i']);
-    expect(call?.options.stdin).toContain('-s agent-board.cli.work -a token -w abm_secret');
+    expect(call?.options.stdin).toContain('-s rumo.cli.work -a token -w abm_secret');
   });
 
   it('refuses outside macOS', async () => {

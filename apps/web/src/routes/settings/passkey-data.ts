@@ -3,7 +3,7 @@ import {
   registerClientPasskeyRoute,
   registerOptionsClientPasskeyRoute,
   removeClientPasskeyRoute,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { createPasskey, webAuthnAvailable } from '../../auth/webauthn.js';

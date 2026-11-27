@@ -1,7 +1,7 @@
 import { accessSync, constants, existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 
-import type { DoctorResult } from '@agent-board/contract';
+import type { DoctorResult } from '@rumo/contract';
 
 import type { Context } from '../commands/context.js';
 import { CliError } from '../errors.js';
@@ -60,7 +60,7 @@ export function profileChecks(ctx: Context): DoctorResult[] {
 function configDirectoryCheck(ctx: Context): DoctorResult {
   const directory = ctx.dirs.config;
   if (!existsSync(directory) || !statSync(directory).isDirectory()) {
-    return problem('config dir', 'fail', `${directory} does not exist`, 'run `board init`');
+    return problem('config dir', 'fail', `${directory} does not exist`, 'run `rumo init`');
   }
   if (!writable(directory)) {
     return problem('config dir', 'fail', `${directory} is not writable`, `chmod u+w ${directory}`);
@@ -76,7 +76,7 @@ export function serverFileCheck(ctx: Context): DoctorResult {
         'web.json',
         'fail',
         'no server is configured for this profile',
-        'run `board init`',
+        'run `rumo init`',
       );
     }
     return pass('web.json', `server ${server.url}`);
@@ -85,7 +85,7 @@ export function serverFileCheck(ctx: Context): DoctorResult {
       'web.json',
       'fail',
       error instanceof Error ? error.message : String(error),
-      'run `board init --force`',
+      'run `rumo init --force`',
     );
   }
 }
@@ -99,7 +99,7 @@ export function credentialChecks(ctx: Context): DoctorResult[] {
   } else if (source === 'keychain') {
     results.push(pass('env', 'credentials are kept in the macOS Keychain'));
   } else if (!existsSync(file)) {
-    results.push(problem('env', 'fail', `${file} does not exist`, 'run `board init`'));
+    results.push(problem('env', 'fail', `${file} does not exist`, 'run `rumo init`'));
   } else {
     results.push(pass('env', file));
     const mode = statSync(file).mode & 0o777;
@@ -133,7 +133,7 @@ export async function loadedCredentialChecks(
     const message = error instanceof CliError ? error.message : String(error);
     const name = /data key/i.test(message) ? 'data key' : 'token';
     return {
-      results: [problem(name, 'fail', message, 'run `board init --force` with a fresh token')],
+      results: [problem(name, 'fail', message, 'run `rumo init --force` with a fresh token')],
       loaded: false,
     };
   }
@@ -146,7 +146,7 @@ export function signingKeyCheck(ctx: Context, required: boolean | null): DoctorR
       'request-signature',
       'fail',
       'the server requires signed requests and this profile has no signing key',
-      'run `board init --force`',
+      'run `rumo init --force`',
     );
   }
   if (required === true) return pass('request-signature', 'requests are signed');
@@ -167,7 +167,7 @@ export function folderChecks(ctx: Context): DoctorResult[] {
     results.push(pass('folders', state));
   }
   if (!existsSync(run)) {
-    results.push(pass('run directory', `${run} is created by \`board setup\``));
+    results.push(pass('run directory', `${run} is created by \`rumo setup\``));
   } else {
     const mode = statSync(run).mode & 0o777;
     results.push(

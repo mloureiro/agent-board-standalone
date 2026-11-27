@@ -1,8 +1,4 @@
-import {
-  listClientFeedsRoute,
-  requestClientFeedRoute,
-  type FeedAction,
-} from '@agent-board/contract';
+import { listClientFeedsRoute, requestClientFeedRoute, type FeedAction } from '@rumo/contract';
 import { Alert, Badge, Button, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';

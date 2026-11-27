@@ -1,4 +1,4 @@
-import type { UiTask } from '@agent-board/contract';
+import type { UiTask } from '@rumo/contract';
 
 import { parseTime } from '../board/format.js';
 import { parseQuestions, type Question } from './question-model.js';

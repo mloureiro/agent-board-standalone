@@ -9,7 +9,7 @@ import { loadConfig, type Env } from '../src/modules/index.js';
 import { createServer } from '../src/server.js';
 import { createOpenStreams, type OpenStreams } from '../src/streams.js';
 
-export const DATABASE = 'pglite:///tmp/agent-board-api-test';
+export const DATABASE = 'pglite:///tmp/rumo-api-test';
 
 export const noLoginEnv = (extra: Env = {}): Env => ({
   NO_LOGIN_USER: 'owner',

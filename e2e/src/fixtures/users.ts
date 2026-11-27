@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 
-import { sessionCookieName } from '@agent-board/contract';
+import { sessionCookieName } from '@rumo/contract';
 
 import {
   anonymous,
@@ -15,7 +15,7 @@ import {
   type RouteOutput,
   type ServerRef,
 } from '../client/contract-client.js';
-import type { RouteName } from '@agent-board/contract';
+import type { RouteName } from '@rumo/contract';
 import { openEvents, type EventStream } from '../client/events.js';
 import { CookieJar } from '../client/cookies.js';
 import type { RequestSigner } from '../client/signer.js';

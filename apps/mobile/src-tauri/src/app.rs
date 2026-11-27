@@ -1,7 +1,7 @@
 use crate::adapters::{DialogConfirm, FileStore, PluginKeys, ReqwestHttp, SystemEnv};
 use crate::{commands, watcher};
-use agent_board_bridge_core::bridge::{Bridge, BridgeConfig, CONTRACT_LEVEL};
-use agent_board_bridge_core::links::{Navigation, navigation};
+use rumo_bridge_core::bridge::{Bridge, BridgeConfig, CONTRACT_LEVEL};
+use rumo_bridge_core::links::{Navigation, navigation};
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_opener::OpenerExt;
 

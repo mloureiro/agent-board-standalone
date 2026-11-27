@@ -2,9 +2,9 @@
 
 Three synthetic boards, one per source version the migration tool reads. **No real data is present in them**: every
 name, token, key, passphrase, URL and path is made up, and every value that the old boards seal is sealed under a
-made-up data key with `@agent-board/sealing`. The repository is public, so the hygiene test
+made-up data key with `@rumo/sealing`. The repository is public, so the hygiene test
 (`test/hygiene.test.ts`) fails on a home directory path, an email address that does not end in `@example.test`, a URL
-host outside `example.test`, and any sealed-looking value that fails the shape checks of `@agent-board/sealing`.
+host outside `example.test`, and any sealed-looking value that fails the shape checks of `@rumo/sealing`.
 
 ## What is committed
 
@@ -48,7 +48,7 @@ names the PGlite version above. Both aliases are declared in `package.json`, one
 ## How they were made
 
 ```bash
-pnpm --filter @agent-board/migrate fixtures:build --core <path to the old agent-board checkout>
+pnpm --filter @rumo/migrate fixtures:build --core <path to the old agent-board checkout>
 ```
 
 For each fixture the script:
@@ -58,7 +58,7 @@ For each fixture the script:
 2. starts a throwaway `postgres:16` container with Docker (or uses `--postgres-url` and `--pg-dump`), creates the
    `board_app` role and a fresh database, and applies the migrations the way the old migrator does, including its
    `drizzle.__drizzle_migrations` journal (hash of each file, migration time);
-3. builds the synthetic content with `@agent-board/sealing`, sealing every field under the binding the old board
+3. builds the synthetic content with `@rumo/sealing`, sealing every field under the binding the old board
    used for it, and inserts it **with the columns and tables the pin really has**: a column the pin lacks is dropped
    and a table it lacks is skipped, which is how the three fixtures differ;
 4. dumps the database with the container's `pg_dump` (no owners, no privileges, one `INSERT` per row) and removes

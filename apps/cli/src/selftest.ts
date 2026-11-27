@@ -6,7 +6,7 @@ import {
   seal,
   unlockKeys,
   type Binding,
-} from '@agent-board/sealing';
+} from '@rumo/sealing';
 
 const GOLDEN = {
   owner: 'vector-owner',

@@ -58,7 +58,7 @@ beforeEach(() => {
   media.coarse = false;
   localStorage.clear();
   globalThis.indexedDB = new IDBFactory();
-  delete window.agentBoardBridge;
+  delete window.rumoBridge;
 });
 
 afterEach(() => {

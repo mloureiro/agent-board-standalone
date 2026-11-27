@@ -5,14 +5,12 @@ export function isUnitName(value: string): value is UnitName {
   return (UNIT_NAMES as readonly string[]).includes(value);
 }
 
-export const launchdLabel = (profile: string, unit: UnitName): string =>
-  `agent-board.${profile}.${unit}`;
+export const launchdLabel = (profile: string, unit: UnitName): string => `rumo.${profile}.${unit}`;
 
 export const launchdFile = (profile: string, unit: UnitName): string =>
   `${launchdLabel(profile, unit)}.plist`;
 
-export const systemdBase = (profile: string, unit: UnitName): string =>
-  `agent-board-${profile}-${unit}`;
+export const systemdBase = (profile: string, unit: UnitName): string => `rumo-${profile}-${unit}`;
 
 export const systemdService = (profile: string, unit: UnitName): string =>
   `${systemdBase(profile, unit)}.service`;

@@ -4,7 +4,7 @@ import {
   MAX_SCHEDULE_TIMES,
   MIN_INTERVAL_MS,
   scheduleId,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 
 import { UsageError } from '../errors.js';
 import { checkedModel, checkedSize, parseEffort, parsePriority } from '../domain/rules.js';

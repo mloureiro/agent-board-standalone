@@ -5,8 +5,8 @@ import {
   listClientTasksRoute,
   moveClientTaskRoute,
   configureClientTaskRoute,
-} from '@agent-board/contract';
-import { bindings, open, type Keys } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, open, type Keys } from '@rumo/sealing';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

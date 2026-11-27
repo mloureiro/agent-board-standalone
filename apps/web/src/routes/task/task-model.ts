@@ -1,5 +1,5 @@
-import type { PrState, UiTask, UiTaskDetail, UiThreadNote } from '@agent-board/contract';
-import { bindings, type Keys } from '@agent-board/sealing';
+import type { PrState, UiTask, UiTaskDetail, UiThreadNote } from '@rumo/contract';
+import { bindings, type Keys } from '@rumo/sealing';
 
 import {
   attempt,

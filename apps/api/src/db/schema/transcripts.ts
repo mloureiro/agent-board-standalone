@@ -1,4 +1,4 @@
-import { PLAIN_EVENT_KINDS } from '@agent-board/contract';
+import { PLAIN_EVENT_KINDS } from '@rumo/contract';
 import { sql } from 'drizzle-orm';
 import {
   boolean,

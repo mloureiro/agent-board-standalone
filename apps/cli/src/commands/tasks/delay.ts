@@ -1,4 +1,4 @@
-import { updateTaskRoute } from '@agent-board/contract';
+import { updateTaskRoute } from '@rumo/contract';
 
 import { UsageError } from '../../errors.js';
 import { localTime, parseStart } from '../../domain/time.js';

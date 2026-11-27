@@ -1,5 +1,5 @@
-import { SIGNATURE_HEADERS, canonicalString } from '@agent-board/contract';
-import { contentDigest, importPublicKey, verify } from '@agent-board/sealing';
+import { SIGNATURE_HEADERS, canonicalString } from '@rumo/contract';
+import { contentDigest, importPublicKey, verify } from '@rumo/sealing';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -163,7 +163,7 @@ describe('pairing', () => {
       label: 'Web browser',
     });
 
-    expect((await indexedDB.databases()).map((entry) => entry.name)).toEqual(['agent-board:srv-1']);
+    expect((await indexedDB.databases()).map((entry) => entry.name)).toEqual(['rumo:srv-1']);
     const stored = await loadSigningKey(HOME.id);
     expect(stored?.privateKey.type).toBe('private');
     expect(stored?.privateKey.extractable).toBe(false);

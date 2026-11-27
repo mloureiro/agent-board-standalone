@@ -1,4 +1,4 @@
-import { failRoute, getTaskRoute } from '@agent-board/contract';
+import { failRoute, getTaskRoute } from '@rumo/contract';
 
 import type { OpenTask } from '../commands/tasks/open.js';
 import { sealedNote } from '../commands/tasks/notes.js';

@@ -1,5 +1,5 @@
 {
-  "name": "@agent-board/web",
+  "name": "@rumo/web",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -15,8 +15,8 @@
     "phone": "vite build && tsx scripts/write-version.ts && playwright test"
   },
   "dependencies": {
-    "@agent-board/contract": "workspace:^1.0.0",
-    "@agent-board/sealing": "workspace:^1.0.0",
+    "@rumo/contract": "workspace:^1.0.0",
+    "@rumo/sealing": "workspace:^1.0.0",
     "@dnd-kit/core": "6.3.1",
     "@mantine/core": "^9.8.2",
     "@mantine/hooks": "^9.8.2",

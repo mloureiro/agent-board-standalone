@@ -29,5 +29,5 @@ a lost key means a new key and a CLI release built with it.
 
 Commit apps/cli/update-key.pub and merge it BEFORE building the CLI release you
 want to trust it. A CLI built earlier has no key built in and checks checksums only.
-Sign each release with: pnpm --filter @agent-board/cli release:sign <cli-vX.Y.Z>
+Sign each release with: pnpm --filter @rumo/cli release:sign <cli-vX.Y.Z>
 EOF

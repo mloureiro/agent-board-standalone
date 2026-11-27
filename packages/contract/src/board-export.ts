@@ -44,7 +44,7 @@ import {
 import { storedMachineName } from './schemas/ui-machine.js';
 import { MAX_SEQ, PLAIN_EVENT_KINDS } from './schemas/transcript.js';
 
-export const BOARD_EXPORT_FORMAT = 'agent-board-export';
+export const BOARD_EXPORT_FORMAT = 'rumo-export';
 export const BOARD_EXPORT_VERSION = 1;
 export const BOARD_EXPORT_MEDIA_TYPE = 'application/x-ndjson';
 

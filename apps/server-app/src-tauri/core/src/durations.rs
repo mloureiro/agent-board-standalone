@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-pub const TIMINGS_ENV: &str = "AGENT_BOARD_SUPERVISION_TIMINGS";
+pub const TIMINGS_ENV: &str = "RUMO_SUPERVISION_TIMINGS";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Durations {

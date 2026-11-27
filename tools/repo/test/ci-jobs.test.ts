@@ -28,7 +28,7 @@ describe('CI jobs', () => {
   it('[repo-006] the install-alone job also typechecks and tests each part', () => {
     const job = jobBlock('install-alone');
     expect(job).toContain('run typecheck');
-    expect(job).toMatch(/--filter "@agent-board\/\$\{\{ matrix\.package \}\}" test/);
+    expect(job).toMatch(/--filter "@rumo\/\$\{\{ matrix\.package \}\}" test/);
   });
 
   it.each(['client-app-macos', 'server-app-macos'])('[repo-006] %s builds on macOS', (name) => {
@@ -39,8 +39,6 @@ describe('CI jobs', () => {
   });
 
   it('[repo-006] the server app tests run in its macOS job', () => {
-    expect(jobBlock('server-app-macos')).toContain(
-      'run: pnpm --filter @agent-board/server-app test',
-    );
+    expect(jobBlock('server-app-macos')).toContain('run: pnpm --filter @rumo/server-app test');
   });
 });

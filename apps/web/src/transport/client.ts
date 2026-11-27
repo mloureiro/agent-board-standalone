@@ -5,7 +5,7 @@ import {
   formatClientHeader,
   routes,
   type AnyRoute,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 
 import { PART_VERSION } from '../version.js';
 import type { Transport, TransportInit } from './types.js';

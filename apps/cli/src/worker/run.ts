@@ -16,7 +16,7 @@ import {
   stoppedRoute,
   updateTaskRoute,
   type WireTask,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 
 import { localAgents } from '../agents/shared.js';
 import type { Context } from '../commands/context.js';
@@ -96,7 +96,7 @@ export function shellQuote(value: string): string {
 
 export function boardFirst(self: readonly string[], current: string | undefined): string {
   const program = self.at(-1);
-  if (program === undefined || path.basename(program) !== 'board' || !path.isAbsolute(program)) {
+  if (program === undefined || path.basename(program) !== 'rumo' || !path.isAbsolute(program)) {
     return current ?? '';
   }
   return [path.dirname(program), current]
@@ -267,11 +267,11 @@ export async function runWorker(
   const env: Record<string, string | undefined> = {
     ...ctx.rt.env,
     PATH: boardFirst(ctx.rt.self, ctx.rt.env.PATH),
-    AGENT_BOARD_TASK: task,
-    AGENT_BOARD_PROFILE: ctx.dirs.profile,
-    AGENT_BOARD_START_DIR: cwd,
-    ...(wire.run === undefined ? {} : { AGENT_BOARD_RUN: wire.run }),
-    ...(agent === undefined ? {} : { AGENT_BOARD_RESTRICTED: '1' }),
+    RUMO_TASK: task,
+    RUMO_PROFILE: ctx.dirs.profile,
+    RUMO_START_DIR: cwd,
+    ...(wire.run === undefined ? {} : { RUMO_RUN: wire.run }),
+    ...(agent === undefined ? {} : { RUMO_RESTRICTED: '1' }),
   };
 
   const startedAt = clock();

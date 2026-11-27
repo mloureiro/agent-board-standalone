@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 import { expect, test, type Page } from '@playwright/test';
 
 import type { RouteOutput } from '../src/client/contract-client.js';

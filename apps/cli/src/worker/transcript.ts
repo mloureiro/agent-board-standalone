@@ -1,5 +1,5 @@
-import { transcriptRoute, type TranscriptBatchEvent } from '@agent-board/contract';
-import { bindings, seal, type Keys } from '@agent-board/sealing';
+import { transcriptRoute, type TranscriptBatchEvent } from '@rumo/contract';
+import { bindings, seal, type Keys } from '@rumo/sealing';
 
 import type { Session } from '../transport/session.js';
 import type { ContextReading, Draft } from './stream.js';

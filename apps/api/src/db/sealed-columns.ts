@@ -1,4 +1,4 @@
-import { maxEnvelopeLength, type SealedField } from '@agent-board/contract';
+import { maxEnvelopeLength, type SealedField } from '@rumo/contract';
 
 export const ENVELOPE_PATTERN = '^abe1[.][A-Za-z0-9_-]{38,}$';
 export const BLIND_INDEX_PATTERN = '^abh1[.][A-Za-z0-9_-]{43}$';

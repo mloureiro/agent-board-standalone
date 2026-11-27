@@ -6,7 +6,7 @@ import { smokeChecks } from './smoke-checks.ts';
 
 const binary = process.argv[2];
 if (binary === undefined) {
-  console.error('usage: node scripts/smoke.ts <path to the board binary>');
+  console.error('usage: node scripts/smoke.ts <path to the rumo binary>');
   process.exit(2);
 }
 const { version } = JSON.parse(readFileSync(path.join(CLI_ROOT, 'package.json'), 'utf8')) as {

@@ -1,4 +1,4 @@
-import { MAX_PROJECT_POSITION, type WireProject } from '@agent-board/contract';
+import { MAX_PROJECT_POSITION, type WireProject } from '@rumo/contract';
 import { and, asc, count, eq, max, sql } from 'drizzle-orm';
 
 import type { ServerContext } from '../../context.js';

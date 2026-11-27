@@ -6,7 +6,7 @@ import {
   isFeature,
   type CompatResult,
   type Feature,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 
 import { CliError } from '../errors.js';
 import { PART_VERSION } from '../version.js';
@@ -21,7 +21,7 @@ export class ClientTooOldError extends CliError {
   }
 }
 
-export const UPGRADE_HINT = 'Upgrade the CLI with `board self-update`.';
+export const UPGRADE_HINT = 'Upgrade the CLI with `rumo self-update`.';
 
 function sides(server: ServerInfo) {
   return {

@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { LOCK_PROGRAMS, type WorkerUnits } from '@agent-board/contract';
+import { LOCK_PROGRAMS, type WorkerUnits } from '@rumo/contract';
 
 import { CliError } from '../errors.js';
 import {

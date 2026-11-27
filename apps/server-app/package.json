@@ -1,5 +1,5 @@
 {
-  "name": "@agent-board/server-app",
+  "name": "@rumo/server-app",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -11,16 +11,16 @@
     "sign:check": "node scripts/sign-check.ts",
     "release": "node scripts/release.ts",
     "release:check": "node scripts/release-check.ts",
-    "build:binary": "cargo build --manifest-path src-tauri/Cargo.toml --locked -p agent-board-server && cargo build --manifest-path src-tauri/Cargo.toml --locked -p agent-board-server-core --bin stub_child",
+    "build:binary": "cargo build --manifest-path src-tauri/Cargo.toml --locked -p rumo-server && cargo build --manifest-path src-tauri/Cargo.toml --locked -p rumo-server-core --bin stub_child",
     "test": "vitest run && pnpm run test:rust",
     "typecheck": "tsc --noEmit && cargo check --manifest-path src-tauri/Cargo.toml --locked",
     "format:check:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml --all --check",
     "lint:rust": "cargo clippy --manifest-path src-tauri/Cargo.toml --locked --all-targets -- -D warnings",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml --locked",
-    "shell:check": "cargo clippy --manifest-path src-tauri/Cargo.toml --locked -p agent-board-server --all-targets -- -D warnings && cargo test --manifest-path src-tauri/Cargo.toml --locked -p agent-board-server"
+    "shell:check": "cargo clippy --manifest-path src-tauri/Cargo.toml --locked -p rumo-server --all-targets -- -D warnings && cargo test --manifest-path src-tauri/Cargo.toml --locked -p rumo-server"
   },
   "dependencies": {
-    "@agent-board/api": "workspace:^0.0.0"
+    "@rumo/api": "workspace:^0.0.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.12.6"

@@ -2,7 +2,7 @@ import { chmodSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { generateDataKey, encodeDataKey } from '@agent-board/sealing';
+import { generateDataKey, encodeDataKey } from '@rumo/sealing';
 import { describe, expect, it } from 'vitest';
 
 import { machineTmp } from '../src/fixtures/machines.js';
@@ -27,7 +27,7 @@ import {
   usePair,
 } from '../src/steps/profiles.js';
 
-describe('board init', () => {
+describe('rumo init', () => {
   const boards = usePair({ parts: ['api', 'cli'], features: [] });
 
   async function fresh(label: string) {
@@ -87,7 +87,7 @@ describe('board init', () => {
   it('[cli-046] refuses an existing credentials file with mode 644', async () => {
     const { board, identity, tmp, run, dirs } = await fresh('init-loose');
     const enrolment = await prepareEnrolment(tmp, identity);
-    const file = seedLooseCredentials(dirs.config, 'AGENT_BOARD_TOKEN=abm_previous\n');
+    const file = seedLooseCredentials(dirs.config, 'RUMO_TOKEN=abm_previous\n');
     const before = snapshotOf(scopesOf(tmp));
     const result = await run(initArgs(board.url, enrolment));
     expect(result.code).not.toBe(0);
@@ -164,7 +164,7 @@ describe('profiles', () => {
     const enrolmentB = await prepareEnrolment(tmp, identityB);
     const initA = await run(['--profile', 'a', ...initArgs(boards.a.url, enrolmentA)]);
     expect(initA.code, combined(initA)).toBe(0);
-    const initB = await run(initArgs(boards.b.url, enrolmentB), { AGENT_BOARD_PROFILE: 'b' });
+    const initB = await run(initArgs(boards.b.url, enrolmentB), { RUMO_PROFILE: 'b' });
     expect(initB.code, combined(initB)).toBe(0);
     return { tmp, run, identityA, identityB, enrolmentA, enrolmentB };
   }
@@ -199,7 +199,7 @@ describe('profiles', () => {
     expect(listedA.code, combined(listedA)).toBe(0);
     expect(listedA.stdout).toContain(titleA);
     expect(listedA.stdout).not.toContain(titleB);
-    const listedB = await run(['tasks'], { AGENT_BOARD_PROFILE: 'b' });
+    const listedB = await run(['tasks'], { RUMO_PROFILE: 'b' });
     expect(listedB.code, combined(listedB)).toBe(0);
     expect(listedB.stdout).toContain(titleB);
     expect(listedB.stdout).not.toContain(titleA);
@@ -226,8 +226,8 @@ describe('profiles', () => {
     for (const name of invalid) {
       const byFlag = await run(['--profile', name, ...init]);
       expect(byFlag.code, `--profile ${name}`).not.toBe(0);
-      const byEnv = await run(init, { AGENT_BOARD_PROFILE: name });
-      expect(byEnv.code, `AGENT_BOARD_PROFILE=${name}`).not.toBe(0);
+      const byEnv = await run(init, { RUMO_PROFILE: name });
+      expect(byEnv.code, `RUMO_PROFILE=${name}`).not.toBe(0);
     }
     expect(existsSync(tmp.path('xdg'))).toBe(false);
     const valid = await run(['--profile', 'a'.repeat(32), ...init]);

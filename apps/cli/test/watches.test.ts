@@ -2,7 +2,7 @@ import { mkdtempSync, readdirSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -42,7 +42,7 @@ async function published(stub: Awaited<ReturnType<typeof rig>>['stub']) {
   };
 }
 
-describe('board watch, watches and unwatch', () => {
+describe('rumo watch, watches and unwatch', () => {
   it('[cli-020] starts a CI watch on the PR the task reported, from gh, and publishes it without the command', async () => {
     const { stub, cli } = await running({ exec: gh });
     await cli.run('pr', 'taskAAAA', PR);
@@ -109,7 +109,7 @@ describe('board watch, watches and unwatch', () => {
   });
 
   it('[cli-020] command and stream watches are refused in a restricted run', async () => {
-    const { cli } = await running({ env: { AGENT_BOARD_RESTRICTED: '1' }, exec: gh });
+    const { cli } = await running({ env: { RUMO_RESTRICTED: '1' }, exec: gh });
     expect(await cli.run('watch', 'taskAAAA', '--name', 'x', '--', 'true')).toBe(2);
     expect(await cli.run('watch', 'taskAAAA', '--name', 'x', '--stream', '--', 'true')).toBe(2);
     expect(await cli.run('watch', 'taskAAAA', '--in', '5m')).toBe(0);
@@ -117,7 +117,7 @@ describe('board watch, watches and unwatch', () => {
   });
 
   it('[cli-020] a run watches its own task only, and only a running or waiting task of this machine', async () => {
-    const own = await running({ env: { AGENT_BOARD_TASK: 'taskAAAA' } });
+    const own = await running({ env: { RUMO_TASK: 'taskAAAA' } });
     await own.stub.addTask({ id: 'taskBBBB', status: 'running', machine: 'test-machine' });
     expect(await own.cli.run('watch', 'taskBBBB', '--in', '5m')).toBe(2);
     const { stub, cli } = await running();

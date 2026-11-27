@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { unlockedKey } from '../src/fixtures/keys.js';
@@ -147,7 +147,7 @@ describe('migrating the source fixture', () => {
 
 describe('a worker after the migration', () => {
   it(
-    '[migrate-004] a CLI set up with board init from the existing token and data key claims and runs a task to Done with the stub',
+    '[migrate-004] a CLI set up with rumo init from the existing token and data key claims and runs a task to Done with the stub',
     async (context) => {
       const opened = await openMigrated({ ...OPTIONS, label: 'migrate-worker' });
       if ('unavailable' in opened) return skipVitest(context, opened.unavailable);

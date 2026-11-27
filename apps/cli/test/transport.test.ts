@@ -7,8 +7,8 @@ import {
   canonicalString,
   CLIENT_HEADER,
   CONTRACT_HEADER,
-} from '@agent-board/contract';
-import { importPublicKey, verify } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { importPublicKey, verify } from '@rumo/sealing';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { clockOffsetMs, now } from '../src/transport/clock.js';
@@ -185,35 +185,29 @@ describe('request signing', () => {
 });
 
 describe('clock offset', () => {
-  it('is honoured only when AGENT_BOARD_E2E is 1', () => {
+  it('is honoured only when RUMO_E2E is 1', () => {
     env = testRuntime();
     const file = env.path('offset');
     writeFileSync(file, '30\n');
-    expect(clockOffsetMs({ AGENT_BOARD_E2E: '1', AGENT_BOARD_CLOCK_OFFSET_FILE: file })).toBe(
-      30_000,
-    );
-    expect(clockOffsetMs({ AGENT_BOARD_CLOCK_OFFSET_FILE: file })).toBe(0);
-    expect(clockOffsetMs({ AGENT_BOARD_E2E: '0', AGENT_BOARD_CLOCK_OFFSET_FILE: file })).toBe(0);
-    expect(clockOffsetMs({ AGENT_BOARD_E2E: '1' })).toBe(0);
+    expect(clockOffsetMs({ RUMO_E2E: '1', RUMO_CLOCK_OFFSET_FILE: file })).toBe(30_000);
+    expect(clockOffsetMs({ RUMO_CLOCK_OFFSET_FILE: file })).toBe(0);
+    expect(clockOffsetMs({ RUMO_E2E: '0', RUMO_CLOCK_OFFSET_FILE: file })).toBe(0);
+    expect(clockOffsetMs({ RUMO_E2E: '1' })).toBe(0);
   });
 
   it('ignores a missing or unreadable offset file', () => {
     env = testRuntime();
-    expect(
-      clockOffsetMs({ AGENT_BOARD_E2E: '1', AGENT_BOARD_CLOCK_OFFSET_FILE: env.path('none') }),
-    ).toBe(0);
+    expect(clockOffsetMs({ RUMO_E2E: '1', RUMO_CLOCK_OFFSET_FILE: env.path('none') })).toBe(0);
     writeFileSync(env.path('bad'), 'soon');
-    expect(
-      clockOffsetMs({ AGENT_BOARD_E2E: '1', AGENT_BOARD_CLOCK_OFFSET_FILE: env.path('bad') }),
-    ).toBe(0);
+    expect(clockOffsetMs({ RUMO_E2E: '1', RUMO_CLOCK_OFFSET_FILE: env.path('bad') })).toBe(0);
   });
 
   it('moves the clock by the offset', () => {
     env = testRuntime();
     writeFileSync(env.path('offset'), '-600');
     const shifted = now({
-      AGENT_BOARD_E2E: '1',
-      AGENT_BOARD_CLOCK_OFFSET_FILE: env.path('offset'),
+      RUMO_E2E: '1',
+      RUMO_CLOCK_OFFSET_FILE: env.path('offset'),
     });
     expect(Date.now() - shifted).toBeGreaterThan(599_000);
   });
@@ -286,7 +280,7 @@ describe('verdicts and feature gating', () => {
 
   it('adds the upgrade hint to a too-old CLI', () => {
     expect(() => assertCompatible(info({ contract: 2, minClient: { cli: 2, web: 2 } }))).toThrow(
-      /board self-update/,
+      /rumo self-update/,
     );
   });
 

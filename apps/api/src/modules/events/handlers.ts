@@ -1,4 +1,4 @@
-import { EVENT_PING_MS, MACHINE_EVENT_DEBOUNCE_MS } from '@agent-board/contract';
+import { EVENT_PING_MS, MACHINE_EVENT_DEBOUNCE_MS } from '@rumo/contract';
 import { and, eq } from 'drizzle-orm';
 
 import { authenticateClient, authenticateMachine, type Principal } from '../../auth/index.js';

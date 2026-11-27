@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use agent_board_server_core::control::{ApiState, ControlClient, Timeouts};
+use rumo_server_core::control::{ApiState, ControlClient, Timeouts};
 
 type Handler = Box<dyn Fn(&str) -> Option<(u16, String)> + Send + 'static>;
 

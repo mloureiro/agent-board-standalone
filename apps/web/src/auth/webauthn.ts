@@ -5,7 +5,7 @@ import type {
   authPasskeyLoginRoute,
   authPasskeySignupOptionsRoute,
   authPasskeySignupRoute,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 
 type CreationOptions = RouteResponse<typeof authPasskeySignupOptionsRoute>['options'];
 type RequestOptions = RouteResponse<typeof authPasskeyLoginOptionsRoute>['options'];

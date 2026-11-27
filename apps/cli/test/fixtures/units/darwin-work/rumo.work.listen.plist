@@ -3,31 +3,42 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>agent-board.default.watch</string>
+	<string>rumo.work.listen</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/var/tester/.local/bin/board</string>
+		<string>/opt/homebrew/bin/node</string>
+		<string>/opt/board/dist/rumo</string>
 		<string>--profile</string>
-		<string>default</string>
+		<string>work</string>
 		<string>internal</string>
-		<string>watch</string>
+		<string>listen</string>
 	</array>
 	<key>KeepAlive</key>
 	<true/>
 	<key>RunAtLoad</key>
 	<true/>
 	<key>ThrottleInterval</key>
-	<integer>5</integer>
+	<integer>10</integer>
+	<key>ExitTimeOut</key>
+	<integer>130</integer>
 	<key>AbandonProcessGroup</key>
 	<true/>
 	<key>EnvironmentVariables</key>
 	<dict>
 		<key>PATH</key>
 		<string>/var/tester/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+		<key>RUMO_CONFIG_DIR</key>
+		<string>/Volumes/data/board/config</string>
+		<key>RUMO_STATE_DIR</key>
+		<string>/Volumes/data/board/state</string>
+		<key>RUMO_RUN_DIR</key>
+		<string>/Volumes/data/board/run</string>
+		<key>XDG_STATE_HOME</key>
+		<string>/Volumes/data/state</string>
 	</dict>
 	<key>StandardOutPath</key>
-	<string>/var/tester/.local/state/agent-board/profiles/default/logs/launchd.watch.log</string>
+	<string>/Volumes/data/board/state/logs/launchd.listen.log</string>
 	<key>StandardErrorPath</key>
-	<string>/var/tester/.local/state/agent-board/profiles/default/logs/launchd.watch.log</string>
+	<string>/Volumes/data/board/state/logs/launchd.listen.log</string>
 </dict>
 </plist>

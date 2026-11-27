@@ -1,4 +1,4 @@
-import { watchId } from '@agent-board/contract';
+import { watchId } from '@rumo/contract';
 
 import { isPrUrl } from '../domain/rules.js';
 

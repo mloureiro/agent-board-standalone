@@ -1,4 +1,4 @@
-import type { AgentBoardBridge, BridgeServerEntry, BridgeStreamedResponse } from '@agent-board/web';
+import type { RumoBridge, BridgeServerEntry, BridgeStreamedResponse } from '@rumo/web';
 
 export interface TauriChannel<T> {
   onmessage: (message: T) => void;
@@ -16,7 +16,7 @@ interface FetchHead {
   headers: Record<string, string>;
 }
 
-export const createMobileBridge = (core: TauriCore): AgentBoardBridge => {
+export const createMobileBridge = (core: TauriCore): RumoBridge => {
   const call = <T>(command: string, args?: Record<string, unknown>): Promise<T> =>
     core.invoke<T>(command, args);
 

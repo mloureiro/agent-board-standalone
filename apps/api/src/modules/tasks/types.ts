@@ -1,10 +1,4 @@
-import type {
-  NoteAuthor,
-  NoteKind,
-  TaskActor,
-  TaskCreator,
-  TaskStatus,
-} from '@agent-board/contract';
+import type { NoteAuthor, NoteKind, TaskActor, TaskCreator, TaskStatus } from '@rumo/contract';
 
 import type { Clock } from '../../clock.js';
 import type { note, task } from '../../db/schema/index.js';

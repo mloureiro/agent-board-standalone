@@ -1,4 +1,4 @@
-import { publicPairRoute } from '@agent-board/contract';
+import { publicPairRoute } from '@rumo/contract';
 import { Alert, Button, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState, type FormEvent, type ReactNode } from 'react';
 

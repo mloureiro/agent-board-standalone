@@ -43,7 +43,7 @@ export interface BridgeTabReport {
   readonly title: string;
 }
 
-export interface AgentBoardBridge {
+export interface RumoBridge {
   readonly kind: 'client-app' | 'mobile';
   serverFetch(
     serverId: string,
@@ -66,7 +66,7 @@ export interface AgentBoardBridge {
 
 export const BRIDGE_BINDING = '__abBridge';
 export const BRIDGE_INBOX = '__abBridgeIn';
-export const BRIDGE_GLOBAL = 'agentBoardBridge';
+export const BRIDGE_GLOBAL = 'rumoBridge';
 
 export const BRIDGE_OPS = [
   'servers.list',

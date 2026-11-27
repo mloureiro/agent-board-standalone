@@ -1,5 +1,5 @@
-import { answerRoute, dismissQuestionRoute, readNotesRoute } from '@agent-board/contract';
-import { bindings, seal } from '@agent-board/sealing';
+import { answerRoute, dismissQuestionRoute, readNotesRoute } from '@rumo/contract';
+import { bindings, seal } from '@rumo/sealing';
 
 import { CliError, UsageError } from '../../errors.js';
 import { checkedSize } from '../../domain/rules.js';

@@ -1,4 +1,4 @@
-# agent-board-standalone
+# rumo
 
 A Kanban board for headless Claude Code runs, in one repository with six independently installable parts:
 

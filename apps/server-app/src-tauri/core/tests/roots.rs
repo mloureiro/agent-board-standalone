@@ -4,16 +4,14 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use agent_board_server_core::credentials::{
+use rumo_server_core::credentials::{
     ACCOUNTS, CredentialStore, FileStore, PENDING_WORKER_DATA_KEY, PENDING_WORKER_TOKEN,
     SIGNUP_TOKEN, WORKER_DATA_KEY, WORKER_TOKEN,
 };
-use agent_board_server_core::lock::{Acquired, InstanceLock, is_held};
-use agent_board_server_core::opener::{Opener, open_logs_folder, open_settings_file};
-use agent_board_server_core::overrides::{
-    CREDENTIAL_STORE_ENV, E2E_ENV, LAUNCH_AGENTS_ENV, Overrides,
-};
-use agent_board_server_core::paths::{AppPaths, IDENTIFIER, ROOT_ENV, Root};
+use rumo_server_core::lock::{Acquired, InstanceLock, is_held};
+use rumo_server_core::opener::{Opener, open_logs_folder, open_settings_file};
+use rumo_server_core::overrides::{CREDENTIAL_STORE_ENV, E2E_ENV, LAUNCH_AGENTS_ENV, Overrides};
+use rumo_server_core::paths::{AppPaths, IDENTIFIER, ROOT_ENV, Root};
 
 fn env_of<'a>(pairs: &'a [(&'a str, &'a str)]) -> impl Fn(&str) -> Option<String> + 'a {
     move |name| {
@@ -30,17 +28,17 @@ fn server_app_069_without_the_variable_the_root_is_the_default_folder() {
     assert!(root.is_default());
     assert_eq!(
         root.path(),
-        Path::new("/var/folders/ines/Library/Application Support/Agent Board Server")
+        Path::new("/var/folders/ines/Library/Application Support/Rumo Server")
     );
     assert_eq!(root.keychain_service(), IDENTIFIER);
-    assert_eq!(IDENTIFIER, "dev.mloureiro.agent-board-server");
+    assert_eq!(IDENTIFIER, "dev.mloureiro.rumo-server");
     let empty = Root::resolve(Some(OsStr::new("")), Path::new("/var/folders/ines")).unwrap();
     assert!(empty.is_default());
 }
 
 #[test]
 fn server_app_069_the_variable_moves_the_whole_root_and_gives_it_its_own_keychain_service() {
-    assert_eq!(ROOT_ENV, "AGENT_BOARD_SERVER_ROOT");
+    assert_eq!(ROOT_ENV, "RUMO_SERVER_ROOT");
     let root = Root::resolve(
         Some(OsStr::new("/tmp/board-a/")),
         Path::new("/var/folders/ines"),
@@ -80,7 +78,7 @@ fn server_app_069_a_relative_root_is_refused() {
 #[test]
 fn server_app_054_the_default_root_uses_the_bare_service_name_and_any_other_a_suffixed_one() {
     let home = Path::new("/var/folders/ines");
-    let default_path = "/var/folders/ines/Library/Application Support/Agent Board Server";
+    let default_path = "/var/folders/ines/Library/Application Support/Rumo Server";
     let same = Root::resolve(Some(OsStr::new(default_path)), home).unwrap();
     assert_eq!(same.keychain_service(), IDENTIFIER);
     let other = Root::resolve(Some(OsStr::new("/Volumes/x/board")), home).unwrap();
@@ -243,20 +241,20 @@ fn server_app_054_the_file_store_keeps_each_service_apart_and_deletes_idempotent
 
 #[test]
 fn server_app_088_resources_are_found_beside_the_binary_and_inside_the_bundle() {
-    use agent_board_server_core::app::resources_for;
+    use rumo_server_core::app::resources_for;
 
     let scratch = tempfile::tempdir().unwrap();
     let dev = scratch.path().join("target/debug");
     fs::create_dir_all(dev.join("resources")).unwrap();
     assert_eq!(
-        resources_for(&dev.join("agent-board-server")),
+        resources_for(&dev.join("rumo-server")),
         dev.join("resources")
     );
 
-    let app = scratch.path().join("Agent Board Server.app/Contents");
+    let app = scratch.path().join("Rumo Server.app/Contents");
     fs::create_dir_all(app.join("MacOS")).unwrap();
     fs::create_dir_all(app.join("Resources/resources")).unwrap();
-    let found = resources_for(&app.join("MacOS/agent-board-server"));
+    let found = resources_for(&app.join("MacOS/rumo-server"));
     assert_eq!(
         found.canonicalize().unwrap(),
         app.join("Resources/resources").canonicalize().unwrap()
@@ -265,7 +263,7 @@ fn server_app_088_resources_are_found_beside_the_binary_and_inside_the_bundle() 
     let bare = scratch.path().join("bare");
     fs::create_dir_all(&bare).unwrap();
     assert_eq!(
-        resources_for(&bare.join("agent-board-server")),
+        resources_for(&bare.join("rumo-server")),
         bare.join("resources")
     );
 }

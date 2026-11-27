@@ -4,16 +4,16 @@ One document from the release builds to the final walk. Follow it top to bottom 
 The other manuals hold the detailed walks it points to: `server-app.md`, `client-app.md`, `mobile.md`, `migrate.md`.
 
 Nothing in this document reads, changes or deletes the old apps' data. The new server app
-(`Agent Board Server`, `dev.mloureiro.agent-board-server`) and the new client app (`Agent Board Client`,
-`dev.mloureiro.agent-board-client`) install beside the old local server and the old `Agent Board` client. Remove the
+(`Rumo Server`, `dev.mloureiro.rumo-server`) and the new client app (`Rumo Client`,
+`dev.mloureiro.rumo-client`) install beside the old local server and the old `Agent Board` client. Remove the
 old apps yourself, and only once the new ones have passed the walk.
 
 | Placeholder    | Meaning                                                                       |
 | -------------- | ----------------------------------------------------------------------------- |
-| `<repo>`       | a clone of `mloureiro/agent-board-standalone` on `main`                       |
-| `<root>`       | `~/Library/Application Support/Agent Board Server`                            |
-| `<app>`        | `/Applications/Agent Board Server.app`                                        |
-| `<server>`     | `"<app>/Contents/MacOS/agent-board-server"`, the server app's executable      |
+| `<repo>`       | a clone of `mloureiro/rumo` on `main`                                         |
+| `<root>`       | `~/Library/Application Support/Rumo Server`                                   |
+| `<app>`        | `/Applications/Rumo Server.app`                                               |
+| `<server>`     | `"<app>/Contents/MacOS/rumo-server"`, the server app's executable             |
 | `<port>`       | `port` in `<root>/settings.json` (default 4785)                               |
 | `<public-url>` | the https address of the tunnel, for example `https://my-mac.tail1234.ts.net` |
 | `<owner>`      | the board owner's user name                                                   |
@@ -31,44 +31,41 @@ No `*-v1.0.0` tag exists before your walk passes, so the builds come from workfl
 after the last change you want to test has merged:
 
 ```bash
-gh workflow run ci.yml --repo mloureiro/agent-board-standalone --ref main
+gh workflow run ci.yml --repo mloureiro/rumo --ref main
 ```
 
 ```bash
-gh workflow run release-assets.yml --repo mloureiro/agent-board-standalone --ref main -f dry-run=true
+gh workflow run release-assets.yml --repo mloureiro/rumo --ref main -f dry-run=true
 ```
 
 ```bash
-gh workflow run mobile-apk.yml --repo mloureiro/agent-board-standalone --ref main
+gh workflow run mobile-apk.yml --repo mloureiro/rumo --ref main
 ```
 
 When the three runs are green, download each artifact into an empty folder outside `/tmp` (`<run>` is the run id
-`gh run list --repo mloureiro/agent-board-standalone --workflow <file> --branch main --limit 1` prints):
+`gh run list --repo mloureiro/rumo --workflow <file> --branch main --limit 1` prints):
 
 | Part                                           | Workflow             | Artifact                  |
 | ---------------------------------------------- | -------------------- | ------------------------- |
 | Server app (bundles the API, the CLI, the web) | `ci.yml`             | `server-app-adhoc-signed` |
-| Client app (release and Debug)                 | `release-assets.yml` | `agent-board-client-app`  |
-| Android                                        | `mobile-apk.yml`     | `agent-board-mobile-apk`  |
+| Client app (release and Debug)                 | `release-assets.yml` | `rumo-client-app`         |
+| Android                                        | `mobile-apk.yml`     | `rumo-mobile-apk`         |
 
 ```bash
-gh run download <run> --repo mloureiro/agent-board-standalone -n server-app-adhoc-signed
+gh run download <run> --repo mloureiro/rumo -n server-app-adhoc-signed
 ```
 
 Unzip with `ditto -x -k <zip> .`. The apps are ad-hoc signed: remove the quarantine flag with
 `xattr -dr com.apple.quarantine "<name>.app"` before the first open, and expect one Keychain prompt per item after
 every rebuild (choose Always Allow). The CLI for another host is inside the server app at
-`<app>/Contents/Resources/resources/cli/board`.
+`<app>/Contents/Resources/resources/cli/rumo`.
 
 ## 2. Install the server app
 
 1. Quit the old local server from its tray and stop it starting at login (its README says how). Keep its data.
-2. The old local server installs as `/Applications/Agent Board Server.app` too. Check which one is there with
-   `defaults read "/Applications/Agent Board Server.app/Contents/Info" CFBundleIdentifier`: the old one is
-   `dev.mloureiro.agent-board-local-server`. Rename it in Finder, for example to `Agent Board Local Server.app`, so the
-   copy in the next step does not replace it.
-3. Copy `Agent Board Server.app` to `/Applications` and remove the quarantine flag.
-4. If you migrate a board (section 3), do not open the app yet: write `<root>/settings.json` with
+2. Copy `Rumo Server.app` to `/Applications` and remove the quarantine flag. It sits beside the old local server, which
+   is `/Applications/Agent Board Server.app`.
+3. If you migrate a board (section 3), do not open the app yet: write `<root>/settings.json` with
    `{"userName": "<owner>"}` first, where `<owner>` is the name the old board exports. Without a migration, open the
    app now: it creates its settings and opens the Set up window by itself.
 
@@ -78,7 +75,7 @@ port.
 ## 3. Migrate the board
 
 Follow `migrate.md` from "Before you start" to step 12, with the bundled API executable
-`<app>/Contents/Resources/resources/api/agent-board-api` and `--target-db pglite://<root>/data`. The migration runs before the
+`<app>/Contents/Resources/resources/api/rumo-api` and `--target-db pglite://<root>/data`. The migration runs before the
 first start of the app, always first into a scratch copy, and never against the old board in place: for the rehearsal
 set up the old system, create and run a few cards, then migrate a copy of its data folder.
 
@@ -145,7 +142,7 @@ setup used). The window shows `Connected as <machine>`; the tray row reaches `Wo
 A worker on another host uses the CLI from section 1:
 
 ```bash
-board init --url <public-url> --token-file <token file> --data-key-file <data key file>
+rumo init --url <public-url> --token-file <token file> --data-key-file <data key file>
 ```
 
 Create a card in the browser and check that it reaches Done.
@@ -169,7 +166,7 @@ throwaway key and the CLI checks update checksums only.
 
 ## 5. Client app
 
-1. Unzip `Agent-Board-Client.zip`, copy `Agent Board Client.app` to `/Applications`, remove the quarantine flag.
+1. Unzip `Rumo-Client.zip`, copy `Rumo Client.app` to `/Applications`, remove the quarantine flag.
 2. In the server app's tray choose **Open board**: the client app opens and adds the server. With remote access on,
    the client signs in with **Sign in with your browser**: approve the code in a browser where you are signed in.
 3. Walk `client-app.md` in file order. Its acceptance walk ends with a card reaching Done.
@@ -199,7 +196,7 @@ Only after the walk has passed:
 
 1. Keys: run the two scripts of section 4.5, set the two secrets, commit and merge `apps/cli/update-key.pub`.
 2. Tags: push the `*-v1.0.0` tags of every part (each part's CHANGELOG lists its release steps). A CLI release stays a
-   draft until you sign it: `pnpm --filter @agent-board/cli release:sign cli-v1.0.0`.
+   draft until you sign it: `pnpm --filter @rumo/cli release:sign cli-v1.0.0`.
 3. Install the tagged builds over the walked ones the same way as section 1. The data, the passkeys and the worker
    stay.
 4. Remove the old local server and the old `Agent Board` client when you no longer need them.

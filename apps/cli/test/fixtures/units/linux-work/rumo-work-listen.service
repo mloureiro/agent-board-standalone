@@ -1,0 +1,18 @@
+[Unit]
+Description=rumo work listen: dispatch as soon as the board says tasks changed
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Environment="PATH=/srv/tester/.local/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="RUMO_CONFIG_DIR=/srv/rumo work/config"
+Environment="RUMO_STATE_DIR=/srv/rumo work/state"
+Environment="RUMO_RUN_DIR=/srv/rumo work/run"
+ExecStart=/usr/local/bin/node /opt/board/dist/rumo --profile work internal listen
+Restart=always
+RestartSec=10
+KillMode=mixed
+TimeoutStopSec=130
+
+[Install]
+WantedBy=default.target

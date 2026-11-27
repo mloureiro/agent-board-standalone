@@ -1,4 +1,4 @@
-import { CONTRACT, MIN_CLIENT, formatClientHeader, routes } from '@agent-board/contract';
+import { CONTRACT, MIN_CLIENT, formatClientHeader, routes } from '@rumo/contract';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { PART_VERSION } from '../src/version.js';

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
-import { isServerNoteBody, maxEnvelopeLength, SEALED_LIMITS } from '@agent-board/contract';
-import { isBlindIndex, isEnvelope } from '@agent-board/sealing';
+import { isServerNoteBody, maxEnvelopeLength, SEALED_LIMITS } from '@rumo/contract';
+import { isBlindIndex, isEnvelope } from '@rumo/sealing';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

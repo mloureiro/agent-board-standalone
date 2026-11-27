@@ -1,4 +1,4 @@
-import { decodeDataKey, deriveKeys } from '@agent-board/sealing';
+import { decodeDataKey, deriveKeys } from '@rumo/sealing';
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

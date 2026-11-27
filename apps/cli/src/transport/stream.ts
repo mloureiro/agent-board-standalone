@@ -1,4 +1,4 @@
-import { EVENT_PING_MS } from '@agent-board/contract';
+import { EVENT_PING_MS } from '@rumo/contract';
 
 import { CliError } from '../errors.js';
 import type { RequestSigner } from '../profile/signing-key.js';

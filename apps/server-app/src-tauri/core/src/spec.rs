@@ -5,7 +5,7 @@ use crate::paths::AppPaths;
 use crate::redact::MASK;
 use crate::settings::Settings;
 
-pub const API_RELATIVE: &str = "api/agent-board-api";
+pub const API_RELATIVE: &str = "api/rumo-api";
 pub const WEB_RELATIVE: &str = "web";
 pub const LOCAL_HOSTS: &str = "localhost,127.0.0.1,[::1]";
 pub const SIGNUP_TOKEN_ENV: &str = "SIGNUP_TOKEN";

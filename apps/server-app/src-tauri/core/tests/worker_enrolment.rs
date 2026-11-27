@@ -4,20 +4,18 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use agent_board_server_core::cli_run::{ProcessCli, WorkerCli};
-use agent_board_server_core::credential_flow::{
+use common::worker::{Rig, SERVICE, eventually};
+use rumo_server_core::cli_run::{ProcessCli, WorkerCli};
+use rumo_server_core::credential_flow::{
     Pair, normalize_secret, read_pair, render_command_output, write_pair,
 };
-use agent_board_server_core::credentials::{
+use rumo_server_core::credentials::{
     CredentialError, CredentialStore, FileStore, PENDING_WORKER_DATA_KEY, PENDING_WORKER_TOKEN,
     WORKER_DATA_KEY, WORKER_TOKEN,
 };
-use agent_board_server_core::enrol::{
-    EnrolError, EnrolForm, Enrolment, Lifecycle, MASK_CHARACTER, Phase,
-};
-use agent_board_server_core::log_file::{AppLog, LogFile};
-use agent_board_server_core::recipe::{self, Recipe};
-use common::worker::{Rig, SERVICE, eventually};
+use rumo_server_core::enrol::{EnrolError, EnrolForm, Enrolment, Lifecycle, MASK_CHARACTER, Phase};
+use rumo_server_core::log_file::{AppLog, LogFile};
+use rumo_server_core::recipe::{self, Recipe};
 use tempfile::TempDir;
 
 const RECIPE: &str = r#"{"schema":1,"platform":"darwin","path":"/usr/bin:/bin","passedVariables":[],"units":[
@@ -342,35 +340,31 @@ fn server_app_052_a_failing_machine_or_last_step_never_leaves_a_mixed_pair() {
 #[test]
 fn server_app_055_a_pasted_prefix_is_stripped_and_a_multi_line_value_is_refused() {
     assert_eq!(
-        normalize_secret("AGENT_BOARD_TOKEN=abm_x1\n", "AGENT_BOARD_TOKEN", "token"),
+        normalize_secret("RUMO_TOKEN=abm_x1\n", "RUMO_TOKEN", "token"),
         Ok("abm_x1".to_string())
     );
     assert_eq!(
-        normalize_secret("  abm_x1  ", "AGENT_BOARD_TOKEN", "token"),
+        normalize_secret("  abm_x1  ", "RUMO_TOKEN", "token"),
         Ok("abm_x1".to_string())
     );
     assert_eq!(
-        normalize_secret(
-            "AGENT_BOARD_DATA_KEY=abk1_y",
-            "AGENT_BOARD_DATA_KEY",
-            "data key"
-        ),
+        normalize_secret("RUMO_DATA_KEY=abk1_y", "RUMO_DATA_KEY", "data key"),
         Ok("abk1_y".to_string())
     );
     assert_eq!(
-        normalize_secret("AGENT_BOARD_DATA_KEY=abk1_y", "AGENT_BOARD_TOKEN", "token"),
-        Ok("AGENT_BOARD_DATA_KEY=abk1_y".to_string())
+        normalize_secret("RUMO_DATA_KEY=abk1_y", "RUMO_TOKEN", "token"),
+        Ok("RUMO_DATA_KEY=abk1_y".to_string())
     );
     assert!(
         normalize_secret(
-            "AGENT_BOARD_TOKEN=abm_x\nAGENT_BOARD_DATA_KEY=abk1_y",
-            "AGENT_BOARD_TOKEN",
+            "RUMO_TOKEN=abm_x\nRUMO_DATA_KEY=abk1_y",
+            "RUMO_TOKEN",
             "token"
         )
         .is_err()
     );
-    assert!(normalize_secret("abm_a\r\nabm_b", "AGENT_BOARD_TOKEN", "token").is_err());
-    assert!(normalize_secret("AGENT_BOARD_TOKEN=  ", "AGENT_BOARD_TOKEN", "token").is_err());
+    assert!(normalize_secret("abm_a\r\nabm_b", "RUMO_TOKEN", "token").is_err());
+    assert!(normalize_secret("RUMO_TOKEN=  ", "RUMO_TOKEN", "token").is_err());
 }
 
 #[test]
@@ -401,7 +395,7 @@ fn server_app_055_connect_strips_the_prefix_before_anything_is_stored() {
     assert_eq!(bench.account(PENDING_WORKER_TOKEN), None);
 
     enrolment
-        .connect("AGENT_BOARD_TOKEN=abm_ok", "AGENT_BOARD_DATA_KEY=abk1_ok")
+        .connect("RUMO_TOKEN=abm_ok", "RUMO_DATA_KEY=abk1_ok")
         .unwrap();
     assert_eq!(bench.account(WORKER_TOKEN).as_deref(), Some("abm_ok"));
     assert_eq!(bench.account(WORKER_DATA_KEY).as_deref(), Some("abk1_ok"));
@@ -483,7 +477,7 @@ fn server_app_051_the_running_worker_is_served_the_real_pair_never_the_pending_o
     let env = rig.setup.env("/bin");
     let command = env
         .iter()
-        .find(|(name, _)| name == "AGENT_BOARD_CREDENTIALS_COMMAND")
+        .find(|(name, _)| name == "RUMO_CREDENTIALS_COMMAND")
         .map(|(_, value)| PathBuf::from(value))
         .unwrap();
     assert_eq!(command, rig.setup.paths.credentials_script(false));
@@ -492,7 +486,7 @@ fn server_app_051_the_running_worker_is_served_the_real_pair_never_the_pending_o
         .unwrap();
     assert_eq!(
         render_command_output(&served),
-        "AGENT_BOARD_TOKEN=abm_good\nAGENT_BOARD_DATA_KEY=abk1_good\n"
+        "RUMO_TOKEN=abm_good\nRUMO_DATA_KEY=abk1_good\n"
     );
 }
 

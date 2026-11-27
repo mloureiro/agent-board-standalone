@@ -118,5 +118,5 @@ export async function readBrowserKeyStorage(page: Page): Promise<BrowserKeyStora
       db.close();
     }
     return { databases: named, keys };
-  }, 'agent-board:');
+  }, 'rumo:');
 }

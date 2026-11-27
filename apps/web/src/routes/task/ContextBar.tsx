@@ -1,4 +1,4 @@
-import { clientTranscriptContextRoute } from '@agent-board/contract';
+import { clientTranscriptContextRoute } from '@rumo/contract';
 import { Box, Group, Text } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';

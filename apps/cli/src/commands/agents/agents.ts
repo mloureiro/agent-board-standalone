@@ -79,7 +79,7 @@ async function runAdd(
   options: AgentsOptions,
 ): Promise<void> {
   if (given === undefined)
-    throw new UsageError('usage: board agents add <file|-|https-url|example:name>');
+    throw new UsageError('usage: rumo agents add <file|-|https-url|example:name>');
   const source = await loadAgentSource(ctx.rt, given);
   const name = checkedName(options.name ?? source.name);
   const problem = agentProblem(name, source.definition);
@@ -105,7 +105,7 @@ async function runPush(
   options: AgentsOptions,
 ): Promise<void> {
   if (given === undefined)
-    throw new UsageError('usage: board agents push <name|file|-|url|example:name>');
+    throw new UsageError('usage: rumo agents push <name|file|-|url|example:name>');
   const local = isAgentName(given) ? localAgents(ctx.dirs.config)[given] : undefined;
   const source =
     local === undefined
@@ -119,7 +119,7 @@ async function runPush(
   s.require('shared-agents');
   const board = await readBoardAgents(s);
   if (board?.unreadable === true) {
-    throw new UsageError('the board agents cannot be decrypted with this data key; nothing pushed');
+    throw new UsageError('the rumo agents cannot be decrypted with this data key; nothing pushed');
   }
   await writeBoardAgents(s, board, { ...(board?.agents ?? {}), [name]: source.definition });
   confirm(ctx, `pushed agent ${name} to the board; every machine applies it when it next syncs`);
@@ -130,7 +130,7 @@ async function runRemove(
   name: string | undefined,
   options: AgentsOptions,
 ): Promise<void> {
-  if (name === undefined) throw new UsageError('usage: board agents rm [--board] <name>');
+  if (name === undefined) throw new UsageError('usage: rumo agents rm [--board] <name>');
   if (options.board === true) {
     const s = await session(ctx);
     s.require('shared-agents');
@@ -173,9 +173,9 @@ export async function runAgents(
     throw new UsageError('--json and --yaml cannot be combined');
   }
   if (['add', 'push', 'rm'].includes(verb)) {
-    refuseInRun(ctx, `board agents ${verb}`);
-    if (ctx.rt.env.AGENT_BOARD_RESTRICTED === '1') {
-      throw new UsageError(`board agents ${verb} is not available to a restricted agent`);
+    refuseInRun(ctx, `rumo agents ${verb}`);
+    if (ctx.rt.env.RUMO_RESTRICTED === '1') {
+      throw new UsageError(`rumo agents ${verb} is not available to a restricted agent`);
     }
   }
   if (verb === 'add') return runAdd(ctx, rest[0], options);
@@ -193,7 +193,7 @@ export async function runAgents(
       );
       return;
     }
-    if (Object.keys(agents).length === 0) ctx.out('no agents; add one with "board agents add"');
+    if (Object.keys(agents).length === 0) ctx.out('no agents; add one with "rumo agents add"');
     for (const [name, definition] of Object.entries(agents)) {
       ctx.out(`${plain(name)}  ${plain(definition.description)}`);
     }
@@ -201,7 +201,7 @@ export async function runAgents(
   }
   if (verb === 'show' || verb === 'export') {
     const [name] = rest;
-    if (name === undefined) throw new UsageError(`usage: board agents ${verb} <name>`);
+    if (name === undefined) throw new UsageError(`usage: rumo agents ${verb} <name>`);
     const definition = find(ctx, name);
     if (verb === 'show' && options.json !== true && options.yaml !== true) {
       ctx.out(summary(name, definition));

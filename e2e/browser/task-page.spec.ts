@@ -1,5 +1,5 @@
-import type { TaskStatus } from '@agent-board/contract';
-import { bindings } from '@agent-board/sealing';
+import type { TaskStatus } from '@rumo/contract';
+import { bindings } from '@rumo/sealing';
 import { expect, test } from '@playwright/test';
 
 import { setClockOffset } from '../src/harness/clock.js';

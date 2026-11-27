@@ -1,4 +1,4 @@
-import { errorBody } from '@agent-board/contract';
+import { errorBody } from '@rumo/contract';
 
 export class ApiError extends Error {
   readonly status: number;

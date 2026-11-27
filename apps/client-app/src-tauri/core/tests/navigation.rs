@@ -1,5 +1,5 @@
-use agent_board_client_core::layout::{Bounds, TAB_BAR_HEIGHT, page, tab_bar};
-use agent_board_client_core::navigation::{Navigation, app_path, classify};
+use rumo_client_core::layout::{Bounds, TAB_BAR_HEIGHT, page, tab_bar};
+use rumo_client_core::navigation::{Navigation, app_path, classify};
 use url::Url;
 
 fn url(text: &str) -> Url {

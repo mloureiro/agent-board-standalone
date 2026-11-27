@@ -13,7 +13,7 @@ import {
   type Binding,
   type KdfParams,
   type Keys,
-} from '@agent-board/sealing';
+} from '@rumo/sealing';
 
 import type { ServerRef } from '../client/contract-client.js';
 import type { BoardUser } from './users.js';

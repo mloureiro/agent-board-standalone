@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 
-import { deriveKeys, type KdfParams } from '@agent-board/sealing';
+import { deriveKeys, type KdfParams } from '@rumo/sealing';
 import { vi } from 'vitest';
 
 import { App } from '../src/app/index.js';

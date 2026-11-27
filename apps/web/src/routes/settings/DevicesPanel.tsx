@@ -1,8 +1,4 @@
-import {
-  listClientDevicesRoute,
-  revokeClientDeviceRoute,
-  type UiDevice,
-} from '@agent-board/contract';
+import { listClientDevicesRoute, revokeClientDeviceRoute, type UiDevice } from '@rumo/contract';
 import { Button, Group, Modal, Paper, Stack, Text } from '@mantine/core';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';

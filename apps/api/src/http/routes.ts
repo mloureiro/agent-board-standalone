@@ -1,9 +1,4 @@
-import {
-  CLIENT_BODY_LIMIT,
-  MACHINE_BODY_LIMIT,
-  routes,
-  type AnyRoute,
-} from '@agent-board/contract';
+import { CLIENT_BODY_LIMIT, MACHINE_BODY_LIMIT, routes, type AnyRoute } from '@rumo/contract';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import { asWrite } from '../auth/index.js';

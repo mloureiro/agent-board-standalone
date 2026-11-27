@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { call, type RawResult } from '../src/client/contract-client.js';
@@ -406,7 +406,7 @@ describe('user commands with a worker', () => {
     expect(note?.by).toBe(fx.operator.name);
   });
 
-  it('[cli-028] board answer answers an open question with picks, as the user', async () => {
+  it('[cli-028] rumo answer answers an open question with picks, as the user', async () => {
     const fx = await fixture();
     const [alpha, beta] = [uniqueLabel('Alpha'), uniqueLabel('Beta')] as const;
     const asked = await askingTask(fx, [alpha, beta, 'Gamma']);
@@ -423,7 +423,7 @@ describe('user commands with a worker', () => {
     );
   });
 
-  it('[cli-028] board answer answers an open question with Other text', async () => {
+  it('[cli-028] rumo answer answers an open question with Other text', async () => {
     const fx = await fixture();
     const asked = await askingTask(fx, ['Alpha', 'Beta']);
     const other = uniqueLabel('something-else-');
@@ -445,7 +445,7 @@ describe('user commands with a worker', () => {
     expect(thread.some((note) => note.kind === 'answer' && note.answers !== null)).toBe(false);
   });
 
-  it('[cli-028] board answer and dismiss print the grant needed without the grant', async () => {
+  it('[cli-028] rumo answer and dismiss print the grant needed without the grant', async () => {
     const fx = await fixture();
     const asked = await askingTask(fx, ['Alpha', 'Beta']);
     const answer = await fx.plain.cli(['answer', asked.task.id, '--pick', 'Alpha']);
@@ -458,7 +458,7 @@ describe('user commands with a worker', () => {
     expect(detail.task.openQuestion).toBe(true);
   });
 
-  it('[cli-028] board answer and dismiss refuse inside a run before sending', async () => {
+  it('[cli-028] rumo answer and dismiss refuse inside a run before sending', async () => {
     const fx = await fixture();
     const asked = await askingTask(fx, ['Alpha', 'Beta']);
     expect(await refusedInsideRun(fx, ['answer', asked.task.id, '--pick', 'Alpha'])).toBe(2);
@@ -513,7 +513,7 @@ describe('user commands with a worker', () => {
     expect(await refusedInsideRun(fx, ['send', running.id, 'inside'])).toBe(2);
     expect((await threadOf(fx, idle.id)).some((note) => note.text === 'inside')).toBe(false);
     expect(
-      stubStdin(fx).some((line) => line.includes('inside') && !line.includes('#stub: board')),
+      stubStdin(fx).some((line) => line.includes('inside') && !line.includes('#stub: rumo')),
     ).toBe(false);
   });
 
@@ -584,7 +584,7 @@ describe('user commands with a worker', () => {
     expect((await getTask(fx, task.id)).task.status).toBe('running');
   });
 
-  it('[cli-034] board transcript lists the runs of a task', async () => {
+  it('[cli-034] rumo transcript lists the runs of a task', async () => {
     const fx = await fixture();
     const finished = await finishedTask(fx);
     const run = await fx.operator.cli(['transcript', finished.task.id]);
@@ -592,7 +592,7 @@ describe('user commands with a worker', () => {
     expect(run.stdout).toContain(finished.runId);
   });
 
-  it('[cli-034] board transcript with a run id prints its events without tool output', async () => {
+  it('[cli-034] rumo transcript with a run id prints its events without tool output', async () => {
     const fx = await fixture();
     const finished = await finishedTask(fx);
     const run = await fx.operator.cli(['transcript', finished.task.id, '--run', finished.runId]);
@@ -601,7 +601,7 @@ describe('user commands with a worker', () => {
     expect(run.stdout).not.toContain('Grep output');
   });
 
-  it('[cli-034] board transcript prints tool output only with the on-demand option', async () => {
+  it('[cli-034] rumo transcript prints tool output only with the on-demand option', async () => {
     const fx = await fixture();
     const finished = await finishedTask(fx);
     const run = await fx.operator.cli([
@@ -615,7 +615,7 @@ describe('user commands with a worker', () => {
     expect(run.stdout).toContain('Grep output');
   });
 
-  it('[cli-034] board transcript prints the grant needed without the grant and refuses inside a run', async () => {
+  it('[cli-034] rumo transcript prints the grant needed without the grant and refuses inside a run', async () => {
     const fx = await fixture();
     const finished = await finishedTask(fx);
     const denied = await fx.plain.cli(['transcript', finished.task.id]);

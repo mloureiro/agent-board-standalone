@@ -1,5 +1,5 @@
 import { Channel } from '@tauri-apps/api/core';
-import type { BridgeStreamedResponse } from '@agent-board/web';
+import type { BridgeStreamedResponse } from '@rumo/web';
 
 import { call } from './invoke.js';
 

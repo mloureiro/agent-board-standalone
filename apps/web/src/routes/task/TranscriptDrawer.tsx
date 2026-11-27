@@ -3,8 +3,8 @@ import {
   clientTranscriptOutputRoute,
   clientTranscriptRunsRoute,
   type WireTranscriptRun,
-} from '@agent-board/contract';
-import { bindings, open } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, open } from '@rumo/sealing';
 import { Box, Code, Drawer, Stack, Text, UnstyledButton } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';

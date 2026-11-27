@@ -1,4 +1,4 @@
-import { ASSET_HEADERS, DATA_HEADERS, HSTS_HEADER, PAGE_HEADERS } from '@agent-board/contract';
+import { ASSET_HEADERS, DATA_HEADERS, HSTS_HEADER, PAGE_HEADERS } from '@rumo/contract';
 import type { FastifyInstance } from 'fastify';
 
 import type { ServerContext } from '../context.js';

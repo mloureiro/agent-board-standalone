@@ -1,5 +1,5 @@
 import { Alert, Button, Checkbox, Stack, Text, TextInput, Title } from '@mantine/core';
-import type { Keys } from '@agent-board/sealing';
+import type { Keys } from '@rumo/sealing';
 import { useState, type FormEvent, type ReactNode } from 'react';
 
 import { messageOf } from '../auth/messages.js';

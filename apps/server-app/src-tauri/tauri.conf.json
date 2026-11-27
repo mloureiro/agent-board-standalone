@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Agent Board Server",
+  "productName": "Rumo Server",
   "version": "../package.json",
-  "identifier": "dev.mloureiro.agent-board-server",
+  "identifier": "dev.mloureiro.rumo-server",
   "build": {
     "frontendDist": "../frontend"
   },

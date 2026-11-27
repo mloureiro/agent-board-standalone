@@ -109,7 +109,7 @@ test.describe('several servers', () => {
     const databases = await page.evaluate(async () =>
       (await indexedDB.databases()).map((entry) => entry.name),
     );
-    expect(databases).not.toContain(`agent-board:${idB}`);
+    expect(databases).not.toContain(`rumo:${idB}`);
     await page.keyboard.press('Escape');
     await expect(card(page, 'Task on B')).toHaveCount(0);
     await expect(card(page, 'Task on A')).toBeVisible();

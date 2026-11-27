@@ -12,7 +12,7 @@ export async function runRollback(env: UpdateEnv): Promise<void> {
   if (newest === undefined) throw new CliError('there is no backup to go back to');
   const { manifest } = newest;
   if (env.dryRun) {
-    env.out(`DRY restore ${newest.name} (${manifest.kind}, board ${manifest.from})`);
+    env.out(`DRY restore ${newest.name} (${manifest.kind}, rumo ${manifest.from})`);
     return;
   }
   await withUpdateLock(env.dirs.state, () => {
@@ -33,7 +33,7 @@ export async function runRollback(env: UpdateEnv): Promise<void> {
       held: { version: manifest.to, at: now(env.rt.env) },
     }));
     env.out(
-      `restored board ${manifest.from} and its files from ${newest.name}; auto-update is held until you run \`board self-update\``,
+      `restored rumo ${manifest.from} and its files from ${newest.name}; auto-update is held until you run \`rumo self-update\``,
     );
   } else {
     env.out(`restored the files of ${newest.name}`);

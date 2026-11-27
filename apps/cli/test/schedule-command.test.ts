@@ -1,4 +1,4 @@
-import { bindings, blindIndex } from '@agent-board/sealing';
+import { bindings, blindIndex } from '@rumo/sealing';
 import { describe, expect, it } from 'vitest';
 
 import { type ApiStub } from './support/api-stub.js';
@@ -28,7 +28,7 @@ async function onlyTask(stub: ApiStub) {
   return tasks[0] as NonNullable<(typeof tasks)[number]>;
 }
 
-describe('board schedule', () => {
+describe('rumo schedule', () => {
   it('[cli-036] creates a one-off task bound to this machine, the listed directory and the host project', async () => {
     const { stub, cli } = await placed(`machine: test-machine\nproject: ${PROJECT}\n`);
     expect(
@@ -186,7 +186,7 @@ describe('board schedule', () => {
   it('[cli-036] a repeat needs a listed directory of this machine', async () => {
     const { cli } = await rig({ cwd: tmpDir() });
     expect(await cli.run('schedule', '--every', '1h', 'prompt')).toBe(2);
-    expect(cli.stderr()).toContain('board dirs add');
+    expect(cli.stderr()).toContain('rumo dirs add');
   });
 
   it('[cli-036] a key answers created, exists, rescheduled and requeued, and always exits 0', async () => {
@@ -296,7 +296,7 @@ describe('board schedule', () => {
         bindings.input({ origin: { task: child?.id ?? '' }, creator: 'user' }),
         child?.input ?? '',
       ),
-    ).toContain(`board polish ${parent?.id}`);
+    ).toContain(`rumo polish ${parent?.id}`);
   });
 
   it('[cli-036] a prompt ending in --dry-run is refused, and -- starts a prompt with dashes', async () => {
@@ -318,7 +318,7 @@ describe('board schedule', () => {
   });
 
   it('[cli-036] is refused inside a run, prints DRY on a dry run and --json prints the ids', async () => {
-    const inRun = await rig({ env: { AGENT_BOARD_TASK: 'taskAAAA' } });
+    const inRun = await rig({ env: { RUMO_TASK: 'taskAAAA' } });
     expect(await inRun.cli.run('schedule', 'x')).toBe(2);
 
     const { stub, cli } = await placed();

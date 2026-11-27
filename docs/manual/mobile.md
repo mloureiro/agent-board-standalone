@@ -11,7 +11,7 @@ and the notification logic; this walk covers what only a phone shows.
   passkey made (section 4.2). The board then signs everyone in with passkeys (ADR-0013 option a).
 - A way to use that passkey on the phone: a passkey kept in a password manager the phone shares, a security key, or the
   cross-device sign-in (the phone's browser shows a QR code that the Mac or another phone with the passkey scans).
-- The APK: the `agent-board-mobile-apk` artifact of a green `Mobile APK` run, or the file attached to the
+- The APK: the `rumo-mobile-apk` artifact of a green `Mobile APK` run, or the file attached to the
   `mobile-v<version>` release. Debug runs are signed with a throwaway key: uninstall an older build before installing
   a newer one signed with a different key.
 
@@ -26,7 +26,7 @@ Expected: the server answers through the tunnel and asks for sign-in.
 ## 2. Install and add the server
 
 1. Copy the APK to the phone and open it. Allow installs from that source when Android asks.
-2. Open **Agent Board**.
+2. Open **Rumo**.
 3. Open **Servers**, choose **Add server**, enter a name and `<public-url>` and confirm.
 4. Android shows a native confirmation naming the server and its address. Accept it.
 

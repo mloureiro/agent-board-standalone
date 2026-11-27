@@ -1,4 +1,4 @@
-import type { WireSchedule } from '@agent-board/contract';
+import type { WireSchedule } from '@rumo/contract';
 
 import type { ScheduleView } from './types.js';
 

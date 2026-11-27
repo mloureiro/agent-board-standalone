@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
-import { convertLegacyDirsRoute, getLegacyDirsRoute } from '@agent-board/contract';
-import { bindings, open, seal } from '@agent-board/sealing';
+import { convertLegacyDirsRoute, getLegacyDirsRoute } from '@rumo/contract';
+import { bindings, open, seal } from '@rumo/sealing';
 
 import { isRecord } from '../domain/values.js';
 import type { Session } from '../transport/session.js';

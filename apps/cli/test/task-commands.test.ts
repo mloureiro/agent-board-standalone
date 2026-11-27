@@ -1,7 +1,7 @@
 import { mkdirSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 
-import { bindings, seal } from '@agent-board/sealing';
+import { bindings, seal } from '@rumo/sealing';
 import { describe, expect, it } from 'vitest';
 
 import { DEFAULT_PROJECT, type ApiStub } from './support/api-stub.js';
@@ -36,7 +36,7 @@ const questions = (count: number) =>
     })),
   });
 
-describe('board tasks and board show', () => {
+describe('rumo tasks and rumo show', () => {
   it('[cli-013] lists the open tasks per status with id, priority and title, and filters by status and project', async () => {
     const { stub, cli } = await rig();
     await stub.addTask({ id: 'taskAAAA', title: 'alpha', status: 'backlog' });
@@ -137,13 +137,13 @@ describe('board tasks and board show', () => {
     expect(await cli.run('show', `${stub.url}/t/abcdef0123`)).toBe(0);
     expect(cli.stdout()).toContain('# one');
 
-    const inRun = await rig({ env: { AGENT_BOARD_TASK: 'abcdef0123' } });
+    const inRun = await rig({ env: { RUMO_TASK: 'abcdef0123' } });
     await inRun.stub.addTask({ id: 'abcdef0123', title: 'one' });
     expect(await inRun.cli.run('show', 'abcd')).toBe(2);
   });
 });
 
-describe('board attach', () => {
+describe('rumo attach', () => {
   async function attachable() {
     const home = tmpDir();
     const made = await rig({
@@ -210,12 +210,12 @@ describe('board attach', () => {
     expect(cli.stdout()).toMatch(/^DRY claude --resume /);
     expect(cli.test.spawnCalls).toHaveLength(0);
 
-    const inRun = await rig({ env: { AGENT_BOARD_TASK: 'taskAAAA' } });
+    const inRun = await rig({ env: { RUMO_TASK: 'taskAAAA' } });
     expect(await inRun.cli.run('attach', 'taskAAAA')).toBe(2);
   });
 });
 
-describe('board comment', () => {
+describe('rumo comment', () => {
   it('[cli-015] adds the words, stdin and a file as notes of the agent', async () => {
     const { stub, cli } = await rig({ stdin: 'from stdin\n' });
     await stub.addTask({ id: 'taskAAAA' });
@@ -278,7 +278,7 @@ describe('board comment', () => {
   });
 });
 
-describe('board pr', () => {
+describe('rumo pr', () => {
   const url = 'https://github.com/acme/app/pull/17741';
 
   it('[cli-016] reports a pull request once and removes it again', async () => {
@@ -305,7 +305,7 @@ describe('board pr', () => {
   });
 });
 
-describe('board move', () => {
+describe('rumo move', () => {
   it('[cli-017] moves a task and confirms with its link', async () => {
     const { stub, cli } = await rig();
     await stub.addTask({ id: 'taskAAAA', status: 'backlog' });
@@ -329,7 +329,7 @@ describe('board move', () => {
     await stub.addTask({ id: 'taskAAAA', status: 'backlog' });
     expect(await cli.run('move', 'taskAAAA', 'waiting')).toBe(2);
     expect(stub.commands()).not.toContain('update-task');
-    const inRun = await rig({ env: { AGENT_BOARD_TASK: 'taskAAAA' } });
+    const inRun = await rig({ env: { RUMO_TASK: 'taskAAAA' } });
     await inRun.stub.addTask({ id: 'taskAAAA', status: 'running' });
     expect(await inRun.cli.run('move', '--expect', 'running', 'taskAAAA', 'needs-me')).toBe(2);
   });
@@ -342,7 +342,7 @@ describe('board move', () => {
   });
 
   it('[cli-017] a run that moves its own task to needs-me drops the watches of the task', async () => {
-    const { stub, cli } = await rig({ env: { AGENT_BOARD_TASK: 'taskAAAA' } });
+    const { stub, cli } = await rig({ env: { RUMO_TASK: 'taskAAAA' } });
     await stub.addTask({ id: 'taskAAAA', status: 'running', machine: 'test-machine' });
     expect(await cli.run('watch', 'taskAAAA', '--in', '30m', '--name', 'later')).toBe(0);
     expect(await cli.run('watches', 'taskAAAA')).toBe(0);
@@ -355,7 +355,7 @@ describe('board move', () => {
   });
 });
 
-describe('board ask', () => {
+describe('rumo ask', () => {
   it.each([1, 4])('[cli-018] posts %i questions and moves the task to needs-me', async (count) => {
     const { stub, cli } = await rig();
     await stub.addTask({ id: 'taskAAAA', status: 'running' });
@@ -412,10 +412,10 @@ describe('board ask', () => {
   });
 });
 
-describe('board wait', () => {
+describe('rumo wait', () => {
   it('[cli-019] parks a running task until a time', async () => {
     const { stub, cli } = await rig({
-      env: { AGENT_BOARD_TASK: 'taskAAAA', AGENT_BOARD_RUN: 'r'.repeat(20) },
+      env: { RUMO_TASK: 'taskAAAA', RUMO_RUN: 'r'.repeat(20) },
     });
     await stub.addTask({ id: 'taskAAAA', status: 'running' });
     expect(await cli.run('wait', 'taskAAAA', '--in', '20m', '--reason', 'the deploy settles')).toBe(
@@ -458,7 +458,7 @@ describe('board wait', () => {
     expect(await cli.run('wait', 'taskAAAA', '--check', 'true', '--every', '30s')).toBe(2);
     expect(await cli.run('wait', 'taskAAAA', '--in', '8d')).toBe(2);
     expect(await cli.run('wait', 'taskAAAA', '--in', '1h', '--every', '2m')).toBe(2);
-    const restricted = await rig({ env: { AGENT_BOARD_RESTRICTED: '1' } });
+    const restricted = await rig({ env: { RUMO_RESTRICTED: '1' } });
     await restricted.stub.addTask({ id: 'taskAAAA', status: 'running', machine: 'test-machine' });
     expect(await restricted.cli.run('wait', 'taskAAAA', '--check', 'true')).toBe(2);
     expect(await restricted.cli.run('wait', 'taskAAAA', '--in', '5m')).toBe(0);
@@ -474,7 +474,7 @@ describe('board wait', () => {
   });
 });
 
-describe('board add', () => {
+describe('rumo add', () => {
   const projectA = uuid(10);
   const projectB = uuid(11);
 
@@ -484,7 +484,7 @@ describe('board add', () => {
     const elsewhere = tmpDir();
     const made = await rig({
       cwd: first,
-      env: { AGENT_BOARD_TASK: 'parentAA', AGENT_BOARD_START_DIR: first },
+      env: { RUMO_TASK: 'parentAA', RUMO_START_DIR: first },
       config: [
         'machine: test-machine',
         'dirs:',
@@ -584,7 +584,7 @@ describe('board add', () => {
     const { stub, cli, elsewhere } = await withDirectories();
     const outside = await rig({
       cwd: elsewhere,
-      env: { AGENT_BOARD_START_DIR: elsewhere },
+      env: { RUMO_START_DIR: elsewhere },
       config: `machine: test-machine\ndirs:\n  - id: ${uuid(1)}\n    path: ${tmpDir()}\n`,
     });
     expect(await outside.cli.run('add', '--title', 't', '--file', tmpFile('b'))).toBe(2);
@@ -598,7 +598,7 @@ describe('board add', () => {
     const { stub, cli, first, elsewhere } = await withDirectories();
     const moved = await rig({
       cwd: elsewhere,
-      env: { AGENT_BOARD_START_DIR: first },
+      env: { RUMO_START_DIR: first },
       config: `machine: test-machine\ndirs:\n  - id: ${uuid(1)}\n    path: ${first}\n`,
     });
     expect(await moved.cli.run('add', '--title', 't', '--file', tmpFile('b'))).toBe(0);
@@ -670,9 +670,9 @@ describe('board add', () => {
   });
 });
 
-describe('board polish', () => {
+describe('rumo polish', () => {
   it('[cli-025] posts a polish note on the task of the run and changes nothing', async () => {
-    const { stub, cli } = await rig({ env: { AGENT_BOARD_TASK: 'runTask1' } });
+    const { stub, cli } = await rig({ env: { RUMO_TASK: 'runTask1' } });
     await stub.addTask({ id: 'runTask1', status: 'running' });
     await stub.addTask({ id: 'target01', status: 'backlog', title: 'rough' });
     const before = stub.tasks.get('target01');
@@ -693,7 +693,7 @@ describe('board polish', () => {
     const { stub, cli } = await rig();
     await stub.addTask({ id: 'target01', status: 'backlog' });
     expect(await cli.run('polish', 'target01', '--title', 't', '--file', tmpFile('p'))).toBe(2);
-    const inRun = await rig({ env: { AGENT_BOARD_TASK: 'runTask1' } });
+    const inRun = await rig({ env: { RUMO_TASK: 'runTask1' } });
     await inRun.stub.addTask({ id: 'runTask1', status: 'running' });
     expect(await inRun.cli.run('polish', 'runTask1', '--title', 't', '--file', tmpFile('p'))).toBe(
       2,
@@ -707,7 +707,7 @@ describe('board polish', () => {
   });
 });
 
-describe('board task set and unset', () => {
+describe('rumo task set and unset', () => {
   async function settled() {
     const dir = tmpDir();
     const other = tmpDir();
@@ -859,14 +859,14 @@ describe('board task set and unset', () => {
     expect(await cli.run('task', 'taskAAAA', 'unset', 'priority')).toBe(2);
     expect(await cli.run('task', 'taskAAAA', '--title', 'x')).toBe(2);
     expect(await cli.run('task', 'taskAAAA', 'rename')).toBe(2);
-    const inRun = await rig({ env: { AGENT_BOARD_TASK: 'taskAAAA' } });
+    const inRun = await rig({ env: { RUMO_TASK: 'taskAAAA' } });
     await inRun.stub.addTask({ id: 'taskAAAA', status: 'running' });
     expect(await inRun.cli.run('task', 'taskAAAA', 'set', 'priority', 'high')).toBe(2);
     expect(await inRun.cli.run('task', 'taskAAAA')).toBe(0);
   });
 });
 
-describe('board delay', () => {
+describe('rumo delay', () => {
   it('[cli-027] delays a Todo task with --in and --at and makes it due with --now', async () => {
     const { stub, cli } = await rig();
     await stub.addTask({ id: 'taskAAAA', status: 'todo' });

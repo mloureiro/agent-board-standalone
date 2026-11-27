@@ -4,15 +4,15 @@ use std::fs;
 use std::os::unix::fs::symlink;
 use std::path::Path;
 
-use agent_board_server_core::cli::{Invocation, parse};
-use agent_board_server_core::credentials::{ACCOUNTS, CredentialStore, FileStore, WORKER_TOKEN};
-use agent_board_server_core::lock::{Acquired, InstanceLock};
-use agent_board_server_core::login_item::{self, Build, LABEL, plist_path};
-use agent_board_server_core::paths::Root;
-use agent_board_server_core::uninstall::{
+use common::{Bed, RecordingLaunchctl, exists};
+use rumo_server_core::cli::{Invocation, parse};
+use rumo_server_core::credentials::{ACCOUNTS, CredentialStore, FileStore, WORKER_TOKEN};
+use rumo_server_core::lock::{Acquired, InstanceLock};
+use rumo_server_core::login_item::{self, Build, LABEL, plist_path};
+use rumo_server_core::paths::Root;
+use rumo_server_core::uninstall::{
     Environment, QUIT_FIRST, RootState, covers_home, inspect_root, run,
 };
-use common::{Bed, RecordingLaunchctl, exists};
 
 struct Outcome {
     code: i32,
@@ -71,7 +71,7 @@ fn server_app_064_uninstall_removes_the_login_item_and_every_keychain_item_and_k
     fill_store(&store, &root);
     store
         .set(
-            "dev.mloureiro.agent-board-server.root:/elsewhere",
+            "dev.mloureiro.rumo-server.root:/elsewhere",
             WORKER_TOKEN,
             "keep",
         )
@@ -91,10 +91,7 @@ fn server_app_064_uninstall_removes_the_login_item_and_every_keychain_item_and_k
     assert!(store_is_empty_for(&store, &root));
     assert_eq!(
         store
-            .get(
-                "dev.mloureiro.agent-board-server.root:/elsewhere",
-                WORKER_TOKEN
-            )
+            .get("dev.mloureiro.rumo-server.root:/elsewhere", WORKER_TOKEN)
             .unwrap()
             .as_deref(),
         Some("keep")
@@ -341,7 +338,7 @@ fn server_app_065_a_folder_inside_home_is_accepted_and_the_default_root_sits_the
 #[test]
 fn server_app_065_the_firmlinked_alias_of_a_folder_that_holds_home_is_refused() {
     let Some(home) =
-        agent_board_server_core::account::home_dir().filter(|home| home.starts_with("/Users"))
+        rumo_server_core::account::home_dir().filter(|home| home.starts_with("/Users"))
     else {
         return;
     };

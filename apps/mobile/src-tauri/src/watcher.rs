@@ -1,5 +1,5 @@
 use crate::commands::AppBridge;
-use agent_board_bridge_core::attention::{AttentionState, POLL_SECONDS, notification_text};
+use rumo_bridge_core::attention::{AttentionState, POLL_SECONDS, notification_text};
 use std::collections::HashSet;
 use std::time::Duration;
 use tauri::{AppHandle, Manager};

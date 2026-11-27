@@ -1,4 +1,4 @@
-use agent_board_client_core::links::{Link, Trigger, classify};
+use rumo_client_core::links::{Link, Trigger, classify};
 use std::process::{Command, Stdio};
 use tauri::webview::{NewWindowFeatures, NewWindowResponse};
 use tauri::{Runtime, Url};
