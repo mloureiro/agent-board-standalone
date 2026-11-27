@@ -1,3 +1,5 @@
+import { LEGACY_SERVER_NOTE_BODY, isServerNoteBody } from '@agent-board/contract';
+
 import type { SourceRow } from '../source/reader.js';
 import { defaultProjectId, flag, integer, iso, list, requiredIso, text } from './values.js';
 
@@ -111,12 +113,19 @@ export const taskPrRow = (row: SourceRow): ExportRow => ({
   createdAt: requiredIso(row, 'created_at'),
 });
 
+const noteBody = (row: SourceRow): string | null => {
+  const body = text(row.body);
+  return row.author === 'server' && (body === null || !isServerNoteBody(body))
+    ? LEGACY_SERVER_NOTE_BODY
+    : body;
+};
+
 export const noteRow = (row: SourceRow): ExportRow => ({
   id: text(row.id),
   taskId: text(row.task_id),
   author: text(row.author),
-  kind: text(row.kind),
-  body: text(row.body),
+  kind: row.author === 'server' ? 'event' : text(row.kind),
+  body: noteBody(row),
   preview: text(row.preview),
   suggestion: text(row.suggestion),
   questions: text(row.questions),
