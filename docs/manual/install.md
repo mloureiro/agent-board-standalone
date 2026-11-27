@@ -63,8 +63,12 @@ every rebuild (choose Always Allow). The CLI for another host is inside the serv
 ## 2. Install the server app
 
 1. Quit the old local server from its tray and stop it starting at login (its README says how). Keep its data.
-2. Copy `Agent Board Server.app` to `/Applications` and remove the quarantine flag.
-3. If you migrate a board (section 3), do not open the app yet: write `<root>/settings.json` with
+2. The old local server installs as `/Applications/Agent Board Server.app` too. Check which one is there with
+   `defaults read "/Applications/Agent Board Server.app/Contents/Info" CFBundleIdentifier`: the old one is
+   `dev.mloureiro.agent-board-local-server`. Rename it in Finder, for example to `Agent Board Local Server.app`, so the
+   copy in the next step does not replace it.
+3. Copy `Agent Board Server.app` to `/Applications` and remove the quarantine flag.
+4. If you migrate a board (section 3), do not open the app yet: write `<root>/settings.json` with
    `{"userName": "<owner>"}` first, where `<owner>` is the name the old board exports. Without a migration, open the
    app now: it creates its settings and opens the Set up window by itself.
 
