@@ -4,6 +4,8 @@
 
 The `lean-task-list` feature marks a server that leaves the sealed `input` out of `client.tasks.list` and `machine.list-tasks` items when the request sets `withoutInput`; `client.tasks.get` and `machine.get-task` still serve the prompt. `input` is optional on list items, so a 1.2 client reads the lists of a 1.1 server, and a 1.1 client, which never sets `withoutInput`, gets the prompts from a 1.2 server as before. A client sets `withoutInput` only when the server advertises the feature, because a 1.1 server refuses the unknown field. The contract level stays 1.
 
+A server note is only ever an event whose body is one of the texts the API writes: `SERVER_NOTE_PATTERN` lists them and `isServerNoteBody` checks one. `BoardExport` refuses a server note that has any other body or a kind other than `event`, so an import file can no longer carry free plaintext in a note. `LEGACY_SERVER_NOTE_BODY` is the fixed text a migration writes in place of an old server note it cannot express. The contract level stays 1.
+
 ## 1.1.0
 
 The `context-usage` feature marks a server that fills `context` on task list items with the newest run's latest context reading, and a worker that reports it. A server without the feature has no readings and the browser client shows no context line or bar. The contract level stays 1.

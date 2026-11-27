@@ -47,6 +47,9 @@ only, since they hold machine token hashes and wrapped key slots. Timestamps are
 - Task `workdir` becomes `legacyDirectory`, `home_workdir` becomes `legacyHomeWorkdir` and a schedule's `workdir`
   becomes `legacyDirectory`. A machine's sealed `dirs` document becomes its `legacy_dirs` record as stored.
 - A note is `queued` when the old note was `queued` or `pending`.
+- A server note is written as an `event` whose body is one of the texts the API itself writes. An old server note
+  with any other text, which was plaintext in the old board and cannot be sealed without the owner's key, keeps its
+  row and time but gets the body `Recorded before this board was migrated.`
 - `shared_agents`, `link_rules` and `title_rules` become documents of kind `agents`, `links` and `titles`. The old
   board had no settings and no device keys, so none are written.
 - Values the old schema lacks (`source`, `effort`, `icon`, `labels`, machine feeds) are written as null.

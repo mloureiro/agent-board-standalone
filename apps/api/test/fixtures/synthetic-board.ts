@@ -262,7 +262,7 @@ export const syntheticRecords = (options: SyntheticOptions): BoardExportRecord[]
       taskId: 't-parent',
       author: 'server',
       kind: 'event',
-      body: 'x'.repeat(3000),
+      body: 'Taken back from ' + 'm'.repeat(256) + ': no sign of life for 20 minutes.',
       preview: null,
       suggestion: null,
       questions: null,

@@ -1,3 +1,4 @@
+import { SERVER_NOTE_PATTERN } from '@agent-board/contract';
 import { sql } from 'drizzle-orm';
 import {
   boolean,
@@ -28,8 +29,6 @@ import { owner } from './owner.js';
 import { project } from './projects.js';
 import { envelopeCondition, sealedChecks, tenantPolicy } from './tenancy.js';
 import { maxLengthOf } from '../sealed-columns.js';
-
-const SERVER_NOTE_MAX_LENGTH = maxLengthOf('note.body');
 
 export const task = pgTable(
   'task',
@@ -159,7 +158,7 @@ export const note = pgTable(
     primaryKey({ columns: [t.owner, t.id] }),
     check(
       'note_body_sealed',
-      sql`(${t.author} = 'server' and ${t.kind} = 'event' and char_length(${t.body}) between 1 and ${sql.raw(String(SERVER_NOTE_MAX_LENGTH))}) or (${t.author} <> 'server' and ${envelopeCondition(t.body, maxLengthOf('note.body'))})`,
+      sql`(${t.author} = 'server' and ${t.kind} = 'event' and ${t.body} ~ ${sql.raw(`'${SERVER_NOTE_PATTERN}'`)}) or (${t.author} <> 'server' and ${envelopeCondition(t.body, maxLengthOf('note.body'))})`,
     ),
     check(
       'note_suggestion_agent_comment',

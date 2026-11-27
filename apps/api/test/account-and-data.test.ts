@@ -128,7 +128,7 @@ describe.each(TARGETS)('board import on $name', (target) => {
         expect(parent?.watchStops).toEqual(WATCH_STOPS);
         expect(parent?.title).toBe(envelope('title-t-parent'));
         const [server] = await tx.select().from(schema.note).where(eq(schema.note.id, 'n-server'));
-        expect(server?.body).toHaveLength(3000);
+        expect(server?.body).toHaveLength(305);
         const events = await tx.select().from(schema.transcriptEvent);
         expect(events.find((event) => event.seq === 0)).toMatchObject({
           output: null,
