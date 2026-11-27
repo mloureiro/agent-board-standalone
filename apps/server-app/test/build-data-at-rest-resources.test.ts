@@ -9,7 +9,7 @@ import { readSignature, signingProblems, verifyStrict } from '../scripts/signing
 import { agentsOf, bundledApp, missing, startApp, treeOf, type RealApp } from './real.js';
 
 const MARKER = 'zq7-marker-Ωmega-4172';
-const API_IDLE_RSS_KB = 1_700_000;
+const API_IDLE_RSS_KB = 390_625;
 const WORKER_TREE_IDLE_RSS_KB = 250_000;
 const IDLE_SECONDS = 10;
 const bundledResources = join(BUNDLED_APP, 'Contents', 'Resources', 'resources');
