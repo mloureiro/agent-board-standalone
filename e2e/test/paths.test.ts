@@ -2,17 +2,35 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { missingParts, REPO_ROOT } from '../src/harness/paths.js';
+import { locatePart, missingParts, REPO_ROOT } from '../src/harness/paths.js';
 
 const present = path.join(REPO_ROOT, 'e2e', 'package.json');
 
 describe('missingParts', () => {
-  it('reports each unbuilt part with its default entry point', () => {
-    expect(missingParts(['api', 'cli', 'web', 'migrate'], {})).toEqual([
-      { part: 'api', path: 'apps/api/dist/main.js' },
-      { part: 'cli', path: 'apps/cli/dist/board' },
-      { part: 'web', path: 'apps/web/dist' },
-      { part: 'migrate', path: 'apps/migrate/dist/main.js' },
+  it('defaults each part to its build output', () => {
+    expect(
+      (['api', 'cli', 'web', 'migrate'] as const).map((part) => locatePart(part, {}).path),
+    ).toEqual([
+      'apps/api/dist/main.js',
+      'apps/cli/dist/board',
+      'apps/web/dist',
+      'apps/migrate/dist/main.js',
+    ]);
+  });
+
+  it('reports each unbuilt part with the path it looked at', () => {
+    expect(
+      missingParts(['api', 'cli', 'web', 'migrate'], {
+        AGENT_BOARD_API_BIN: 'unbuilt/api',
+        AGENT_BOARD_CLI_BIN: 'unbuilt/board',
+        AGENT_BOARD_WEB_ROOT: 'unbuilt/web',
+        AGENT_BOARD_MIGRATE_BIN: 'unbuilt/migrate',
+      }),
+    ).toEqual([
+      { part: 'api', path: 'unbuilt/api' },
+      { part: 'cli', path: 'unbuilt/board' },
+      { part: 'web', path: 'unbuilt/web' },
+      { part: 'migrate', path: 'unbuilt/migrate' },
     ]);
   });
 
