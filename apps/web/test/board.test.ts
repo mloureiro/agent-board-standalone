@@ -3,7 +3,7 @@ import { open, seal } from '@agent-board/sealing';
 import { bindings } from '@agent-board/sealing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { POLL_MS } from '../src/routes/board/board-data.js';
+import { LEAN_LIST_FEATURE, POLL_MS } from '../src/routes/board/board-data.js';
 import { media } from './setup.js';
 import {
   BoardWorld,
@@ -16,6 +16,7 @@ import {
 } from './board-world.js';
 import { cardNamed, cardsIn, columnNamed, dragCard, installBoardLayout } from './board-drag.js';
 import { renderApp } from './render.js';
+import { TaskWorld } from './task-world.js';
 
 const COLUMN = {
   backlog: /^backlog/i,
@@ -429,6 +430,24 @@ describe('proposals', () => {
     await proposal();
     openBoard();
     await findTitle('Proposed work');
+
+    await dragCard(cardNamed('Proposed work'), columnNamed(COLUMN.todo));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('textbox', { name: 'Prompt' })).toHaveValue(
+      'Do the proposed thing',
+    );
+    expect(world.moves).toHaveLength(0);
+  });
+
+  it('[web-030] on a server that lists tasks without prompts, the board asks for lean lists and fetches the proposal prompt on drop', async () => {
+    world = new TaskWorld({ session: 'not-required' });
+    world.features = [LEAN_LIST_FEATURE];
+    await proposal();
+    openBoard();
+    await findTitle('Proposed work');
+    expect(world.listQueries.length).toBeGreaterThan(0);
+    expect(world.listQueries.every((query) => query.includes('withoutInput=true'))).toBe(true);
 
     await dragCard(cardNamed('Proposed work'), columnNamed(COLUMN.todo));
 

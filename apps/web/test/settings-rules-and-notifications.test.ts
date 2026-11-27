@@ -275,6 +275,7 @@ describe('Settings › Notifications', () => {
   });
 
   it('[web-073] a task newly in Needs me fires a notification while the window is not in front', async () => {
+    world.eventsStatus = 503;
     await world.setDocument('settings', JSON.stringify({ notifications: { desktop: true } }), 1);
     const { shown } = grant('granted');
     vi.spyOn(document, 'hasFocus').mockReturnValue(false);
@@ -296,7 +297,8 @@ describe('Settings › Notifications', () => {
     expect(shown).toHaveLength(1);
   }, 20_000);
 
-  it('[web-073] polls the attention list and reads each new task title once when the server offers it', async () => {
+  it('[web-073] polls the attention list while the event stream is down and reads each new task title once', async () => {
+    world.eventsStatus = 503;
     world.features = [...world.features, 'attention'];
     await world.setDocument('settings', JSON.stringify({ notifications: { desktop: true } }), 1);
     const { shown } = grant('granted');
@@ -322,6 +324,31 @@ describe('Settings › Notifications', () => {
     expect(titleReads).toHaveLength(1);
     expect(shown).toHaveLength(1);
     expect(world.taskLists.slice(listsBefore).every((url) => url.includes('closed='))).toBe(true);
+  }, 20_000);
+
+  it('[web-073] stops polling the attention list while the event stream is open and reads it again on a change', async () => {
+    world.features = [...world.features, 'attention'];
+    await world.setDocument('settings', JSON.stringify({ notifications: { desktop: true } }), 1);
+    const { shown } = grant('granted');
+    vi.spyOn(document, 'hasFocus').mockReturnValue(false);
+    render('/closed');
+    await screen.findByRole('heading', { name: 'Closed' });
+    await waitFor(() => expect(world.attentionPolls).toBeGreaterThan(0));
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const settled = world.attentionPolls;
+
+    await world.seedTask({
+      id: '88888888-8888-4888-8888-888888888884',
+      title: 'Answer me',
+      status: 'needs-me',
+    });
+    await new Promise((resolve) => setTimeout(resolve, 3500));
+    expect(world.attentionPolls).toBe(settled);
+    expect(shown).toEqual([]);
+
+    world.push('changed');
+    await waitFor(() => expect(shown).toHaveLength(1));
+    expect(shown[0]?.title).toBe('Answer me');
   }, 20_000);
 
   const silentCase = async (options: {

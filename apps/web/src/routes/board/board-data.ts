@@ -1,5 +1,6 @@
 import {
   doneClientTaskRoute,
+  getClientTaskRoute,
   listClientMachinesRoute,
   listClientTasksRoute,
   moveClientTaskRoute,
@@ -7,14 +8,14 @@ import {
 } from '@agent-board/contract';
 import { bindings, open, type Keys } from '@agent-board/sealing';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { callRoute } from '../../auth/api.js';
 import { useKeys } from '../../keys/index.js';
 import { useServers } from '../../servers/index.js';
 import type { ServerClient } from '../../transport/client.js';
 import { watchEvents } from '../../transport/index.js';
-import { decryptCard, type BoardCard } from './card-model.js';
+import { decryptCard, openPrompt, type BoardCard, type OpenedPrompt } from './card-model.js';
 import { CONTEXT_FEATURE } from './context-model.js';
 import { applyMove, type MoveRequest } from './columns.js';
 import { fetchProjectNames } from '../../projects/fetch-projects.js';
@@ -24,6 +25,10 @@ import { parseTime } from './format.js';
 export const POLL_MS = 5_000;
 export const MACHINES_POLL_MS = 15_000;
 export const EVENTS_PATH = '/api/client/events';
+export const LEAN_LIST_FEATURE = 'lean-task-list';
+
+export const leanList = (features: readonly string[]): { withoutInput?: 'true' } =>
+  features.includes(LEAN_LIST_FEATURE) ? { withoutInput: 'true' } : {};
 
 export interface BoardMachine {
   readonly name: string;
@@ -141,7 +146,7 @@ export function useBoardData(): BoardData | null {
     queryFn: async (): Promise<BoardCard[]> => {
       const client = clientRef.current;
       if (client === null || keys === null) return [];
-      const answer = await callRoute(client, listClientTasksRoute, {});
+      const answer = await callRoute(client, listClientTasksRoute, leanList(features));
       const withContext = features.includes(CONTEXT_FEATURE);
       return Promise.all(
         answer.tasks.map(async (task) => ({
@@ -231,6 +236,24 @@ export function useBoardData(): BoardData | null {
 export interface BoardSource {
   readonly serverId: string;
   readonly keys: Keys;
+}
+
+export function usePromptOf(): (
+  source: BoardSource,
+  card: BoardCard,
+) => Promise<OpenedPrompt | null> {
+  const { clientOf } = useServers();
+  return useCallback(
+    async (source, card) => {
+      const { input } = card.task;
+      if (input !== undefined) return openPrompt(source.keys, { ...card.task, input });
+      const client = clientOf(source.serverId);
+      if (client === null) return null;
+      const detail = await callRoute(client, getClientTaskRoute, { id: card.task.id });
+      return openPrompt(source.keys, detail.task);
+    },
+    [clientOf],
+  );
 }
 
 export interface BoardActions {

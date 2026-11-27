@@ -2,11 +2,10 @@ import { Alert, Box, Stack, Text } from '@mantine/core';
 import type { TaskStatus } from '@agent-board/contract';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 
-import { useBoardActions, type BoardData } from './board-data.js';
+import { useBoardActions, usePromptOf, type BoardData } from './board-data.js';
 import type { CardEditValue } from './CardEditDialog.js';
 import {
   cardUid,
-  openPrompt,
   sealIcon,
   sealLabels,
   sealPromptAsUser,
@@ -56,6 +55,7 @@ export function Board(props: {
 }): ReactNode {
   const { sources, only } = props;
   const actions = useBoardActions();
+  const promptOf = usePromptOf();
   const now = useNow();
   const [pending, setPending] = useState<PendingStart | null>(null);
   const several = props.showServers === true || sources.length > 1;
@@ -109,10 +109,7 @@ export function Board(props: {
         ...(afterId === undefined ? {} : { afterId }),
       };
       if (card.task.proposed && card.task.status === 'backlog' && target.status === 'todo') {
-        const [prompt] = await Promise.all([
-          openPrompt(source.keys, card.task),
-          selectionReleased(),
-        ]);
+        const [prompt] = await Promise.all([promptOf(source, card), selectionReleased()]);
         if (prompt !== null) {
           setPending({ card, move, prompt, source });
           return;
@@ -120,7 +117,7 @@ export function Board(props: {
       }
       await actions.move(source, move);
     },
-    [cards, groups, sourceOf, actions],
+    [cards, groups, sourceOf, actions, promptOf],
   );
 
   const editCard = useCallback(
