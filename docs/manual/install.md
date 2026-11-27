@@ -58,7 +58,7 @@ gh run download <run> --repo mloureiro/agent-board-standalone -n server-app-adho
 Unzip with `ditto -x -k <zip> .`. The apps are ad-hoc signed: remove the quarantine flag with
 `xattr -dr com.apple.quarantine "<name>.app"` before the first open, and expect one Keychain prompt per item after
 every rebuild (choose Always Allow). The CLI for another host is inside the server app at
-`<app>/Contents/Resources/cli/board`.
+`<app>/Contents/Resources/resources/cli/board`.
 
 ## 2. Install the server app
 
@@ -74,7 +74,7 @@ port.
 ## 3. Migrate the board
 
 Follow `migrate.md` from "Before you start" to step 12, with the bundled API executable
-`<app>/Contents/Resources/api/agent-board-api` and `--target-db pglite://<root>/data`. The migration runs before the
+`<app>/Contents/Resources/resources/api/agent-board-api` and `--target-db pglite://<root>/data`. The migration runs before the
 first start of the app, always first into a scratch copy, and never against the old board in place: for the rehearsal
 set up the old system, create and run a few cards, then migrate a copy of its data folder.
 
