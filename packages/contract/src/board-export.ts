@@ -34,6 +34,7 @@ import {
   watchId,
 } from './schemas/ids.js';
 import { MAX_SHARED_VERSION } from './schemas/machine.js';
+import { isServerNoteBody } from './server-notes.js';
 import { passkeyId, passkeyName } from './schemas/passkey.js';
 import {
   MAX_INTERVAL_MS,
@@ -253,7 +254,12 @@ const noteRow = z
   })
   .strict()
   .superRefine((row, ctx) => {
-    if (row.author !== 'server' && !sealedField('note.body').safeParse(row.body).success) {
+    if (row.author === 'server') {
+      if (row.kind !== 'event')
+        ctx.addIssue({ code: 'custom', path: ['kind'], message: 'a server note is an event' });
+      if (!isServerNoteBody(row.body))
+        ctx.addIssue({ code: 'custom', path: ['body'], message: 'not a known server event' });
+    } else if (!sealedField('note.body').safeParse(row.body).success) {
       ctx.addIssue({ code: 'custom', path: ['body'], message: 'not a sealed body' });
     }
   });

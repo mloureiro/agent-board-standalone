@@ -551,7 +551,7 @@ describe.each(TARGETS)('projects, directories, keys and settings on $name', (tar
             taskId,
             author: 'server',
             kind: 'event',
-            body: 'The run was stopped.',
+            body: 'Marked done.',
           }),
         );
         for (const [author, kind] of [

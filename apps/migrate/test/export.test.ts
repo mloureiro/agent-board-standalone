@@ -3,7 +3,12 @@ import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { EXPORT_TABLES, parseBoardExportLine } from '@agent-board/contract';
+import {
+  EXPORT_TABLES,
+  LEGACY_SERVER_NOTE_BODY,
+  isServerNoteBody,
+  parseBoardExportLine,
+} from '@agent-board/contract';
 import { FIXTURES } from '../fixtures/fixtures.js';
 import { exportSource, openSource, run, type SourceRow } from '../src/index.js';
 import { materializeFolder, type MaterializedFolder } from './support/folders.js';
@@ -139,11 +144,22 @@ describe.each(FIXTURES)('export of $name', (fixture) => {
 
   it('copies note bodies byte for byte and marks pending messages queued', () => {
     for (const stored of original.note as SourceRow[]) {
+      if (stored.author === 'server') continue;
       const exported = rows('note').find((line) => line.row.id === stored.id)?.row;
       expect(exported?.body).toBe(stored.body);
       expect(exported?.queued).toBe(stored.queued === true || stored.pending === true);
     }
-    expect(rows('note').some((line) => line.row.author === 'server')).toBe(true);
+  });
+
+  it('exports a server note only as an event the API can write, replacing free text', () => {
+    const exported = rows('note').filter((line) => line.row.author === 'server');
+    expect(exported.length).toBeGreaterThan(0);
+    for (const line of exported) {
+      expect(line.row.kind).toBe('event');
+      expect(isServerNoteBody(String(line.row.body)), String(line.row.body)).toBe(true);
+    }
+    const legacy = exported.find((line) => line.row.id === 'fixture-note-event-server')?.row;
+    expect(legacy?.body).toBe(LEGACY_SERVER_NOTE_BODY);
   });
 
   it('copies PR urls byte for byte', () => {

@@ -312,8 +312,18 @@ describe('BoardExport', () => {
         row: set(rows.task, { createdAt: '2026-11-13T11:00:00+01:00' }),
       }).success,
     ).toBe(true);
-    const server = set(rows.note, { author: 'server', kind: 'event', body: 'Task moved to todo' });
+    const server = set(rows.note, {
+      author: 'server',
+      kind: 'event',
+      body: 'Moved from todo to running.',
+    });
     expect(boardExportRecord.safeParse({ owner, table: 'note', row: server }).success).toBe(true);
+    for (const bad of [
+      set(server, { body: 'Task moved to todo' }),
+      set(server, { kind: 'comment' }),
+    ]) {
+      expect(boardExportRecord.safeParse({ owner, table: 'note', row: bad }).success).toBe(false);
+    }
     expect(
       boardExportRecord.safeParse({ owner, table: 'note', row: set(rows.note, { body: 'plain' }) })
         .success,

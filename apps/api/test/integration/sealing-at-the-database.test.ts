@@ -1,11 +1,16 @@
 import { randomUUID } from 'node:crypto';
 
-import { maxEnvelopeLength, SEALED_LIMITS } from '@agent-board/contract';
+import { isServerNoteBody, maxEnvelopeLength, SEALED_LIMITS } from '@agent-board/contract';
 import { isBlindIndex, isEnvelope } from '@agent-board/sealing';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import {
+  formatServerEvent,
+  recordServerEvent,
+  type ServerEvent,
+} from '../../src/modules/tasks/server-events.js';
 import { PLAIN_COLUMNS } from '../../src/db/plain-columns.js';
 import * as schema from '../../src/db/schema/index.js';
 import { CONDITIONALLY_SEALED, SEALED_COLUMNS, maxLengthOf } from '../../src/db/sealed-columns.js';
@@ -155,6 +160,31 @@ describe.each(TARGETS)('sealed columns on $name', (target) => {
       expect(SEALED_LIMITS.title).toBeGreaterThan(0);
     });
 
+    it('[api-049] every event the API formats is a body the note check accepts', async () => {
+      const events: ServerEvent[] = [
+        { type: 'done' },
+        { type: 'rerun' },
+        { type: 'closed' },
+        { type: 'reopened' },
+        { type: 'archived', days: 30 },
+        { type: 'moved', from: 'needs-me', to: 'running' },
+        { type: 'priority', from: 'low', to: 'urgent' },
+        { type: 'start-cleared' },
+        { type: 'start-set', at: new Date('2026-11-27T09:30:00.000Z') },
+        { type: 'woken' },
+        { type: 'late-message' },
+        { type: 'taken-back', machine: 'laptop' },
+        { type: 'taken-back', machine: null },
+      ];
+      await opened.database.withOwner('owner', async (tx) => {
+        await tx.insert(schema.task).values(taskValues(projectId, 't-events'));
+        for (const [index, event] of events.entries()) {
+          await recordServerEvent(tx, 't-events', event, null);
+          expect(isServerNoteBody(formatServerEvent(event)), `event ${index}`).toBe(true);
+        }
+      });
+    });
+
     it('[api-049] a note body is sealed unless the server wrote the event, and a document is sealed', async () => {
       await opened.database.withOwner('owner', async (tx) => {
         await tx.insert(schema.task).values(taskValues(projectId, 't-notes'));
@@ -163,12 +193,14 @@ describe.each(TARGETS)('sealed columns on $name', (target) => {
           taskId: 't-notes',
           author: 'server',
           kind: 'event',
-          body: 'Moved to Done.',
+          body: formatServerEvent({ type: 'moved', from: 'todo', to: 'done' }),
         });
       });
       const cases = [
         { author: 'user', kind: 'comment', body: 'plain' },
-        { author: 'server', kind: 'comment', body: 'Moved to Done.' },
+        { author: 'server', kind: 'comment', body: 'Moved from todo to done.' },
+        { author: 'server', kind: 'event', body: 'Moved to Done.' },
+        { author: 'server', kind: 'event', body: 'Moved from todo to done. And more' },
         { author: 'agent', kind: 'comment', body: 'x'.repeat(10) },
         { author: 'server', kind: 'event', body: envelope(5) },
       ] as const;
@@ -178,11 +210,7 @@ describe.each(TARGETS)('sealed columns on $name', (target) => {
             tx.insert(schema.note).values({ id: `bad-${index}`, taskId: 't-notes', ...sample }),
           ),
         ).catch(() => null);
-        if (sample.body.startsWith('abe1.')) {
-          expect(facts, 'a sealed server note is a server event of a valid length').toBeNull();
-        } else {
-          expect(facts?.code, JSON.stringify(sample)).toBe(CHECK_VIOLATION);
-        }
+        expect(facts?.code, JSON.stringify(sample)).toBe(CHECK_VIOLATION);
       }
       const plain = await databaseError(
         opened.database.withOwner('owner', (tx) =>
