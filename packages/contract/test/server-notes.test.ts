@@ -17,7 +17,7 @@ describe('server note bodies', () => {
     'Your message reached the agent after its run ended; resuming with it.',
     'Taken back from laptop: no sign of life for 20 minutes.',
     'Taken back from its worker: no sign of life for 20 minutes.',
-    'Taken back from two\nlines: no sign of life for 20 minutes.',
+    `Taken back from ${'m'.repeat(256)}: no sign of life for 20 minutes.`,
     LEGACY_SERVER_NOTE_BODY,
   ])('accepts %j', (body) => {
     expect(isServerNoteBody(body)).toBe(true);
@@ -36,6 +36,8 @@ describe('server note bodies', () => {
     'Closed.\nMarked done.',
     'Marked done',
     'Taken back from laptop: no sign of life for soon minutes.',
+    'Taken back from two\nlines: no sign of life for 20 minutes.',
+    `Taken back from ${'m'.repeat(257)}: no sign of life for 20 minutes.`,
   ])('refuses %j', (body) => {
     expect(isServerNoteBody(body)).toBe(false);
   });

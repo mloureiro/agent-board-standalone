@@ -20,7 +20,7 @@ export const SERVER_NOTE_BODIES = [
   `Start time set to ${ISO_TIME}[.]`,
   'Wait ended by you[.]',
   'Your message reached the agent after its run ended\\x3b resuming with it[.]',
-  'Taken back from .+: no sign of life for [0-9]{1,4} minutes[.]',
+  'Taken back from [^\\r\\n]{1,128}[^\\r\\n]{0,128}: no sign of life for [0-9]{1,4} minutes[.]',
   `${LEGACY_SERVER_NOTE_BODY.slice(0, -1)}[.]`,
 ] as const;
 
