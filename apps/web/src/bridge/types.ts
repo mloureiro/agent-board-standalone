@@ -12,7 +12,7 @@ export interface BridgeStreamedResponse {
   readonly body: ReadableStream<Uint8Array> | null;
 }
 
-export interface AgentBoardBridge {
+export interface RumoBridge {
   readonly kind: BridgeKind;
   serverFetch(
     serverId: string,
@@ -43,6 +43,6 @@ export interface AgentBoardBridge {
 
 declare global {
   interface Window {
-    agentBoardBridge?: AgentBoardBridge;
+    rumoBridge?: RumoBridge;
   }
 }

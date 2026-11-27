@@ -3,9 +3,9 @@ mod tray;
 use std::io::{self, Write};
 use std::process::ExitCode;
 
-use agent_board_server_core::app::{self, Host, Start};
-use agent_board_server_core::cli::{self, Invocation, USAGE, USAGE_EXIT_CODE};
-use agent_board_server_core::credential_flow;
+use rumo_server_core::app::{self, Host, Start};
+use rumo_server_core::cli::{self, Invocation, USAGE, USAGE_EXIT_CODE};
+use rumo_server_core::credential_flow;
 
 fn exit(code: i32) -> ExitCode {
     ExitCode::from(u8::try_from(code).unwrap_or(1))

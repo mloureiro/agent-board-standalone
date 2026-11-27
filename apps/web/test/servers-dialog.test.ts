@@ -292,7 +292,7 @@ describe('the server list', () => {
     await waitFor(() => expect(storedList().map((entry) => entry.name)).toEqual(['localhost']));
     expect(serverNamespace(id).local.keys()).toEqual([]);
     expect((await indexedDB.databases()).map((database) => database.name)).not.toContain(
-      `agent-board:${id}`,
+      `rumo:${id}`,
     );
     expect(serverNamespace('kept').local.get('draft:new')).toBe('z');
     expect(await screen.findByText('Removed Second.')).toBeInTheDocument();

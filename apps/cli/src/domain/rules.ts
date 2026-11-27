@@ -9,7 +9,7 @@ import {
   type Priority,
   type SealedField,
   type TaskStatus,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 
 import { UsageError } from '../errors.js';
 

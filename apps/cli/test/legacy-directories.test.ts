@@ -1,7 +1,7 @@
 import { chmodSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { runCli } from '../src/commands/program.js';
@@ -70,7 +70,7 @@ async function init(stub: ApiStub) {
 }
 
 describe('legacy directory conversion', () => {
-  it('[cli-085] board init converts the legacy directories and reports matched and unmatched counts', async () => {
+  it('[cli-085] rumo init converts the legacy directories and reports matched and unmatched counts', async () => {
     const stub = await legacyBoard(['/srv/web', '/srv/api/'], {
       'task:taskAAAA': '/srv/web',
       'task:taskBBBB': '/srv/web/',

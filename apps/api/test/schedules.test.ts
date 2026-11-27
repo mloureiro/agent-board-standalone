@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import type { ScheduleDraft } from '@agent-board/contract';
+import type { ScheduleDraft } from '@rumo/contract';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 

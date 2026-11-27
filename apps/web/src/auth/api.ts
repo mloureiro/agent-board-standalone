@@ -1,4 +1,4 @@
-import type { AnyRoute, RouteRequest, RouteResponse } from '@agent-board/contract';
+import type { AnyRoute, RouteRequest, RouteResponse } from '@rumo/contract';
 
 import { readApiError } from '../session/api-error.js';
 import type { ServerClient } from '../transport/client.js';

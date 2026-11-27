@@ -1,4 +1,4 @@
-import type { AnyRoute } from '@agent-board/contract';
+import type { AnyRoute } from '@rumo/contract';
 import type { FastifyInstance } from 'fastify';
 
 import type { ServerContext } from '../context.js';

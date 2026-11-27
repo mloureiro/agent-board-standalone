@@ -13,7 +13,7 @@ run alone (R1.2) and work by declared versions (R1.3), with CI proving N against
 ## Decision
 
 - **Code dependencies.** API, CLI and browser client import no code from each other. They share only
-  `@agent-board/contract` and `@agent-board/sealing`. The API uses `sealing` for envelope shape checks and
+  `@rumo/contract` and `@rumo/sealing`. The API uses `sealing` for envelope shape checks and
   signature verification only. An ESLint `no-restricted-imports` rule per part fails on any other import across
   parts.
 - Wrappers depend on what they wrap and nothing else.

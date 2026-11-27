@@ -25,7 +25,7 @@ import {
   writeSettings,
 } from './support.js';
 
-const real = join(import.meta.dirname, '../../api/dist/agent-board-api');
+const real = join(import.meta.dirname, '../../api/dist/rumo-api');
 const HEADERS = { 'content-type': 'application/json', 'x-board-contract': '1' };
 
 const envelope = (): string => `abe1.${randomUUID().replaceAll('-', '')}${'A'.repeat(24)}`;
@@ -41,7 +41,7 @@ describe('restore walk on a real PGlite folder', () => {
     if (binary === undefined || stub === undefined) context.skip(SKIP_REASON);
     if (!existsSync(real))
       context.skip(
-        'the API executable is not built: run `pnpm --filter @agent-board/api build:executable`',
+        'the API executable is not built: run `pnpm --filter @rumo/api build:executable`',
       );
     scratch = mkdtempSync(join(tmpdir(), 'server-app-restore-'));
     root = join(scratch, 'root');
@@ -50,7 +50,7 @@ describe('restore walk on a real PGlite folder', () => {
     resources = join(scratch, 'resources');
     mkdirSync(join(resources, 'api'), { recursive: true });
     mkdirSync(join(resources, 'web'), { recursive: true });
-    symlinkSync(real, join(resources, 'api/agent-board-api'));
+    symlinkSync(real, join(resources, 'api/rumo-api'));
     writeFileSync(join(resources, 'web/index.html'), '<html></html>');
     writeFileSync(join(resources, 'api/schema-version'), 'real-1\n');
   });
@@ -69,7 +69,7 @@ describe('restore walk on a real PGlite folder', () => {
   });
 
   function start(): Session {
-    const session = launch(root, { AGENT_BOARD_SERVER_RESOURCES: resources });
+    const session = launch(root, { RUMO_SERVER_RESOURCES: resources });
     sessions.push(session);
     return session;
   }

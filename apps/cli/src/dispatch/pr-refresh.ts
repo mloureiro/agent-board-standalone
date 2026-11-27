@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { setPrStatesRoute, type PrState } from '@agent-board/contract';
+import { setPrStatesRoute, type PrState } from '@rumo/contract';
 
 import { isPrUrl, prUrlIn } from '../domain/rules.js';
 import { isRecord } from '../domain/values.js';

@@ -1,5 +1,5 @@
-import type { UiRunContext } from '@agent-board/contract';
-import { bindings, open, type Keys } from '@agent-board/sealing';
+import type { UiRunContext } from '@rumo/contract';
+import { bindings, open, type Keys } from '@rumo/sealing';
 
 export const CONTEXT_FEATURE = 'context-usage';
 export const AUTO_COMPACT_PERCENT = 80;

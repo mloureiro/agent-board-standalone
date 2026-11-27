@@ -1,7 +1,7 @@
 import { rmSync } from 'node:fs';
 
-import { CONTRACT, MIN_CLIENT, isFeature } from '@agent-board/contract';
-import { encodeDataKey, generateDataKey } from '@agent-board/sealing';
+import { CONTRACT, MIN_CLIENT, isFeature } from '@rumo/contract';
+import { encodeDataKey, generateDataKey } from '@rumo/sealing';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { call, callRaw, machineToken } from '../src/client/contract-client.js';

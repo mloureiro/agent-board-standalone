@@ -14,7 +14,7 @@ import {
   type RouteRequest,
   type RouteResponse,
   routes,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 
 import { CookieJar } from './cookies.js';
 import type { RequestSigner } from './signer.js';

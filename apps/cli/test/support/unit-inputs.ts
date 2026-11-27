@@ -21,7 +21,7 @@ export const FIXTURE_CASES: readonly FixtureCase[] = [
     platform: 'linux',
     profile: 'default',
     home: '/srv/tester',
-    self: ['/srv/tester/.local/bin/board'],
+    self: ['/srv/tester/.local/bin/rumo'],
     env: {},
   },
   {
@@ -29,11 +29,11 @@ export const FIXTURE_CASES: readonly FixtureCase[] = [
     platform: 'linux',
     profile: 'work',
     home: '/srv/tester',
-    self: ['/usr/local/bin/node', '/opt/board/dist/board'],
+    self: ['/usr/local/bin/node', '/opt/board/dist/rumo'],
     env: {
-      AGENT_BOARD_CONFIG_DIR: '/srv/board work/config',
-      AGENT_BOARD_STATE_DIR: '/srv/board work/state',
-      AGENT_BOARD_RUN_DIR: '/srv/board work/run',
+      RUMO_CONFIG_DIR: '/srv/rumo work/config',
+      RUMO_STATE_DIR: '/srv/rumo work/state',
+      RUMO_RUN_DIR: '/srv/rumo work/run',
     },
   },
   {
@@ -41,7 +41,7 @@ export const FIXTURE_CASES: readonly FixtureCase[] = [
     platform: 'darwin',
     profile: 'default',
     home: '/var/tester',
-    self: ['/var/tester/.local/bin/board'],
+    self: ['/var/tester/.local/bin/rumo'],
     env: {},
   },
   {
@@ -49,11 +49,11 @@ export const FIXTURE_CASES: readonly FixtureCase[] = [
     platform: 'darwin',
     profile: 'work',
     home: '/var/tester',
-    self: ['/opt/homebrew/bin/node', '/opt/board/dist/board'],
+    self: ['/opt/homebrew/bin/node', '/opt/board/dist/rumo'],
     env: {
-      AGENT_BOARD_CONFIG_DIR: '/Volumes/data/board/config',
-      AGENT_BOARD_STATE_DIR: '/Volumes/data/board/state',
-      AGENT_BOARD_RUN_DIR: '/Volumes/data/board/run',
+      RUMO_CONFIG_DIR: '/Volumes/data/board/config',
+      RUMO_STATE_DIR: '/Volumes/data/board/state',
+      RUMO_RUN_DIR: '/Volumes/data/board/run',
       XDG_STATE_HOME: '/Volumes/data/state',
     },
   },
@@ -68,9 +68,8 @@ export function renderCase(entry: FixtureCase): UnitFile[] {
     env: entry.env,
   });
   const state =
-    entry.env.AGENT_BOARD_STATE_DIR ??
-    `${entry.home}/.local/state/agent-board/profiles/${entry.profile}`;
-  const runDir = entry.env.AGENT_BOARD_RUN_DIR ?? `${state}/run`;
+    entry.env.RUMO_STATE_DIR ?? `${entry.home}/.local/state/rumo/profiles/${entry.profile}`;
+  const runDir = entry.env.RUMO_RUN_DIR ?? `${state}/run`;
   if (entry.platform === 'darwin') {
     return renderLaunchd({
       profile: entry.profile,

@@ -65,9 +65,7 @@ if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(
   const args = process.argv.slice(2);
   const version = args.find((argument) => SEMVER.test(argument));
   if (version === undefined) {
-    process.stderr.write(
-      'usage: pnpm --filter @agent-board/migrate release <version> --notes "<text>"\n',
-    );
+    process.stderr.write('usage: pnpm --filter @rumo/migrate release <version> --notes "<text>"\n');
     process.exit(2);
   }
   await prepareRelease(resolve(here, '..'), version, optionOf(args, '--notes') ?? '');

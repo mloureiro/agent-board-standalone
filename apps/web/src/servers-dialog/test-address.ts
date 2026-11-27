@@ -1,4 +1,4 @@
-import { checkServerAddress } from '@agent-board/contract';
+import { checkServerAddress } from '@rumo/contract';
 
 import {
   ADDRESS_PROBLEM_MESSAGES,

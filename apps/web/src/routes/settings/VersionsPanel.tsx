@@ -1,4 +1,4 @@
-import { CONTRACT } from '@agent-board/contract';
+import { CONTRACT } from '@rumo/contract';
 import { Paper, Stack, Table, Text } from '@mantine/core';
 import type { ReactNode } from 'react';
 

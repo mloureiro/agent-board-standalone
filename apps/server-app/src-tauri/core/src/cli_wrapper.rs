@@ -55,7 +55,7 @@ fn credentials_script(setup: &WorkerSetup, pending: bool) -> String {
 pub fn wrapper_script(setup: &WorkerSetup, env: &[(String, String)]) -> String {
     let exports: String = env
         .iter()
-        .filter(|(name, _)| name == "PATH" || name.starts_with("AGENT_BOARD_"))
+        .filter(|(name, _)| name == "PATH" || name.starts_with("RUMO_"))
         .map(|(name, value)| format!("{name}={}\nexport {name}\n", sh_quote(value)))
         .collect();
     format!(
@@ -67,7 +67,7 @@ pub fn wrapper_script(setup: &WorkerSetup, env: &[(String, String)]) -> String {
          \x20   --profile) skip=1 ;;\n\
          \x20   -*) ;;\n\
          \x20   setup|self-update|restart|init)\n\
-         \x20     echo \"board $arg is managed by Agent Board Server and is not available here\" >&2\n\
+         \x20     echo \"rumo $arg is managed by Rumo Server and is not available here\" >&2\n\
          \x20     exit {REFUSED_EXIT_CODE} ;;\n\
          \x20   *) break ;;\n\
          \x20 esac\n\

@@ -30,7 +30,7 @@ const CLEAN_EXIT_CODES = new Set([
 const QUIET_COMMANDS = new Set(['internal', '__complete', 'completion', 'self-update']);
 
 export function buildProgram(rt: Runtime): Command {
-  const program = new Command('board');
+  const program = new Command('rumo');
   program
     .enablePositionalOptions()
     .exitOverride()
@@ -43,11 +43,11 @@ export function buildProgram(rt: Runtime): Command {
         rt.io.stderr(text);
       },
       outputError: (text, write) => {
-        write(`board: ${text.replace(/^error: /, '')}`);
+        write(`rumo: ${text.replace(/^error: /, '')}`);
       },
     })
     .version(cliVersionLine(), '-V, --version', 'print the CLI version')
-    .option('--profile <name>', 'the profile to use (default: AGENT_BOARD_PROFILE or "default")')
+    .option('--profile <name>', 'the profile to use (default: RUMO_PROFILE or "default")')
     .option('--dry-run', 'perform all reads and print each write as DRY <command>');
 
   const withContext = (command: Command): Context => {
@@ -105,11 +105,11 @@ export async function runCli(argv: readonly string[], rt: Runtime): Promise<numb
       return CLEAN_EXIT_CODES.has(error.code) ? EXIT.ok : EXIT.usage;
     }
     if (error instanceof CliError) {
-      if (error.message !== '') rt.io.stderr(`board: ${error.message}\n`);
+      if (error.message !== '') rt.io.stderr(`rumo: ${error.message}\n`);
       return error.exitCode;
     }
     const message = error instanceof Error ? error.message : String(error);
-    rt.io.stderr(`board: ${message}\n`);
+    rt.io.stderr(`rumo: ${message}\n`);
     return EXIT.failure;
   }
 }

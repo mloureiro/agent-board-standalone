@@ -1,7 +1,7 @@
 import path from 'node:path';
 
-import { getTaskRoute, setClosedRoute, setFeedsRoute } from '@agent-board/contract';
-import { bindings, blindIndex, seal } from '@agent-board/sealing';
+import { getTaskRoute, setClosedRoute, setFeedsRoute } from '@rumo/contract';
+import { bindings, blindIndex, seal } from '@rumo/sealing';
 
 import { CliError } from '../../errors.js';
 import { readConfigObject } from '../../config/file.js';
@@ -39,7 +39,7 @@ export async function resolveProgram(ctx: Context, integration: string): Promise
   const installed = readRegistry(ctx.dirs)[marketplace];
   if (installed === undefined) {
     throw new CliError(
-      `marketplace ${marketplace} is not installed: run "board plugins install <url>"`,
+      `marketplace ${marketplace} is not installed: run "rumo plugins install <url>"`,
     );
   }
   const checkout = checkoutDir(ctx.dirs, marketplace);

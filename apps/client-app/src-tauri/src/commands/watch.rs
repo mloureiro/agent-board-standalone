@@ -1,8 +1,8 @@
 use crate::alerts;
 use crate::state::AppState;
 use crate::windows;
-use agent_board_client_core::notify::expiry_banner;
-use agent_board_client_core::tabs::HOME;
+use rumo_client_core::notify::expiry_banner;
+use rumo_client_core::tabs::HOME;
 use std::sync::Arc;
 use tauri::{AppHandle, State, Webview};
 

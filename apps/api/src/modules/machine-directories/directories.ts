@@ -1,4 +1,4 @@
-import type { DirectoryInput, WireDirectory } from '@agent-board/contract';
+import type { DirectoryInput, WireDirectory } from '@rumo/contract';
 import { and, asc, eq, inArray, isNotNull, isNull, or } from 'drizzle-orm';
 
 import { directory, legacyDirs, project, schedule, task } from '../../db/schema/index.js';

@@ -1,6 +1,6 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
-import { open, seal } from '@agent-board/sealing';
-import { bindings } from '@agent-board/sealing';
+import { open, seal } from '@rumo/sealing';
+import { bindings } from '@rumo/sealing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POLL_MS } from '../src/routes/board/board-data.js';
@@ -523,7 +523,7 @@ const findTitle = async (title: string): Promise<string> => {
 };
 
 const sealPr = async (): Promise<string> => {
-  const { seal } = await import('@agent-board/sealing');
+  const { seal } = await import('@rumo/sealing');
   return seal(await OWNER_KEYS, bindings.pr('any'), 'https://example.test/pr/1');
 };
 

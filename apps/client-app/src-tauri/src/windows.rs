@@ -2,13 +2,13 @@ use crate::server_tabs;
 use crate::state::AppState;
 use crate::tab_registry::TabRegistry;
 use crate::{alerts, links, webkit};
-use agent_board_client_core::bridge::Scope;
-use agent_board_client_core::ids::ServerId;
-use agent_board_client_core::layout;
-use agent_board_client_core::log::line;
-use agent_board_client_core::servers::ServerEntry;
-use agent_board_client_core::tab_file;
-use agent_board_client_core::tabs::TabId;
+use rumo_client_core::bridge::Scope;
+use rumo_client_core::ids::ServerId;
+use rumo_client_core::layout;
+use rumo_client_core::log::line;
+use rumo_client_core::servers::ServerEntry;
+use rumo_client_core::tab_file;
+use rumo_client_core::tabs::TabId;
 use std::sync::Arc;
 use tauri::webview::WebviewBuilder;
 use tauri::window::WindowBuilder;
@@ -99,7 +99,7 @@ pub fn show_list(app: &AppHandle) -> tauri::Result<()> {
         return bring_forward(&window);
     }
     WebviewWindowBuilder::new(app, LIST_LABEL, WebviewUrl::App(LIST_PAGE.into()))
-        .title("Agent Board")
+        .title("Rumo")
         .inner_size(520.0, 560.0)
         .min_inner_size(360.0, 320.0)
         .build()

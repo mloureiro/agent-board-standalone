@@ -1,8 +1,8 @@
 use crate::commands::page::start_removal;
 use crate::state::{AppState, OpenFailure};
 use crate::{handover, windows};
-use agent_board_client_core::ids::ServerId;
-use agent_board_client_core::servers::ServerEntry;
+use rumo_client_core::ids::ServerId;
+use rumo_client_core::servers::ServerEntry;
 use serde::Serialize;
 use std::sync::Arc;
 use tauri::{AppHandle, State, Webview};
@@ -23,7 +23,7 @@ pub async fn list_add_server(
         .bridge
         .servers()
         .add(ServerId::generate(), &name, &address)
-        .map_err(|error| agent_board_client_core::bridge::BridgeError::from(error).message())
+        .map_err(|error| rumo_client_core::bridge::BridgeError::from(error).message())
 }
 
 #[derive(Serialize)]

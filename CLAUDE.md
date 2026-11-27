@@ -1,4 +1,4 @@
-# agent-board-standalone
+# rumo
 
 One pnpm monorepo replacing the `agent-board` fork, `agent-board-client` and `agent-board-local-server`.
 Written from scratch against E2E tests; no code is copied from the old repositories.

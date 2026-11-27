@@ -107,7 +107,7 @@ function padded(svg: string, png: string, scale: number): void {
 function tauriIcon(root: string, part: string, source: string, output: string): void {
   execFileSync(
     'pnpm',
-    ['--filter', `@agent-board/${part}`, 'exec', 'tauri', 'icon', source, '--output', output],
+    ['--filter', `@rumo/${part}`, 'exec', 'tauri', 'icon', source, '--output', output],
     { cwd: root, stdio: 'inherit' },
   );
 }

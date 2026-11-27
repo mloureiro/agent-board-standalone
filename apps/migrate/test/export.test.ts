@@ -8,7 +8,7 @@ import {
   LEGACY_SERVER_NOTE_BODY,
   isServerNoteBody,
   parseBoardExportLine,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 import { FIXTURES } from '../fixtures/fixtures.js';
 import { exportSource, openSource, run, type SourceRow } from '../src/index.js';
 import { materializeFolder, type MaterializedFolder } from './support/folders.js';
@@ -55,7 +55,7 @@ describe.each(FIXTURES)('export of $name', (fixture) => {
 
   it('[migrate-011] writes a header naming the migrate source and the detected version', () => {
     expect(header).toMatchObject({
-      format: 'agent-board-export',
+      format: 'rumo-export',
       version: 1,
       source: { kind: 'migrate', version: fixture.name },
     });

@@ -1,4 +1,4 @@
-import type { UiTaskListItem, WireTask, WireTaskPr } from '@agent-board/contract';
+import type { UiTaskListItem, WireTask, WireTaskPr } from '@rumo/contract';
 
 import type { TaskRow } from './types.js';
 

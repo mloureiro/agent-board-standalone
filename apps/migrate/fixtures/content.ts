@@ -14,7 +14,7 @@ import {
   type Binding,
   type Keys,
   type KeySetup,
-} from '@agent-board/sealing';
+} from '@rumo/sealing';
 
 export const OWNER = 'fixture-owner';
 export const PASSPHRASE = 'correct horse battery staple';

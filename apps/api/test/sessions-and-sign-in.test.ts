@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { tokenHash } from '@agent-board/sealing';
+import { tokenHash } from '@rumo/sealing';
 
 import type { CredentialStore } from '../src/auth/index.js';
 import {

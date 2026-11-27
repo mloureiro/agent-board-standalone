@@ -1,4 +1,4 @@
-import type { ScheduleDraft } from '@agent-board/contract';
+import type { ScheduleDraft } from '@rumo/contract';
 import { eq } from 'drizzle-orm';
 
 import { schedule } from '../../db/schema/index.js';

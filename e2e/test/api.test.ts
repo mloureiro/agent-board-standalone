@@ -12,10 +12,10 @@ const fakeApi = path.join(E2E_ROOT, 'test', 'fixtures', 'fake-api.ts');
 
 describe('startApi', () => {
   const stops: (() => Promise<void> | void)[] = [];
-  const originalBin = process.env.AGENT_BOARD_API_BIN;
+  const originalBin = process.env.RUMO_API_BIN;
 
   function setup(): Tmp {
-    process.env.AGENT_BOARD_API_BIN = fakeApi;
+    process.env.RUMO_API_BIN = fakeApi;
     const tmp = createTmp('api-test');
     stops.push(() => tmp.remove());
     return tmp;
@@ -35,8 +35,8 @@ describe('startApi', () => {
 
   afterEach(async () => {
     for (const stop of stops.splice(0)) await stop();
-    if (originalBin === undefined) delete process.env.AGENT_BOARD_API_BIN;
-    else process.env.AGENT_BOARD_API_BIN = originalBin;
+    if (originalBin === undefined) delete process.env.RUMO_API_BIN;
+    else process.env.RUMO_API_BIN = originalBin;
   });
 
   it('parses the readiness line and answers requests', async () => {
@@ -59,7 +59,7 @@ describe('startApi', () => {
       const keys = (await (await fetch(`${api.url}/env`)).json()) as string[];
       expect(keys).not.toContain('E2E_LEAK_CHECK');
       expect(keys).toEqual(
-        expect.arrayContaining(['DATABASE_URL', 'AUTH_MODE', 'HOST', 'PORT', 'AGENT_BOARD_E2E']),
+        expect.arrayContaining(['DATABASE_URL', 'AUTH_MODE', 'HOST', 'PORT', 'RUMO_E2E']),
       );
     } finally {
       delete process.env.E2E_LEAK_CHECK;

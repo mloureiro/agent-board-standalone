@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { statSync } from 'node:fs';
 import path from 'node:path';
 
-import { listSchedulesRoute, listTasksRoute } from '@agent-board/contract';
+import { listSchedulesRoute, listTasksRoute } from '@rumo/contract';
 
 import { CliError, UsageError } from '../../errors.js';
 import { plain } from '../../domain/rules.js';
@@ -75,9 +75,7 @@ function describe(entry: LocalDirectory): string {
 function runList(ctx: Context): void {
   const local = readLocalDirectories(ctx.dirs.config);
   if (!local.configured) {
-    ctx.out(
-      'no directories are listed, so workers may run anywhere; add one with "board dirs add"',
-    );
+    ctx.out('no directories are listed, so workers may run anywhere; add one with "rumo dirs add"');
     return;
   }
   if (local.entries.length === 0)
@@ -199,7 +197,7 @@ function entryAt(ctx: Context, given: string | undefined): LocalDirectory {
     (entry) => normalizePath(entry.path) === target,
   );
   if (found === undefined) {
-    throw new UsageError(`${plain(target)} is not a listed directory; run "board dirs add" first`);
+    throw new UsageError(`${plain(target)} is not a listed directory; run "rumo dirs add" first`);
   }
   return found;
 }
@@ -329,25 +327,25 @@ export async function runDirs(
 ): Promise<void> {
   const [verb = 'list', ...rest] = action;
   if (verb === 'list') {
-    if (rest.length > 0) throw new UsageError('board dirs list takes no arguments');
+    if (rest.length > 0) throw new UsageError('rumo dirs list takes no arguments');
     runList(ctx);
     return;
   }
-  refuseInRun(ctx, `board dirs ${verb}`);
+  refuseInRun(ctx, `rumo dirs ${verb}`);
   if (verb === 'add') {
-    if (rest.length > 1) throw new UsageError('board dirs add takes one path');
+    if (rest.length > 1) throw new UsageError('rumo dirs add takes one path');
     await runAdd(ctx, rest[0], options);
     return;
   }
   if (verb === 'rm') {
-    if (rest.length > 1) throw new UsageError('board dirs rm takes one path');
+    if (rest.length > 1) throw new UsageError('rumo dirs rm takes one path');
     await runRemove(ctx, rest[0], options);
     return;
   }
   if (verb === 'set') {
     const [key, value, given, ...extra] = rest;
     if (key === undefined || value === undefined || extra.length > 0) {
-      throw new UsageError('usage: board dirs set <key> <value> [path]');
+      throw new UsageError('usage: rumo dirs set <key> <value> [path]');
     }
     await runSetting(ctx, key, value, given);
     return;
@@ -355,7 +353,7 @@ export async function runDirs(
   if (verb === 'unset') {
     const [key, given, ...extra] = rest;
     if (key === undefined || extra.length > 0)
-      throw new UsageError('usage: board dirs unset <key> [path]');
+      throw new UsageError('usage: rumo dirs unset <key> [path]');
     await runSetting(ctx, key, undefined, given);
     return;
   }

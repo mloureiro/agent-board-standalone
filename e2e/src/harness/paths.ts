@@ -14,10 +14,10 @@ interface PartSpec {
 }
 
 const FILE_PARTS: Record<Exclude<PartName, 'postgres'>, PartSpec> = {
-  api: { entry: 'apps/api/dist/main.js', override: 'AGENT_BOARD_API_BIN' },
-  cli: { entry: 'apps/cli/dist/board', override: 'AGENT_BOARD_CLI_BIN' },
-  web: { entry: 'apps/web/dist', override: 'AGENT_BOARD_WEB_ROOT' },
-  migrate: { entry: 'apps/migrate/dist/main.js', override: 'AGENT_BOARD_MIGRATE_BIN' },
+  api: { entry: 'apps/api/dist/main.js', override: 'RUMO_API_BIN' },
+  cli: { entry: 'apps/cli/dist/rumo', override: 'RUMO_CLI_BIN' },
+  web: { entry: 'apps/web/dist', override: 'RUMO_WEB_ROOT' },
+  migrate: { entry: 'apps/migrate/dist/main.js', override: 'RUMO_MIGRATE_BIN' },
 };
 
 export const POSTGRES_URL_VARIABLE = 'E2E_POSTGRES_URL';

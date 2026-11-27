@@ -13,9 +13,7 @@ const isSubcommand = (value: string): value is Subcommand =>
 const pair = async (env: Env): Promise<number> => {
   const socket = env.CONTROL_SOCKET?.trim();
   if (socket === undefined || socket === '') {
-    process.stderr.write(
-      'agent-board-api: pair needs CONTROL_SOCKET, the socket of the running API\n',
-    );
+    process.stderr.write('rumo-api: pair needs CONTROL_SOCKET, the socket of the running API\n');
     return 2;
   }
   try {
@@ -23,7 +21,7 @@ const pair = async (env: Env): Promise<number> => {
     return 0;
   } catch (error) {
     process.stderr.write(
-      `agent-board-api: could not get a pairing code: ${error instanceof Error ? error.message : String(error)}\n`,
+      `rumo-api: could not get a pairing code: ${error instanceof Error ? error.message : String(error)}\n`,
     );
     return 1;
   }
@@ -33,9 +31,7 @@ export const runCli = async (args: readonly string[], env: Env): Promise<number>
   const [first] = args;
   if (first === undefined || first.startsWith('-')) return serve(env);
   if (!isSubcommand(first)) {
-    process.stderr.write(
-      `agent-board-api: unknown command "${first}"; use ${SUBCOMMANDS.join(', ')}\n`,
-    );
+    process.stderr.write(`rumo-api: unknown command "${first}"; use ${SUBCOMMANDS.join(', ')}\n`);
     return 2;
   }
   if (first === 'serve') return serve(env);

@@ -135,7 +135,7 @@ impl ProcessCli {
             Some(machine) => {
                 if output.code != 0 {
                     self.setup.log.info(&format!(
-                        "board init set up the worker and then reported: {}",
+                        "rumo init set up the worker and then reported: {}",
                         reason_of(&output)
                     ));
                 }

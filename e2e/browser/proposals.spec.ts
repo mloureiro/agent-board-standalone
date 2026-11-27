@@ -35,7 +35,7 @@ async function proposeFromRun(account: Account, worker: Worker): Promise<Proposa
   writeFileSync(file, `#stub: done\n${body}\n`);
   const parentTitle = uniqueTitle('proposer');
   const parentId = await createTitled(account, parentTitle, {
-    prompt: `${parentTitle}\n#stub: board add --title "${title}" --file ${file}`,
+    prompt: `${parentTitle}\n#stub: rumo add --title "${title}" --file ${file}`,
     status: 'todo',
   });
   await waitForStatus(account, parentId, 'needs-me');

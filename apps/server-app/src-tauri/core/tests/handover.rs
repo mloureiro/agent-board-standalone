@@ -3,10 +3,10 @@ mod common;
 use std::io;
 use std::sync::Mutex;
 
-use agent_board_server_core::handover::{
+use common::repo_json;
+use rumo_server_core::handover::{
     CLIENT_APP_BUNDLE_ID, CommandRunner, Problem, build_link, check_target, open_board,
 };
-use common::repo_json;
 use serde_json::Value;
 use url::Url;
 
@@ -76,10 +76,7 @@ fn server_app_014_the_targets_the_contract_rejects_are_never_handed_over() {
                 .map(|(_, value)| value.into_owned())
         });
         let Some(target) = target else { continue };
-        if link
-            .as_ref()
-            .is_none_or(|link| link.scheme() != "agentboard")
-        {
+        if link.as_ref().is_none_or(|link| link.scheme() != "rumo") {
             continue;
         }
         let got = check_target(&target);
@@ -101,7 +98,7 @@ fn server_app_014_open_board_runs_open_with_the_bundle_id_and_the_link() {
     let runner = Scripted::new(vec![Ok(0)]);
     let opened = open_board("http://127.0.0.1:4785/", "http://127.0.0.1:4785/", &runner);
 
-    let link = "agentboard://open?v=1&url=http%3A%2F%2F127.0.0.1%3A4785%2F";
+    let link = "rumo://open?v=1&url=http%3A%2F%2F127.0.0.1%3A4785%2F";
     let expected = vec![
         "-b".to_string(),
         CLIENT_APP_BUNDLE_ID.to_string(),

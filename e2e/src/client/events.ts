@@ -1,4 +1,4 @@
-import { routeByName } from '@agent-board/contract';
+import { routeByName } from '@rumo/contract';
 
 import {
   anonymous,

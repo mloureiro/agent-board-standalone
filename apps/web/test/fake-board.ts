@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 
-import type { AgentBoardBridge } from '../src/bridge/types.js';
+import type { RumoBridge } from '../src/bridge/types.js';
 import type { SessionChannel, SessionMessage } from '../src/session/index.js';
 import type { ConnectionCheck, ServerEntry } from '../src/servers/index.js';
 import { serverVersion } from './versions.js';
@@ -178,7 +178,7 @@ export const fixedRegistry = (entries: readonly ServerEntry[]) => ({
 
 export const nativeBridge = (
   board: FakeBoard,
-): AgentBoardBridge & {
+): RumoBridge & {
   readonly links: string[];
   readonly finished: { serverId: string; flowId: string; verifier: string }[];
   readonly signedOut: string[];

@@ -1,4 +1,4 @@
-import { CONTRACT } from '@agent-board/contract';
+import { CONTRACT } from '@rumo/contract';
 import { expect, test, type Page } from '@playwright/test';
 
 import { startVersionProxy, type VersionOverride } from '../src/fixtures/version-proxy.js';

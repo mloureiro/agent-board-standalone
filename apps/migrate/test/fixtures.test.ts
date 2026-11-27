@@ -13,7 +13,7 @@ import {
   tokenHash,
   unlockKeys,
   type KeySlot,
-} from '@agent-board/sealing';
+} from '@rumo/sealing';
 import { FIXTURES, PGLITE_BUILDS } from '../fixtures/fixtures.js';
 import {
   materializePglite,

@@ -1,5 +1,5 @@
-import { sharedClientAgentsRoute } from '@agent-board/contract';
-import { bindings, open } from '@agent-board/sealing';
+import { sharedClientAgentsRoute } from '@rumo/contract';
+import { bindings, open } from '@rumo/sealing';
 import { Paper, Stack, Text } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';

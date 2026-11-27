@@ -1,9 +1,9 @@
-import type { AgentBoardBridge } from '../bridge/types.js';
+import type { RumoBridge } from '../bridge/types.js';
 import type { Transport } from './types.js';
 
 const NULL_BODY_STATUSES = new Set([101, 204, 205, 304]);
 
-export const nativeTransport = (bridge: AgentBoardBridge, serverId: string): Transport => ({
+export const nativeTransport = (bridge: RumoBridge, serverId: string): Transport => ({
   kind: 'native',
   fetch: async (path, init = {}) => {
     const signal = init.signal;

@@ -78,8 +78,7 @@ export async function runMigration(options: RunOptions): Promise<string> {
   const rule = signInRuleOf(options.env);
   const apiEnv = importEnv(options.env, target, options.targetDb);
 
-  const scratch =
-    options.out === undefined ? await mkdtemp(join(tmpdir(), 'agent-board-migrate-')) : null;
+  const scratch = options.out === undefined ? await mkdtemp(join(tmpdir(), 'rumo-migrate-')) : null;
   const file = options.out ?? join(scratch as string, 'board.jsonl');
   const keep = options.out !== undefined || options.keepExport;
   try {

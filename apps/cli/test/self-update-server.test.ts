@@ -28,7 +28,7 @@ const serverUrl = (source: Rig): string =>
     }
   ).url;
 
-describe('board self-update --server', () => {
+describe('rumo self-update --server', () => {
   it('[cli-059] moves the machine after the target accepts the token, the owner and the key id', async () => {
     const source = await rig();
     const board = await target({ keyId: source.stub.keys.keyId });

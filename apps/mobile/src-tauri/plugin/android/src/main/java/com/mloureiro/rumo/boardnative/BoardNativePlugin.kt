@@ -1,4 +1,4 @@
-package com.mloureiro.agentboard.boardnative
+package com.mloureiro.rumo.boardnative
 
 import android.Manifest
 import android.app.Activity
@@ -60,7 +60,7 @@ class BoardNativePlugin(private val activity: Activity) : Plugin(activity) {
 
     override fun load(webView: WebView) {
         this.webView = webView
-        webView.addJavascriptInterface(LaunchTarget(), "AgentBoardLaunch")
+        webView.addJavascriptInterface(LaunchTarget(), "RumoLaunch")
         remember(activity.intent)
     }
 
@@ -165,7 +165,7 @@ class BoardNativePlugin(private val activity: Activity) : Plugin(activity) {
     private companion object {
         val TASK_ID = Regex("^[A-Za-z0-9_-]{1,64}$")
         const val OPEN_PENDING =
-            "(function(){var t=window.AgentBoardLaunch&&AgentBoardLaunch.takeTask();" +
+            "(function(){var t=window.RumoLaunch&&RumoLaunch.takeTask();" +
                 "if(t){history.pushState(null,'','/tasks/'+t);" +
                 "window.dispatchEvent(new PopStateEvent('popstate'));}})()"
     }

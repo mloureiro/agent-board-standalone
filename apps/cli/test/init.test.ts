@@ -26,7 +26,7 @@ function runtime(options: TestRuntimeOptions = {}): TestRuntime {
   return created;
 }
 
-describe('board init prompts', () => {
+describe('rumo init prompts', () => {
   it('[cli-046] asks for the url, the token and the data key when they are missing', async () => {
     const server = await board();
     const test = runtime({
@@ -67,15 +67,15 @@ describe('board init prompts', () => {
   });
 });
 
-describe('board init with a credentials command', () => {
+describe('rumo init with a credentials command', () => {
   const COMMAND = '/opt/board/credentials';
 
   function commandRuntime(server: FakeBoard, extra: TestRuntimeOptions = {}): TestRuntime {
     return runtime({
-      env: { AGENT_BOARD_CREDENTIALS_COMMAND: COMMAND },
+      env: { RUMO_CREDENTIALS_COMMAND: COMMAND },
       exec: () => ({
         code: 0,
-        stdout: `AGENT_BOARD_TOKEN=${TEST_TOKEN}\nAGENT_BOARD_DATA_KEY=${server.dataKey}\n`,
+        stdout: `RUMO_TOKEN=${TEST_TOKEN}\nRUMO_DATA_KEY=${server.dataKey}\n`,
       }),
       ...extra,
     });
@@ -89,7 +89,7 @@ describe('board init with a credentials command', () => {
       await runCli(['init', '--url', server.url, '--token-file', test.path('token')], test.rt),
     ).toBe(2);
     expect(test.captured.stderr).toMatch(
-      /--token-file cannot be used while AGENT_BOARD_CREDENTIALS_COMMAND/,
+      /--token-file cannot be used while RUMO_CREDENTIALS_COMMAND/,
     );
     expect(
       await runCli(['init', '--url', server.url, '--data-key-file', test.path('token')], test.rt),
@@ -110,12 +110,12 @@ describe('board init with a credentials command', () => {
     expect(existsSync(test.path('config', 'env'))).toBe(false);
     expect(existsSync(test.path('config', 'server.json'))).toBe(true);
     expect(test.captured.stdout).toMatch(
-      /ok {4}env: credentials come from AGENT_BOARD_CREDENTIALS_COMMAND/,
+      /ok {4}env: credentials come from RUMO_CREDENTIALS_COMMAND/,
     );
   });
 });
 
-describe('board init runs the doctor checks', () => {
+describe('rumo init runs the doctor checks', () => {
   it('[cli-046] prints the checks after writing and exits 0 when none fails', async () => {
     const server = await board();
     const test = runtime();
@@ -176,7 +176,7 @@ describe('board init runs the doctor checks', () => {
   });
 });
 
-describe('board --version --server', () => {
+describe('rumo --version --server', () => {
   it('[cli-011] prints the version report of the profile like board version', async () => {
     const server = await board();
     const test = runtime();

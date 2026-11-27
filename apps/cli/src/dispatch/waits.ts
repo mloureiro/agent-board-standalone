@@ -1,4 +1,4 @@
-import { ackWatchStopsRoute, getTaskRoute } from '@agent-board/contract';
+import { ackWatchStopsRoute, getTaskRoute } from '@rumo/contract';
 
 import type { OpenTask } from '../commands/tasks/open.js';
 import { publishWatches } from '../watch/publish.js';

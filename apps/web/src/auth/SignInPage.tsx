@@ -5,7 +5,7 @@ import {
   authPasskeyLoginOptionsRoute,
   authPasskeyLoginRoute,
   authSamlStartRoute,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 import { Alert, Button, Stack, Text, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, type ReactNode } from 'react';

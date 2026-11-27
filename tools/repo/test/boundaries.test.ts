@@ -15,8 +15,8 @@ async function messages(code: string, filePath: string): Promise<string[]> {
 }
 
 describe('boundaries', () => {
-  it('[repo-001] cli importing @agent-board/api fails lint', async () => {
-    expect(await messages("import '@agent-board/api';", 'apps/cli/src/x.ts')).toEqual([
+  it('[repo-001] cli importing @rumo/api fails lint', async () => {
+    expect(await messages("import '@rumo/api';", 'apps/cli/src/x.ts')).toEqual([
       'cli may not import api; allowed: contract, sealing',
     ]);
   });
@@ -27,41 +27,37 @@ describe('boundaries', () => {
     ]);
   });
 
-  it('[repo-001] api importing @agent-board/contract and @agent-board/sealing passes', async () => {
-    const code = "import '@agent-board/contract';\nimport '@agent-board/sealing';\nimport 'zod';";
+  it('[repo-001] api importing @rumo/contract and @rumo/sealing passes', async () => {
+    const code = "import '@rumo/contract';\nimport '@rumo/sealing';\nimport 'zod';";
     expect(await messages(code, 'apps/api/src/x.ts')).toEqual([]);
   });
 
-  it('[repo-001] contract importing @agent-board/sealing fails and the reverse', async () => {
-    expect(await messages("import '@agent-board/sealing';", 'packages/contract/src/x.ts')).toEqual([
+  it('[repo-001] contract importing @rumo/sealing fails and the reverse', async () => {
+    expect(await messages("import '@rumo/sealing';", 'packages/contract/src/x.ts')).toEqual([
       'contract may not import sealing; allowed: nothing',
     ]);
-    expect(await messages("import '@agent-board/contract';", 'packages/sealing/src/x.ts')).toEqual([
+    expect(await messages("import '@rumo/contract';", 'packages/sealing/src/x.ts')).toEqual([
       'sealing may not import contract; allowed: nothing',
     ]);
   });
 
   it('[repo-001] server-app may import api; client-app and mobile may import web; client-app may not import api', async () => {
-    expect(await messages("import '@agent-board/api';", 'apps/server-app/src/x.ts')).toEqual([]);
-    expect(await messages("import '@agent-board/web';", 'apps/client-app/src/x.ts')).toEqual([]);
-    expect(await messages("import '@agent-board/web';", 'apps/mobile/src/x.ts')).toEqual([]);
-    expect(await messages("import '@agent-board/api';", 'apps/client-app/src/x.ts')).toEqual([
+    expect(await messages("import '@rumo/api';", 'apps/server-app/src/x.ts')).toEqual([]);
+    expect(await messages("import '@rumo/web';", 'apps/client-app/src/x.ts')).toEqual([]);
+    expect(await messages("import '@rumo/web';", 'apps/mobile/src/x.ts')).toEqual([]);
+    expect(await messages("import '@rumo/api';", 'apps/client-app/src/x.ts')).toEqual([
       'client-app may not import api; allowed: web',
     ]);
   });
 
   it('[repo-001] dynamic import and export-from are checked', async () => {
     const forbidden = ['cli may not import api; allowed: contract, sealing'];
-    expect(await messages("await import('@agent-board/api');", 'apps/cli/src/x.ts')).toEqual(
+    expect(await messages("await import('@rumo/api');", 'apps/cli/src/x.ts')).toEqual(forbidden);
+    expect(await messages("export * from '@rumo/api';", 'apps/cli/src/x.ts')).toEqual(forbidden);
+    expect(await messages("export { a } from '@rumo/api';", 'apps/cli/src/x.ts')).toEqual(
       forbidden,
     );
-    expect(await messages("export * from '@agent-board/api';", 'apps/cli/src/x.ts')).toEqual(
-      forbidden,
-    );
-    expect(await messages("export { a } from '@agent-board/api';", 'apps/cli/src/x.ts')).toEqual(
-      forbidden,
-    );
-    expect(await messages("require('@agent-board/api');", 'apps/cli/src/x.js')).toEqual(forbidden);
+    expect(await messages("require('@rumo/api');", 'apps/cli/src/x.js')).toEqual(forbidden);
   });
 
   it("[repo-001] the rule's part table matches PARTS", async () => {

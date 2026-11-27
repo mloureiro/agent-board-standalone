@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import type { BoardExportRecord } from '@agent-board/contract';
+import type { BoardExportRecord } from '@rumo/contract';
 
 export const envelope = (seed: string): string =>
   `abe1.${seed.padEnd(40, 'A').replaceAll(/[^A-Za-z0-9_-]/g, 'A')}`;
@@ -329,7 +329,7 @@ export const syntheticRecords = (options: SyntheticOptions): BoardExportRecord[]
 export const exportFile = (
   records: readonly BoardExportRecord[],
   header = {
-    format: 'agent-board-export',
+    format: 'rumo-export',
     version: 1,
     createdAt: AT,
     source: { kind: 'migrate', version: '0.0.0' },

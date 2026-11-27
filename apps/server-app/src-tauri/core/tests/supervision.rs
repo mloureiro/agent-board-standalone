@@ -7,16 +7,16 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use agent_board_server_core::durations::Durations;
-use agent_board_server_core::health;
-use agent_board_server_core::log_file::{AppLog, LogFile};
-use agent_board_server_core::orphans;
-use agent_board_server_core::paths::AppPaths;
-use agent_board_server_core::process_group::group_is_alive;
-use agent_board_server_core::settings::Settings;
-use agent_board_server_core::spec::{self, ChildSpec};
-use agent_board_server_core::status::{RowState, Status};
-use agent_board_server_core::supervisor::{Plan, Supervisor};
+use rumo_server_core::durations::Durations;
+use rumo_server_core::health;
+use rumo_server_core::log_file::{AppLog, LogFile};
+use rumo_server_core::orphans;
+use rumo_server_core::paths::AppPaths;
+use rumo_server_core::process_group::group_is_alive;
+use rumo_server_core::settings::Settings;
+use rumo_server_core::spec::{self, ChildSpec};
+use rumo_server_core::status::{RowState, Status};
+use rumo_server_core::supervisor::{Plan, Supervisor};
 use tempfile::TempDir;
 
 const STUB: &str = env!("CARGO_BIN_EXE_stub_child");
@@ -679,7 +679,7 @@ fn settings_in(paths: &AppPaths, text: &str) -> Settings {
 fn resources(dir: &Path) -> PathBuf {
     let api = dir.join("resources/api");
     fs::create_dir_all(&api).unwrap();
-    fs::copy(STUB, api.join("agent-board-api")).unwrap();
+    fs::copy(STUB, api.join("rumo-api")).unwrap();
     dir.join("resources")
 }
 

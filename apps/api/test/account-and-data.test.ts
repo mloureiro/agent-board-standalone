@@ -7,7 +7,7 @@ import {
   boardExportRecord,
   type AccountTable,
   type BoardExportRecord,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
@@ -192,7 +192,7 @@ describe.each(TARGETS)('board import on $name', (target) => {
   });
 });
 
-describe('agent-board-api import', () => {
+describe('rumo-api import', () => {
   const cleanups: (() => void)[] = [];
   afterEach(() => {
     for (const cleanup of cleanups.splice(0)) cleanup();

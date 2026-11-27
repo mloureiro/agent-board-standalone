@@ -4,7 +4,7 @@ use tauri::{
     plugin::{PluginApi, PluginHandle},
 };
 
-const PACKAGE: &str = "com.mloureiro.agentboard.boardnative";
+const PACKAGE: &str = "com.mloureiro.rumo.boardnative";
 
 pub struct BoardNative<R: Runtime>(PluginHandle<R>);
 

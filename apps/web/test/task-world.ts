@@ -26,8 +26,8 @@ import {
   wakeNowClientTaskRoute,
   type NoteKind,
   type UiTaskListItem,
-} from '@agent-board/contract';
-import { bindings, seal } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, seal } from '@rumo/sealing';
 
 import { json } from './fake-board.js';
 import { BoardWorld, OWNER_KEYS, hours, isoAt, minutes, type SeedTask } from './board-world.js';

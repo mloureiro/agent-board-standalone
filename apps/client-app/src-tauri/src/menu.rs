@@ -1,12 +1,12 @@
 use crate::alerts;
 use crate::server_tabs::dispatch;
 use crate::windows::{LIST_LABEL, focused_server};
-use agent_board_client_core::keybindings::Keybindings;
-use agent_board_client_core::shortcuts::{
+use rumo_client_core::keybindings::Keybindings;
+use rumo_client_core::shortcuts::{
     Action, MENU_CLOSE_PANE, MENU_CLOSE_TAB, MENU_FOCUS_NEXT_PANE, MENU_MOVE_TAB, MENU_NEXT_TAB,
     MENU_PREVIOUS_TAB, MENU_SPLIT_TAB, from_menu_id, menu_select_id,
 };
-use agent_board_client_core::zoom::{
+use rumo_client_core::zoom::{
     self, MENU_ZOOM_IN, MENU_ZOOM_IN_SHIFTED, MENU_ZOOM_OUT, MENU_ZOOM_RESET,
 };
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
@@ -15,7 +15,7 @@ use tauri::{AppHandle, Manager};
 pub fn install(app: &AppHandle, keys: &Keybindings) -> tauri::Result<()> {
     let application = Submenu::with_items(
         app,
-        "Agent Board",
+        "Rumo",
         true,
         &[
             &PredefinedMenuItem::hide(app, None)?,

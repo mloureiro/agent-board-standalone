@@ -1,8 +1,8 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 
-import type { Feature } from '@agent-board/contract';
-import { bindings } from '@agent-board/sealing';
+import type { Feature } from '@rumo/contract';
+import { bindings } from '@rumo/sealing';
 import {
   expect,
   test,
@@ -188,13 +188,13 @@ export async function createWorld(board: Board, options: WorldOptions): Promise<
   mkdirSync(directory, { recursive: true });
   const registration = { env: machine.env, cwd: directory };
   const added = await runProcess(partPath('cli'), ['dirs', 'add', '--no-repo'], registration);
-  if (added.code !== 0) throw new Error(`board dirs add exited ${added.code}\n${added.stderr}`);
+  if (added.code !== 0) throw new Error(`rumo dirs add exited ${added.code}\n${added.stderr}`);
   const marked = await runProcess(
     partPath('cli'),
     ['dirs', 'set', 'default', 'true', directory],
     registration,
   );
-  if (marked.code !== 0) throw new Error(`board dirs set exited ${marked.code}\n${marked.stderr}`);
+  if (marked.code !== 0) throw new Error(`rumo dirs set exited ${marked.code}\n${marked.stderr}`);
   let listener: ReturnType<EnrolledMachine['start']> | null = null;
   const world: JourneyWorld = {
     board,
@@ -342,7 +342,7 @@ export async function createSchedule(
     options,
   );
   if (scheduled.code !== 0) {
-    throw new Error(`board schedule exited ${scheduled.code}\n${scheduled.stderr}`);
+    throw new Error(`rumo schedule exited ${scheduled.code}\n${scheduled.stderr}`);
   }
   return scheduled;
 }

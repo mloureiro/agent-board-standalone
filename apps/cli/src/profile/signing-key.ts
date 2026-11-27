@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { SIGNATURE_HEADERS, canonicalString } from '@agent-board/contract';
-import { contentDigest, exportPublicKey, sign, signingKeyId } from '@agent-board/sealing';
+import { SIGNATURE_HEADERS, canonicalString } from '@rumo/contract';
+import { contentDigest, exportPublicKey, sign, signingKeyId } from '@rumo/sealing';
 
 import { CliError } from '../errors.js';
 import { SIGNING_KEY_FILE, assertSecretFile, writeSecretFile } from './files.js';

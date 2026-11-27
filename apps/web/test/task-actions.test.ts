@@ -14,8 +14,8 @@ import {
   wakeNowClientTaskRoute,
   type TaskStatus,
   type UiTaskListItem,
-} from '@agent-board/contract';
-import { bindings, open } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, open } from '@rumo/sealing';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

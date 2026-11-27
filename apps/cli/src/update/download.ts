@@ -58,7 +58,7 @@ async function verifyChecksums(
   const publicKey = parsePublicKey(updateKey);
   const refuse = (reason: string): CliError =>
     new CliError(
-      `release ${release.tag} is not signed with the key this board trusts (${publicKey.keyId}): ${reason}; nothing was installed`,
+      `release ${release.tag} is not signed with the key this rumo trusts (${publicKey.keyId}): ${reason}; nothing was installed`,
     );
   const listing = release.assets.find((asset) => asset.name === SIGNATURE_ASSET);
   if (listing === undefined) throw refuse(`it has no ${SIGNATURE_ASSET}`);
@@ -160,11 +160,11 @@ export async function probeVersion(rt: Runtime, file: string, version: string): 
     });
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    throw new CliError(`the downloaded board does not run (${reason}); nothing was installed`);
+    throw new CliError(`the downloaded rumo does not run (${reason}); nothing was installed`);
   }
-  if (result.code !== 0 || !result.stdout.includes(`board ${version}`)) {
+  if (result.code !== 0 || !result.stdout.includes(`rumo ${version}`)) {
     throw new CliError(
-      `the downloaded board does not report version ${version}; nothing was installed`,
+      `the downloaded rumo does not report version ${version}; nothing was installed`,
     );
   }
 }

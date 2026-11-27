@@ -5,13 +5,13 @@ use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use agent_board_server_core::backup::{Backups, Kind, parse_entry};
-use agent_board_server_core::durations::Durations;
-use agent_board_server_core::log_file::{AppLog, LogFile};
-use agent_board_server_core::spec::ChildSpec;
-use agent_board_server_core::status::{RowState, Status};
-use agent_board_server_core::supervisor::{Plan, StartGate, Supervisor};
-use agent_board_server_core::upgrade::{
+use rumo_server_core::backup::{Backups, Kind, parse_entry};
+use rumo_server_core::durations::Durations;
+use rumo_server_core::log_file::{AppLog, LogFile};
+use rumo_server_core::spec::ChildSpec;
+use rumo_server_core::status::{RowState, Status};
+use rumo_server_core::supervisor::{Plan, StartGate, Supervisor};
+use rumo_server_core::upgrade::{
     BUNDLED_VERSION_RELATIVE, RECORD_FILE, Step, Upgrade, database_exists, decide,
 };
 use tempfile::TempDir;

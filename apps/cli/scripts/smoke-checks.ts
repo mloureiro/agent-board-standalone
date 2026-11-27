@@ -36,13 +36,13 @@ function run(command: readonly string[], args: readonly string[], env: NodeJS.Pr
 }
 
 export function smokeChecks(command: readonly string[], version: string): SmokeResult[] {
-  const home = mkdtempSync(path.join(os.tmpdir(), 'board-smoke-'));
+  const home = mkdtempSync(path.join(os.tmpdir(), 'rumo-smoke-'));
   const env: NodeJS.ProcessEnv = {
     PATH: process.env.PATH,
     HOME: home,
-    AGENT_BOARD_CONFIG_DIR: path.join(home, 'config'),
-    AGENT_BOARD_STATE_DIR: path.join(home, 'state'),
-    AGENT_BOARD_RUN_DIR: path.join(home, 'run'),
+    RUMO_CONFIG_DIR: path.join(home, 'config'),
+    RUMO_STATE_DIR: path.join(home, 'state'),
+    RUMO_RUN_DIR: path.join(home, 'run'),
   };
   const results: SmokeResult[] = [];
   const check = (name: string, args: string[], accepts: (out: Capture) => boolean): void => {
@@ -54,13 +54,13 @@ export function smokeChecks(command: readonly string[], version: string): SmokeR
     });
   };
   try {
-    check('board version', ['version'], (out) => out.stdout.startsWith(`board ${version}`));
-    check('board --version', ['--version'], (out) => out.stdout.includes(`board ${version}`));
-    check('board --help', ['--help'], (out) => out.stdout.includes('Usage: board'));
-    check('board completion bash', ['completion', 'bash'], (out) =>
-      out.stdout.includes('complete -F _board board'),
+    check('rumo version', ['version'], (out) => out.stdout.startsWith(`rumo ${version}`));
+    check('rumo --version', ['--version'], (out) => out.stdout.includes(`rumo ${version}`));
+    check('rumo --help', ['--help'], (out) => out.stdout.includes('Usage: rumo'));
+    check('rumo completion bash', ['completion', 'bash'], (out) =>
+      out.stdout.includes('complete -F _rumo rumo'),
     );
-    check('board internal selftest', ['internal', 'selftest'], (out) => {
+    check('rumo internal selftest', ['internal', 'selftest'], (out) => {
       const report = JSON.parse(out.stdout) as Record<string, unknown>;
       return (
         report.keyIdMatches === true &&

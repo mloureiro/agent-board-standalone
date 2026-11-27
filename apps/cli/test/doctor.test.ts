@@ -1,8 +1,8 @@
 import { chmodSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { DOCTOR_CHECK_IDS, doctorReport, type DoctorResult } from '@agent-board/contract';
-import { decodeDataKey, encodeDataKey } from '@agent-board/sealing';
+import { DOCTOR_CHECK_IDS, doctorReport, type DoctorResult } from '@rumo/contract';
+import { decodeDataKey, encodeDataKey } from '@rumo/sealing';
 import { describe, expect, it } from 'vitest';
 
 import { nodeCheck } from '../src/doctor/local.js';
@@ -22,7 +22,7 @@ function level(results: readonly DoctorResult[], name: DoctorResult['name']): st
   return results.find((entry) => entry.name === name)?.level;
 }
 
-describe('board doctor', () => {
+describe('rumo doctor', () => {
   it('[cli-047] reports a healthy profile with the contract check ids and exits 0', async () => {
     const { cli } = await rig();
     expect(await cli.run('doctor', '--json')).toBe(0);
@@ -55,7 +55,7 @@ describe('board doctor', () => {
     expect(await cli.run('doctor')).toBe(0);
     expect(cli.stdout()).toMatch(/^ok {4}web\.json: server http/m);
     expect(cli.stdout()).toMatch(/^warn {2}dispatch command: .*not installed$/m);
-    expect(cli.stdout()).toMatch(/hint: run `board setup`/);
+    expect(cli.stdout()).toMatch(/hint: run `rumo setup`/);
     expect(cli.stdout()).toMatch(/\d+ checks: \d+ ok, \d+ warnings, 0 failures\n$/);
   });
 
@@ -75,7 +75,7 @@ describe('board doctor', () => {
     const other = encodeDataKey(bytes);
     writeFileSync(
       cli.test.path('config', 'env'),
-      `AGENT_BOARD_TOKEN=abm_testtoken\nAGENT_BOARD_DATA_KEY=${other}\n`,
+      `RUMO_TOKEN=abm_testtoken\nRUMO_DATA_KEY=${other}\n`,
     );
     expect(await cli.run('doctor', '--json')).toBe(1);
     const results = doctorReport.parse(JSON.parse(cli.stdout()));
@@ -94,7 +94,7 @@ describe('board doctor', () => {
 
   it('[cli-047] fails on a profile that was never initialised', async () => {
     const { cli } = await rig();
-    const profile = cli.test.rt.env.AGENT_BOARD_CONFIG_DIR ?? '';
+    const profile = cli.test.rt.env.RUMO_CONFIG_DIR ?? '';
     writeFileSync(path.join(profile, 'server.json'), '{');
     expect(await cli.run('doctor', '--json')).toBe(1);
     expect(level(doctorReport.parse(JSON.parse(cli.stdout())), 'web.json')).toBe('fail');
@@ -137,8 +137,8 @@ describe('board doctor', () => {
     const units = path.join(cli.test.rt.homedir, '.config', 'systemd', 'user');
     mkdirSync(units, { recursive: true });
     writeFileSync(
-      path.join(units, 'agent-board-default-listen.service'),
-      'ExecStart=/nonexistent/board --profile default internal listen\n',
+      path.join(units, 'rumo-default-listen.service'),
+      'ExecStart=/nonexistent/rumo --profile default internal listen\n',
     );
     const results = await report(cli);
     expect(level(results, 'listen command')).toBe('fail');
@@ -152,7 +152,7 @@ describe('board doctor', () => {
     const units = path.join(cli.test.rt.homedir, '.config', 'systemd', 'user');
     mkdirSync(units, { recursive: true });
     writeFileSync(
-      path.join(units, 'agent-board-default-watch.service'),
+      path.join(units, 'rumo-default-watch.service'),
       `ExecStart=${process.execPath} --profile default internal watch\n`,
     );
     const results = await report(cli);
@@ -169,10 +169,10 @@ describe('board doctor', () => {
   });
 
   it('[cli-047] reads the credentials command instead of the env file', async () => {
-    const { cli } = await rig({ env: { AGENT_BOARD_CREDENTIALS_COMMAND: '/opt/creds' } });
+    const { cli } = await rig({ env: { RUMO_CREDENTIALS_COMMAND: '/opt/creds' } });
     const results = await report(cli);
     expect(results.find((entry) => entry.name === 'env')?.message).toMatch(
-      /AGENT_BOARD_CREDENTIALS_COMMAND/,
+      /RUMO_CREDENTIALS_COMMAND/,
     );
     expect(level(results, 'env mode')).toBeUndefined();
   });

@@ -9,7 +9,7 @@ export function registerConfig(program: Command, withContext: (command: Command)
     program
       .command('config')
       .description(
-        'Show and edit this profile\'s config file; keys below dirs go through "board dirs"',
+        'Show and edit this profile\'s config file; keys below dirs go through "rumo dirs"',
       )
       .usage('[options] [show | get <key> | set <key> <value> | unset <key> | edit | path]')
       .argument('[action...]', 'show, get, set, unset, edit or path')

@@ -63,8 +63,8 @@ describe('repository', () => {
 
   it("[contract-009] every workspace range on contract and sealing admits the package's version", () => {
     const versions: Record<string, string> = {
-      '@agent-board/contract': manifest('packages/contract').version,
-      '@agent-board/sealing': manifest('packages/sealing').version,
+      '@rumo/contract': manifest('packages/contract').version,
+      '@rumo/sealing': manifest('packages/sealing').version,
     };
     let checked = 0;
     for (const directory of PACKAGE_DIRECTORIES) {

@@ -29,4 +29,4 @@ pub mod tokens;
 pub mod watch;
 pub mod zoom;
 
-pub const BUNDLE_ID: &str = "dev.mloureiro.agent-board-client";
+pub const BUNDLE_ID: &str = "dev.mloureiro.rumo-client";

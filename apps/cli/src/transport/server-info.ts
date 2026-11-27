@@ -1,4 +1,4 @@
-import { CLIENT_KINDS, type ClientKind } from '@agent-board/contract';
+import { CLIENT_KINDS, type ClientKind } from '@rumo/contract';
 
 import { CliError } from '../errors.js';
 

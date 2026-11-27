@@ -2,9 +2,9 @@ import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import type { Feature, TaskStatus } from '@agent-board/contract';
-import { routeByName } from '@agent-board/contract';
-import { bindings } from '@agent-board/sealing';
+import type { Feature, TaskStatus } from '@rumo/contract';
+import { routeByName } from '@rumo/contract';
+import { bindings } from '@rumo/sealing';
 
 import { UNLOCK_NAMES, unlockInPage } from '../fixtures/browser.js';
 import { DEFAULT_PASSPHRASE, unlockedKey, type UnlockedKey } from '../fixtures/keys.js';
@@ -224,12 +224,12 @@ export async function startWorker(
   mkdirSync(directory, { recursive: true });
   const added = await machine.cli(['dirs', 'add', directory]);
   if (added.code !== 0) {
-    throw new Error(`board dirs add exited ${added.code}\n${added.stdout}${added.stderr}`);
+    throw new Error(`rumo dirs add exited ${added.code}\n${added.stdout}${added.stderr}`);
   }
   const configured = await machine.cli(['config', 'set', 'defaultCwd', directory]);
   if (configured.code !== 0) {
     throw new Error(
-      `board config set exited ${configured.code}\n${configured.stdout}${configured.stderr}`,
+      `rumo config set exited ${configured.code}\n${configured.stdout}${configured.stderr}`,
     );
   }
   const listener = options.listen === false ? null : machine.start(['internal', 'listen']);

@@ -1,5 +1,5 @@
-import { meRoute } from '@agent-board/contract';
-import type { Keys } from '@agent-board/sealing';
+import { meRoute } from '@rumo/contract';
+import type { Keys } from '@rumo/sealing';
 
 import { callRoute } from '../auth/api.js';
 import type { ServerClient } from '../transport/client.js';

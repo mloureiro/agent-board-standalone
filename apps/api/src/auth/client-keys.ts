@@ -1,4 +1,4 @@
-import { SealingError, signingKeyId, tokenHash } from '@agent-board/sealing';
+import { SealingError, signingKeyId, tokenHash } from '@rumo/sealing';
 import { and, eq } from 'drizzle-orm';
 
 import type { Clock } from '../clock.js';

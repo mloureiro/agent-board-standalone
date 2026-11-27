@@ -11,7 +11,7 @@ export function showUpdateHint(env: UpdateEnv, interactive: boolean, inRun: bool
   const at = now(env.rt.env);
   if (state.hintShownAt !== undefined && at - state.hintShownAt < HINT_EVERY_MS) return;
   env.rt.io.stderr(
-    `board ${state.latest} is available (this is ${PART_VERSION}); run \`board self-update\`\n`,
+    `rumo ${state.latest} is available (this is ${PART_VERSION}); run \`rumo self-update\`\n`,
   );
   patchUpdateState(env.dirs.state, (current) => ({ ...current, hintShownAt: at }));
 }

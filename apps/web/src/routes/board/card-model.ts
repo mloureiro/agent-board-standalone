@@ -1,5 +1,5 @@
-import type { UiTaskListItem } from '@agent-board/contract';
-import { bindings, open, seal, type Binding, type Keys, type Origin } from '@agent-board/sealing';
+import type { UiTaskListItem } from '@rumo/contract';
+import { bindings, open, seal, type Binding, type Keys, type Origin } from '@rumo/sealing';
 
 import { readContext, type ContextUsage } from './context-model.js';
 

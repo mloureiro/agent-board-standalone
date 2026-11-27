@@ -1,8 +1,8 @@
 import { realpathSync, statSync } from 'node:fs';
 import path from 'node:path';
 
-import { configureTaskRoute, editPromptRoute, type TaskConfig } from '@agent-board/contract';
-import { bindings, seal } from '@agent-board/sealing';
+import { configureTaskRoute, editPromptRoute, type TaskConfig } from '@rumo/contract';
+import { bindings, seal } from '@rumo/sealing';
 
 import { UsageError } from '../../errors.js';
 import {
@@ -243,7 +243,7 @@ function chosenDirectory(
   const row = entry === undefined ? undefined : rows.find((candidate) => candidate.id === entry.id);
   if (row === undefined) {
     throw new UsageError(
-      `${plain(real)} is not a listed directory on this machine, so the task would stop in Needs me there. Run "board dirs add" there first, or give a listed directory.`,
+      `${plain(real)} is not a listed directory on this machine, so the task would stop in Needs me there. Run "rumo dirs add" there first, or give a listed directory.`,
     );
   }
   return row;
@@ -275,7 +275,7 @@ async function directoryChange(
   const row = chosenDirectory(ctx, rows, requested);
   if (row.projectId !== null && row.projectId !== wire.projectId) {
     throw new UsageError(
-      `${plain(row.path)} belongs to another project than ${id}: use "board task ${id} set project ${row.projectId}" first`,
+      `${plain(row.path)} belongs to another project than ${id}: use "rumo task ${id} set project ${row.projectId}" first`,
     );
   }
   return {
@@ -308,8 +308,8 @@ async function projectChange(
   if (pick === undefined) {
     throw new UsageError(
       inProject.length === 0
-        ? `no directory of this machine is in that project: run "board dirs add" in one first`
-        : `several directories of this machine are in that project: choose one with "board task ${id} set dir <path>"`,
+        ? `no directory of this machine is in that project: run "rumo dirs add" in one first`
+        : `several directories of this machine are in that project: choose one with "rumo task ${id} set dir <path>"`,
     );
   }
   return {
@@ -322,10 +322,10 @@ function promptEditRefusal(task: OpenTask): string | undefined {
   const { wire } = task;
   if (wire.createdBy !== 'user') return 'only a task you created has a prompt you can edit';
   if (wire.scheduleId !== null) {
-    return 'this card is the next run of a schedule: edit the schedule with `board schedules edit <schedule> <text...>`';
+    return 'this card is the next run of a schedule: edit the schedule with `rumo schedules edit <schedule> <text...>`';
   }
   if (wire.lastActiveAt !== null || wire.sessionId !== null) {
-    return 'a worker has started it, so its prompt is in its thread now: reply with `board comment` instead';
+    return 'a worker has started it, so its prompt is in its thread now: reply with `rumo comment` instead';
   }
   if (wire.closed || (wire.status !== 'todo' && wire.status !== 'backlog')) {
     return `it is ${wire.closed ? 'closed' : wire.status}: a prompt can only be edited while the task waits in Todo or Backlog`;
@@ -396,12 +396,12 @@ export async function runTaskSettings(
     (options.title !== undefined || options.file !== undefined) &&
     !(action === 'set' && key === 'prompt')
   ) {
-    throw new UsageError('--title and --file belong to board task <task> set prompt');
+    throw new UsageError('--title and --file belong to rumo task <task> set prompt');
   }
   if (action !== undefined && options.json === true) {
     throw new UsageError('--json only prints the settings of a task');
   }
-  if (action !== undefined) refuseInRun(ctx, `board task ${action}`);
+  if (action !== undefined) refuseInRun(ctx, `rumo task ${action}`);
   if (action === undefined) {
     const s = await session(ctx);
     const task = await fetchTask(s, await resolveTask(ctx, s, input));
@@ -410,10 +410,10 @@ export async function runTaskSettings(
     return;
   }
   if (!isSettingKey(key)) {
-    throw new UsageError(`board task ${action} takes ${SETTING_KEYS.join(', ')}`);
+    throw new UsageError(`rumo task ${action} takes ${SETTING_KEYS.join(', ')}`);
   }
   if (action === 'unset') {
-    if (rest.length > 0) throw new UsageError(`board task unset ${key} takes nothing more`);
+    if (rest.length > 0) throw new UsageError(`rumo task unset ${key} takes nothing more`);
     if (key === 'priority')
       throw new UsageError('a task always has a priority; set one of urgent, high, normal, low');
     if (key === 'prompt') throw new UsageError('a task always has a prompt; set a new one');
@@ -432,30 +432,30 @@ export async function runTaskSettings(
   let change: Change;
   if (key === 'dir') {
     if (action === 'set' && rest.length > 1)
-      throw new UsageError('board task set dir takes one path');
+      throw new UsageError('rumo task set dir takes one path');
     change = await directoryChange(ctx, s, task, action === 'unset' ? null : rest[0]);
   } else if (key === 'project') {
     const [value] = rest;
     if (value === undefined || rest.length > 1)
-      throw new UsageError('board task set project takes one project id');
+      throw new UsageError('rumo task set project takes one project id');
     change = await projectChange(ctx, s, task, value);
   } else if (key === 'icon' || key === 'labels') {
     if (action === 'set') {
       if (rest.length === 0) {
         throw new UsageError(
           key === 'icon'
-            ? 'board task set icon takes one emoji'
-            : 'board task set labels takes one or more labels; unset labels removes them',
+            ? 'rumo task set icon takes one emoji'
+            : 'rumo task set labels takes one or more labels; unset labels removes them',
         );
       }
       if (key === 'icon' && rest.length > 1)
-        throw new UsageError('board task set icon takes one emoji');
+        throw new UsageError('rumo task set icon takes one emoji');
     }
     change = await sealedChange(s, task, key, action === 'unset' ? [] : rest);
   } else {
     const [value] = rest;
     if (action === 'set' && (value === undefined || rest.length > 1)) {
-      throw new UsageError(`board task set ${key} takes one value`);
+      throw new UsageError(`rumo task set ${key} takes one value`);
     }
     change = simpleChange(
       task,

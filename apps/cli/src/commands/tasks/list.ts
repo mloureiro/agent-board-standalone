@@ -1,4 +1,4 @@
-import { TASK_STATUSES, listTasksRoute, projectId, readNotesRoute } from '@agent-board/contract';
+import { TASK_STATUSES, listTasksRoute, projectId, readNotesRoute } from '@rumo/contract';
 
 import { UsageError } from '../../errors.js';
 import { parseStatus, plain } from '../../domain/rules.js';

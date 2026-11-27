@@ -94,7 +94,7 @@ const envOf = (extra: Record<string, string> = {}): Record<string, string> => ({
 describe.skipIf(!hasBun)('[api-019] the single executable', () => {
   beforeAll(async () => {
     folder = mkdtempSync(join(tmpdir(), 'board-api-exe-'));
-    binary = join(folder, 'agent-board-api');
+    binary = join(folder, 'rumo-api');
     mkdirSync(join(folder, 'site', 'assets'), { recursive: true });
     writeFileSync(join(folder, 'site', 'index.html'), '<html>page</html>');
     writeFileSync(join(folder, 'site', 'assets', 'app.js'), '0123456789');

@@ -108,8 +108,8 @@ export const serve = async (env: Env): Promise<number> => {
   } catch (error) {
     process.stderr.write(
       error instanceof ConfigError || error instanceof DatabaseRefusal
-        ? `agent-board-api: ${error.message}\n`
-        : `agent-board-api: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`,
+        ? `rumo-api: ${error.message}\n`
+        : `rumo-api: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`,
     );
     return 1;
   }
@@ -118,7 +118,7 @@ export const serve = async (env: Env): Promise<number> => {
       started.close().then(
         () => resolve(0),
         (error: unknown) => {
-          process.stderr.write(`agent-board-api: shutdown failed: ${String(error)}\n`);
+          process.stderr.write(`rumo-api: shutdown failed: ${String(error)}\n`);
           resolve(1);
         },
       );

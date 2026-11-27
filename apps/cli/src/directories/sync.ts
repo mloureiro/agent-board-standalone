@@ -1,5 +1,5 @@
-import { setDirsRoute } from '@agent-board/contract';
-import { bindings, seal } from '@agent-board/sealing';
+import { setDirsRoute } from '@rumo/contract';
+import { bindings, seal } from '@rumo/sealing';
 
 import type { Session } from '../transport/session.js';
 import { convertLegacyDirectories, reportLegacy } from './legacy.js';

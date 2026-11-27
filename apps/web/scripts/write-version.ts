@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { CONTRACT } from '@agent-board/contract';
+import { CONTRACT } from '@rumo/contract';
 
 import { PART_VERSION } from '../src/version.js';
 

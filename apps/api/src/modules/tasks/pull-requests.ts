@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { MAX_TASK_PRS, MAX_TASK_WATCHES, type PrState } from '@agent-board/contract';
+import { MAX_TASK_PRS, MAX_TASK_WATCHES, type PrState } from '@rumo/contract';
 import { and, count, eq } from 'drizzle-orm';
 
 import { task, taskPr } from '../../db/schema/index.js';

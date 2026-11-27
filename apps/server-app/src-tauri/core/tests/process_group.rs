@@ -2,9 +2,7 @@ use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
-use agent_board_server_core::process_group::{
-    group_is_alive, group_of, signal_group, spawn_in_own_group,
-};
+use rumo_server_core::process_group::{group_is_alive, group_of, signal_group, spawn_in_own_group};
 
 fn wait_until(mut condition: impl FnMut() -> bool) -> bool {
     let deadline = Instant::now() + Duration::from_secs(10);

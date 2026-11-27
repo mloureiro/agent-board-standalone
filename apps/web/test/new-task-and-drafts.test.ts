@@ -3,8 +3,8 @@ import {
   createClientTaskRoute,
   listClientSchedulesRoute,
   replyClientTaskRoute,
-} from '@agent-board/contract';
-import { bindings, open, seal } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, open, seal } from '@rumo/sealing';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

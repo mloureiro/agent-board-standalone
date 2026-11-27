@@ -1,4 +1,4 @@
-import { compat, type ClientKind, type CompatKind } from '@agent-board/contract';
+import { compat, type ClientKind, type CompatKind } from '@rumo/contract';
 
 export type MatrixPart = 'api' | 'cli' | 'web';
 

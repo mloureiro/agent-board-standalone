@@ -2,12 +2,12 @@ mod common;
 
 use std::fs;
 
-use agent_board_server_core::activity::Busy;
-use agent_board_server_core::backup_desk::BackupView;
-use agent_board_server_core::menu::{BADGE, Inputs, ItemId, Menu, TITLE};
-use agent_board_server_core::status::{GaveUp, Row, RowState, Status};
-use agent_board_server_core::versions::Versions;
-use agent_board_server_core::worker::NOT_CONNECTED;
+use rumo_server_core::activity::Busy;
+use rumo_server_core::backup_desk::BackupView;
+use rumo_server_core::menu::{BADGE, Inputs, ItemId, Menu, TITLE};
+use rumo_server_core::status::{GaveUp, Row, RowState, Status};
+use rumo_server_core::versions::Versions;
+use rumo_server_core::worker::NOT_CONNECTED;
 
 fn status(api: Row, worker: Row) -> Status {
     Status {

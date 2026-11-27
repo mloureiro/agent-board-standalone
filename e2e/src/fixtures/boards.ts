@@ -1,4 +1,4 @@
-import type { Feature } from '@agent-board/contract';
+import type { Feature } from '@rumo/contract';
 
 import { startApi, type AuthMode } from '../harness/api.js';
 import {

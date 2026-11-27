@@ -2,8 +2,8 @@ import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 
-import type { Feature } from '@agent-board/contract';
-import { bindings } from '@agent-board/sealing';
+import type { Feature } from '@rumo/contract';
+import { bindings } from '@rumo/sealing';
 import { test, type Browser, type BrowserContext, type Locator, type Page } from '@playwright/test';
 
 import type { RouteOutput } from '../client/contract-client.js';
@@ -362,7 +362,7 @@ export async function runScenario(input: ScenarioInput): Promise<ScenarioResult>
     env: { STUB_CLAUDE_LOG: path.join(stubLogDir, 'claude.jsonl') },
   });
   const added = await runIn(machine, directory, ['dirs', 'add', '--no-repo']);
-  if (added.code !== 0) throw new Error(`board dirs add exited ${added.code}\n${added.stderr}`);
+  if (added.code !== 0) throw new Error(`rumo dirs add exited ${added.code}\n${added.stderr}`);
   const listener = machine.start(['internal', 'listen']);
 
   const title = `${marker} title`;
@@ -428,7 +428,7 @@ export async function runScenario(input: ScenarioInput): Promise<ScenarioResult>
     'the run ends after the reply',
   );
   const commented = await machine.cli(['comment', taskId, note]);
-  if (commented.code !== 0) throw new Error(`board comment exited ${commented.code}`);
+  if (commented.code !== 0) throw new Error(`rumo comment exited ${commented.code}`);
   await user.ok('client.tasks.done', { id: taskId });
 
   const forkId = `fork-${randomBytes(6).toString('hex')}`;
@@ -458,7 +458,7 @@ export async function runScenario(input: ScenarioInput): Promise<ScenarioResult>
     schedulePrompt,
   ]);
   if (repeating.code !== 0)
-    throw new Error(`board schedule exited ${repeating.code}\n${repeating.stderr}`);
+    throw new Error(`rumo schedule exited ${repeating.code}\n${repeating.stderr}`);
   const keyed = await runIn(machine, directory, [
     'schedule',
     '--key',
@@ -468,7 +468,7 @@ export async function runScenario(input: ScenarioInput): Promise<ScenarioResult>
     `${marker} keyed prompt`,
   ]);
   if (keyed.code !== 0)
-    throw new Error(`board schedule --key exited ${keyed.code}\n${keyed.stderr}`);
+    throw new Error(`rumo schedule --key exited ${keyed.code}\n${keyed.stderr}`);
 
   await openSettings(page, SETTINGS_PAGES.notifications);
   await page.getByRole('checkbox', { name: NAMES.notifications }).check();

@@ -112,7 +112,7 @@ export async function runPendingMigration(
         failed: { id: step.id, message },
       });
       throw new CliError(
-        `migration step ${step.id} (${step.title}) stopped: ${message}; run \`board self-update --resume\` to retry or \`board self-update --rollback\` to go back`,
+        `migration step ${step.id} (${step.title}) stopped: ${message}; run \`rumo self-update --resume\` to retry or \`rumo self-update --rollback\` to go back`,
       );
     }
     done.add(step.id);

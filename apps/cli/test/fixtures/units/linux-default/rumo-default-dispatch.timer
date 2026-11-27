@@ -1,5 +1,5 @@
 [Unit]
-Description=agent-board default dispatch: a tick every 120 seconds
+Description=rumo default dispatch: a tick every 120 seconds
 
 [Timer]
 OnBootSec=120s

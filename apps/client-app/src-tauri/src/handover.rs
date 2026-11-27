@@ -1,16 +1,16 @@
 use crate::state::{AppState, OpenFailure};
 use crate::windows;
-use agent_board_client_core::handover::{EarlyLinks, HandoverPlan, plan};
-use agent_board_client_core::handshake::Handshake;
-use agent_board_client_core::ids::ServerId;
-use agent_board_client_core::opening::{Opening, WindowAction, plan_open, window_error};
-use agent_board_client_core::servers::ServerEntry;
+use rumo_client_core::handover::{EarlyLinks, HandoverPlan, plan};
+use rumo_client_core::handshake::Handshake;
+use rumo_client_core::ids::ServerId;
+use rumo_client_core::opening::{Opening, WindowAction, plan_open, window_error};
+use rumo_client_core::servers::ServerEntry;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
 const FAILURES_QUEUED_EVENT: &str = "open-failures-queued";
 const SERVERS_CHANGED_EVENT: &str = "servers-changed";
-const LINK_NOTICE_NAME: &str = "Agent Board";
+const LINK_NOTICE_NAME: &str = "Rumo";
 
 pub fn queue_failure(app: &AppHandle, state: &AppState, name: &str, text: String) {
     state.queue_open_failure(OpenFailure {
@@ -43,7 +43,7 @@ pub async fn open_entry(
                     .servers()
                     .add(entry.id, &entry.name, &entry.url)
                     .map_err(|error| {
-                        agent_board_client_core::bridge::BridgeError::from(error).message()
+                        rumo_client_core::bridge::BridgeError::from(error).message()
                     })?;
                 let _ = app.emit_to(windows::LIST_LABEL, SERVERS_CHANGED_EVENT, ());
             }

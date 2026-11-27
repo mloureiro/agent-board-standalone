@@ -3,29 +3,29 @@
 Steps that no automated test can drive, because they need the real tray, the macOS Keychain, launchd, a second Mac
 or the owner's real data. Each entry names the requirement row it covers in
 `requirements/catalogue/server-app.md`. The walk runs once per release on a Mac with macOS 14 or later, against a
-built app: the `Agent Board Server` zip attached to the `server-app-v<version>` release (unzip it outside `/tmp`), or a
-local build (`pnpm --filter @agent-board/server-app bundle`, then open
-`apps/server-app/src-tauri/target/release/bundle/macos/Agent Board Server.app`).
+built app: the `Rumo Server` zip attached to the `server-app-v<version>` release (unzip it outside `/tmp`), or a
+local build (`pnpm --filter @rumo/server-app bundle`, then open
+`apps/server-app/src-tauri/target/release/bundle/macos/Rumo Server.app`).
 
 Terms used below:
 
-| Term          | Meaning                                                                                               |
-| ------------- | ----------------------------------------------------------------------------------------------------- |
-| `<root>`      | `~/Library/Application Support/Agent Board Server`, or the folder `AGENT_BOARD_SERVER_ROOT` points at |
-| `<port>`      | `port` in `<root>/settings.json` (default 4785)                                                       |
-| `<app>`       | the installed `Agent Board Server.app`                                                                |
-| `<resources>` | the `resources` folder that sits next to the app's executable, holding `api/`, `cli/` and `web/`      |
-| `<owner>`     | the user name of the board's owner, as exported from the old board                                    |
+| Term          | Meaning                                                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------ |
+| `<root>`      | `~/Library/Application Support/Rumo Server`, or the folder `RUMO_SERVER_ROOT` points at          |
+| `<port>`      | `port` in `<root>/settings.json` (default 4785)                                                  |
+| `<app>`       | the installed `Rumo Server.app`                                                                  |
+| `<resources>` | the `resources` folder that sits next to the app's executable, holding `api/`, `cli/` and `web/` |
+| `<owner>`     | the user name of the board's owner, as exported from the old board                               |
 
 ## Before you start
 
-The app writes to the Keychain (service `dev.mloureiro.agent-board-server`), to `~/Library/LaunchAgents` and to
+The app writes to the Keychain (service `dev.mloureiro.rumo-server`), to `~/Library/LaunchAgents` and to
 `<root>`. To walk without touching anything that matters, use a throwaway state:
 
 1. Make a new macOS user (System Settings › Users & Groups) and run the walk there, or
-2. Run entries 023, 090 and restore with `AGENT_BOARD_SERVER_ROOT=<scratch folder>` set for the launch (the root has
+2. Run entries 023, 090 and restore with `RUMO_SERVER_ROOT=<scratch folder>` set for the launch (the root has
    its own Keychain service and never touches the login item), for example
-   `AGENT_BOARD_SERVER_ROOT=/Users/<you>/server-walk "<app>/Contents/MacOS/agent-board-server"`.
+   `RUMO_SERVER_ROOT=/Users/<you>/server-walk "<app>/Contents/MacOS/rumo-server"`.
 
 Entries 060, 062 and 087 need the default root, the real Keychain and the login item, so they run only in the new
 macOS user. The new app has its own bundle id, root, Keychain service and launch agent label, so it coexists with the
@@ -37,7 +37,7 @@ Other preparation:
 - `claude` and `gh` installed and signed in, for the worker entries.
 - The client app installed for entry 023 step 7, and uninstalled (or renamed) for step 8.
 - The app is ad-hoc signed, so macOS may refuse to open a downloaded copy on first launch. Remove the quarantine flag
-  with `xattr -dr com.apple.quarantine "Agent Board Server.app"` or approve it in System Settings › Privacy & Security.
+  with `xattr -dr com.apple.quarantine "Rumo Server.app"` or approve it in System Settings › Privacy & Security.
 - Keep the app out of `/tmp`: LaunchServices ignores bundles there.
 
 ## 023: the tray (text, mark, Open board)
@@ -73,7 +73,7 @@ it recovers, and Open board reaches the client app first and the browser second.
 2. Paste a wrong token and a wrong data key and click Connect. The window shows `Connecting…`, the fields are locked
    and the close button does nothing until the answer arrives.
 3. The answer is the refusal's reason. Nothing is stored: `Worker not connected` stays on the tray, and Keychain Access
-   (search `dev.mloureiro.agent-board-server`) holds no `worker-token` or `worker-data-key` item.
+   (search `dev.mloureiro.rumo-server`) holds no `worker-token` or `worker-data-key` item.
 4. Paste the real token and data key and click Connect. The window shows `Connected as <machine>` and the fields are
    empty. Close the window. The tray row now reads `Worker: …` and Restart worker, Disconnect worker and Check worker are
    enabled.
@@ -130,7 +130,7 @@ Funnel or `cloudflared` installed on this Mac, and a phone that is not on this M
     settings file, and `<publicUrl>/` answers with an error. Stop the tunnel (`tailscale funnel reset` or Ctrl-C).
 
 The same steps run without the window, from a terminal, with the app's binary
-`"<app>/Contents/MacOS/agent-board-server"`: `setup status`, `setup remote --public-url https://<host>`,
+`"<app>/Contents/MacOS/rumo-server"`: `setup status`, `setup remote --public-url https://<host>`,
 `setup first-passkey` (prints the address, the name and the token on three lines), `setup first-passkey --done` and
 `setup remote --off`. Each changing command ends with the sentence to restart the server from the tray or to reopen
 the app; click Restart server to apply.
@@ -144,7 +144,7 @@ New macOS user only. Connect a worker first (entry 023, step 4 of the Connect wi
 
 1. Quit the app. Install a rebuild of the same version over `<app>` (build it again with `bundle`, or take a second
    release asset), remove the quarantine flag and open it.
-2. macOS asks whether `Agent Board Server` may use the Keychain item `dev.mloureiro.agent-board-server`. Choose
+2. macOS asks whether `Rumo Server` may use the Keychain item `dev.mloureiro.rumo-server`. Choose
    Always Allow (once per item, up to the token and the data key).
 3. The worker row reaches `Worker: ok` without enrolling again.
 
@@ -165,14 +165,14 @@ Expected: a rebuild signed with the same identity reads the Keychain without a p
 
 New macOS user only, release build installed in `/Applications`, `startAtLogin` left at its default.
 
-1. Open the app once. `~/Library/LaunchAgents/dev.mloureiro.agent-board-server.plist` exists.
+1. Open the app once. `~/Library/LaunchAgents/dev.mloureiro.rumo-server.plist` exists.
 2. Log out and log in again. The app is running (tray icon present) without being opened.
-3. In a terminal run `pgrep -x agent-board-server` and note the number, then `kill -9 <number>`.
-4. Within about 10 seconds `pgrep -x agent-board-server` prints a new number and the tray icon is back. The old
-   API and worker processes (`pgrep -fl agent-board-api`) are gone or replaced: no orphan of the killed run remains.
-5. Click Quit. After 30 seconds `pgrep -x agent-board-server` prints nothing.
+3. In a terminal run `pgrep -x rumo-server` and note the number, then `kill -9 <number>`.
+4. Within about 10 seconds `pgrep -x rumo-server` prints a new number and the tray icon is back. The old
+   API and worker processes (`pgrep -fl rumo-api`) are gone or replaced: no orphan of the killed run remains.
+5. Click Quit. After 30 seconds `pgrep -x rumo-server` prints nothing.
 6. Open the app, then open it a second time (`open -n "<app>"`). The second launch exits at once, the first keeps
-   running and `pgrep -x agent-board-server` prints one number 30 seconds later.
+   running and `pgrep -x rumo-server` prints one number 30 seconds later.
 7. Log out while the app runs. After logging in the app starts once (a single `pgrep` number).
 
 Expected: a crash or kill is relaunched in about 10 seconds with its orphans swept, and Quit, logout and a second
@@ -211,10 +211,10 @@ Expected: the documented restore brings back the state at the backup.
 
 ## Uninstall
 
-1. Quit the app. Run `"<app>/Contents/MacOS/agent-board-server" --uninstall`. It lists what it removed: the launch
+1. Quit the app. Run `"<app>/Contents/MacOS/rumo-server" --uninstall`. It lists what it removed: the launch
    agent (default root only) and the Keychain items. `<root>` is untouched.
-2. In Keychain Access search `dev.mloureiro.agent-board-server`: nothing is left. `~/Library/LaunchAgents` holds no
-   `dev.mloureiro.agent-board-server.plist`.
+2. In Keychain Access search `dev.mloureiro.rumo-server`: nothing is left. `~/Library/LaunchAgents` holds no
+   `dev.mloureiro.rumo-server.plist`.
 3. Run it again with `--delete-data` only when you want the app folder gone: `<root>` disappears, and a data or backup
    folder outside it is printed and left.
 4. Drag `<app>` to the Trash.

@@ -4,38 +4,38 @@ For the step-13 install, `install.md` says where this walk fits; start there.
 
 Steps that no automated test can drive, because they need real native window chrome, the Dock, notifications or the
 macOS Keychain. Each entry names the requirement row it covers in `requirements/catalogue/client-app.md`. The walk
-runs once per release on a Mac with macOS 14 or later, against a built app: either the `Agent Board Client` or
-`Agent Board Client Debug` zip attached to the `client-app-v<version>` release (unzip it outside `/tmp`), or a local build
-(`pnpm --filter @agent-board/client-app bundle`, then open
-`apps/client-app/src-tauri/target/release/bundle/macos/Agent Board Client.app`). The debug variant has the same bundle id, so
+runs once per release on a Mac with macOS 14 or later, against a built app: either the `Rumo Client` or
+`Rumo Client Debug` zip attached to the `client-app-v<version>` release (unzip it outside `/tmp`), or a local build
+(`pnpm --filter @rumo/client-app bundle`, then open
+`apps/client-app/src-tauri/target/release/bundle/macos/Rumo Client.app`). The debug variant has the same bundle id, so
 it shares the Keychain items, the notification permission and the data of the release one, and adds the Web Inspector
 (right-click a page, Inspect Element).
 
 ## Before you start
 
-The app is `Agent Board Client.app`, bundle id `dev.mloureiro.agent-board-client`. It installs beside the previous
+The app is `Rumo Client.app`, bundle id `dev.mloureiro.rumo-client`. It installs beside the previous
 client (`Agent Board.app`, `com.mloureiro.agent-board-client`) and never reads, changes or deletes that app's data,
 WebKit stores or Keychain items. The two keep separate server lists, sign-ins and notification permissions.
 
 To walk without touching anything that matters, use a throwaway state:
 
 1. Make a new macOS user (System Settings › Users & Groups) and run the walk there, or
-2. Back up `~/Library/Application Support/dev.mloureiro.agent-board-client` and `~/Library/WebKit/dev.mloureiro.agent-board-client`
+2. Back up `~/Library/Application Support/dev.mloureiro.rumo-client` and `~/Library/WebKit/dev.mloureiro.rumo-client`
    first, and restore them afterwards.
 
 Every entry wants a clean state: no `servers.json`, no items in Keychain Access under
-`dev.mloureiro.agent-board-client` and no entry for `Agent Board Client` in System Settings › Notifications.
+`dev.mloureiro.rumo-client` and no entry for `Rumo Client` in System Settings › Notifications.
 
 Other preparation:
 
 - Run an API server that needs no sign-in and add it to the list with its address. A second, unreachable entry (for
   example `http://localhost:1`) is useful for the failure checks of later entries.
 - Entries that name a login-mode server or a request-signature server say so at their start.
-- Keep the app out of `/tmp`: LaunchServices ignores bundles there, which breaks `agentboard://` links.
-- Both clients claim `agentboard://` links. While the previous client is installed, run the link entries with
-  `open -b dev.mloureiro.agent-board-client '<link>'` (as the server app does), so the link cannot reach the old app.
+- Keep the app out of `/tmp`: LaunchServices ignores bundles there, which breaks `rumo://` links.
+- The previous client claims `agentboard://` links and this app claims `rumo://`, so a link reaches only the app it
+  names. The server app still sends it with `open -b dev.mloureiro.rumo-client '<link>'`.
 - The app is ad-hoc signed, so macOS may refuse to open a downloaded copy on first launch. Remove the quarantine flag
-  with `xattr -dr com.apple.quarantine "Agent Board Client.app"` or approve it in System Settings › Privacy & Security.
+  with `xattr -dr com.apple.quarantine "Rumo Client.app"` or approve it in System Settings › Privacy & Security.
 
 ## 010: a server window cannot be closed
 
@@ -45,7 +45,7 @@ Other preparation:
 4. Open the Window menu. It holds Minimize and no Close Window item. Check the File menu too: its only item is
    "Close Tab".
 5. Click the yellow minimise button. The window moves to the Dock, and clicking its Dock tile brings it back.
-6. Press Cmd-Q. The app quits and its Dock icon disappears: no process stays behind (`pgrep -x agent-board-client`
+6. Press Cmd-Q. The app quits and its Dock icon disappears: no process stays behind (`pgrep -x rumo-client`
    prints nothing).
 
 Expected: the server window can only be minimised, Cmd-Q quits everything and there is no background mode.
@@ -144,16 +144,16 @@ Expected: every action in the list reports its outcome in the list, with the ent
 Run the API on a loopback port, for example `http://localhost:4000`, and keep the app out of `/tmp` (LaunchServices
 ignores bundles there).
 
-1. Quit the app. In a terminal run `open 'agentboard://open?v=1&url=http%3A%2F%2Flocalhost%3A4000%2F'`.
+1. Quit the app. In a terminal run `open 'rumo://open?v=1&url=http%3A%2F%2Flocalhost%3A4000%2F'`.
 2. The app launches cold, the list window shows, and a server window named `localhost:4000` opens with the board.
    The list holds one new entry with that name.
 3. With the app still running, run the same command again. The existing window comes to the front and the list
    holds no second entry.
 4. Run the command for a second API on another port. A second window opens with a name that
    includes its port.
-5. Run `open 'agentboard://open?v=2&url=http%3A%2F%2Flocalhost%3A4000%2F'`. No window opens, the list comes to
+5. Run `open 'rumo://open?v=2&url=http%3A%2F%2Flocalhost%3A4000%2F'`. No window opens, the list comes to
    the front and shows that the link's version is not understood.
-6. Run `open 'agentboard://open?v=1&url=http%3A%2F%2Fexample.com%2F'`. The list comes to the front and nothing is
+6. Run `open 'rumo://open?v=1&url=http%3A%2F%2Fexample.com%2F'`. The list comes to the front and nothing is
    added.
 
 Expected: the cold and the warm link both reach the app once, a known address is opened and an unknown loopback
@@ -165,9 +165,9 @@ On a Mac where the previous Agent Board client (`Agent Board.app`) was used:
 
 1. Note `ls ~/Library/Application\ Support/com.mloureiro.agent-board-client` and
    `security find-generic-password -s com.mloureiro.agent-board-client.session` (an item or "could not be found").
-2. Launch `Agent Board Client`, add a server, open it, remove it again from the list, then quit and relaunch.
+2. Launch `Rumo Client`, add a server, open it, remove it again from the list, then quit and relaunch.
 3. The listing and the Keychain query of step 1 print the same as before. In
-   `~/Library/Application Support/dev.mloureiro.agent-board-client/tab-files` no file of the removed server is left.
+   `~/Library/Application Support/dev.mloureiro.rumo-client/tab-files` no file of the removed server is left.
 
 Expected: nothing of the previous client changes, and the new app's own stores of unlisted servers are deleted.
 
@@ -185,7 +185,7 @@ list.
    inside the app window. Sign in there by any method and approve the code.
 3. The app window signs in on its own within a few seconds and shows the board. The code was never typed in the app.
 4. Quit the app with Cmd-Q and launch it again. Open the same server. It is still signed in with no new code.
-5. In Keychain Access, search for `dev.mloureiro.agent-board-client`. One item per signed-in server exists under the
+5. In Keychain Access, search for `dev.mloureiro.rumo-client`. One item per signed-in server exists under the
    `.client-token` service, with the server's id as account. If the server has the request signature on, a
    `.signing-key` item exists as well.
 6. Use the sign-out button in the app. The page shows sign-in again, and both Keychain items for that server are gone.
@@ -207,11 +207,11 @@ expired state.
 
 ## 052: pair with a server app code
 
-Use a no-login API with the request signature on, for example the server app or `agent-board-api` started with
+Use a no-login API with the request signature on, for example the server app or `rumo-api` started with
 `REQUEST_SIGNATURE=on`.
 
 1. Add the server and open it. The page shows `needs-pairing` and asks for a code.
-2. In the server app choose "Pair a device…" (or run `agent-board-api pair`) and read the `XXXX-XXXX` code.
+2. In the server app choose "Pair a device…" (or run `rumo-api pair`) and read the `XXXX-XXXX` code.
 3. Enter the code in the app. The page leaves `needs-pairing` and shows the board.
 4. In Keychain Access, a `.signing-key` item exists for that server's id. Quit and relaunch the app: the board still
    opens with no new code.
@@ -239,7 +239,7 @@ already given before the steps below.
 4. A second banner shows with that task's title and the same server name.
 5. Make the same task need you again within a minute (move it out of Needs me and back). No second banner shows for
    it. After a minute the same change raises a banner again.
-6. Run `log stream --predicate 'process == "agent-board-client"' | grep -i "notification"` while repeating a step:
+6. Run `log stream --predicate 'process == "rumo-client"' | grep -i "notification"` while repeating a step:
    no line holds a task title.
 
 Expected: every notification carries the task title and the server's name, repeats of one task within 60 seconds are
@@ -259,7 +259,7 @@ Mac user that never opened the app.
 5. Open a second server window and keep it in front with its own home selected. A task of the first server that needs
    you now raises a banner, because only the server of the key window is silent.
 6. Deny the permission in System Settings › Notifications and repeat step 3. Nothing shows, and
-   `log stream --predicate 'process == "agent-board-client"'` shows "notification permission denied" once for the
+   `log stream --predicate 'process == "rumo-client"'` shows "notification permission denied" once for the
    run.
 
 Expected: nothing is requested at launch, the prompt appears with the first raised notification, a home tab in the
@@ -293,7 +293,7 @@ macOS versions where this does not hold, and the spike did not cover Cmd-H, disp
 4. Repeat steps 1 to 3 with another app fullscreen in front of the window instead of minimising it, and once with
    Cmd-H.
 5. Where the live view of a hidden window is still throttled by macOS, the log
-   (`log stream --predicate 'process == "agent-board-client"'`) shows "window throttled, polling attention" for the
+   (`log stream --predicate 'process == "rumo-client"'`) shows "window throttled, polling attention" for the
    server. From then on a task that needs you raises "A task needs you on <server>" within 30 seconds. A task that
    needed you before the poll started raises none of them.
 6. Restore the window. The log line does not repeat and polling stops: no further banner with the generic text shows.
@@ -334,7 +334,7 @@ answered the notification prompt for this app.
 3. Replace build A with build B (same name, same location) and open it.
 4. Make another task need you. A banner shows and no permission prompt shows. The Notifications entry still reads
    Allow Notifications on and no second entry exists.
-5. Repeat the steps with `Agent Board Client Debug` in place of build B. It shows banners without a prompt and without a
+5. Repeat the steps with `Rumo Client Debug` in place of build B. It shows banners without a prompt and without a
    second entry, because it has the same bundle id. Its ad-hoc signature differs from the release build, so the
    Keychain prompts of the walk "Keychain prompt after an update (S4)" show for the token and key items. They are not
    a failure of this entry.
@@ -355,12 +355,12 @@ Expected: the All servers window always matches the server windows that are open
 
 ## 048: runs on macOS 14 and later, on Apple silicon and Intel
 
-1. Check the bundle without launching it: `lipo -archs "Agent Board Client.app/Contents/MacOS/agent-board-client"` prints
+1. Check the bundle without launching it: `lipo -archs "Rumo Client.app/Contents/MacOS/rumo-client"` prints
    `x86_64 arm64`, and
-   `/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "Agent Board Client.app/Contents/Info.plist"` prints `14.0`.
+   `/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "Rumo Client.app/Contents/Info.plist"` prints `14.0`.
 2. On an Apple silicon Mac with macOS 14 or later, open the app, add a server and open it. The board loads.
 3. On an Intel Mac with macOS 14 or later, repeat step 2 with the same zip. If no Intel Mac is at hand, run
-   `arch -x86_64 "Agent Board Client.app/Contents/MacOS/agent-board-client"` on Apple silicon (Rosetta) and check that the
+   `arch -x86_64 "Rumo Client.app/Contents/MacOS/rumo-client"` on Apple silicon (Rosetta) and check that the
    list window shows.
 4. On a Mac with macOS 13 or older, open the app. macOS refuses with a message that the app needs a newer macOS
    version, and nothing launches.
@@ -398,7 +398,7 @@ an absent item.
 The end-to-end check of a release. Use the zip attached to the `client-app-v<version>` release, on a clean state
 (see "Before you start"), with the server app of the same release train on the same Mac.
 
-1. Unzip `Agent-Board-Client.zip` outside `/tmp`, remove the quarantine flag if macOS blocks it, and open the app once. The
+1. Unzip `Rumo-Client.zip` outside `/tmp`, remove the quarantine flag if macOS blocks it, and open the app once. The
    list window shows with no server. The first launch ran the cleanup of the old app's stores.
 2. Start the server app. In its tray menu choose "Open board". The client app comes to the front, a server window
    opens for the server app's address, and the list gains an entry for it. If the client app is not installed, the
@@ -411,7 +411,7 @@ The end-to-end check of a release. Use the zip attached to the `client-app-v<ver
 6. Quit with Cmd-Q and open the app again. No server window comes back, because nothing loads at launch. Open the
    server from the list: its window opens with the tabs it had, the board shows the card in Done, and no sign-in is
    asked.
-7. Repeat steps 2 to 4 with `Agent Board Client Debug`. Its ad-hoc signature differs from the release build, so the Keychain
+7. Repeat steps 2 to 4 with `Rumo Client Debug`. Its ad-hoc signature differs from the release build, so the Keychain
    prompts of the walk "Keychain prompt after an update (S4)" show for the token and key items. Allow them. It then
    reaches the same server with the same sign-in, and right-click Inspect Element opens the Web Inspector.
 

@@ -1,4 +1,4 @@
-import { replyRoute, sendRoute, stopRoute } from '@agent-board/contract';
+import { replyRoute, sendRoute, stopRoute } from '@rumo/contract';
 
 import { textOf } from '../../input/text.js';
 import type { Context } from '../context.js';

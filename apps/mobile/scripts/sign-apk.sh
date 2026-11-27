@@ -17,17 +17,17 @@ keystore="$(mktemp -d)/signing.jks"
 if [ -n "${KEYSTORE_B64:-}" ]; then
   printf '%s' "${KEYSTORE_B64}" | base64 --decode > "${keystore}"
   password="${KEYSTORE_PASSWORD}"
-  alias_name="agent-board"
+  alias_name="rumo"
 else
   password="$(head -c 24 /dev/urandom | base64 | tr -dc 'A-Za-z0-9')"
   alias_name="ci-throwaway"
   keytool -genkeypair -keystore "${keystore}" -alias "${alias_name}" -keyalg EC -groupname secp256r1 \
-    -validity 3650 -dname "CN=agent-board ci build" -storepass "${password}" -keypass "${password}"
+    -validity 3650 -dname "CN=rumo ci build" -storepass "${password}" -keypass "${password}"
   echo "signed with a throwaway key: updates over an installed build need the same key" >&2
 fi
 
 "${tools}/zipalign" -f -p 4 "${unsigned}" "${out}/aligned.apk"
 SIGNING_PASSWORD="${password}" "${tools}/apksigner" sign --ks "${keystore}" --ks-key-alias "${alias_name}" \
-  --ks-pass "env:SIGNING_PASSWORD" --out "${out}/agent-board-mobile.apk" "${out}/aligned.apk"
-"${tools}/apksigner" verify --print-certs "${out}/agent-board-mobile.apk"
+  --ks-pass "env:SIGNING_PASSWORD" --out "${out}/rumo-mobile.apk" "${out}/aligned.apk"
+"${tools}/apksigner" verify --print-certs "${out}/rumo-mobile.apk"
 rm -f "${out}/aligned.apk" "${out}/aligned.apk.idsig"

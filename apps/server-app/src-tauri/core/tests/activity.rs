@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use agent_board_server_core::activity::{Activity, Busy};
-use agent_board_server_core::log_file::{AppLog, LogFile};
+use rumo_server_core::activity::{Activity, Busy};
+use rumo_server_core::log_file::{AppLog, LogFile};
 
 fn activity() -> (tempfile::TempDir, Activity, Arc<AtomicUsize>) {
     let dir = tempfile::tempdir().unwrap();

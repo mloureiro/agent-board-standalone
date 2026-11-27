@@ -1,9 +1,9 @@
 use crate::server_tabs::dispatch;
 use crate::tab_registry::TabRegistry;
 use crate::windows;
-use agent_board_client_core::ids::ServerId;
-use agent_board_client_core::page_input::{self, TabIntent};
-use agent_board_client_core::tabs::{Effect, HOME, LayoutView, TabId, Tabs};
+use rumo_client_core::ids::ServerId;
+use rumo_client_core::page_input::{self, TabIntent};
+use rumo_client_core::tabs::{Effect, HOME, LayoutView, TabId, Tabs};
 use tauri::{AppHandle, State, Webview};
 
 const UNKNOWN: &str = "unknown server";

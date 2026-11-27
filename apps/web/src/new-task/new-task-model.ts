@@ -10,8 +10,8 @@ import {
   type Effort,
   type Priority,
   type UiTaskCreate,
-} from '@agent-board/contract';
-import { bindings, seal, type Keys } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, seal, type Keys } from '@rumo/sealing';
 
 import { sealPromptAsUser, serializeLabels } from '../routes/board/card-model.js';
 

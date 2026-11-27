@@ -8,8 +8,8 @@ import {
   clientEventsRoute,
   type TaskStatus,
   type UiTaskListItem,
-} from '@agent-board/contract';
-import { bindings, deriveKeys, seal, type Keys } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, deriveKeys, seal, type Keys } from '@rumo/sealing';
 
 import type { ConnectionCheck } from '../src/servers/index.js';
 import { FakeBoard, json } from './fake-board.js';

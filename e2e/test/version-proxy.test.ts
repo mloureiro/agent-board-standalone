@@ -15,7 +15,7 @@ import { E2E_ROOT } from '../src/harness/paths.js';
 import { createTmp, type Tmp } from '../src/harness/tmp.js';
 
 const fakeApi = path.join(E2E_ROOT, 'test', 'fixtures', 'fake-api.ts');
-const originalBin = process.env.AGENT_BOARD_API_BIN;
+const originalBin = process.env.RUMO_API_BIN;
 const token = machineToken(`abm_${'M'.repeat(43)}`);
 
 let api: ApiHandle;
@@ -23,7 +23,7 @@ let tmp: Tmp;
 let proxy: VersionProxy;
 
 beforeAll(async () => {
-  process.env.AGENT_BOARD_API_BIN = fakeApi;
+  process.env.RUMO_API_BIN = fakeApi;
   tmp = createTmp('version-proxy');
   api = await startApi({
     tmp,
@@ -41,8 +41,8 @@ afterAll(async () => {
   await proxy.stop();
   await api.stop();
   tmp.remove();
-  if (originalBin === undefined) delete process.env.AGENT_BOARD_API_BIN;
-  else process.env.AGENT_BOARD_API_BIN = originalBin;
+  if (originalBin === undefined) delete process.env.RUMO_API_BIN;
+  else process.env.RUMO_API_BIN = originalBin;
 });
 
 describe('version proxy', () => {

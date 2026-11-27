@@ -1,10 +1,10 @@
 use crate::state::AppState;
 use crate::windows;
-use agent_board_client_core::ids::ServerId;
-use agent_board_client_core::orphans::tab_file_name;
-use agent_board_client_core::ports::FileStore;
-use agent_board_client_core::removal::{Effect, Removal};
-use agent_board_client_core::tokens::{delete_secret, key_service, token_service};
+use rumo_client_core::ids::ServerId;
+use rumo_client_core::orphans::tab_file_name;
+use rumo_client_core::ports::FileStore;
+use rumo_client_core::removal::{Effect, Removal};
+use rumo_client_core::tokens::{delete_secret, key_service, token_service};
 use serde::Serialize;
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};

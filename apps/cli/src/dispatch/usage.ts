@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { PRIORITIES, setUsageRoute, type Priority } from '@agent-board/contract';
-import { bindings, blindIndex, seal } from '@agent-board/sealing';
+import { PRIORITIES, setUsageRoute, type Priority } from '@rumo/contract';
+import { bindings, blindIndex, seal } from '@rumo/sealing';
 
 import { isRecord } from '../domain/values.js';
 import type { Session } from '../transport/session.js';

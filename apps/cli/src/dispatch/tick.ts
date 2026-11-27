@@ -4,7 +4,7 @@ import {
   claimTaskRoute,
   failRoute,
   listTasksRoute,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 
 import type { OpenTask } from '../commands/tasks/open.js';
 import { openTask } from '../commands/tasks/open.js';
@@ -257,7 +257,7 @@ export async function runTick(env: TickEnv): Promise<TickResult> {
     log(
       `STARTED ${task.id} lane=${next.lane}${next.borrowed ? ' borrowed' : ''}${missing === undefined ? '' : `, lane ${missing} -> ${ownOf(task).name} (no such lane here)`}`,
     );
-    const text = `agent-board: started ${env.now().toISOString()} (${s.machine}, ${next.lane} lane${next.borrowed ? ', borrowed' : ''})`;
+    const text = `rumo: started ${env.now().toISOString()} (${s.machine}, ${next.lane} lane${next.borrowed ? ', borrowed' : ''})`;
     const note = await sealedNote(s.keys, task.id, 'system', 'comment', text);
     await s
       .command(addNoteRoute, {

@@ -1,5 +1,5 @@
-import { listClientProjectsRoute } from '@agent-board/contract';
-import { bindings, open, type Keys } from '@agent-board/sealing';
+import { listClientProjectsRoute } from '@rumo/contract';
+import { bindings, open, type Keys } from '@rumo/sealing';
 
 import { callRoute } from '../auth/api.js';
 import type { ServerClient } from '../transport/client.js';

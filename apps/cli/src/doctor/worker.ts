@@ -1,4 +1,4 @@
-import type { DoctorResult } from '@agent-board/contract';
+import type { DoctorResult } from '@rumo/contract';
 
 import type { Context } from '../commands/context.js';
 import { readTickResult } from '../dispatch/result.js';
@@ -21,7 +21,7 @@ export function workerCheck(ctx: Context): DoctorResult {
       'worker',
       'warn',
       'no dispatch tick has run yet',
-      'run `board setup`, or `board internal dispatch` once',
+      'run `rumo setup`, or `rumo internal dispatch` once',
     );
   }
   if (result.status !== 'ok') {
@@ -30,7 +30,7 @@ export function workerCheck(ctx: Context): DoctorResult {
       'fail',
       `${result.status}: ${result.message}`,
       result.status === 'refused'
-        ? 'issue a new machine token and run `board init --force`'
+        ? 'issue a new machine token and run `rumo init --force`'
         : 'check that the board is reachable',
     );
   }
@@ -40,7 +40,7 @@ export function workerCheck(ctx: Context): DoctorResult {
       'worker',
       'warn',
       `the last dispatch tick was ${Math.round(ageMs / 60_000)} minutes ago`,
-      'check that the dispatch timer and the listener run: `board restart`',
+      'check that the dispatch timer and the listener run: `rumo restart`',
     );
   }
   return pass('worker', `the last dispatch tick at ${result.at} succeeded`);

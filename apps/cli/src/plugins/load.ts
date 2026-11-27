@@ -26,9 +26,9 @@ export async function pinProblem(
 ): Promise<string | null> {
   const head = await git(rt, checkout, ['rev-parse', 'HEAD']);
   if (!head.ok)
-    return `marketplace ${name}: the checkout ${checkout} is missing; remove it with board plugins remove ${name} and install it again`;
+    return `marketplace ${name}: the checkout ${checkout} is missing; remove it with rumo plugins remove ${name} and install it again`;
   if (head.out !== commit) {
-    return `marketplace ${name} is not at its pinned commit ${commit.slice(0, 12)} (HEAD ${head.out.slice(0, 12)}); run board plugins update ${name} to accept the new code`;
+    return `marketplace ${name} is not at its pinned commit ${commit.slice(0, 12)} (HEAD ${head.out.slice(0, 12)}); run rumo plugins update ${name} to accept the new code`;
   }
   const status = await git(rt, checkout, ['status', '--porcelain', '--untracked-files=no']);
   if (!status.ok) return `git failed in ${checkout}`;

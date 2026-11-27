@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { tokenHash } from '@agent-board/sealing';
+import { tokenHash } from '@rumo/sealing';
 
 import {
   DAY_MS,
@@ -827,9 +827,9 @@ describe('test clock', () => {
     const dir = mkdtempSync(join(tmpdir(), 'board-api-clock-'));
     const file = join(dir, 'offset');
     writeFileSync(file, '3600');
-    const shifted = clockFromEnv({ AGENT_BOARD_E2E: '1', AGENT_BOARD_CLOCK_OFFSET_FILE: file });
+    const shifted = clockFromEnv({ RUMO_E2E: '1', RUMO_CLOCK_OFFSET_FILE: file });
     expect(shifted.now().getTime() - Date.now()).toBeGreaterThan(3_590_000);
-    const plain = clockFromEnv({ AGENT_BOARD_CLOCK_OFFSET_FILE: file });
+    const plain = clockFromEnv({ RUMO_CLOCK_OFFSET_FILE: file });
     expect(Math.abs(plain.now().getTime() - Date.now())).toBeLessThan(1000);
     writeFileSync(file, 'garbage');
     expect(Math.abs(shifted.now().getTime() - Date.now())).toBeLessThan(1000);

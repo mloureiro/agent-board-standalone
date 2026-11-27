@@ -1,9 +1,4 @@
-import {
-  CLIENT_HEADER,
-  CONTRACT,
-  CONTRACT_HEADER,
-  formatClientHeader,
-} from '@agent-board/contract';
+import { CLIENT_HEADER, CONTRACT, CONTRACT_HEADER, formatClientHeader } from '@rumo/contract';
 
 import { CliError } from '../errors.js';
 import { PART_VERSION } from '../version.js';

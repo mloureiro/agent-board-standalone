@@ -13,10 +13,10 @@ function built(name: string, override?: string): string | undefined {
   ].find((candidate): candidate is string => candidate !== undefined && existsSync(candidate));
 }
 
-export const binary = built('agent-board-server', process.env['AGENT_BOARD_SERVER_BIN']);
+export const binary = built('rumo-server', process.env['RUMO_SERVER_BIN']);
 export const stub = built('stub_child');
 export const SKIP_REASON =
-  'the binaries are not built: run `pnpm --filter @agent-board/server-app build:binary` or set AGENT_BOARD_SERVER_BIN';
+  'the binaries are not built: run `pnpm --filter @rumo/server-app build:binary` or set RUMO_SERVER_BIN';
 
 export const FAST_TIMINGS =
   'restart1=100,restart2=200,restart3=400,probe=100,probeTimeout=200,grace=500,tick=10,startupProbe=20';
@@ -37,7 +37,7 @@ export interface Resources {
 
 export function prepareResources(scratch: string, config = ''): Resources {
   const dir = join(scratch, 'resources');
-  const program = join(dir, 'api/agent-board-api');
+  const program = join(dir, 'api/rumo-api');
   mkdirSync(join(dir, 'api'), { recursive: true });
   mkdirSync(join(dir, 'web'), { recursive: true });
   writeFileSync(join(dir, 'api/schema-version'), 'stub-1\n');
@@ -66,10 +66,10 @@ export function environment(root: string, extra: Record<string, string> = {}): N
   return {
     PATH: process.env['PATH'],
     HOME: process.env['HOME'],
-    AGENT_BOARD_SERVER_ROOT: root,
-    AGENT_BOARD_E2E: '1',
-    AGENT_BOARD_CREDENTIAL_STORE: `file:${join(root, '..', 'credentials.json')}`,
-    AGENT_BOARD_LAUNCH_AGENTS_DIR: join(root, '..', 'LaunchAgents'),
+    RUMO_SERVER_ROOT: root,
+    RUMO_E2E: '1',
+    RUMO_CREDENTIAL_STORE: `file:${join(root, '..', 'credentials.json')}`,
+    RUMO_LAUNCH_AGENTS_DIR: join(root, '..', 'LaunchAgents'),
     ...extra,
   };
 }

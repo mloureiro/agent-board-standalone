@@ -6,7 +6,7 @@ import {
   open as openEnvelope,
   unwrapSlot,
   wrapSlot,
-} from '@agent-board/sealing';
+} from '@rumo/sealing';
 import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -327,9 +327,7 @@ describe('storage of keys', () => {
     await unlock(user);
     await screen.findByRole('heading', { name: 'Board' });
 
-    expect((await indexedDB.databases()).map((entry) => entry.name)).toEqual([
-      `agent-board:${HOME.id}`,
-    ]);
+    expect((await indexedDB.databases()).map((entry) => entry.name)).toEqual([`rumo:${HOME.id}`]);
     const namespace = serverNamespace(HOME.id);
     expect(await namespace.secrets.names()).toEqual([DATA_KEYS_NAME]);
     const stored = (await namespace.secrets.get(DATA_KEYS_NAME)) as Record<string, unknown>;
@@ -378,8 +376,8 @@ describe('storage of keys', () => {
     await screen.findByRole('heading', { name: 'Board' });
     expect(await other.secrets.get(DATA_KEYS_NAME)).toBe('not this server');
     expect((await indexedDB.databases()).map((entry) => entry.name).sort()).toEqual([
-      'agent-board:srv-1',
-      'agent-board:srv-other',
+      'rumo:srv-1',
+      'rumo:srv-other',
     ]);
   });
 });
@@ -461,7 +459,7 @@ describe('account export at setup', () => {
   const exportText = (owner: string = GOLDEN.owner, withKey = true): string =>
     [
       {
-        format: 'agent-board-export',
+        format: 'rumo-export',
         version: 1,
         createdAt: NOW,
         source: { kind: 'api', version: '1.0.0' },

@@ -1,5 +1,5 @@
 import { MantineProvider } from '@mantine/core';
-import { deriveKeys } from '@agent-board/sealing';
+import { deriveKeys } from '@rumo/sealing';
 import { MutationObserver, QueryClientProvider, QueryObserver } from '@tanstack/react-query';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { createElement } from 'react';
@@ -50,7 +50,7 @@ describe('header and navigation', () => {
     }
     await user.click(within(nav).getByRole('link', { name: 'Backlog' }));
     expect(await screen.findByRole('heading', { name: 'Backlog' })).toBeInTheDocument();
-    expect(document.title).toBe('Backlog · Agent Board');
+    expect(document.title).toBe('Backlog · Rumo');
   });
 });
 
@@ -133,28 +133,28 @@ describe('colour scheme', () => {
 });
 
 describe('page titles', () => {
-  it('[web-018] a title is the page or task title followed by Agent Board', () => {
-    expect(pageTitle('Settings')).toBe('Settings · Agent Board');
-    expect(pageTitle('Fix the login bug')).toBe('Fix the login bug · Agent Board');
-    expect(pageTitle(null)).toBe('Agent Board');
+  it('[web-018] a title is the page or task title followed by Rumo', () => {
+    expect(pageTitle('Settings')).toBe('Settings · Rumo');
+    expect(pageTitle('Fix the login bug')).toBe('Fix the login bug · Rumo');
+    expect(pageTitle(null)).toBe('Rumo');
   });
 
   it('[web-018] each page sets its own title and a navigation changes it', async () => {
     const { user } = renderApp();
     expect(await screen.findByRole('heading', { name: 'Board' })).toBeInTheDocument();
-    expect(document.title).toBe('Board · Agent Board');
+    expect(document.title).toBe('Board · Rumo');
     await user.click(screen.getByRole('link', { name: 'Closed' }));
     expect(await screen.findByRole('heading', { name: 'Closed' })).toBeInTheDocument();
-    expect(document.title).toBe('Closed · Agent Board');
+    expect(document.title).toBe('Closed · Rumo');
     await user.click(screen.getByRole('link', { name: 'Settings' }));
     expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument();
-    expect(document.title).toBe('Settings · Agent Board');
+    expect(document.title).toBe('Settings · Rumo');
   });
 
   it('[web-018] an unknown address says so in the title', async () => {
     renderApp({ path: '/nowhere' });
     expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
-    expect(document.title).toBe('Page not found · Agent Board');
+    expect(document.title).toBe('Page not found · Rumo');
   });
 });
 

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import type { WireDirectory, WireProject } from '@agent-board/contract';
+import type { WireDirectory, WireProject } from '@rumo/contract';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 

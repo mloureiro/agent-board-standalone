@@ -1,7 +1,7 @@
-use agent_board_client_core::ports::Confirm;
 use objc2::MainThreadMarker;
 use objc2_app_kit::{NSAlert, NSAlertFirstButtonReturn};
 use objc2_foundation::NSString;
+use rumo_client_core::ports::Confirm;
 use std::sync::mpsc;
 use tauri::AppHandle;
 

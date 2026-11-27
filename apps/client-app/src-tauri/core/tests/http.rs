@@ -1,7 +1,7 @@
-use agent_board_client_core::handshake::{ClientInfo, handshake};
-use agent_board_client_core::http::ReqwestHttp;
-use agent_board_client_core::ports::{Http, HttpRequest, Limits};
 use futures_util::StreamExt;
+use rumo_client_core::handshake::{ClientInfo, handshake};
+use rumo_client_core::http::ReqwestHttp;
+use rumo_client_core::ports::{Http, HttpRequest, Limits};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;

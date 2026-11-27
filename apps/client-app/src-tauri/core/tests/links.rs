@@ -1,6 +1,6 @@
-use agent_board_client_core::ids::ServerId;
-use agent_board_client_core::links::{Link, Trigger, classify};
-use agent_board_client_core::log::{LogEvent, line};
+use rumo_client_core::ids::ServerId;
+use rumo_client_core::links::{Link, Trigger, classify};
+use rumo_client_core::log::{LogEvent, line};
 
 #[test]
 fn client_app_034_log_lines_carry_only_the_server_id() {

@@ -1,4 +1,4 @@
-import type { ExportTable } from '@agent-board/contract';
+import type { ExportTable } from '@rumo/contract';
 import type { DetectedSource } from '../source/detect.js';
 import type { SourceReader, SourceRow } from '../source/reader.js';
 import { defaultProjectId } from './values.js';

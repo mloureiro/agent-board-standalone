@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Agent Board",
+  "productName": "Rumo",
   "version": "0.1.0",
-  "identifier": "com.mloureiro.agentboard.mobile",
+  "identifier": "com.mloureiro.rumo.mobile",
   "build": {
     "frontendDist": "../dist-web"
   },

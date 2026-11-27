@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 
-import { TOKEN_PREFIXES } from '@agent-board/contract';
-import { tokenHash } from '@agent-board/sealing';
+import { TOKEN_PREFIXES } from '@rumo/contract';
+import { tokenHash } from '@rumo/sealing';
 import { and, eq } from 'drizzle-orm';
 
 import * as schema from '../db/schema/index.js';

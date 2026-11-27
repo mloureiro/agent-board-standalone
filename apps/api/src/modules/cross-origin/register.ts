@@ -1,4 +1,4 @@
-import { CORS_ALLOWED_HEADERS } from '@agent-board/contract';
+import { CORS_ALLOWED_HEADERS } from '@rumo/contract';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 
 import type { ServerContext } from '../../context.js';

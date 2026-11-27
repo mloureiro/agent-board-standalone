@@ -20,10 +20,10 @@ import type { Context } from '../context.js';
 import { refuseInRun } from '../tasks/support.js';
 
 const REDIRECTED: Record<string, string> = {
-  dirs: 'use "board dirs" to change the directories',
-  project: 'use "board projects default <id>" to change the default project',
-  credentials: 'the credential store is chosen by "board init"',
-  feeds: 'use "board feeds" to change the feeds',
+  dirs: 'use "rumo dirs" to change the directories',
+  project: 'use "rumo projects default <id>" to change the default project',
+  credentials: 'the credential store is chosen by "rumo init"',
+  feeds: 'use "rumo feeds" to change the feeds',
 };
 
 const SETTABLE_TOP = [
@@ -110,9 +110,9 @@ function lookup(config: Record<string, unknown>, parts: readonly string[]): unkn
 async function runEdit(ctx: Context): Promise<void> {
   const editor = ctx.rt.env.VISUAL ?? ctx.rt.env.EDITOR;
   if (editor === undefined || editor.trim() === '') {
-    throw new UsageError('board config edit needs $VISUAL or $EDITOR; there is no default editor');
+    throw new UsageError('rumo config edit needs $VISUAL or $EDITOR; there is no default editor');
   }
-  if (!ctx.rt.io.stdoutIsTty) throw new UsageError('board config edit needs a terminal');
+  if (!ctx.rt.io.stdoutIsTty) throw new UsageError('rumo config edit needs a terminal');
   if (ctx.dryRun) {
     ctx.out('DRY config edit');
     return;
@@ -152,7 +152,7 @@ export async function runConfig(
   const [verb = 'show', ...rest] = action;
   if (options.json === true && verb !== 'show') throw new UsageError('--json goes with show only');
   if (verb === 'show') {
-    if (rest.length > 0) throw new UsageError('board config show takes no arguments');
+    if (rest.length > 0) throw new UsageError('rumo config show takes no arguments');
     const config = readConfigObject(ctx.dirs.config);
     warnUnknown(ctx, config);
     ctx.out(
@@ -168,23 +168,22 @@ export async function runConfig(
   }
   if (verb === 'get') {
     const [key, ...extra] = rest;
-    if (key === undefined || extra.length > 0)
-      throw new UsageError('usage: board config get <key>');
+    if (key === undefined || extra.length > 0) throw new UsageError('usage: rumo config get <key>');
     const value = lookup(readConfigObject(ctx.dirs.config), keyPath(key));
     if (value === undefined) throw new CliError(`${plain(key).slice(0, 80)} is not set`);
     ctx.out(typeof value === 'string' ? plain(value) : JSON.stringify(value));
     return;
   }
-  refuseInRun(ctx, `board config ${verb}`);
+  refuseInRun(ctx, `rumo config ${verb}`);
   if (verb === 'edit') {
-    if (rest.length > 0) throw new UsageError('board config edit takes no arguments');
+    if (rest.length > 0) throw new UsageError('rumo config edit takes no arguments');
     await runEdit(ctx);
     return;
   }
   if (verb === 'set') {
     const [key, ...words] = rest;
     if (key === undefined || words.length === 0)
-      throw new UsageError('usage: board config set <key> <value>');
+      throw new UsageError('usage: rumo config set <key> <value>');
     const parts = checkedKey(key);
     const value = parseValue(words.join(' '));
     const document = readConfigDocument(ctx.dirs.config);
@@ -202,7 +201,7 @@ export async function runConfig(
   if (verb === 'unset') {
     const [key, ...extra] = rest;
     if (key === undefined || extra.length > 0)
-      throw new UsageError('usage: board config unset <key>');
+      throw new UsageError('usage: rumo config unset <key>');
     const parts = checkedKey(key);
     const document = readConfigDocument(ctx.dirs.config);
     if (!document.hasIn(parts)) throw new CliError(`${plain(key).slice(0, 80)} is not set`);

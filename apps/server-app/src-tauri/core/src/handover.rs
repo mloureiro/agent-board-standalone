@@ -6,9 +6,9 @@ use url::{Host, Url};
 
 use crate::opener::OPEN_PROGRAM;
 
-pub const SCHEME: &str = "agentboard";
+pub const SCHEME: &str = "rumo";
 pub const VERSION: u32 = 1;
-pub const CLIENT_APP_BUNDLE_ID: &str = "dev.mloureiro.agent-board-client";
+pub const CLIENT_APP_BUNDLE_ID: &str = "dev.mloureiro.rumo-client";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Problem {

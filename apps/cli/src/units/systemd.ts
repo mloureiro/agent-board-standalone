@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import type { WorkerUnits } from '@agent-board/contract';
+import type { WorkerUnits } from '@rumo/contract';
 
 import { CliError } from '../errors.js';
 import { DISPATCH_LOCK_FILE, systemdService, systemdTimer, type UnitName } from './names.js';
@@ -49,7 +49,7 @@ export function renderSystemd(plan: SystemdPlan): UnitFile[] {
   const [tick, listen, watch] = plan.recipe.units;
   const environment = environmentOf(plan);
   const lock = path.join(plan.runDir, DISPATCH_LOCK_FILE);
-  const label = (unit: UnitName): string => `agent-board ${plan.profile} ${unit}`;
+  const label = (unit: UnitName): string => `rumo ${plan.profile} ${unit}`;
   return [
     {
       file: systemdService(plan.profile, 'dispatch'),

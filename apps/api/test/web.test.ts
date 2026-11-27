@@ -3,7 +3,7 @@ import { connect } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { ASSET_HEADERS, DATA_HEADERS, PAGE_HEADERS, WEB_CSP } from '@agent-board/contract';
+import { ASSET_HEADERS, DATA_HEADERS, PAGE_HEADERS, WEB_CSP } from '@rumo/contract';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import { selectRanges, type Selection } from '../src/modules/web/ranges.js';

@@ -1,8 +1,8 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
-import { setCatalogRoute } from '@agent-board/contract';
-import { bindings, blindIndex, seal } from '@agent-board/sealing';
+import { setCatalogRoute } from '@rumo/contract';
+import { bindings, blindIndex, seal } from '@rumo/sealing';
 import { parse } from 'yaml';
 
 import type { Runtime } from '../runtime.js';

@@ -32,7 +32,7 @@ const SUBCOMMANDS = [
 ];
 
 function refuseInRun(ctx: Context, name: string): void {
-  if (ctx.inRun) throw new CliError(`\`board internal ${name}\` cannot run inside a board run`);
+  if (ctx.inRun) throw new CliError(`\`rumo internal ${name}\` cannot run inside a board run`);
 }
 
 export function graceSeconds(text: string): number {
@@ -47,7 +47,7 @@ export function runUnits(ctx: Context): void {
   refuseInRun(ctx, 'units');
   const { rt, dirs } = ctx;
   if (!isUnitPlatform(rt.platform)) {
-    throw new CliError(`board internal units needs Linux or macOS; this is ${rt.platform}`);
+    throw new CliError(`rumo internal units needs Linux or macOS; this is ${rt.platform}`);
   }
   const units = resolveWorkerUnits({
     platform: rt.platform,
@@ -100,7 +100,7 @@ export function registerInternal(
     .command('internal', { hidden: true })
     .description('Commands the units and the server app call')
     .action(() => {
-      throw new UsageError(`board internal needs a subcommand: ${SUBCOMMANDS.join(', ')}`);
+      throw new UsageError(`rumo internal needs a subcommand: ${SUBCOMMANDS.join(', ')}`);
     });
 
   internal
@@ -120,7 +120,7 @@ export function registerInternal(
 
   internal
     .command('watch')
-    .description('Run the watches stored by `board watch` and wake the tasks they end')
+    .description('Run the watches stored by `rumo watch` and wake the tasks they end')
     .action(async (_options: unknown, command: Command) => {
       await runWatchCommand(withContext(command));
     });

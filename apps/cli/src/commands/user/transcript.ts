@@ -3,8 +3,8 @@ import {
   transcriptEventsRoute,
   transcriptOutputRoute,
   type WireTranscriptEvent,
-} from '@agent-board/contract';
-import { bindings, open } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, open } from '@rumo/sealing';
 
 import { UsageError } from '../../errors.js';
 import { oneLine, plain } from '../../domain/rules.js';

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import type { Priority, TaskStatus } from '@agent-board/contract';
+import type { Priority, TaskStatus } from '@rumo/contract';
 
 import { note } from '../../db/schema/index.js';
 import type { ScopedDatabase } from '../database/index.js';

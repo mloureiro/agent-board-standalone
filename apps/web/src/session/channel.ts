@@ -10,7 +10,7 @@ export interface SessionChannel {
   subscribe(listener: (message: SessionMessage) => void): () => void;
 }
 
-export const CHANNEL_NAME = 'agent-board:session';
+export const CHANNEL_NAME = 'rumo:session';
 
 const isMessage = (value: unknown): value is SessionMessage => {
   if (value === null || typeof value !== 'object') return false;

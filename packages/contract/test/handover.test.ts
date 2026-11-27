@@ -36,8 +36,7 @@ describe('handover', () => {
   });
 
   it('[contract-012] parseHandover refuses non-loopback, credentials and unknown v', () => {
-    const link = (v: string, url: string) =>
-      `agentboard://open?v=${v}&url=${encodeURIComponent(url)}`;
+    const link = (v: string, url: string) => `rumo://open?v=${v}&url=${encodeURIComponent(url)}`;
     expect(parseHandover(link('1', 'http://example.com/'))).toEqual({
       ok: false,
       problem: 'not-loopback',
@@ -63,6 +62,6 @@ describe('handover', () => {
     expect(emitted).toEqual(HANDOVER_CASES);
     for (const entry of emitted) check(entry);
     expect(await read('bundle-id.json')).toEqual({ bundleId: CLIENT_APP_BUNDLE_ID });
-    expect(CLIENT_APP_BUNDLE_ID).toBe('dev.mloureiro.agent-board-client');
+    expect(CLIENT_APP_BUNDLE_ID).toBe('dev.mloureiro.rumo-client');
   });
 });

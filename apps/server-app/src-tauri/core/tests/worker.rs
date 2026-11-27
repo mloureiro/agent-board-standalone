@@ -5,13 +5,13 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 use std::process::Command;
 
-use agent_board_server_core::cli_wrapper::{REFUSED_COMMANDS, REFUSED_EXIT_CODE, prepare_base};
-use agent_board_server_core::status::RowState;
-use agent_board_server_core::worker::NOT_CONNECTED;
-use agent_board_server_core::worker_paths::{
+use common::worker::{Rig, eventually, read};
+use rumo_server_core::cli_wrapper::{REFUSED_COMMANDS, REFUSED_EXIT_CODE, prepare_base};
+use rumo_server_core::status::RowState;
+use rumo_server_core::worker::NOT_CONNECTED;
+use rumo_server_core::worker_paths::{
     INHERITED, WorkerPaths, fallback_tail, path_value, worker_env,
 };
-use common::worker::{Rig, eventually, read};
 
 fn pid_of(rig: &Rig, unit: &str) -> Option<i32> {
     rig.log()
@@ -53,7 +53,7 @@ fn server_app_044_the_worker_directories_are_under_the_root_with_the_cli_linked_
         assert!(worker.join(name).is_dir(), "{name}");
     }
     assert_eq!(
-        fs::read_link(worker.join("bin/board-cli")).unwrap(),
+        fs::read_link(worker.join("bin/rumo-cli")).unwrap(),
         rig.setup.cli_source
     );
     assert_eq!(rig.setup.paths, WorkerPaths::new(&rig.root));
@@ -81,11 +81,11 @@ fn server_app_045_only_the_listed_variables_are_inherited_besides_the_profile_on
     names.sort_unstable();
     let mut expected: Vec<&str> = INHERITED.to_vec();
     expected.extend([
-        "AGENT_BOARD_CONFIG_DIR",
-        "AGENT_BOARD_CREDENTIALS_COMMAND",
-        "AGENT_BOARD_PROFILE",
-        "AGENT_BOARD_RUN_DIR",
-        "AGENT_BOARD_STATE_DIR",
+        "RUMO_CONFIG_DIR",
+        "RUMO_CREDENTIALS_COMMAND",
+        "RUMO_PROFILE",
+        "RUMO_RUN_DIR",
+        "RUMO_STATE_DIR",
         "PATH",
     ]);
     expected.sort_unstable();
@@ -103,17 +103,17 @@ fn server_app_045_the_running_processes_get_exactly_that_environment() {
 
     let text = read(&env_file);
     let worker_dir = rig.worker_dir();
-    assert!(text.contains("AGENT_BOARD_PROFILE=server-app"));
+    assert!(text.contains("RUMO_PROFILE=server-app"));
     assert!(text.contains(&format!(
-        "AGENT_BOARD_CONFIG_DIR={}",
+        "RUMO_CONFIG_DIR={}",
         worker_dir.join("config").display()
     )));
     assert!(text.contains(&format!(
-        "AGENT_BOARD_STATE_DIR={}",
+        "RUMO_STATE_DIR={}",
         worker_dir.join("state").display()
     )));
     assert!(text.contains(&format!(
-        "AGENT_BOARD_RUN_DIR={}",
+        "RUMO_RUN_DIR={}",
         worker_dir.join("run").display()
     )));
     assert!(text.contains(&format!(
@@ -168,7 +168,7 @@ fn server_app_007_the_worker_names_and_folders_never_collide_with_another_instal
     let env = first.setup.env("/bin");
     let profile = env
         .iter()
-        .find(|(name, _)| name == "AGENT_BOARD_PROFILE")
+        .find(|(name, _)| name == "RUMO_PROFILE")
         .map(|(_, value)| value.as_str());
     assert_eq!(profile, Some("server-app"));
     assert_ne!(profile, Some("default"));
@@ -321,7 +321,7 @@ fn server_app_018_restart_restarts_the_processes_without_pausing_cards() {
 
 fn run_wrapper(rig: &Rig, args: &[&str]) -> std::process::Output {
     Command::new("/bin/sh")
-        .arg(rig.worker_dir().join("bin/board"))
+        .arg(rig.worker_dir().join("bin/rumo"))
         .args(args)
         .env_clear()
         .output()
@@ -333,7 +333,7 @@ fn with_wrapper(rig: &Rig) {
     let worker = rig.worker();
     assert!(eventually(10, || rig
         .worker_dir()
-        .join("bin/board")
+        .join("bin/rumo")
         .exists()
         && rig.count("listen start") == 1));
     drop(worker);
@@ -384,7 +384,7 @@ fn server_app_059_a_root_with_quotes_and_spaces_still_refuses_and_runs() {
     setup.run_dir = hostile.join("run");
     prepare_base(&setup).unwrap();
     let env = setup.env("/usr/bin:/bin");
-    agent_board_server_core::cli_wrapper::install_wrapper(&setup, &env).unwrap();
+    rumo_server_core::cli_wrapper::install_wrapper(&setup, &env).unwrap();
 
     let wrapper = setup.paths.wrapper();
     let refused = Command::new("/bin/sh")

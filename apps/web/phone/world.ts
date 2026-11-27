@@ -1,5 +1,5 @@
-import { FEATURES, getClientKeysRoute, meRoute } from '@agent-board/contract';
-import { wrapSlot, type KeySetup } from '@agent-board/sealing';
+import { FEATURES, getClientKeysRoute, meRoute } from '@rumo/contract';
+import { wrapSlot, type KeySetup } from '@rumo/sealing';
 import type { BrowserContext, Page, Route } from '@playwright/test';
 
 import { OWNER_KEYS } from '../test/board-world.js';

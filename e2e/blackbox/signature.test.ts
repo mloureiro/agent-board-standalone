@@ -1,7 +1,7 @@
 import { existsSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
-import { routeByName } from '@agent-board/contract';
+import { routeByName } from '@rumo/contract';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { anonymous, call, callRaw, machineToken } from '../src/client/contract-client.js';
@@ -82,7 +82,7 @@ describe('request signature on a no-login server', () => {
     expect(answer.status).toBe(401);
   });
 
-  it('[api-120] agent-board-api pair prints an XXXX-XXXX code while the API holds the PGlite folder', async () => {
+  it('[api-120] rumo-api pair prints an XXXX-XXXX code while the API holds the PGlite folder', async () => {
     const printed = await runApi(harness.board.api, ['pair']);
     expect(printed.code).toBe(0);
     const code = pairCodeIn(printed.stdout);
@@ -181,7 +181,7 @@ describe('request signature on a no-login server', () => {
     expect(afterRevoke.status).toBe(401);
   });
 
-  it('[cli-083] board init generates, registers and stores a signing key; with it removed the next call gets 401', async () => {
+  it('[cli-083] rumo init generates, registers and stores a signing key; with it removed the next call gets 401', async () => {
     const { user } = await pairedDevice(harness.board, control, 'owner device');
     const key = await unlockedKey(harness.board, user);
     const machine = await enrolledMachine(harness.board, user, { key, name: 'signing-cli' });

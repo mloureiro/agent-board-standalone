@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { tokenHash } from '@agent-board/sealing';
+import { tokenHash } from '@rumo/sealing';
 
 import {
   createCredentialStore,

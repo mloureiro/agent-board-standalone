@@ -1,4 +1,4 @@
-import { DISPATCH_TICK, LISTEN_UNIT } from '@agent-board/contract';
+import { DISPATCH_TICK, LISTEN_UNIT } from '@rumo/contract';
 
 export const TICK_LIMIT_MS = DISPATCH_TICK.limitSeconds * 1000;
 export const TICK_GRACE_MS = DISPATCH_TICK.graceSeconds * 1000;

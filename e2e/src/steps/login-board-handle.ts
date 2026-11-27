@@ -1,4 +1,4 @@
-import type { Feature } from '@agent-board/contract';
+import type { Feature } from '@rumo/contract';
 import { afterAll, beforeAll, beforeEach } from 'vitest';
 
 import {

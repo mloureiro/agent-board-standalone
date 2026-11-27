@@ -39,7 +39,7 @@ export function appRolePassword(env: NodeJS.ProcessEnv = process.env): string {
   const fixed = env.E2E_APP_ROLE_PASSWORD;
   if (fixed) return fixed;
   return createHash('sha256')
-    .update(`agent-board-e2e|${env[POSTGRES_URL_VARIABLE] ?? ''}`)
+    .update(`rumo-e2e|${env[POSTGRES_URL_VARIABLE] ?? ''}`)
     .digest('hex')
     .slice(0, 32);
 }
@@ -104,7 +104,7 @@ export async function createDatabase(
   return kind === 'postgres' ? createPostgresDatabase(tmp, env) : createPgliteDatabase(tmp);
 }
 
-export const POSTGRES_START_LOCK = path.join(os.tmpdir(), 'agent-board-e2e-postgres-start.lock');
+export const POSTGRES_START_LOCK = path.join(os.tmpdir(), 'rumo-e2e-postgres-start.lock');
 
 async function acquire(lockFile: string, timeoutMs: number): Promise<void> {
   const deadline = Date.now() + timeoutMs;

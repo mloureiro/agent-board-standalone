@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Agent Board Client",
+  "productName": "Rumo Client",
   "version": "../package.json",
-  "identifier": "dev.mloureiro.agent-board-client",
+  "identifier": "dev.mloureiro.rumo-client",
   "build": {
     "beforeBuildCommand": "pnpm run build",
     "frontendDist": "../dist"

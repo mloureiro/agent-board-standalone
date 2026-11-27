@@ -1,4 +1,4 @@
-import type { TranscriptBatchEvent, WireTranscriptEvent } from '@agent-board/contract';
+import type { TranscriptBatchEvent, WireTranscriptEvent } from '@rumo/contract';
 import { and, asc, desc, eq, gt, ne, sql } from 'drizzle-orm';
 
 import { task, transcriptEvent, transcriptRun } from '../../db/schema/index.js';

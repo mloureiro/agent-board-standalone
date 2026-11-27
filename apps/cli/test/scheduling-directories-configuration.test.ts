@@ -1,7 +1,7 @@
 import { existsSync, lstatSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 import { parse } from 'yaml';
 import { describe, expect, it } from 'vitest';
 
@@ -31,7 +31,7 @@ async function openedRows(stub: ApiStub): Promise<{ path: string; repo: string |
   );
 }
 
-describe('board config', () => {
+describe('rumo config', () => {
   it('[cli-040] shows, gets, sets and unsets keys, keeping the key order and the comments', async () => {
     const { cli } = await rig({ config: '# mine\nmachine: test-machine\ndefaultCwd: /srv/work\n' });
     expect(await cli.run('config', 'set', 'maxRunHours', '4')).toBe(0);
@@ -103,7 +103,7 @@ describe('board config', () => {
     expect(cli.stderr()).toContain('credential store');
     cli.reset();
     await cli.run('config', 'set', 'dirs', '[]');
-    expect(cli.stderr()).toContain('board dirs');
+    expect(cli.stderr()).toContain('rumo dirs');
   });
 
   it('[cli-040] writes through a symlink and keeps the file mode', async () => {
@@ -163,13 +163,13 @@ describe('board config', () => {
   });
 
   it('[cli-040] [cli-009] set refuses inside a run', async () => {
-    const { cli } = await rig({ env: { AGENT_BOARD_TASK: 'taskAAAA' } });
+    const { cli } = await rig({ env: { RUMO_TASK: 'taskAAAA' } });
     expect(await cli.run('config', 'set', 'maxRunHours', '4')).toBe(2);
     expect(await cli.run('config', 'get', 'machine')).toBe(0);
   });
 });
 
-describe('board dirs', () => {
+describe('rumo dirs', () => {
   it('[cli-038] adds the current directory, sets repo from the git remote and writes the board rows', async () => {
     const work = tmpDir();
     const { stub, cli } = await rig({
@@ -320,7 +320,7 @@ describe('board dirs', () => {
 
   it('[cli-038] changes are refused inside a run and a dry run writes nothing', async () => {
     const work = tmpDir();
-    const inRun = await rig({ cwd: work, env: { AGENT_BOARD_TASK: 'taskAAAA' } });
+    const inRun = await rig({ cwd: work, env: { RUMO_TASK: 'taskAAAA' } });
     expect(await inRun.cli.run('dirs', 'add')).toBe(2);
     expect(await inRun.cli.run('dirs', 'list')).toBe(0);
 
@@ -332,7 +332,7 @@ describe('board dirs', () => {
     expect(stub.directories.size).toBe(0);
   });
 
-  it('[cli-038] listed directories are what board add reads: a task proposed from one is placed there', async () => {
+  it('[cli-038] listed directories are what rumo add reads: a task proposed from one is placed there', async () => {
     const work = tmpDir();
     const { stub, cli } = await rig({ cwd: work });
     await cli.run('dirs', 'add', '--no-repo');
@@ -344,7 +344,7 @@ describe('board dirs', () => {
   });
 });
 
-describe('board projects', () => {
+describe('rumo projects', () => {
   it("[cli-039] lists the projects the board holds work in and marks this host's default", async () => {
     const work = tmpDir();
     const { stub, cli } = await rig({
@@ -400,7 +400,7 @@ describe('board projects', () => {
     expect(cli.stdout()).toContain(DEFAULT_PROJECT);
   });
 
-  it('[cli-039] default writes project: to the config in the shape board add reads, and prints the current one', async () => {
+  it('[cli-039] default writes project: to the config in the shape rumo add reads, and prints the current one', async () => {
     const { cli } = await rig();
     expect(await cli.run('projects', 'default', PROJECT)).toBe(0);
     expect(configOf(cli)).toEqual({ machine: 'test-machine', project: PROJECT });
@@ -411,7 +411,7 @@ describe('board projects', () => {
     expect(await cli.run('projects', 'default', 'not-an-id')).toBe(2);
   });
 
-  it('[cli-039] a task proposed with board add lands in the host default project', async () => {
+  it('[cli-039] a task proposed with rumo add lands in the host default project', async () => {
     const work = tmpDir();
     const { stub, cli } = await rig({ cwd: work });
     await cli.run('dirs', 'add', '--no-repo');
@@ -423,7 +423,7 @@ describe('board projects', () => {
   });
 
   it('[cli-039] [cli-009] default is refused inside a run and needs the projects feature', async () => {
-    const inRun = await rig({ env: { AGENT_BOARD_TASK: 'taskAAAA' } });
+    const inRun = await rig({ env: { RUMO_TASK: 'taskAAAA' } });
     expect(await inRun.cli.run('projects', 'default', PROJECT)).toBe(2);
     const old = await rig({ board: { features: ['directories'] } });
     expect(await old.cli.run('projects', 'default', PROJECT)).toBe(1);
@@ -431,7 +431,7 @@ describe('board projects', () => {
   });
 });
 
-describe('board schedules', () => {
+describe('rumo schedules', () => {
   async function seeded() {
     const work = tmpDir();
     const made = await rig({ cwd: work });
@@ -540,7 +540,7 @@ describe('board schedules', () => {
     );
     expect(await cli.run('schedules', 'edit', first, '--times', '2', '--forever')).toBe(2);
     expect(await cli.run('schedules', 'pause', first, '--priority', 'low')).toBe(2);
-    const inRun = await rig({ env: { AGENT_BOARD_TASK: 'taskAAAA' } });
+    const inRun = await rig({ env: { RUMO_TASK: 'taskAAAA' } });
     expect(await inRun.cli.run('schedules', 'pause', 'abc')).toBe(2);
     expect(await inRun.cli.run('schedules')).toBe(0);
   });

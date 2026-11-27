@@ -1,5 +1,5 @@
-import type { Priority, UiScheduleUpdate, WireSchedule } from '@agent-board/contract';
-import { bindings, seal, type Keys } from '@agent-board/sealing';
+import type { Priority, UiScheduleUpdate, WireSchedule } from '@rumo/contract';
+import { bindings, seal, type Keys } from '@rumo/sealing';
 
 import { attempt } from '../board/card-model.js';
 import { spanText } from '../board/format.js';

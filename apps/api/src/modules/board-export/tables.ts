@@ -1,4 +1,4 @@
-import type { AccountTable, ExportTable } from '@agent-board/contract';
+import type { AccountTable, ExportTable } from '@rumo/contract';
 import { eq, getTableColumns, ne, type SQL } from 'drizzle-orm';
 import type { AnyPgColumn, AnyPgTable } from 'drizzle-orm/pg-core';
 

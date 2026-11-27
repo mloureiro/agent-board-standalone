@@ -47,16 +47,16 @@ describe('resolveDatabaseKind', () => {
 
 describe('createBoard', () => {
   const stops: (() => Promise<void>)[] = [];
-  const originalBin = process.env.AGENT_BOARD_API_BIN;
+  const originalBin = process.env.RUMO_API_BIN;
 
   afterEach(async () => {
     for (const stop of stops.splice(0)) await stop();
-    if (originalBin === undefined) delete process.env.AGENT_BOARD_API_BIN;
-    else process.env.AGENT_BOARD_API_BIN = originalBin;
+    if (originalBin === undefined) delete process.env.RUMO_API_BIN;
+    else process.env.RUMO_API_BIN = originalBin;
   });
 
   it('yields missing feature: <name> (<label>) for a feature the version answer lacks', async () => {
-    process.env.AGENT_BOARD_API_BIN = fakeApi;
+    process.env.RUMO_API_BIN = fakeApi;
     const board = await createBoard({
       parts: ['api'],
       features: ['projects', 'forks'],

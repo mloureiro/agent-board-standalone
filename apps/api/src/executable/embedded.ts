@@ -15,7 +15,7 @@ export const extractMigrations = async (
   files: EmbeddedFiles['migrations'],
   parent: string = tmpdir(),
 ): Promise<string> => {
-  const folder = await mkdtemp(join(parent, 'agent-board-api-migrations-'));
+  const folder = await mkdtemp(join(parent, 'rumo-api-migrations-'));
   await mkdir(join(folder, 'meta'));
   for (const [name, path] of Object.entries(files))
     await writeFile(join(folder, name), await readFile(path));

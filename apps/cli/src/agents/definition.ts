@@ -1,4 +1,4 @@
-import { agentName, modelName } from '@agent-board/contract';
+import { agentName, modelName } from '@rumo/contract';
 
 import { isRecord, isStringList, nearest } from '../domain/values.js';
 

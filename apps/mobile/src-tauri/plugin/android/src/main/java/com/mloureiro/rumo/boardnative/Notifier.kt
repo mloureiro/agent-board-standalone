@@ -1,4 +1,4 @@
-package com.mloureiro.agentboard.boardnative
+package com.mloureiro.rumo.boardnative
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -10,7 +10,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 
 object Notifier {
-    const val EXTRA_TASK = "agentboard.task"
+    const val EXTRA_TASK = "rumo.task"
     const val WATCH_ID = 1
     private const val ATTENTION_CHANNEL = "attention"
     private const val WATCH_CHANNEL = "watch"

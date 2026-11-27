@@ -1,4 +1,4 @@
-import { bindings, seal, type Keys } from '@agent-board/sealing';
+import { bindings, seal, type Keys } from '@rumo/sealing';
 
 import { oneLine } from './action-model.js';
 

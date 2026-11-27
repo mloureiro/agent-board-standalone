@@ -1,4 +1,4 @@
-import { MAX_INTERVAL_MS, MAX_SCHEDULE_CRONS, MIN_INTERVAL_MS } from '@agent-board/contract';
+import { MAX_INTERVAL_MS, MAX_SCHEDULE_CRONS, MIN_INTERVAL_MS } from '@rumo/contract';
 import { Cron } from 'croner';
 
 import { ApiError } from '../../errors.js';

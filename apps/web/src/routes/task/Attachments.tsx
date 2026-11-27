@@ -1,4 +1,4 @@
-import type { PrState } from '@agent-board/contract';
+import type { PrState } from '@rumo/contract';
 import { Anchor, Badge, Button, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import type { ReactNode } from 'react';
 

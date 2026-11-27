@@ -1,5 +1,5 @@
 import { Button, Group, Modal, Radio, Stack, Text, TextInput } from '@mantine/core';
-import type { ProjectDeleteThen } from '@agent-board/contract';
+import type { ProjectDeleteThen } from '@rumo/contract';
 import { useState, type ReactNode } from 'react';
 
 import type { ProjectEntry } from './fetch-projects.js';

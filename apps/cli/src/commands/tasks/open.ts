@@ -1,5 +1,5 @@
-import type { WireNote, WireTask } from '@agent-board/contract';
-import { bindings, open, type Binding, type Keys, type Origin } from '@agent-board/sealing';
+import type { WireNote, WireTask } from '@rumo/contract';
+import { bindings, open, type Binding, type Keys, type Origin } from '@rumo/sealing';
 
 export const UNREADABLE_TEXT = '(cannot decrypt)';
 

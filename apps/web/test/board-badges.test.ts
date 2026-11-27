@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react';
-import type { UiTaskListItem } from '@agent-board/contract';
+import type { UiTaskListItem } from '@rumo/contract';
 import { describe, expect, it, vi } from 'vitest';
 
 import { badgesOf, isMergedOnly, prSummaries, prText } from '../src/routes/board/badges.js';

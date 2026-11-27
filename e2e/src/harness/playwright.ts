@@ -1,4 +1,4 @@
-import type { Feature } from '@agent-board/contract';
+import type { Feature } from '@rumo/contract';
 import { test } from '@playwright/test';
 
 import { createBoard, resolveDatabaseKind, type Board, type BoardDeclaration } from './board.js';

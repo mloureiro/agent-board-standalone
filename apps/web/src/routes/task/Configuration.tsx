@@ -1,10 +1,4 @@
-import {
-  EFFORTS,
-  MODEL_ALIASES,
-  PRIORITIES,
-  type Effort,
-  type Priority,
-} from '@agent-board/contract';
+import { EFFORTS, MODEL_ALIASES, PRIORITIES, type Effort, type Priority } from '@rumo/contract';
 import {
   Box,
   Button,

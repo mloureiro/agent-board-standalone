@@ -31,7 +31,7 @@ directory sealed, so the server could not enforce that a directory belongs to on
   unless the request says `withUsers: true`; then they all move in one transaction. A running task refuses it.
 - **Migrated boards.** The import keeps each machine's legacy `dirs` document (`legacy_dirs`) and each task's and
   schedule's sealed directory (`legacy_directory`) as stored. A CLI holding the data key converts them on
-  `board init`, at listener start or before `set-dirs`: it writes `directory` rows in the default project and
+  `rumo init`, at listener start or before `set-dirs`: it writes `directory` rows in the default project and
   back-fills `directory_id` for its machine's tasks and schedules, and unassigned ones, whose paths match. The
   server applies the conversion in one transaction, clears the matched legacy values and deletes the document.
 - Task, schedule and client event queries take an optional project filter.

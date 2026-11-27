@@ -3,7 +3,7 @@ import http from 'node:http';
 import path from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 
 import { UNLOCK_NAMES, persistentContext, unlockInPage } from '../src/fixtures/browser.js';
 import { DEFAULT_PASSPHRASE, unlockedKey, type UnlockedKey } from '../src/fixtures/keys.js';
@@ -189,7 +189,7 @@ test.describe('opening the board of the server app', () => {
 test.describe('restarting the server app on the same root', () => {
   const harness = useLayout({ cli: true });
 
-  test('[server-app-002] cards stay, the worker reconnects without board init and the client opens unlocked', async ({
+  test('[server-app-002] cards stay, the worker reconnects without rumo init and the client opens unlocked', async ({
     browserName,
   }) => {
     test.setTimeout(START_TIMEOUT_MS + SIGHTING_WAIT_MS);

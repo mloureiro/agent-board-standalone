@@ -1,5 +1,5 @@
-import { clientTranscriptContextRoute, type UiRunContext } from '@agent-board/contract';
-import { bindings, seal } from '@agent-board/sealing';
+import { clientTranscriptContextRoute, type UiRunContext } from '@rumo/contract';
+import { bindings, seal } from '@rumo/sealing';
 import { screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

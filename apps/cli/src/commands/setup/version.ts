@@ -1,4 +1,4 @@
-import { CONTRACT, MIN_SERVER } from '@agent-board/contract';
+import { CONTRACT, MIN_SERVER } from '@rumo/contract';
 import type { Command } from 'commander';
 
 import { readServerFile } from '../../profile/files.js';
@@ -24,7 +24,7 @@ export interface VersionReport {
 }
 
 export function cliVersionLine(): string {
-  return `board ${PART_VERSION} (contract ${CONTRACT})`;
+  return `rumo ${PART_VERSION} (contract ${CONTRACT})`;
 }
 
 export async function buildVersionReport(ctx: Context): Promise<VersionReport> {
@@ -58,12 +58,12 @@ export async function buildVersionReport(ctx: Context): Promise<VersionReport> {
 
 export function renderVersionReport(report: VersionReport): string[] {
   const lines = [
-    `board ${report.cli.version}`,
+    `rumo ${report.cli.version}`,
     `contract: ${report.cli.contract} (works with servers on contract ${report.cli.minServer} or newer)`,
     `profile: ${report.profile}`,
   ];
   if (report.server === null) {
-    lines.push('server: not configured (run `board init`)');
+    lines.push('server: not configured (run `rumo init`)');
     return lines;
   }
   lines.push(

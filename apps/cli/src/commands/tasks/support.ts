@@ -1,4 +1,4 @@
-import { getTaskRoute, listTasksRoute } from '@agent-board/contract';
+import { getTaskRoute, listTasksRoute } from '@rumo/contract';
 
 import { UsageError } from '../../errors.js';
 import { openSession, type Session } from '../../transport/session.js';

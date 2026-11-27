@@ -1,5 +1,5 @@
-import type { WireSchedule } from '@agent-board/contract';
-import { bindings, open, type Binding, type Keys } from '@agent-board/sealing';
+import type { WireSchedule } from '@rumo/contract';
+import { bindings, open, type Binding, type Keys } from '@rumo/sealing';
 
 export interface OpenSchedule {
   readonly wire: WireSchedule;

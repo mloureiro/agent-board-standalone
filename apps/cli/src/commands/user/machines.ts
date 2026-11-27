@@ -1,4 +1,4 @@
-import { listMachinesRoute } from '@agent-board/contract';
+import { listMachinesRoute } from '@rumo/contract';
 
 import { localTime } from '../../domain/time.js';
 import { plain } from '../../domain/rules.js';

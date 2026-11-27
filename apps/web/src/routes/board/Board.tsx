@@ -1,5 +1,5 @@
 import { Alert, Box, Stack, Text } from '@mantine/core';
-import type { TaskStatus } from '@agent-board/contract';
+import type { TaskStatus } from '@rumo/contract';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 
 import { useBoardActions, type BoardData } from './board-data.js';

@@ -2,7 +2,7 @@ import {
   getClientKeysRoute,
   replaceSlotsClientKeysRoute,
   setupClientKeysRoute,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 import {
   KeyError,
   WrongSecretError,
@@ -17,7 +17,7 @@ import {
   type KdfParams,
   type KeySetup,
   type Keys,
-} from '@agent-board/sealing';
+} from '@rumo/sealing';
 
 import { callRoute } from '../auth/api.js';
 import type { ServerClient } from '../transport/client.js';

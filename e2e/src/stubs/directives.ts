@@ -3,7 +3,7 @@ export type Directive =
   | { readonly kind: 'fail' }
   | { readonly kind: 'sleep'; readonly seconds: number }
   | { readonly kind: 'ask'; readonly questions: unknown }
-  | { readonly kind: 'board'; readonly args: readonly string[] }
+  | { readonly kind: 'rumo'; readonly args: readonly string[] }
   | { readonly kind: 'tool'; readonly name: string }
   | { readonly kind: 'subagent' }
   | { readonly kind: 'usage'; readonly tokens: number }
@@ -77,8 +77,8 @@ function parseLine(name: string, rest: string | undefined): Directive {
     case 'tool':
       if (rest === undefined || rest === '') throw new DirectiveError('#stub: tool needs a name');
       return { kind: 'tool', name: rest };
-    case 'board':
-      return { kind: 'board', args: splitArguments(rest ?? '') };
+    case 'rumo':
+      return { kind: 'rumo', args: splitArguments(rest ?? '') };
     case 'ask':
       try {
         return { kind: 'ask', questions: JSON.parse(rest ?? '') as unknown };

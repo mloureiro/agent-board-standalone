@@ -13,9 +13,9 @@ import {
 const folders: string[] = [];
 
 const CARGO =
-  '[workspace]\nmembers = ["core"]\n\n[package]\nname = "agent-board-server"\nversion = "0.0.0"\nedition.workspace = true\n\n[dependencies]\ntauri = { version = "=2.12.6" }\n';
+  '[workspace]\nmembers = ["core"]\n\n[package]\nname = "rumo-server"\nversion = "0.0.0"\nedition.workspace = true\n\n[dependencies]\ntauri = { version = "=2.12.6" }\n';
 const LOCK =
-  '[[package]]\nname = "agent-board-server"\nversion = "0.0.0"\n\n[[package]]\nname = "agent-board-server-core"\nversion = "0.0.0"\n\n[[package]]\nname = "serde"\nversion = "1.0.0"\n';
+  '[[package]]\nname = "rumo-server"\nversion = "0.0.0"\n\n[[package]]\nname = "rumo-server-core"\nversion = "0.0.0"\n\n[[package]]\nname = "serde"\nversion = "1.0.0"\n';
 
 const part = (changelog = '# Changelog\n\n## 0.0.0\n\nNot released\n'): string => {
   const root = mkdtempSync(join(tmpdir(), 'server-app-release-'));
@@ -24,7 +24,7 @@ const part = (changelog = '# Changelog\n\n## 0.0.0\n\nNot released\n'): string =
   mkdirSync(join(root, 'src-tauri/core'), { recursive: true });
   writeFileSync(
     join(root, 'package.json'),
-    '{\n  "name": "@agent-board/server-app",\n  "version": "0.0.0"\n}\n',
+    '{\n  "name": "@rumo/server-app",\n  "version": "0.0.0"\n}\n',
   );
   writeFileSync(
     join(root, 'src/version.ts'),
@@ -33,7 +33,7 @@ const part = (changelog = '# Changelog\n\n## 0.0.0\n\nNot released\n'): string =
   writeFileSync(join(root, 'src-tauri/Cargo.toml'), CARGO);
   writeFileSync(
     join(root, 'src-tauri/core/Cargo.toml'),
-    CARGO.replace('"agent-board-server"', '"agent-board-server-core"'),
+    CARGO.replace('"rumo-server"', '"rumo-server-core"'),
   );
   writeFileSync(join(root, 'src-tauri/Cargo.lock'), LOCK);
   writeFileSync(join(root, 'CHANGELOG.md'), changelog);
@@ -52,14 +52,14 @@ describe('server app release preparation', () => {
     expect(readFileSync(join(root, 'package.json'), 'utf8')).toContain('"version": "1.0.0"');
     expect(readFileSync(join(root, 'src/version.ts'), 'utf8')).toContain("PART_VERSION = '1.0.0'");
     expect(readFileSync(join(root, 'src-tauri/Cargo.toml'), 'utf8')).toContain(
-      'name = "agent-board-server"\nversion = "1.0.0"',
+      'name = "rumo-server"\nversion = "1.0.0"',
     );
     expect(readFileSync(join(root, 'src-tauri/core/Cargo.toml'), 'utf8')).toContain(
       'version = "1.0.0"',
     );
     const lock = readFileSync(join(root, 'src-tauri/Cargo.lock'), 'utf8');
-    expect(lock).toContain('name = "agent-board-server"\nversion = "1.0.0"');
-    expect(lock).toContain('name = "agent-board-server-core"\nversion = "1.0.0"');
+    expect(lock).toContain('name = "rumo-server"\nversion = "1.0.0"');
+    expect(lock).toContain('name = "rumo-server-core"\nversion = "1.0.0"');
     expect(lock).toContain('name = "serde"\nversion = "1.0.0"');
     expect(readFileSync(join(root, 'CHANGELOG.md'), 'utf8')).toBe(
       '# Changelog\n\n## 1.0.0\n\nFirst release.\n\n',

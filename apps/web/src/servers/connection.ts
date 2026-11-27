@@ -1,4 +1,4 @@
-import { CONTRACT, MIN_SERVER, compat, type ClientSide } from '@agent-board/contract';
+import { CONTRACT, MIN_SERVER, compat, type ClientSide } from '@rumo/contract';
 
 import type { Transport } from '../transport/types.js';
 import { PART_VERSION } from '../version.js';

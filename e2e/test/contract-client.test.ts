@@ -1,7 +1,7 @@
 import path from 'node:path';
 
-import { SIGNATURE_HEADERS, canonicalString } from '@agent-board/contract';
-import { contentDigest, importPublicKey, verify } from '@agent-board/sealing';
+import { SIGNATURE_HEADERS, canonicalString } from '@rumo/contract';
+import { contentDigest, importPublicKey, verify } from '@rumo/sealing';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
@@ -23,7 +23,7 @@ import { E2E_ROOT } from '../src/harness/paths.js';
 import { createTmp, type Tmp } from '../src/harness/tmp.js';
 
 const fakeApi = path.join(E2E_ROOT, 'test', 'fixtures', 'fake-api.ts');
-const originalBin = process.env.AGENT_BOARD_API_BIN;
+const originalBin = process.env.RUMO_API_BIN;
 
 let api: ApiHandle;
 let tmp: Tmp;
@@ -41,7 +41,7 @@ async function last(): Promise<Last> {
 }
 
 beforeAll(async () => {
-  process.env.AGENT_BOARD_API_BIN = fakeApi;
+  process.env.RUMO_API_BIN = fakeApi;
   tmp = createTmp('contract-client');
   api = await startApi({ tmp, database: createPgliteDatabase(tmp), auth: 'no-login' });
   server = { url: api.url };
@@ -50,8 +50,8 @@ beforeAll(async () => {
 afterAll(async () => {
   await api.stop();
   tmp.remove();
-  if (originalBin === undefined) delete process.env.AGENT_BOARD_API_BIN;
-  else process.env.AGENT_BOARD_API_BIN = originalBin;
+  if (originalBin === undefined) delete process.env.RUMO_API_BIN;
+  else process.env.RUMO_API_BIN = originalBin;
 });
 
 describe('contract client headers', () => {

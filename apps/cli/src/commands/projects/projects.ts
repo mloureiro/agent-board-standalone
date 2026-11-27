@@ -1,5 +1,5 @@
-import { listProjectsRoute, listTasksRoute } from '@agent-board/contract';
-import { bindings, open } from '@agent-board/sealing';
+import { listProjectsRoute, listTasksRoute } from '@rumo/contract';
+import { bindings, open } from '@rumo/sealing';
 
 import { UsageError } from '../../errors.js';
 import {
@@ -76,13 +76,13 @@ export async function runProjects(
 
 async function runDefault(ctx: Context, rest: readonly string[]): Promise<void> {
   const [given, ...extra] = rest;
-  if (extra.length > 0) throw new UsageError('usage: board projects default <id>');
+  if (extra.length > 0) throw new UsageError('usage: rumo projects default <id>');
   if (given === undefined) {
     const current = readLocalDirectories(ctx.dirs.config).defaultProject;
     ctx.out(current === null ? 'this host has no default project' : current);
     return;
   }
-  refuseInRun(ctx, 'board projects default');
+  refuseInRun(ctx, 'rumo projects default');
   const project = checkedProject(given);
   const s = await session(ctx);
   s.require('projects');

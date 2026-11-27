@@ -5,7 +5,7 @@ import {
   parseBoardExportLine,
   type BoardExportHeader,
   type BoardExportRecord,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 import { and, eq } from 'drizzle-orm';
 
 import { appUser } from '../../db/schema/index.js';

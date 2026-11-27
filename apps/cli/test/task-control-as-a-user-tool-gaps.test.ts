@@ -1,4 +1,4 @@
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 import { describe, expect, it } from 'vitest';
 
 import type { ApiStub } from './support/api-stub.js';
@@ -35,9 +35,9 @@ async function asking(stub: ApiStub, id = 'taskAAAA', questions: readonly unknow
   return stub.addQuestion(id, questions);
 }
 
-const IN_RUN = { env: { AGENT_BOARD_TASK: 'taskAAAA', AGENT_BOARD_RUN: 'r'.repeat(20) } };
+const IN_RUN = { env: { RUMO_TASK: 'taskAAAA', RUMO_RUN: 'r'.repeat(20) } };
 
-describe('board answer and board dismiss', () => {
+describe('rumo answer and board dismiss', () => {
   it('[cli-028] answers the open question with picks, sealed as the user', async () => {
     const { stub, cli } = await rig();
     const questionNote = await asking(stub);
@@ -143,7 +143,7 @@ describe('board answer and board dismiss', () => {
   });
 });
 
-describe('board reply, send and stop', () => {
+describe('rumo reply, send and stop', () => {
   it('[cli-029] reply adds a user note and leaves the task where it was', async () => {
     const { stub, cli } = await rig();
     await stub.addTask({ id: 'taskAAAA', status: 'backlog' });
@@ -205,7 +205,7 @@ describe('board reply, send and stop', () => {
   });
 });
 
-describe('board rerun, move --fresh, close, reopen and fork', () => {
+describe('rumo rerun, move --fresh, close, reopen and fork', () => {
   it('[cli-031] rerun queues the task for a fresh run', async () => {
     const { stub, cli } = await rig();
     await stub.addTask({ id: 'taskAAAA', status: 'done' });
@@ -275,7 +275,7 @@ describe('board rerun, move --fresh, close, reopen and fork', () => {
   });
 });
 
-describe('board transcript and board machines', () => {
+describe('rumo transcript and rumo machines', () => {
   const run = {
     id: 'run00000001',
     events: [
@@ -420,7 +420,7 @@ describe('the user commands without the grant and inside a run', () => {
   });
 });
 
-describe('board ask on a refused machine', () => {
+describe('rumo ask on a refused machine', () => {
   it('[cli-018] says not to ask again when the board answers 403 as well as 409', async () => {
     const { stub, cli } = await rig(IN_RUN);
     await stub.addTask({ id: 'taskAAAA', status: 'running' });

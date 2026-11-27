@@ -1,6 +1,6 @@
 import type { Command } from 'commander';
 
-import { MODEL_ALIASES } from '@agent-board/contract';
+import { MODEL_ALIASES } from '@rumo/contract';
 
 import type { Context } from '../context.js';
 import { TASK_ARGUMENT, collect, dryRun } from '../options.js';

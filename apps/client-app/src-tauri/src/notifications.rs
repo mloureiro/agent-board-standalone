@@ -1,4 +1,3 @@
-use agent_board_client_core::notify::{Permission, UserInfo};
 use block2::RcBlock;
 use objc2::rc::Retained;
 use objc2::runtime::{AnyObject, Bool, NSObject, NSObjectProtocol, ProtocolObject};
@@ -10,6 +9,7 @@ use objc2_user_notifications::{
     UNNotificationSettings, UNNotificationSound, UNUserNotificationCenter,
     UNUserNotificationCenterDelegate,
 };
+use rumo_client_core::notify::{Permission, UserInfo};
 use std::ptr::NonNull;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU8, Ordering};
@@ -26,7 +26,7 @@ struct Handler(Clicked);
 
 define_class!(
     #[unsafe(super(NSObject))]
-    #[name = "AgentBoardNotificationDelegate"]
+    #[name = "RumoNotificationDelegate"]
     #[ivars = Handler]
     struct Delegate;
 

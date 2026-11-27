@@ -1,4 +1,4 @@
-import { authHandoffApproveRoute, authHandoffDescribeRoute } from '@agent-board/contract';
+import { authHandoffApproveRoute, authHandoffDescribeRoute } from '@rumo/contract';
 import { Alert, Button, Code, Stack, Text, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';

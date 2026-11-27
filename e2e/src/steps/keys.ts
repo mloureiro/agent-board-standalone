@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-import { unwrapSlot } from '@agent-board/sealing';
+import { unwrapSlot } from '@rumo/sealing';
 
 import { UNLOCK_NAMES, unlockInPage } from '../fixtures/browser.js';
 import { DEFAULT_PASSPHRASE, unlockedKey, type UnlockedKey } from '../fixtures/keys.js';

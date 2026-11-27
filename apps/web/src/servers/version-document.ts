@@ -1,4 +1,4 @@
-import { SESSION_STATES, type ServerSide, type SessionState } from '@agent-board/contract';
+import { SESSION_STATES, type ServerSide, type SessionState } from '@rumo/contract';
 
 export interface ServerVersion {
   readonly server: ServerSide;

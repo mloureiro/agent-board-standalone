@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 
-import { TOKEN_PREFIXES, MAX_FEED_REQUEST_ACKS, type FeedAction } from '@agent-board/contract';
-import { tokenHash } from '@agent-board/sealing';
+import { TOKEN_PREFIXES, MAX_FEED_REQUEST_ACKS, type FeedAction } from '@rumo/contract';
+import { tokenHash } from '@rumo/sealing';
 import { and, asc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 
 import { clearMachineKey } from '../../auth/index.js';

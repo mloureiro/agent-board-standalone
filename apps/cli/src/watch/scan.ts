@@ -1,7 +1,7 @@
 import { statSync, utimesSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 
-import { getTaskRoute } from '@agent-board/contract';
+import { getTaskRoute } from '@rumo/contract';
 
 import { ApiError } from '../transport/errors.js';
 import type { ExecOptions, ExecResult } from '../runtime.js';

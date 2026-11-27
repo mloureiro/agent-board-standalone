@@ -99,10 +99,10 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/mobile/src-tauri
-      - run: pnpm install --frozen-lockfile --filter @agent-board/contract...
-      - run: pnpm --filter @agent-board/contract run build
-      - run: pnpm --filter @agent-board/mobile lint:rust
-      - run: pnpm --filter @agent-board/mobile test:rust
+      - run: pnpm install --frozen-lockfile --filter @rumo/contract...
+      - run: pnpm --filter @rumo/contract run build
+      - run: pnpm --filter @rumo/mobile lint:rust
+      - run: pnpm --filter @rumo/mobile test:rust
 
   api-executable:
     needs: changes
@@ -119,7 +119,7 @@ jobs:
           cache: pnpm
       - uses: oven-sh/setup-bun@v2
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @agent-board/api exec vitest run test/bun-executable.test.ts
+      - run: pnpm --filter @rumo/api exec vitest run test/bun-executable.test.ts
 
   mobile-phone:
     name: mobile (phone)
@@ -134,10 +134,10 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @agent-board/web... run build
-      - run: pnpm --filter @agent-board/mobile exec playwright install --with-deps chromium
-      - run: pnpm --filter @agent-board/mobile run bundle
-      - run: pnpm --filter @agent-board/mobile run phone
+      - run: pnpm --filter @rumo/web... run build
+      - run: pnpm --filter @rumo/mobile exec playwright install --with-deps chromium
+      - run: pnpm --filter @rumo/mobile run bundle
+      - run: pnpm --filter @rumo/mobile run phone
 
   client-app-macos:
     name: client-app (macOS)
@@ -157,9 +157,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/client-app/src-tauri
-      - run: pnpm install --frozen-lockfile --filter "@agent-board/client-app..."
-      - run: pnpm --filter "@agent-board/client-app..." --if-present run build
-      - run: pnpm --filter @agent-board/client-app shell:check
+      - run: pnpm install --frozen-lockfile --filter "@rumo/client-app..."
+      - run: pnpm --filter "@rumo/client-app..." --if-present run build
+      - run: pnpm --filter @rumo/client-app shell:check
 
   server-app-macos:
     name: server-app (macOS)
@@ -181,18 +181,18 @@ jobs:
           workspaces: apps/server-app/src-tauri
       - uses: oven-sh/setup-bun@v2
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter "@agent-board/server-app..." --if-present run build
-      - run: pnpm --filter @agent-board/server-app shell:check
-      - run: pnpm --filter @agent-board/server-app assemble --build
-      - run: pnpm --filter @agent-board/server-app build:binary
-      - run: pnpm --filter @agent-board/server-app bundle
-      - run: pnpm --filter @agent-board/server-app sign:check
-      - run: pnpm --filter @agent-board/server-app test
-      - run: ditto -c -k --keepParent "apps/server-app/src-tauri/target/release/bundle/macos/Agent Board Server.app" "$RUNNER_TEMP/agent-board-server-app.zip"
+      - run: pnpm --filter "@rumo/server-app..." --if-present run build
+      - run: pnpm --filter @rumo/server-app shell:check
+      - run: pnpm --filter @rumo/server-app assemble --build
+      - run: pnpm --filter @rumo/server-app build:binary
+      - run: pnpm --filter @rumo/server-app bundle
+      - run: pnpm --filter @rumo/server-app sign:check
+      - run: pnpm --filter @rumo/server-app test
+      - run: ditto -c -k --keepParent "apps/server-app/src-tauri/target/release/bundle/macos/Rumo Server.app" "$RUNNER_TEMP/rumo-server-app.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: server-app-adhoc-signed
-          path: ${{ runner.temp }}/agent-board-server-app.zip
+          path: ${{ runner.temp }}/rumo-server-app.zip
           if-no-files-found: error
 
   sealing-runtimes:
@@ -208,9 +208,9 @@ jobs:
           cache: pnpm
       - uses: oven-sh/setup-bun@v2
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @agent-board/sealing exec playwright install --with-deps chromium webkit
-      - run: pnpm --filter @agent-board/sealing test:bun
-      - run: pnpm --filter @agent-board/sealing test:browser
+      - run: pnpm --filter @rumo/sealing exec playwright install --with-deps chromium webkit
+      - run: pnpm --filter @rumo/sealing test:bun
+      - run: pnpm --filter @rumo/sealing test:browser
 
   e2e-blackbox:
     name: e2e (black-box)
@@ -242,14 +242,14 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r --if-present run build
-      - run: pnpm --filter @agent-board/e2e e2e:blackbox --strict
+      - run: pnpm --filter @rumo/e2e e2e:blackbox --strict
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: e2e-blackbox-logs
           path: |
-            /tmp/agent-board-e2e-*/api.log
-            /tmp/agent-board-e2e-*/machines/*/api.log
+            /tmp/rumo-e2e-*/api.log
+            /tmp/rumo-e2e-*/machines/*/api.log
           if-no-files-found: ignore
 
   e2e-browser:
@@ -286,29 +286,29 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: pnpm install --frozen-lockfile
       - id: playwright
-        run: echo "version=$(pnpm --filter @agent-board/e2e exec playwright --version | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(pnpm --filter @rumo/e2e exec playwright --version | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)" >> "$GITHUB_OUTPUT"
       - id: browsers
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
       - if: steps.browsers.outputs.cache-hit != 'true'
-        run: pnpm --filter @agent-board/e2e exec playwright install --with-deps chromium webkit
+        run: pnpm --filter @rumo/e2e exec playwright install --with-deps chromium webkit
       - if: steps.browsers.outputs.cache-hit == 'true'
-        run: pnpm --filter @agent-board/e2e exec playwright install-deps chromium webkit
+        run: pnpm --filter @rumo/e2e exec playwright install-deps chromium webkit
       - run: pnpm -r --if-present run build
       - env:
           E2E_OUTPUT_DIR: ${{ runner.temp }}/e2e-results
           PROJECT: ${{ matrix.project }}
-        run: pnpm --filter @agent-board/e2e e2e:browser --strict -- --project "$PROJECT"
+        run: pnpm --filter @rumo/e2e e2e:browser --strict -- --project "$PROJECT"
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: e2e-browser-${{ matrix.project }}-reports
           path: |
             ${{ runner.temp }}/e2e-results
-            /tmp/agent-board-e2e-*/api.log
-            /tmp/agent-board-e2e-*/machines/*/api.log
+            /tmp/rumo-e2e-*/api.log
+            /tmp/rumo-e2e-*/machines/*/api.log
           if-no-files-found: ignore
 
   compat-matrix:
@@ -331,18 +331,18 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: pnpm install --frozen-lockfile
       - id: playwright
-        run: echo "version=$(pnpm --filter @agent-board/e2e exec playwright --version | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(pnpm --filter @rumo/e2e exec playwright --version | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)" >> "$GITHUB_OUTPUT"
       - id: browsers
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
       - if: steps.browsers.outputs.cache-hit != 'true'
-        run: pnpm --filter @agent-board/e2e exec playwright install --with-deps chromium webkit
+        run: pnpm --filter @rumo/e2e exec playwright install --with-deps chromium webkit
       - if: steps.browsers.outputs.cache-hit == 'true'
-        run: pnpm --filter @agent-board/e2e exec playwright install-deps chromium webkit
+        run: pnpm --filter @rumo/e2e exec playwright install-deps chromium webkit
       - run: pnpm -r --if-present run build
-      - run: pnpm --filter @agent-board/e2e e2e:matrix
+      - run: pnpm --filter @rumo/e2e e2e:matrix
 
   install-alone:
     name: install alone (${{ matrix.package }})
@@ -368,10 +368,10 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/${{ matrix.package }}/src-tauri
-      - run: pnpm install --frozen-lockfile --filter "@agent-board/${{ matrix.package }}..."
-      - run: pnpm --filter "@agent-board/${{ matrix.package }}..." --if-present run build
-      - run: pnpm --filter "@agent-board/${{ matrix.package }}" run typecheck
-      - run: pnpm --filter "@agent-board/${{ matrix.package }}" test
+      - run: pnpm install --frozen-lockfile --filter "@rumo/${{ matrix.package }}..."
+      - run: pnpm --filter "@rumo/${{ matrix.package }}..." --if-present run build
+      - run: pnpm --filter "@rumo/${{ matrix.package }}" run typecheck
+      - run: pnpm --filter "@rumo/${{ matrix.package }}" test
 
   binary-smoke:
     name: binary smoke (${{ matrix.target }})
@@ -396,9 +396,9 @@ jobs:
           node-version: 24
           cache: pnpm
       - uses: oven-sh/setup-bun@v2
-      - run: pnpm install --frozen-lockfile --filter "@agent-board/cli..."
+      - run: pnpm install --frozen-lockfile --filter "@rumo/cli..."
       - run: node apps/cli/scripts/compile.ts --target ${{ matrix.target }}
-      - run: node apps/cli/scripts/smoke.ts apps/cli/dist/release/board-${{ matrix.target }}
+      - run: node apps/cli/scripts/smoke.ts apps/cli/dist/release/rumo-${{ matrix.target }}
 
   public-hygiene:
     name: public hygiene

@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { getAgentsRoute, setAgentsRoute } from '@agent-board/contract';
-import { bindings, open, seal } from '@agent-board/sealing';
+import { getAgentsRoute, setAgentsRoute } from '@rumo/contract';
+import { bindings, open, seal } from '@rumo/sealing';
 import { stringify } from 'yaml';
 
 import { configObject, editConfig, readConfigDocument } from '../config/file.js';
@@ -58,7 +58,7 @@ export async function writeBoardAgents(
     });
   } catch (error) {
     if (error instanceof ApiError && error.code === 'version-conflict') {
-      throw new CliError('the board agents changed meanwhile; run the command again');
+      throw new CliError('the rumo agents changed meanwhile; run the command again');
     }
     throw error;
   }
@@ -93,7 +93,7 @@ export async function applyBoardAgents(
   if (board === null) return null;
   if (board.unreadable) {
     say(
-      `the board agents (version ${board.version}) cannot be decrypted with this data key; not applied`,
+      `the rumo agents (version ${board.version}) cannot be decrypted with this data key; not applied`,
     );
     return null;
   }

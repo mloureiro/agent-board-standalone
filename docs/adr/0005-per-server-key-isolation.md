@@ -13,7 +13,7 @@ board (web-086).
 
 ## Decision
 
-- Every server entry has a random id. Each id owns a namespace: an IndexedDB database `agent-board:<serverId>`
+- Every server entry has a random id. Each id owns a namespace: an IndexedDB database `rumo:<serverId>`
   (non-extractable data keys, signing key, client token when cross-origin) and `localStorage` keys prefixed
   `ab:<serverId>:` (drafts, volatile state).
 - The query cache is held in memory only, per server, and never persisted.

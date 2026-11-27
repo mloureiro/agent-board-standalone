@@ -1,3 +1,3 @@
-import type { AgentBoardBridge } from './types.js';
+import type { RumoBridge } from './types.js';
 
-export const currentBridge = (): AgentBoardBridge | null => window.agentBoardBridge ?? null;
+export const currentBridge = (): RumoBridge | null => window.rumoBridge ?? null;

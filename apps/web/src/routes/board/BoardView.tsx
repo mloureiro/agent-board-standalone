@@ -1,5 +1,5 @@
 import { Title, VisuallyHidden } from '@mantine/core';
-import type { TaskStatus } from '@agent-board/contract';
+import type { TaskStatus } from '@rumo/contract';
 import type { ReactNode } from 'react';
 
 import { useServers } from '../../servers/index.js';

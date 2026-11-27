@@ -36,7 +36,7 @@ An Android phone must still be able to open the same server as the desktop clien
 ## Consequences
 
 - The phone walk uses a tunnel such as `tailscale funnel` to the server app's port, turns remote access on in the
-  server app's setup window (or `agent-board-server setup remote --public-url …`), creates the first passkey, and
+  server app's setup window (or `rumo-server setup remote --public-url …`), creates the first passkey, and
   signs the phone in through the hand-off.
 - With remote access on, browsers on the Mac itself also sign in: the API has one sign-in mode per process.
 - No base component assumes the phone is on the same network as the Mac.

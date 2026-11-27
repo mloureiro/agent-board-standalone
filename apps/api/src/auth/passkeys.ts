@@ -14,7 +14,7 @@ import type {
   uiPasskeyCreationOptions,
   uiPasskeyRequestOptions,
   uiRegistrationResponse,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 import type { z } from 'zod';
 
 import type { LoginConfig } from '../modules/sign-in/index.js';
@@ -27,7 +27,7 @@ type UiAuthenticationResponse = z.infer<typeof uiAuthenticationResponse>;
 type CreationOptions = z.infer<typeof uiPasskeyCreationOptions>;
 type RequestOptions = z.infer<typeof uiPasskeyRequestOptions>;
 
-const RP_NAME = 'Agent board';
+const RP_NAME = 'Rumo';
 const SUPPORTED_ALGORITHMS = [COSEALG.EdDSA, COSEALG.ES256, COSEALG.RS256];
 const CONTROL_CHARACTERS = /\p{Cc}/gu;
 
@@ -47,7 +47,7 @@ export const signupTokenMatches = (expected: string, presented: string): boolean
   timingSafeEqual(sha256(expected), sha256(presented));
 
 const userHandle = (owner: string): Uint8Array<ArrayBuffer> =>
-  new Uint8Array(sha256(`agent-board-user:${owner}`));
+  new Uint8Array(sha256(`rumo-user:${owner}`));
 
 export const registrationOptionsFor = (
   login: LoginConfig,

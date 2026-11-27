@@ -25,7 +25,7 @@ export function releaseProblems(inputs: ReleaseInputs): string[] {
   if (!inputs.changelog.split('\n').some((line) => line.trim() === `## ${inputs.target}`))
     problems.push(`CHANGELOG.md has no "## ${inputs.target}" heading`);
   if (inputs.bundleVersion === null)
-    problems.push('the built .app is missing: run `pnpm --filter @agent-board/server-app bundle`');
+    problems.push('the built .app is missing: run `pnpm --filter @rumo/server-app bundle`');
   else if (inputs.bundleVersion !== inputs.target)
     problems.push(`the built .app is ${inputs.bundleVersion}, not ${inputs.target}`);
   return problems;

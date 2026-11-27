@@ -1,8 +1,8 @@
 import { CliError } from '../errors.js';
 
-export const RELEASE_REPOSITORY = 'mloureiro/agent-board-standalone';
+export const RELEASE_REPOSITORY = 'mloureiro/rumo';
 export const RELEASE_TAG_PREFIX = 'cli-v';
-export const RELEASES_URL_ENV = 'AGENT_BOARD_RELEASES_URL';
+export const RELEASES_URL_ENV = 'RUMO_RELEASES_URL';
 export const CHECKSUMS_ASSET = 'SHA256SUMS';
 export const SIGNATURE_ASSET = 'SHA256SUMS.minisig';
 export const UPDATE_TARGETS = ['linux-x64', 'linux-arm64', 'darwin-arm64'] as const;
@@ -45,7 +45,7 @@ export function updateTarget(platform: string, arch: string): UpdateTarget | nul
   return (UPDATE_TARGETS as readonly string[]).includes(target) ? (target as UpdateTarget) : null;
 }
 
-export const assetName = (target: UpdateTarget): string => `board-${target}`;
+export const assetName = (target: UpdateTarget): string => `rumo-${target}`;
 
 export function releasesUrl(env: Readonly<Record<string, string | undefined>>): string {
   const override = env[RELEASES_URL_ENV];

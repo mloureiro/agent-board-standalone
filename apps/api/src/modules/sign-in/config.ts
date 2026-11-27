@@ -1,4 +1,4 @@
-import type { SignInMethod } from '@agent-board/contract';
+import type { SignInMethod } from '@rumo/contract';
 
 import type { z } from 'zod';
 

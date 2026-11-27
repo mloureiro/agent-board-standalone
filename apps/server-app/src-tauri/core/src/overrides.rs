@@ -2,11 +2,11 @@ use std::path::PathBuf;
 
 use crate::durations::{Durations, TIMINGS_ENV};
 
-pub const CREDENTIAL_STORE_ENV: &str = "AGENT_BOARD_CREDENTIAL_STORE";
-pub const LAUNCH_AGENTS_ENV: &str = "AGENT_BOARD_LAUNCH_AGENTS_DIR";
-pub const RESOURCES_ENV: &str = "AGENT_BOARD_SERVER_RESOURCES";
-pub const OPEN_PROGRAM_ENV: &str = "AGENT_BOARD_OPEN_PROGRAM";
-pub const E2E_ENV: &str = "AGENT_BOARD_E2E";
+pub const CREDENTIAL_STORE_ENV: &str = "RUMO_CREDENTIAL_STORE";
+pub const LAUNCH_AGENTS_ENV: &str = "RUMO_LAUNCH_AGENTS_DIR";
+pub const RESOURCES_ENV: &str = "RUMO_SERVER_RESOURCES";
+pub const OPEN_PROGRAM_ENV: &str = "RUMO_OPEN_PROGRAM";
+pub const E2E_ENV: &str = "RUMO_E2E";
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Overrides {

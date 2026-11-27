@@ -12,9 +12,7 @@ const TOOL_MAX_BYTES = 1024 * 1024;
 
 export function requireUnitPlatform(rt: Runtime, command: string): UnitPlatform {
   if (!isUnitPlatform(rt.platform)) {
-    throw new CliError(
-      `board ${command} needs Linux with systemd or macOS; this is ${rt.platform}`,
-    );
+    throw new CliError(`rumo ${command} needs Linux with systemd or macOS; this is ${rt.platform}`);
   }
   return rt.platform;
 }
@@ -37,10 +35,10 @@ export function unitDirectory(rt: Runtime, platform: UnitPlatform): string {
 export const logDirectory = (dirs: ProfileDirs): string => path.join(dirs.state, 'logs');
 
 export function installedBoard(rt: Runtime): string {
-  const base = rt.env.BOARD_INSTALL_DIR;
+  const base = rt.env.RUMO_INSTALL_DIR;
   const directory =
     base !== undefined && path.isAbsolute(base) ? base : path.join(rt.homedir, '.local', 'bin');
-  return path.join(directory, 'board');
+  return path.join(directory, 'rumo');
 }
 
 export function findProgram(rt: Runtime, name: string): string | undefined {
@@ -89,7 +87,7 @@ export function installProblem(rt: Runtime): string | null {
   );
   const real = safeRealpath(running);
   if (temporary.some((directory) => real.startsWith(`${directory}${path.sep}`))) {
-    return `this board runs from ${real}, in the temp directory; install it and run \`board setup\` from there`;
+    return `this rumo runs from ${real}, in the temp directory; install it and run \`rumo setup\` from there`;
   }
   const installed = installedBoard(rt);
   if (existsSync(installed) && safeRealpath(installed) !== real) {

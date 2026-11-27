@@ -1,6 +1,6 @@
-import { checkServerAddress, type AddressProblem } from '@agent-board/contract';
+import { checkServerAddress, type AddressProblem } from '@rumo/contract';
 
-import type { AgentBoardBridge } from '../bridge/types.js';
+import type { RumoBridge } from '../bridge/types.js';
 import {
   readServerList,
   serverNamespace,
@@ -79,7 +79,7 @@ export const createBrowserRegistry = (options: {
   };
 };
 
-export const createNativeRegistry = (bridge: AgentBoardBridge): ServerRegistry => ({
+export const createNativeRegistry = (bridge: RumoBridge): ServerRegistry => ({
   list: () => bridge.listServers(),
   add: async ({ name, address }) => {
     const checked = checkServerAddress(address);

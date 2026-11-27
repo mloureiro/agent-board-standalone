@@ -1,4 +1,4 @@
-import type { DoctorResult } from '@agent-board/contract';
+import type { DoctorResult } from '@rumo/contract';
 
 import type { Context } from '../commands/context.js';
 import { readConfigObject } from '../config/file.js';
@@ -18,7 +18,7 @@ export function migrationCheck(ctx: Context): DoctorResult {
     'migration',
     'fail',
     `a local migration from ${pending.from} to ${pending.to} is pending, ${stopped}; the dispatch tick claims nothing until it ends`,
-    'run `board self-update --resume`, or `board self-update --rollback` to go back',
+    'run `rumo self-update --resume`, or `rumo self-update --rollback` to go back',
   );
 }
 
@@ -36,7 +36,7 @@ export function autoUpdateCheck(ctx: Context): DoctorResult {
       'auto-update',
       'warn',
       `auto-update (${mode}) is held since a rollback from ${state.held.version}`,
-      'run `board self-update` to install the newest release and lift the hold',
+      'run `rumo self-update` to install the newest release and lift the hold',
     );
   }
   if (state.failedAt !== undefined) {
@@ -44,7 +44,7 @@ export function autoUpdateCheck(ctx: Context): DoctorResult {
       'auto-update',
       'warn',
       `auto-update (${mode}) failed at ${new Date(state.failedAt).toISOString()} and retries one hour later`,
-      'run `board self-update` to see the reason',
+      'run `rumo self-update` to see the reason',
     );
   }
   return pass('auto-update', `auto-update is ${mode}`);

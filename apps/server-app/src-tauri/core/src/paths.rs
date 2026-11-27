@@ -2,9 +2,9 @@ use std::ffi::OsStr;
 use std::fmt;
 use std::path::{Component, Path, PathBuf};
 
-pub const PRODUCT_NAME: &str = "Agent Board Server";
-pub const IDENTIFIER: &str = "dev.mloureiro.agent-board-server";
-pub const ROOT_ENV: &str = "AGENT_BOARD_SERVER_ROOT";
+pub const PRODUCT_NAME: &str = "Rumo Server";
+pub const IDENTIFIER: &str = "dev.mloureiro.rumo-server";
+pub const ROOT_ENV: &str = "RUMO_SERVER_ROOT";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RootError(String);

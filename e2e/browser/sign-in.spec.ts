@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { sessionCookieName } from '@agent-board/contract';
+import { sessionCookieName } from '@rumo/contract';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
 import {
@@ -476,7 +476,7 @@ test.describe('another server', () => {
     const namespaces = Object.keys(held);
     expect(namespaces).toHaveLength(1);
     const namespace = namespaces[0] as string;
-    expect(namespace.startsWith('agent-board:')).toBe(true);
+    expect(namespace.startsWith('rumo:')).toBe(true);
     const [token] = held[namespace] as string[];
     expect(token).toMatch(/^abc_/);
     expect(await bearerSessionState(b, token as string)).toBe('valid');

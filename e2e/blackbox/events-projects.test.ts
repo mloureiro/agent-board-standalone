@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { enrolledMachine, type EnrolledMachine } from '../src/fixtures/machines.js';
@@ -43,7 +43,7 @@ async function addPinnedTask(
   return id;
 }
 
-describe('board events', () => {
+describe('rumo events', () => {
   const harness = useBoard({ parts: ['api', 'cli'], features: ['projects'], auth: 'no-login' });
 
   let started: Fixture | null = null;
@@ -193,7 +193,7 @@ describe('board events', () => {
   });
 });
 
-describe('board projects', () => {
+describe('rumo projects', () => {
   const harness = useBoard({
     parts: ['api', 'cli'],
     features: ['projects', 'directories'],
@@ -219,12 +219,12 @@ describe('board projects', () => {
   const hostDefaultSet = once(async () => {
     const fx = await fixture();
     const project = await defaultProject();
-    await expectOk(fx.runner.cli(['projects', 'default', project.id]), 'board projects default');
-    await expectOk(fx.runner.cli(['dirs', 'add', fx.workdir]), 'board dirs add');
+    await expectOk(fx.runner.cli(['projects', 'default', project.id]), 'rumo projects default');
+    await expectOk(fx.runner.cli(['dirs', 'add', fx.workdir]), 'rumo dirs add');
     return project;
   });
 
-  it("[cli-039] board projects lists the server's projects", async () => {
+  it("[cli-039] rumo projects lists the server's projects", async () => {
     const fx = await fixture();
     const names = [uniqueLabel('listed-a-'), uniqueLabel('listed-b-')];
     for (const name of names) await createProject(fx, name);
@@ -233,7 +233,7 @@ describe('board projects', () => {
     for (const name of names) expect(run.stdout).toContain(name);
   });
 
-  it('[cli-039] a default project set on the host receives board schedule without --project', async () => {
+  it('[cli-039] a default project set on the host receives rumo schedule without --project', async () => {
     const fx = await fixture();
     const project = await hostDefaultSet();
     const title = uniqueLabel('scheduled-');
@@ -246,13 +246,13 @@ describe('board projects', () => {
     expect(task.projectId).toBe(project.id);
   });
 
-  it("[cli-039] the host default project does not override the parent's project for an in-run board add", async () => {
+  it("[cli-039] the host default project does not override the parent's project for an in-run rumo add", async () => {
     const fx = await fixture();
     const hostDefault = await hostDefaultSet();
     const parentProject = await createProject(fx, uniqueLabel('parent-'));
     const directory = fx.board.tmp.path('parent-project-dir');
     mkdirSync(directory, { recursive: true });
-    await expectOk(fx.runner.cli(['dirs', 'add', directory]), 'board dirs add');
+    await expectOk(fx.runner.cli(['dirs', 'add', directory]), 'rumo dirs add');
     const directoryId = await directoryIdOf(fx.user, fx.key, fx.runner.name, directory);
     await moveDirectory(fx.user, directoryId, parentProject);
     const title = uniqueLabel('followup-');
@@ -261,7 +261,7 @@ describe('board projects', () => {
     fx.taskIds.push(parentId);
     await createWorkerTask(fx.user, fx.key, {
       id: parentId,
-      prompt: `#stub: board add --title ${title} --file ${file} --parent ${parentId}`,
+      prompt: `#stub: rumo add --title ${title} --file ${file} --parent ${parentId}`,
       projectId: parentProject,
       place: { machine: fx.runner.name, directoryId },
     });

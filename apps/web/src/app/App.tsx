@@ -1,4 +1,4 @@
-import type { KdfParams } from '@agent-board/sealing';
+import type { KdfParams } from '@rumo/sealing';
 import { MantineProvider } from '@mantine/core';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useMemo, type ComponentType, type ReactNode } from 'react';

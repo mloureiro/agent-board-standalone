@@ -32,20 +32,18 @@ export function useUpdateMachine(): (options?: UpdateMachineOptions) => UpdateMa
     for (const cleanup of cleanups.splice(0)) cleanup();
   });
   return (options = {}) => {
-    const bin = mkdtempSync(path.join(os.tmpdir(), 'board-cli-bin-'));
-    const binary = path.join(bin, 'board');
+    const bin = mkdtempSync(path.join(os.tmpdir(), 'rumo-cli-bin-'));
+    const binary = path.join(bin, 'rumo');
     writeFileSync(binary, 'the old binary', { mode: 0o755 });
     const probe = (file: string): ExecResult => ({
       code: 0,
-      stdout: `board ${options.reportedVersion ?? readFileSync(file, 'utf8').replace(/^\D+/, '')} (contract 1)\n`,
+      stdout: `rumo ${options.reportedVersion ?? readFileSync(file, 'utf8').replace(/^\D+/, '')} (contract 1)\n`,
     });
     const test = testRuntime({
       ...options,
       self: options.script === true ? [binary, 'script.js'] : [binary],
       env: {
-        ...(options.releasesUrl === undefined
-          ? {}
-          : { AGENT_BOARD_RELEASES_URL: options.releasesUrl }),
+        ...(options.releasesUrl === undefined ? {} : { RUMO_RELEASES_URL: options.releasesUrl }),
         ...options.env,
       },
       exec: options.exec ?? ((file) => probe(file)),

@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { workerUnits } from '@agent-board/contract';
+import { workerUnits } from '@rumo/contract';
 import { describe, expect, it } from 'vitest';
 
 import { buildContext } from '../src/commands/context.js';
@@ -47,15 +47,15 @@ function clockOf() {
   };
 }
 
-describe('board internal units', () => {
+describe('rumo internal units', () => {
   it('[cli-054] prints the recipe as JSON, valid against the contract, for the profile', async () => {
-    const test = testRuntime({ platform: 'linux', self: ['/opt/board/bin/board'] });
+    const test = testRuntime({ platform: 'linux', self: ['/opt/board/bin/rumo'] });
     expect(await runCli(['--profile', 'work', 'internal', 'units'], test.rt)).toBe(0);
     const recipe = workerUnits.parse(JSON.parse(test.captured.stdout));
     expect(recipe.platform).toBe('linux');
     expect(recipe.units.map((unit) => unit.name)).toEqual(['dispatch', 'listen', 'watch']);
     for (const unit of recipe.units) {
-      expect(unit.program).toBe('/opt/board/bin/board');
+      expect(unit.program).toBe('/opt/board/bin/rumo');
       expect(unit.args).toEqual(['--profile', 'work', 'internal', unit.name]);
     }
     test.dispose();
@@ -64,12 +64,12 @@ describe('board internal units', () => {
   it('[cli-054] prints the macOS recipe on macOS and names only passed variables that are set', async () => {
     const test = testRuntime({
       platform: 'darwin',
-      env: { AGENT_BOARD_CREDENTIALS_COMMAND: '/opt/creds' },
+      env: { RUMO_CREDENTIALS_COMMAND: '/opt/creds' },
     });
     expect(await runCli(['internal', 'units'], test.rt)).toBe(0);
     const recipe = workerUnits.parse(JSON.parse(test.captured.stdout));
     expect(recipe.platform).toBe('darwin');
-    expect(recipe.passedVariables).toContain('AGENT_BOARD_CREDENTIALS_COMMAND');
+    expect(recipe.passedVariables).toContain('RUMO_CREDENTIALS_COMMAND');
     test.dispose();
   });
 
@@ -77,7 +77,7 @@ describe('board internal units', () => {
     const windows = testRuntime({ platform: 'win32' });
     expect(await runCli(['internal', 'units'], windows.rt)).toBe(EXIT.failure);
     expect(windows.captured.stderr).toMatch(/Linux or macOS/);
-    const inRun = testRuntime({ env: { AGENT_BOARD_TASK: 'abc12345' } });
+    const inRun = testRuntime({ env: { RUMO_TASK: 'abc12345' } });
     expect(await runCli(['internal', 'units'], inRun.rt)).toBe(EXIT.failure);
     windows.dispose();
     inRun.dispose();
@@ -91,7 +91,7 @@ describe('board internal units', () => {
   });
 });
 
-describe('board internal shutdown', () => {
+describe('rumo internal shutdown', () => {
   it('[cli-055] asks each running worker to pause and reports it paused when it ends', async () => {
     const test = testRuntime();
     const dir = test.path('run');
@@ -257,8 +257,8 @@ describe('board internal shutdown', () => {
 
 describe('shell completion', () => {
   it.each([
-    ['bash', 'complete -F _board board'],
-    ['zsh', 'compdef _board board'],
+    ['bash', 'complete -F _rumo rumo'],
+    ['zsh', 'compdef _rumo rumo'],
     ['fish', "complete -c board -n '__fish_use_subcommand'"],
   ])('[cli-061] %s script completes commands, task ids and schedule ids', async (shell, marker) => {
     const test = testRuntime();

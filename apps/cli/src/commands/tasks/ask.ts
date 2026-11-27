@@ -1,5 +1,5 @@
-import { askRoute } from '@agent-board/contract';
-import { bindings, seal } from '@agent-board/sealing';
+import { askRoute } from '@rumo/contract';
+import { bindings, seal } from '@rumo/sealing';
 
 import { UsageError } from '../../errors.js';
 import { formatQuestions, parseQuestions } from '../../domain/questions.js';

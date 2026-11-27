@@ -23,7 +23,7 @@ async function requireWebBuild(webDist: string): Promise<void> {
     await readFile(path.join(webDist, 'version.json'));
   } catch {
     throw new Error(
-      `${webDist}/version.json is missing: run \`pnpm --filter @agent-board/web build\` first`,
+      `${webDist}/version.json is missing: run \`pnpm --filter @rumo/web build\` first`,
     );
   }
 }

@@ -1,5 +1,5 @@
-import { CONTRACT, FEATURES, MIN_CLIENT, versionDocument } from '@agent-board/contract';
-import { tokenHash } from '@agent-board/sealing';
+import { CONTRACT, FEATURES, MIN_CLIENT, versionDocument } from '@rumo/contract';
+import { tokenHash } from '@rumo/sealing';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import type { CredentialStore } from '../src/auth/index.js';

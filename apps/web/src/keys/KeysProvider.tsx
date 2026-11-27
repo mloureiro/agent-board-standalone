@@ -1,4 +1,4 @@
-import { PRODUCTION_KDF, type KdfParams, type Keys } from '@agent-board/sealing';
+import { PRODUCTION_KDF, type KdfParams, type Keys } from '@rumo/sealing';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   createContext,

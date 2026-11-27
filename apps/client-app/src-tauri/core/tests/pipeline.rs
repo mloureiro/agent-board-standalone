@@ -1,16 +1,16 @@
 mod common;
 
-use agent_board_client_core::bridge::{Bridge, BridgeError, Scope};
-use agent_board_client_core::handshake::Handshake;
-use agent_board_client_core::ports::{PortError, SecretStore};
-use agent_board_client_core::servers::Servers;
-use agent_board_client_core::signing::{RequestSigner, canonical_string};
-use agent_board_client_core::tokens::{key_service, token_service};
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use common::*;
 use futures_util::StreamExt;
 use p256::ecdsa::{Signature, VerifyingKey, signature::Verifier};
 use p256::pkcs8::DecodePublicKey;
+use rumo_client_core::bridge::{Bridge, BridgeError, Scope};
+use rumo_client_core::handshake::Handshake;
+use rumo_client_core::ports::{PortError, SecretStore};
+use rumo_client_core::servers::Servers;
+use rumo_client_core::signing::{RequestSigner, canonical_string};
+use rumo_client_core::tokens::{key_service, token_service};
 use std::sync::Arc;
 
 const SERVER_URL: &str = "https://board.example.test/";
@@ -26,7 +26,7 @@ fn page_headers() -> Vec<(String, String)> {
     vec![("Accept".to_owned(), "application/json".to_owned())]
 }
 
-async fn collect(response: agent_board_client_core::bridge::ServerResponse) -> Vec<Vec<u8>> {
+async fn collect(response: rumo_client_core::bridge::ServerResponse) -> Vec<Vec<u8>> {
     response
         .body
         .map(|chunk| chunk.unwrap())

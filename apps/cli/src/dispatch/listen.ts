@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { constants as osConstants } from 'node:os';
 
-import { machineEventsRoute } from '@agent-board/contract';
+import { machineEventsRoute } from '@rumo/contract';
 
 import { applyBoardAgents } from '../agents/shared.js';
 import type { Context } from '../commands/context.js';

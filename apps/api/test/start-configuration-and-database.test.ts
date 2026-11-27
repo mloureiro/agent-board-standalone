@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { DATA_HEADERS } from '@agent-board/contract';
+import { DATA_HEADERS } from '@rumo/contract';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { UNKNOWN_VERSION } from '../src/modules/build/index.js';

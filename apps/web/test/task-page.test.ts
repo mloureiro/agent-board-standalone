@@ -1,6 +1,6 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { bindings, open, seal } from '@agent-board/sealing';
+import { bindings, open, seal } from '@rumo/sealing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TRANSCRIPT_POLL_MS } from '../src/routes/task/TranscriptDrawer.js';
@@ -76,7 +76,7 @@ describe('header and breadcrumb', () => {
     openTask();
 
     await screen.findByRole('heading', { name: 'Ship the badge' });
-    expect(document.title).toBe('Ship the badge · Agent Board');
+    expect(document.title).toBe('Ship the badge · Rumo');
   });
 
   it('[web-037] renaming seals the new title for the task and shows it', async () => {

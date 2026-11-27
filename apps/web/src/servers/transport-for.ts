@@ -1,4 +1,4 @@
-import type { AgentBoardBridge } from '../bridge/types.js';
+import type { RumoBridge } from '../bridge/types.js';
 import { loadSigningKey } from '../signing/index.js';
 import { serverNamespace } from '../storage/index.js';
 import {
@@ -14,7 +14,7 @@ export const CLIENT_TOKEN_NAME = 'client-token';
 
 export interface TransportContext {
   readonly pageOrigin: string;
-  readonly bridge: AgentBoardBridge | null;
+  readonly bridge: RumoBridge | null;
 }
 
 export const transportFor = (

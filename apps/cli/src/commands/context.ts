@@ -26,16 +26,16 @@ function nonEmpty(value: string | undefined): string | null {
 
 export function buildContext(rt: Runtime, options: GlobalOptions, localDryRun = false): Context {
   const profile = selectProfile(options.profile, rt.env);
-  const task = rt.env.AGENT_BOARD_TASK;
+  const task = rt.env.RUMO_TASK;
   return {
     rt,
     dirs: resolveProfileDirs({ env: rt.env, homedir: rt.homedir }, profile),
     dryRun: options.dryRun === true || localDryRun,
     inRun: task !== undefined && task !== '',
     runTask: task === undefined || task === '' ? null : task,
-    runId: nonEmpty(rt.env.AGENT_BOARD_RUN),
-    startDir: nonEmpty(rt.env.AGENT_BOARD_START_DIR),
-    restricted: rt.env.AGENT_BOARD_RESTRICTED === '1',
+    runId: nonEmpty(rt.env.RUMO_RUN),
+    startDir: nonEmpty(rt.env.RUMO_START_DIR),
+    restricted: rt.env.RUMO_RESTRICTED === '1',
     out: (line) => {
       rt.io.stdout(`${line}\n`);
     },

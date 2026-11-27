@@ -230,7 +230,7 @@ async function resolvePr(
 ): Promise<{ url: string; head: string }> {
   const arg = (given ?? taskPr)?.trim();
   if (arg === undefined || arg === '')
-    throw new UsageError(`give the PR: board watch ${id} ${flag} <url>`);
+    throw new UsageError(`give the PR: rumo watch ${id} ${flag} <url>`);
   if (!isPrUrl(arg) && !PR_NUMBER.test(arg)) {
     throw new UsageError(`${flag} takes a PR URL or number; got "${oneLine(arg, 60)}"`);
   }

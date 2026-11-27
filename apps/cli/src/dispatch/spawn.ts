@@ -1,12 +1,12 @@
 import path from 'node:path';
 
-import { PASSED_VARIABLES, WORKER_INHERITED_VARIABLES } from '@agent-board/contract';
+import { PASSED_VARIABLES, WORKER_INHERITED_VARIABLES } from '@rumo/contract';
 
 import { CliError } from '../errors.js';
 import { logDirectory, findProgram } from '../units/layout.js';
 import type { Context } from '../commands/context.js';
 
-export const WORKER_SPAWN_VARIABLE = 'AGENT_BOARD_WORKER_SPAWN';
+export const WORKER_SPAWN_VARIABLE = 'RUMO_WORKER_SPAWN';
 
 export type WorkerVia = 'unit' | 'process';
 
@@ -23,7 +23,7 @@ export function workerLogFile(ctx: Pick<Context, 'dirs'>, task: string): string 
 }
 
 export function workerUnitName(profile: string, task: string): string {
-  return `agent-board-${profile}-task-${task}`;
+  return `rumo-${profile}-task-${task}`;
 }
 
 export function selfCommand(ctx: Pick<Context, 'rt' | 'dirs'>, ...args: string[]): string[] {
@@ -44,7 +44,7 @@ const PLAIN_VARIABLES: ReadonlySet<string> = new Set([
 function unitEnvironment(env: Env): string[] {
   const names = new Set<string>([
     ...PLAIN_VARIABLES,
-    ...Object.keys(env).filter((name) => name.startsWith('AGENT_BOARD_')),
+    ...Object.keys(env).filter((name) => name.startsWith('RUMO_')),
   ]);
   return [...names].flatMap((name) => {
     const value = env[name];
@@ -55,8 +55,8 @@ function unitEnvironment(env: Env): string[] {
 
 function processEnvironment(env: Env): Record<string, string | undefined> {
   const rest = { ...env };
-  delete rest.AGENT_BOARD_TASK;
-  delete rest.AGENT_BOARD_RUN;
+  delete rest.RUMO_TASK;
+  delete rest.RUMO_RUN;
   return rest;
 }
 

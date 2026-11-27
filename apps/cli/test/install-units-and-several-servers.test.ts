@@ -10,7 +10,7 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 
-import { workerUnits } from '@agent-board/contract';
+import { workerUnits } from '@rumo/contract';
 import { describe, expect, it } from 'vitest';
 
 import { runCli } from '../src/commands/program.js';
@@ -118,30 +118,28 @@ describe('unit files rendered per profile', () => {
   });
 
   it('[cli-048] quotes an argument that systemd would split or expand', () => {
-    expect(quoteExecArg('/usr/bin/board')).toBe('/usr/bin/board');
-    expect(quoteExecArg('/srv/my dir/board')).toBe('"/srv/my dir/board"');
+    expect(quoteExecArg('/usr/bin/rumo')).toBe('/usr/bin/rumo');
+    expect(quoteExecArg('/srv/my dir/rumo')).toBe('"/srv/my dir/rumo"');
     expect(quoteExecArg('100%')).toBe('100%%');
     expect(() => quoteExecArg('a\nb')).toThrow(/line break/);
   });
 });
 
-describe('board setup on Linux', () => {
+describe('rumo setup on Linux', () => {
   it('[cli-048] writes the dispatch service and timer and the listen and watch services', async () => {
     const { cli, recorded } = await install({ platform: 'linux' });
     withPath(cli);
     expect(await cli.run('setup')).toBe(0);
     const directory = path.join(cli.test.path('xdg-config'), 'systemd', 'user');
     expect(readdirSync(directory).sort()).toEqual([
-      'agent-board-default-dispatch.service',
-      'agent-board-default-dispatch.timer',
-      'agent-board-default-listen.service',
-      'agent-board-default-watch.service',
+      'rumo-default-dispatch.service',
+      'rumo-default-dispatch.timer',
+      'rumo-default-listen.service',
+      'rumo-default-watch.service',
     ]);
     expect(recorded.calls).toContain('systemctl --user daemon-reload');
     expect(recorded.calls.some((call) => call.includes(' enable '))).toBe(false);
-    expect(cli.stdout()).toContain(
-      'systemctl --user enable --now agent-board-default-dispatch.timer',
-    );
+    expect(cli.stdout()).toContain('systemctl --user enable --now rumo-default-dispatch.timer');
   });
 
   it('[cli-048] --enable enables and starts the timer and the services', async () => {
@@ -149,7 +147,7 @@ describe('board setup on Linux', () => {
     withPath(cli);
     expect(await cli.run('setup', '--enable')).toBe(0);
     expect(recorded.calls).toContain(
-      'systemctl --user enable --now agent-board-default-dispatch.timer agent-board-default-listen.service agent-board-default-watch.service',
+      'systemctl --user enable --now rumo-default-dispatch.timer rumo-default-listen.service rumo-default-watch.service',
     );
   });
 
@@ -173,15 +171,13 @@ describe('board setup on Linux', () => {
       cli.test.path('xdg-config'),
       'systemd',
       'user',
-      'agent-board-default-listen.service',
+      'rumo-default-listen.service',
     );
     writeFileSync(listen, 'stale');
     cli.reset();
     expect(await cli.run('setup')).toBe(0);
     expect(cli.stdout()).toContain('differs from what setup writes');
-    expect(recorded.calls).toContain(
-      'systemctl --user try-restart agent-board-default-listen.service',
-    );
+    expect(recorded.calls).toContain('systemctl --user try-restart rumo-default-listen.service');
   });
 
   it('[cli-048] refuses without flock on PATH', async () => {
@@ -193,11 +189,11 @@ describe('board setup on Linux', () => {
 
   it('[cli-048] refuses a binary that runs from the temp directory unless --force', async () => {
     const download = mkdtempSync(path.join(os.tmpdir(), 'download-'));
-    writeFileSync(path.join(download, 'board'), '#!/bin/sh\n');
+    writeFileSync(path.join(download, 'rumo'), '#!/bin/sh\n');
     const test = testRuntime({
       platform: 'linux',
       overrideDirs: false,
-      self: [path.join(download, 'board')],
+      self: [path.join(download, 'rumo')],
       env: { TMPDIR: os.tmpdir() },
       exec: () => ({ code: 0, stdout: '' }),
     });
@@ -250,7 +246,7 @@ describe('board setup on Linux', () => {
   });
 });
 
-describe('board setup on macOS', () => {
+describe('rumo setup on macOS', () => {
   it('[cli-049] writes one launchd agent per unit with an explicit PATH and prints the load commands', async () => {
     const { cli } = await install({
       platform: 'darwin',
@@ -259,11 +255,11 @@ describe('board setup on macOS', () => {
     expect(await cli.run('setup')).toBe(0);
     const directory = path.join(cli.test.path('home'), 'Library', 'LaunchAgents');
     expect(readdirSync(directory).sort()).toEqual([
-      'agent-board.default.dispatch.plist',
-      'agent-board.default.listen.plist',
-      'agent-board.default.watch.plist',
+      'rumo.default.dispatch.plist',
+      'rumo.default.listen.plist',
+      'rumo.default.watch.plist',
     ]);
-    const plist = readFileSync(path.join(directory, 'agent-board.default.listen.plist'), 'utf8');
+    const plist = readFileSync(path.join(directory, 'rumo.default.listen.plist'), 'utf8');
     expect(plist).toContain('<key>PATH</key>');
     expect(plist).toContain('/opt/homebrew/bin');
     expect(cli.stdout()).toContain('launchctl bootstrap gui/501');
@@ -273,9 +269,9 @@ describe('board setup on macOS', () => {
     const { cli, recorded } = await install({ platform: 'darwin' });
     expect(await cli.run('setup', '--enable')).toBe(0);
     const agents = path.join(cli.test.path('home'), 'Library', 'LaunchAgents');
-    expect(recorded.calls).toContain('launchctl bootout gui/501/agent-board.default.dispatch');
+    expect(recorded.calls).toContain('launchctl bootout gui/501/rumo.default.dispatch');
     expect(recorded.calls).toContain(
-      `launchctl bootstrap gui/501 ${path.join(agents, 'agent-board.default.watch.plist')}`,
+      `launchctl bootstrap gui/501 ${path.join(agents, 'rumo.default.watch.plist')}`,
     );
   });
 
@@ -286,17 +282,17 @@ describe('board setup on macOS', () => {
       cli.test.path('home'),
       'Library',
       'LaunchAgents',
-      'agent-board.default.watch.plist',
+      'rumo.default.watch.plist',
     );
     writeFileSync(file, 'stale');
     recorded.calls.length = 0;
     expect(await cli.run('setup')).toBe(0);
     expect(recorded.calls.filter((call) => call.startsWith('launchctl bootstrap'))).toHaveLength(1);
-    expect(cli.stdout()).toContain('loaded agent-board.default.watch again');
+    expect(cli.stdout()).toContain('loaded rumo.default.watch again');
   });
 });
 
-describe('board uninstall', () => {
+describe('rumo uninstall', () => {
   async function installed(platform: 'darwin' | 'linux' = 'linux') {
     const ready = await install({ platform });
     withPath(ready.cli);
@@ -320,19 +316,16 @@ describe('board uninstall', () => {
     expect(unitFiles(cli)).toEqual([]);
     expect(stub.revocations()).toBe(1);
     expect(cli.stdout()).toMatch(/revoked the machine token/);
-    expect(recorded.calls).toContain(
-      'systemctl --user disable --now agent-board-default-dispatch.timer',
+    expect(recorded.calls).toContain('systemctl --user disable --now rumo-default-dispatch.timer');
+    expect(recorded.calls).toContain('systemctl --user stop rumo-default-dispatch.service');
+    expect(existsSync(cli.test.path('xdg-config', 'rumo', 'profiles', 'default', 'env'))).toBe(
+      true,
     );
-    expect(recorded.calls).toContain('systemctl --user stop agent-board-default-dispatch.service');
-    expect(
-      existsSync(cli.test.path('xdg-config', 'agent-board', 'profiles', 'default', 'env')),
-    ).toBe(true);
   });
 
   it('[cli-052] --include-optional also deletes the config, state and run folders', async () => {
     const { cli } = await installed();
-    const profile = (base: string): string =>
-      cli.test.path(base, 'agent-board', 'profiles', 'default');
+    const profile = (base: string): string => cli.test.path(base, 'rumo', 'profiles', 'default');
     mkdirSync(profile('xdg-state'), { recursive: true });
     expect(await cli.run('uninstall', '--include-optional')).toBe(0);
     expect(existsSync(profile('xdg-config'))).toBe(false);
@@ -343,7 +336,7 @@ describe('board uninstall', () => {
     const { cli, stub } = await installed();
     const home = cli.test.rt.homedir;
     mkdirSync(home, { recursive: true });
-    (cli.test.rt.env as Record<string, string | undefined>).AGENT_BOARD_STATE_DIR = home;
+    (cli.test.rt.env as Record<string, string | undefined>).RUMO_STATE_DIR = home;
     expect(await cli.run('uninstall', '--include-optional')).toBe(1);
     expect(cli.stderr()).toMatch(/home directory/);
     expect(unitFiles(cli)).toHaveLength(4);
@@ -361,7 +354,7 @@ describe('board uninstall', () => {
   it('[cli-052] keeps a unit file whose unit could not be stopped and exits 1', async () => {
     const { cli } = await installed();
     const failing = (line: string): number =>
-      line.includes('disable --now agent-board-default-listen') ? 1 : 0;
+      line.includes('disable --now rumo-default-listen') ? 1 : 0;
     const test = cliFor(await startApiStub(), {
       platform: 'linux',
       overrideDirs: false,
@@ -372,14 +365,14 @@ describe('board uninstall', () => {
       },
     });
     expect(await test.run('uninstall')).toBe(1);
-    expect(test.stdout()).toContain('could not stop agent-board-default-listen.service');
-    expect(unitFiles(cli)).toEqual(['agent-board-default-listen.service']);
+    expect(test.stdout()).toContain('could not stop rumo-default-listen.service');
+    expect(unitFiles(cli)).toEqual(['rumo-default-listen.service']);
     test.test.dispose();
   });
 
   it('[cli-052] does not delete the installed binary while another profile still has units', async () => {
     const { cli, stub, recorded } = await installed();
-    const binary = path.join(cli.test.rt.homedir, '.local', 'bin', 'board');
+    const binary = path.join(cli.test.rt.homedir, '.local', 'bin', 'rumo');
     mkdirSync(path.dirname(binary), { recursive: true });
     writeFileSync(binary, '#!/bin/sh\n');
     const other = cliFor(stub, {
@@ -403,20 +396,20 @@ describe('board uninstall', () => {
     const { cli, recorded } = await installed('darwin');
     expect(await cli.run('uninstall')).toBe(0);
     expect(unitFiles(cli, 'darwin')).toEqual([]);
-    expect(recorded.calls).toContain('launchctl bootout gui/501/agent-board.default.listen');
+    expect(recorded.calls).toContain('launchctl bootout gui/501/rumo.default.listen');
   });
 
   it('[cli-052] --dry-run prints each step and changes nothing', async () => {
     const { cli, stub } = await installed();
     expect(await cli.run('uninstall', '--dry-run')).toBe(0);
     expect(cli.stdout()).toContain('DRY revoke-token');
-    expect(cli.stdout()).toMatch(/DRY remove .*agent-board-default-dispatch\.timer/);
+    expect(cli.stdout()).toMatch(/DRY remove .*rumo-default-dispatch\.timer/);
     expect(unitFiles(cli)).toHaveLength(4);
     expect(stub.revocations()).toBe(0);
   });
 });
 
-describe('board restart and board logs', () => {
+describe('rumo restart and rumo logs', () => {
   it('[cli-053] restarts the installed units on Linux, the dispatch one through its timer', async () => {
     const { cli, recorded } = await install({ platform: 'linux' });
     withPath(cli);
@@ -424,19 +417,19 @@ describe('board restart and board logs', () => {
     recorded.calls.length = 0;
     expect(await cli.run('restart')).toBe(0);
     expect(recorded.calls).toEqual([
-      'systemctl --user restart agent-board-default-dispatch.timer',
-      'systemctl --user restart agent-board-default-listen.service',
-      'systemctl --user restart agent-board-default-watch.service',
+      'systemctl --user restart rumo-default-dispatch.timer',
+      'systemctl --user restart rumo-default-listen.service',
+      'systemctl --user restart rumo-default-watch.service',
     ]);
     recorded.calls.length = 0;
     expect(await cli.run('restart', 'watch')).toBe(0);
-    expect(recorded.calls).toEqual(['systemctl --user restart agent-board-default-watch.service']);
+    expect(recorded.calls).toEqual(['systemctl --user restart rumo-default-watch.service']);
   });
 
   it('[cli-053] exits 1 and points at setup when nothing is installed', async () => {
     const { cli } = await install({ platform: 'linux' });
     expect(await cli.run('restart')).toBe(1);
-    expect(cli.stdout()).toContain('run `board setup --enable`');
+    expect(cli.stdout()).toContain('run `rumo setup --enable`');
     expect(cli.stderr()).toMatch(/nothing was restarted/);
   });
 
@@ -448,14 +441,14 @@ describe('board restart and board logs', () => {
     withPath(cli);
     expect(await cli.run('setup')).toBe(0);
     expect(await cli.run('restart', 'listen')).toBe(1);
-    expect(cli.stdout()).toContain('could not restart agent-board-default-listen.service');
+    expect(cli.stdout()).toContain('could not restart rumo-default-listen.service');
   });
 
   it('[cli-053] kicks the loaded launchd agents on macOS', async () => {
     const { cli, recorded } = await install({ platform: 'darwin' });
     expect(await cli.run('restart')).toBe(0);
-    expect(recorded.calls).toContain('launchctl kickstart gui/501/agent-board.default.dispatch');
-    expect(recorded.calls).toContain('launchctl kickstart -k gui/501/agent-board.default.listen');
+    expect(recorded.calls).toContain('launchctl kickstart gui/501/rumo.default.dispatch');
+    expect(recorded.calls).toContain('launchctl kickstart -k gui/501/rumo.default.listen');
   });
 
   it('[cli-053] refuses an unknown unit', async () => {
@@ -476,7 +469,7 @@ describe('board restart and board logs', () => {
         '-f',
         '--since=1 hour ago',
         '-u',
-        'agent-board-default-listen.service',
+        'rumo-default-listen.service',
       ],
     });
   });
@@ -493,7 +486,7 @@ describe('board restart and board logs', () => {
     const { cli } = await install({ platform: 'darwin' });
     expect(await cli.run('logs', 'watch')).toBe(1);
     expect(cli.stderr()).toMatch(/no log yet/);
-    const logs = cli.test.path('xdg-state', 'agent-board', 'profiles', 'default', 'logs');
+    const logs = cli.test.path('xdg-state', 'rumo', 'profiles', 'default', 'logs');
     mkdirSync(logs, { recursive: true });
     writeFileSync(path.join(logs, 'launchd.watch.log'), 'line\n');
     cli.reset();

@@ -1,4 +1,4 @@
-import type { TaskStatus } from '@agent-board/contract';
+import type { TaskStatus } from '@rumo/contract';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 
 import { SignInPage } from '../../auth/index.js';

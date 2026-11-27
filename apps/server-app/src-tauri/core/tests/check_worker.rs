@@ -4,12 +4,12 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 
-use agent_board_server_core::app::Host;
-use agent_board_server_core::check_worker::{dropped_checks, evaluate, find_on_path};
-use agent_board_server_core::credential_flow::{Pair, run_command, write_pair};
-use agent_board_server_core::login_item::Build;
-use agent_board_server_core::overrides::Overrides;
 use common::Bed;
+use rumo_server_core::app::Host;
+use rumo_server_core::check_worker::{dropped_checks, evaluate, find_on_path};
+use rumo_server_core::credential_flow::{Pair, run_command, write_pair};
+use rumo_server_core::login_item::Build;
+use rumo_server_core::overrides::Overrides;
 
 const DOCTOR: &str = r#"[
  {"name":"node","level":"ok","message":"node 24"},
@@ -101,7 +101,7 @@ fn server_app_053_the_credentials_command_prints_the_stored_pair_for_the_cli() {
     let file = bed.dir.path().join("creds.json");
     let host = host(&bed, Some(file));
     let service = host.root().unwrap().keychain_service();
-    let store = agent_board_server_core::credentials::open_store(&host.overrides);
+    let store = rumo_server_core::credentials::open_store(&host.overrides);
     let pair = Pair {
         token: "abm_t".to_string(),
         data_key: "abk1_k".to_string(),
@@ -122,7 +122,7 @@ fn server_app_053_the_credentials_command_prints_the_stored_pair_for_the_cli() {
     assert_eq!(run_command(&host, false, &mut out), 0);
     assert_eq!(
         String::from_utf8(out).unwrap(),
-        "AGENT_BOARD_TOKEN=abm_t\nAGENT_BOARD_DATA_KEY=abk1_k\n"
+        "RUMO_TOKEN=abm_t\nRUMO_DATA_KEY=abk1_k\n"
     );
     let mut pending = Vec::new();
     assert_eq!(run_command(&host, true, &mut pending), 0);
@@ -141,7 +141,7 @@ fn server_app_053_without_a_stored_pair_the_credentials_command_prints_nothing_a
 
 #[test]
 fn server_app_053_the_credentials_command_flags_parse_to_the_hidden_invocation() {
-    use agent_board_server_core::cli::{Invocation, parse};
+    use rumo_server_core::cli::{Invocation, parse};
     let parse_args = |args: &[&str]| parse(args.iter().map(std::ffi::OsString::from));
     assert_eq!(
         parse_args(&["--worker-credentials"]),

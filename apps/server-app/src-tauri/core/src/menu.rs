@@ -6,7 +6,7 @@ use crate::backup_desk::BackupView;
 use crate::status::{Row, RowState, Status};
 use crate::versions::Versions;
 
-pub const TITLE: &str = "Agent Board Server";
+pub const TITLE: &str = "Rumo Server";
 pub const BADGE: &str = "!";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

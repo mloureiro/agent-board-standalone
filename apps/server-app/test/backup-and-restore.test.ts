@@ -79,8 +79,8 @@ describe('backup and pre-upgrade backup through the headless runner', () => {
 
   function start(): Session {
     const session = launch(root, {
-      AGENT_BOARD_SERVER_RESOURCES: resources.dir,
-      AGENT_BOARD_SUPERVISION_TIMINGS: FAST_TIMINGS,
+      RUMO_SERVER_RESOURCES: resources.dir,
+      RUMO_SUPERVISION_TIMINGS: FAST_TIMINGS,
     });
     sessions.push(session);
     return session;

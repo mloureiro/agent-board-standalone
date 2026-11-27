@@ -1,7 +1,7 @@
 import { STATUS_CODES } from 'node:http';
 import type { Socket } from 'node:net';
 
-import { DATA_HEADERS, ERROR_STATUS, HSTS_HEADER } from '@agent-board/contract';
+import { DATA_HEADERS, ERROR_STATUS, HSTS_HEADER } from '@rumo/contract';
 
 import { errorPayload } from '../errors.js';
 

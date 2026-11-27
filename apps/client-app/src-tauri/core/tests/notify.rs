@@ -1,21 +1,21 @@
 mod common;
 
-use agent_board_client_core::attention::{AttentionPoller, MAX_IDS_PER_POLL, POLL_SECS};
-use agent_board_client_core::ids::ServerId;
-use agent_board_client_core::log::LogEvent;
-use agent_board_client_core::notify::{
+use common::{Canned, FIRST_ID, SECOND_ID, harness, id, scope_of, servers_file, token};
+use rumo_client_core::attention::{AttentionPoller, MAX_IDS_PER_POLL, POLL_SECS};
+use rumo_client_core::ids::ServerId;
+use rumo_client_core::log::LogEvent;
+use rumo_client_core::notify::{
     Banner, Click, DEDUPE_SECS, Decision, EXPIRED_BANNER, FocusState, MAX_TRACKED, NotifyPolicy,
     NotifyRequest, Permission, Reason, Target, expiry_banner, route_click,
 };
-use agent_board_client_core::page_input::{InputError, TITLE_MAX_CHARS};
-use agent_board_client_core::throttle::{BEAT_SECS, Change, SILENCE_SECS, State, Throttle};
-use agent_board_client_core::tokens::token_service;
-use agent_board_client_core::watch::{Tick, Watch};
-use agent_board_client_core::zoom::{
+use rumo_client_core::page_input::{InputError, TITLE_MAX_CHARS};
+use rumo_client_core::throttle::{BEAT_SECS, Change, SILENCE_SECS, State, Throttle};
+use rumo_client_core::tokens::token_service;
+use rumo_client_core::watch::{Tick, Watch};
+use rumo_client_core::zoom::{
     Effect, LADDER, MENU_ZOOM_IN, MENU_ZOOM_IN_SHIFTED, MENU_ZOOM_OUT, MENU_ZOOM_RESET, Step, Zoom,
     from_menu_id,
 };
-use common::{Canned, FIRST_ID, SECOND_ID, harness, id, scope_of, servers_file, token};
 
 const T0: u64 = 1_000;
 

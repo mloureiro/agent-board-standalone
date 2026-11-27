@@ -7,4 +7,4 @@ export function hostTarget(platform: string, arch: string): ReleaseTarget | null
   return (RELEASE_TARGETS as readonly string[]).includes(target) ? (target as ReleaseTarget) : null;
 }
 
-export const assetFile = (target: ReleaseTarget): string => `board-${target}`;
+export const assetFile = (target: ReleaseTarget): string => `rumo-${target}`;

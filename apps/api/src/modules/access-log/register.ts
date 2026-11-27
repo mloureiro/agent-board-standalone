@@ -13,7 +13,7 @@ export const registerAccessLog = async (
   if (file === null) return;
   const stream = createWriteStream(file, { flags: 'a' });
   stream.on('error', (error) => {
-    process.stderr.write(`agent-board-api: access log ${file}: ${error.message}\n`);
+    process.stderr.write(`rumo-api: access log ${file}: ${error.message}\n`);
   });
   await once(stream, 'open');
   app.addHook('onSend', async (request, reply, payload) => {

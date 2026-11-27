@@ -3,9 +3,9 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { RouteName, RouteRequest, RouteResponse, routes } from '@agent-board/contract';
-import { routes as allRoutes } from '@agent-board/contract';
-import { tokenHash } from '@agent-board/sealing';
+import type { RouteName, RouteRequest, RouteResponse, routes } from '@rumo/contract';
+import { routes as allRoutes } from '@rumo/contract';
+import { tokenHash } from '@rumo/sealing';
 import type { FastifyInstance } from 'fastify';
 
 import type { CredentialStore } from '../src/auth/index.js';

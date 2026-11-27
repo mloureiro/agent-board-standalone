@@ -81,7 +81,7 @@ export interface TestRuntimeOptions {
 }
 
 export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'board-cli-test-'));
+  const root = mkdtempSync(path.join(os.tmpdir(), 'rumo-cli-test-'));
   const captured: Captured = { stdout: '', stderr: '' };
   const execCalls: ExecCall[] = [];
   const spawnCalls: SpawnCall[] = [];
@@ -93,9 +93,9 @@ export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
           XDG_STATE_HOME: path.join(root, 'xdg-state'),
         }
       : {
-          AGENT_BOARD_CONFIG_DIR: path.join(root, 'config'),
-          AGENT_BOARD_STATE_DIR: path.join(root, 'state'),
-          AGENT_BOARD_RUN_DIR: path.join(root, 'run'),
+          RUMO_CONFIG_DIR: path.join(root, 'config'),
+          RUMO_STATE_DIR: path.join(root, 'state'),
+          RUMO_RUN_DIR: path.join(root, 'run'),
         };
   const pending = [...(options.answers ?? [])];
   const queued = {
@@ -154,7 +154,7 @@ export function testRuntime(options: TestRuntimeOptions = {}): TestRuntime {
     homedir: path.join(root, 'home'),
     hostname: 'test-host',
     uid: 501,
-    self: options.self ?? ['/opt/board/bin/board'],
+    self: options.self ?? ['/opt/board/bin/rumo'],
     prompts: prompter,
     exec: (file, args, execOptions) => {
       execCalls.push({ file, args, options: execOptions });

@@ -7,7 +7,7 @@ import {
   isJsonContentType,
   parseClientHeader,
   type ClientKind,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 
 import { authenticateClient, authenticateMachine } from '../auth/index.js';

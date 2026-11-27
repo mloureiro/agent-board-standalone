@@ -4,7 +4,7 @@ use crate::servers::ServerEntry;
 use std::sync::Mutex;
 use url::Url;
 
-const SCHEME: &str = "agentboard";
+const SCHEME: &str = "rumo";
 const VERSION: &str = "1";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -84,7 +84,8 @@ pub fn server_name(url: &str, taken: &[String]) -> String {
         .unwrap_or(base)
 }
 
-pub const UNKNOWN_VERSION_MESSAGE: &str = "That link uses a handover version this app does not understand. Update Agent Board and try again.";
+pub const UNKNOWN_VERSION_MESSAGE: &str =
+    "That link uses a handover version this app does not understand. Update Rumo and try again.";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum HandoverPlan {

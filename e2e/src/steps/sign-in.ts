@@ -1,6 +1,6 @@
 import { expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
 
-import type { Feature } from '@agent-board/contract';
+import type { Feature } from '@rumo/contract';
 
 import { call, cookieSession, type CallResult, type ServerRef } from '../client/contract-client.js';
 import type { CookieJar } from '../client/cookies.js';
@@ -166,9 +166,7 @@ export async function triggerRefetch(page: Page): Promise<void> {
 export async function namespacesOf(page: Page): Promise<string[]> {
   return page.evaluate(async () => {
     const databases = await indexedDB.databases();
-    return databases
-      .map((entry) => entry.name ?? '')
-      .filter((name) => name.startsWith('agent-board:'));
+    return databases.map((entry) => entry.name ?? '').filter((name) => name.startsWith('rumo:'));
   });
 }
 
@@ -178,7 +176,7 @@ export async function serverIdOf(page: Page): Promise<string> {
   if (names.length !== 1 || first === undefined) {
     throw new Error(`expected one server namespace in IndexedDB, found ${JSON.stringify(names)}`);
   }
-  return first.slice('agent-board:'.length);
+  return first.slice('rumo:'.length);
 }
 
 export async function indexedDbDumps(page: Page): Promise<Record<string, string>> {
@@ -187,7 +185,7 @@ export async function indexedDbDumps(page: Page): Promise<Record<string, string>
     const dumps: Record<string, string> = {};
     for (const entry of databases) {
       const name = entry.name;
-      if (name === undefined || !name.startsWith('agent-board:')) continue;
+      if (name === undefined || !name.startsWith('rumo:')) continue;
       const db = await new Promise<IDBDatabase>((resolve, reject) => {
         const opened = indexedDB.open(name);
         opened.onsuccess = () => resolve(opened.result);

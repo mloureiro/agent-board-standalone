@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 
 export function clockOffsetMs(env: Readonly<Record<string, string | undefined>>): number {
-  if (env.AGENT_BOARD_E2E !== '1') return 0;
-  const file = env.AGENT_BOARD_CLOCK_OFFSET_FILE;
+  if (env.RUMO_E2E !== '1') return 0;
+  const file = env.RUMO_CLOCK_OFFSET_FILE;
   if (file === undefined || file === '') return 0;
   try {
     const seconds = Number.parseFloat(readFileSync(file, 'utf8').trim());

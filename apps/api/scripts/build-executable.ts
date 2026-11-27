@@ -72,5 +72,5 @@ export const buildExecutable = async (outfile: string): Promise<void> => {
 };
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  await buildExecutable(resolve(apiRoot, 'dist', 'agent-board-api'));
+  await buildExecutable(resolve(apiRoot, 'dist', 'rumo-api'));
 }

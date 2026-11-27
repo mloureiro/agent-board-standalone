@@ -1,4 +1,4 @@
-import type { AnyRoute, RouteName, RouteResponse, routes } from '@agent-board/contract';
+import type { AnyRoute, RouteName, RouteResponse, routes } from '@rumo/contract';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { z } from 'zod';
 

@@ -1,15 +1,15 @@
-# agent-board-migrate
+# rumo-migrate
 
-Reads an existing board and writes a `BoardExport` file that `agent-board-api import` loads.
+Reads an existing board and writes a `BoardExport` file that `rumo-api import` loads.
 
 ```bash
-agent-board-migrate inspect --source <postgres-url | pglite-dir>
-agent-board-migrate export --source <postgres-url | pglite-dir> --out <file> [--dry-run]
-agent-board-migrate run --source <postgres-url | pglite-dir> --api <agent-board-api path> \
+rumo-migrate inspect --source <postgres-url | pglite-dir>
+rumo-migrate export --source <postgres-url | pglite-dir> --out <file> [--dry-run]
+rumo-migrate run --source <postgres-url | pglite-dir> --api <rumo-api path> \
   --target-db <postgres-url | pglite://dir> [--out <file>] [--keep-export] [--dry-run]
 ```
 
-From a checkout: `pnpm --filter @agent-board/migrate migrate inspect --source <...>`. `export` prints the plan report
+From a checkout: `pnpm --filter @rumo/migrate migrate inspect --source <...>`. `export` prints the plan report
 (per owner, per table counts). With `--dry-run` it also writes the report as `<file>.plan.json`. Neither
 `inspect` nor `export` imports anything. `run` does; it is described below.
 
@@ -68,8 +68,8 @@ Timestamps lose microsecond precision, which JavaScript dates cannot hold.
 ## Running a migration
 
 `run` exports the source, checks the target, imports through the API executable and compares counts. The tool imports
-no API code: `--api` is the built `agent-board-api` (a `.js` file is run with the current Node, anything else is run
-as a program) and the tool starts it as `agent-board-api import --file <export>`.
+no API code: `--api` is the built `rumo-api` (a `.js` file is run with the current Node, anything else is run
+as a program) and the tool starts it as `rumo-api import --file <export>`.
 
 The API reads its target from the environment, so give `run` the same variables the server will use: `NO_LOGIN_USER`
 (or `PUBLIC_URL` for a login target) and anything else the API needs. A `pglite://` `--target-db` becomes
@@ -114,6 +114,6 @@ running is handled by the new board's stale-run sweep once its worker connects, 
 
 ## Build
 
-`pnpm --filter @agent-board/migrate build` bundles the tool into `dist/main.js` and builds the end-to-end source board in
+`pnpm --filter @rumo/migrate build` bundles the tool into `dist/main.js` and builds the end-to-end source board in
 `test/fixtures/source-board` (the `local-v2` fixture as a PGlite folder with a manifest of its passphrase and machine
 tokens; the folder is git-ignored).

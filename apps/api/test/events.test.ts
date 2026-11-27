@@ -3,11 +3,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import {
-  EVENT_PING_MS,
-  MACHINE_EVENT_DEBOUNCE_MS,
-  clientAttentionRoute,
-} from '@agent-board/contract';
+import { EVENT_PING_MS, MACHINE_EVENT_DEBOUNCE_MS, clientAttentionRoute } from '@rumo/contract';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import * as schema from '../src/db/schema/index.js';
@@ -32,7 +28,7 @@ import {
 import { loadConfig } from '../src/modules/index.js';
 import { createServer } from '../src/server.js';
 import { createOpenStreams } from '../src/streams.js';
-import { tokenHash } from '@agent-board/sealing';
+import { tokenHash } from '@rumo/sealing';
 import { CONTRACT_HEADERS, CLIENT_TOKEN, MACHINE_TOKEN, loginEnv, noLoginEnv } from './helpers.js';
 import {
   POSTGRES_URL,

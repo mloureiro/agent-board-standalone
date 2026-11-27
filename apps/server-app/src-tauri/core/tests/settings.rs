@@ -1,9 +1,9 @@
 use std::fs;
 use std::path::Path;
 
-use agent_board_server_core::account;
-use agent_board_server_core::paths::AppPaths;
-use agent_board_server_core::settings::{DEFAULT_PORT, Settings};
+use rumo_server_core::account;
+use rumo_server_core::paths::AppPaths;
+use rumo_server_core::settings::{DEFAULT_PORT, Settings};
 
 fn parse(text: &str) -> Result<Settings, String> {
     let paths = AppPaths::new(Path::new("/tmp/board-root"));

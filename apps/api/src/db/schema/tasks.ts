@@ -1,4 +1,4 @@
-import { SERVER_NOTE_PATTERN } from '@agent-board/contract';
+import { SERVER_NOTE_PATTERN } from '@rumo/contract';
 import { sql } from 'drizzle-orm';
 import {
   boolean,

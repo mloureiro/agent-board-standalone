@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { sessionId, taskId } from '@agent-board/contract';
+import { sessionId, taskId } from '@rumo/contract';
 
 export interface SessionStore {
   has(task: string, session: string): boolean;

@@ -1,13 +1,13 @@
 # Server app
 
 Tray-only Tauri 2 app that runs the API on one Mac. Layout: `src-tauri/core` (pure Rust library
-`agent-board-server-core`, all logic, tested with `cargo test`) and `src-tauri` (app crate
-`agent-board-server`, a thin shell). `test/` holds black-box Vitest tests that spawn the built headless binary.
+`rumo-server-core`, all logic, tested with `cargo test`) and `src-tauri` (app crate
+`rumo-server`, a thin shell). `test/` holds black-box Vitest tests that spawn the built headless binary.
 
 ```bash
-pnpm --filter @agent-board/server-app shell:check   # clippy + build of the app crate (macOS)
-pnpm --filter @agent-board/server-app test          # Vitest (needs the built binary) + cargo test of core
-pnpm --filter @agent-board/server-app bundle        # signed-ad-hoc .app
+pnpm --filter @rumo/server-app shell:check   # clippy + build of the app crate (macOS)
+pnpm --filter @rumo/server-app test          # Vitest (needs the built binary) + cargo test of core
+pnpm --filter @rumo/server-app bundle        # signed-ad-hoc .app
 ```
 
 ## Architecture notes
@@ -36,10 +36,10 @@ Spike outcome (Tauri `=2.12.6`, Rust 1.100, Darwin 27.2).
 ## Settings and roots
 
 `<root>/settings.json` is created with defaults on the first start and never rewritten; edits apply after Quit and
-reopen. The root is `~/Library/Application Support/Agent Board Server` unless `AGENT_BOARD_SERVER_ROOT` moves it; a
+reopen. The root is `~/Library/Application Support/Rumo Server` unless `RUMO_SERVER_ROOT` moves it; a
 moved root has its own Keychain service and never touches the login item. Test seams (non-release builds, or any
-build with `AGENT_BOARD_E2E=1`): `AGENT_BOARD_CREDENTIAL_STORE=file:<path>` replaces the Keychain and
-`AGENT_BOARD_LAUNCH_AGENTS_DIR=<dir>` replaces `~/Library/LaunchAgents`.
+build with `RUMO_E2E=1`): `RUMO_CREDENTIAL_STORE=file:<path>` replaces the Keychain and
+`RUMO_LAUNCH_AGENTS_DIR=<dir>` replaces `~/Library/LaunchAgents`.
 
 ## Supervision
 
@@ -59,8 +59,8 @@ SIGTERM, SIGINT and SIGHUP are recorded by `core::signals` and run the same stop
 `app.exit`) and in `--headless`; dropping the supervisor on any other exit path stops the children too. A release
 build with `panic = "abort"` skips drops, so the next start's orphan sweep is the net.
 
-Test seams (non-release builds, or `AGENT_BOARD_E2E=1`): `AGENT_BOARD_SERVER_RESOURCES=<dir>` replaces the
-`resources/` folder next to the binary (`api/agent-board-api`, `web/`), and `AGENT_BOARD_SUPERVISION_TIMINGS`
+Test seams (non-release builds, or `RUMO_E2E=1`): `RUMO_SERVER_RESOURCES=<dir>` replaces the
+`resources/` folder next to the binary (`api/rumo-api`, `web/`), and `RUMO_SUPERVISION_TIMINGS`
 (`restart1=100,grace=500,probe=100,...` in ms, keys in `core::durations`) shortens every timing. The `stub_child`
 binary of `core` is the stand-in API in tests: it listens on `HOST:PORT`, answers `/healthz`, and reads its
 behaviour (crash, hang, ignore SIGTERM, start late, spawn a grandchild) from `STUB_CONFIG` or `<exe>.conf`.
@@ -86,7 +86,7 @@ The version line reads `server app <X> · API <Y> · CLI <Z>`. The bundle step m
 without doing its work, so a missing or invalid file reads "unknown".
 
 Open board hands `http://127.0.0.1:<port>/` to the client app with `open -b <client bundle id>
-"agentboard://open?v=1&url=<encoded>"` (the link and the bundle id are the contract's, run as vectors in
+"rumo://open?v=1&url=<encoded>"` (the link and the bundle id are the contract's, run as vectors in
 `core/tests/handover.rs`) and falls back to `open <url>` in the default browser when that exits non-zero. Only a
 loopback URL without credentials is ever handed over.
 
@@ -101,7 +101,7 @@ Every item is one `Action` of `core::actions`, run by `Console::dispatch`; the t
 The headless actions are `open-board`, `backup-now`, `restart-server`, `restart-worker`, `disconnect-worker`,
 `check-worker`, `connect-worker <token> <data-key>`, `open-logs`, `open-settings`, `pair-device`, `quit`, `state` and
 `menu` (prints `{"type":"menu","items":[{id,label,enabled}],"badge","tooltip","busy"}`). Open board prints the `open`
-commands it ran in `commands`. `AGENT_BOARD_OPEN_PROGRAM=<absolute path>` (non-release builds or `AGENT_BOARD_E2E=1`)
+commands it ran in `commands`. `RUMO_OPEN_PROGRAM=<absolute path>` (non-release builds or `RUMO_E2E=1`)
 replaces `/usr/bin/open`, so tests record the calls.
 
 ## What stays plain on disk
@@ -117,14 +117,14 @@ tunnel, uninstall, installing over the old local server) are in `docs/manual/ser
 
 ## Worker and enrolment
 
-The worker is the bundled CLI (`resources/cli/board`) run under `AGENT_BOARD_PROFILE=server-app` with the three
+The worker is the bundled CLI (`resources/cli/rumo`) run under `RUMO_PROFILE=server-app` with the three
 directory overrides under `<root>/worker/{config,state,run}`; no launchd unit is installed. The app asks the CLI for its
-unit recipe (`board internal units`) and runs the listener, the watcher and the dispatch tick from it, supervised with
+unit recipe (`rumo internal units`) and runs the listener, the watcher and the dispatch tick from it, supervised with
 the same restart policy as the API. It starts once the API is first healthy and, on Quit, is stopped first: SIGTERM to
-the worker processes, `board internal shutdown` to pause running cards, then SIGKILL for stragglers. Nothing runs while
+the worker processes, `rumo internal shutdown` to pause running cards, then SIGKILL for stragglers. Nothing runs while
 the worker is not enrolled; the row reads "Worker not connected".
 
-`<root>/worker/bin` holds `board-cli` (a link to the bundled CLI) and `board`, a wrapper that sets the worker
+`<root>/worker/bin` holds `rumo-cli` (a link to the bundled CLI) and `rumo`, a wrapper that sets the worker
 environment and refuses `setup`, `self-update`, `restart` and `init` with exit 2. The worker `PATH` is that folder, the
 `workerPath` entries from `settings.json` (a list of at most 32 absolute folders without `:`; a single string is read
 as a one-entry list), then the recipe's tail; only `HOME`, `USER`, `LOGNAME`, `SHELL`, `TMPDIR`,
@@ -132,12 +132,12 @@ as a one-entry list), then the recipe's tail; only `HOME`, `USER`, `LOGNAME`, `S
 
 The token and data key live only in the credential store (Keychain service from the root, accounts `worker-token` and
 `worker-data-key`, plus `.pending` for a pair under test). The CLI reads them through
-`AGENT_BOARD_CREDENTIALS_COMMAND`, a script in `<root>/worker/libexec` that calls the app binary with
+`RUMO_CREDENTIALS_COMMAND`, a script in `<root>/worker/libexec` that calls the app binary with
 `--worker-credentials`; no file or process argument holds them.
 
-Headless actions: `connect-worker <token> <data-key>` (checks the pair as pending through `board init --force`, then
+Headless actions: `connect-worker <token> <data-key>` (checks the pair as pending through `rumo init --force`, then
 stop, pause once, promote, start; a refusal changes nothing), `disconnect-worker`, `restart-worker` and `check-worker`
-(`board doctor --json` minus the checks in `core/src/dropped_checks.json`, plus a `claude` and `gh` lookup on the worker
+(`rumo doctor --json` minus the checks in `core/src/dropped_checks.json`, plus a `claude` and `gh` lookup on the worker
 `PATH`, written to `logs/check-worker.log`). `core::enrol::EnrolForm` is the window's masked-input model. The row after
 each dispatch tick reads `ok`, `refused — …` or `error — …` from the CLI's `dispatch-result.json`.
 
@@ -178,26 +178,26 @@ delete that file so the next start makes a pre-upgrade copy before the API migra
 
 ## Bundle
 
-`pnpm --filter @agent-board/server-app run assemble --build` builds the three artifacts the app carries and collects them
+`pnpm --filter @rumo/server-app run assemble --build` builds the three artifacts the app carries and collects them
 into `src-tauri/resources/` (git-ignored). Without `--build` it takes the existing outputs and names the missing artifact
 and the command that builds it; `--api`, `--cli` and `--web` point at pre-built paths. `pnpm … bundle` then runs
 `tauri build` and leaves the ad-hoc signed app at
-`src-tauri/target/release/bundle/macos/Agent Board Server.app`. No secret is needed.
+`src-tauri/target/release/bundle/macos/Rumo Server.app`. No secret is needed.
 
 | Path in `resources/` (and in `Contents/Resources/resources/`) | Content                                                                                          |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `api/agent-board-api`                                         | The API single executable (`apps/api` `build:executable`); PGlite assets and migrations are embedded in it |
+| `api/rumo-api`                                         | The API single executable (`apps/api` `build:executable`); PGlite assets and migrations are embedded in it |
 | `api/schema-version`                                          | The API's last migration tag, read by the pre-upgrade backup                                     |
 | `api/version`, `cli/version`                                  | The API and CLI package versions, shown by the tray's version line                               |
-| `cli/board`                                                   | The CLI binary (`apps/cli` `compile`, target `darwin-arm64`), the worker                          |
+| `cli/rumo`                                                   | The CLI binary (`apps/cli` `compile`, target `darwin-arm64`), the worker                          |
 | `web/`                                                        | The browser client build (`apps/web` `dist`), served by the API                                  |
 
 The app finds the folder next to its binary in a development build, in `Contents/Resources/resources` inside the `.app`,
-and in `AGENT_BOARD_SERVER_RESOURCES` for the test seams.
+and in `RUMO_SERVER_RESOURCES` for the test seams.
 
 ## Signing
 
-One identity signs the app and every bundled executable. `assemble` signs `api/agent-board-api` and `cli/board` ad hoc
+One identity signs the app and every bundled executable. `assemble` signs `api/rumo-api` and `cli/rumo` ad hoc
 before Tauri seals them into the app, and `tauri.conf.json` signs the app with the ad-hoc identity `-`.
 `pnpm … sign:check [<app>]` reads `codesign -d --verbose=4` of the app, its binary and every executable under
 `Contents/Resources`, fails when any object is unsigned or the signers differ (ad hoc, or authority and team
@@ -237,7 +237,7 @@ stopped. The app then opens that folder with the full migration set after exactl
 
 ## Release
 
-`pnpm --filter @agent-board/server-app release 1.0.0 [--notes "..."]` sets the version in `package.json`,
+`pnpm --filter @rumo/server-app release 1.0.0 [--notes "..."]` sets the version in `package.json`,
 `src/version.ts`, both Cargo manifests and `Cargo.lock`, and writes `CHANGELOG.md` (notes already written under the
 version heading are kept). `release:check 1.0.0` then verifies all of them and the built `.app`'s version; then
 `pnpm release:tags` creates `server-app-v1.0.0`.

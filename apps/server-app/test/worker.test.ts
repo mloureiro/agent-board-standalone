@@ -34,7 +34,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const STUB_BOARD = join(here, '../src-tauri/core/tests/fixtures/stub-board.sh');
 const DROPPED_CHECKS = join(here, '../src-tauri/core/src/dropped_checks.json');
 const CONTRACT_DOCTOR = join(here, '../../../packages/contract/src/doctor.ts');
-const REAL_CLI = join(here, '../../cli/dist/board');
+const REAL_CLI = join(here, '../../cli/dist/rumo');
 const GOOD = 'abm_good abk1_good';
 
 describe('worker and enrolment through the headless runner', () => {
@@ -79,15 +79,15 @@ describe('worker and enrolment through the headless runner', () => {
   function installCli(source: string, conf: string): void {
     const directory = join(resources.dir, 'cli');
     mkdirSync(directory, { recursive: true });
-    copyFileSync(source, join(directory, 'board'));
-    chmodSync(join(directory, 'board'), 0o755);
+    copyFileSync(source, join(directory, 'rumo'));
+    chmodSync(join(directory, 'rumo'), 0o755);
     writeFileSync(join(directory, 'board.conf'), `${conf}\n`);
   }
 
   function start(): Session {
     const session = launch(root, {
-      AGENT_BOARD_SERVER_RESOURCES: resources.dir,
-      AGENT_BOARD_SUPERVISION_TIMINGS: FAST_TIMINGS,
+      RUMO_SERVER_RESOURCES: resources.dir,
+      RUMO_SUPERVISION_TIMINGS: FAST_TIMINGS,
     });
     sessions.push(session);
     return session;
@@ -230,7 +230,7 @@ describe('worker and enrolment through the headless runner', () => {
 
     const accepted = await act(
       session,
-      'connect-worker AGENT_BOARD_TOKEN=abm_good AGENT_BOARD_DATA_KEY=abk1_good',
+      'connect-worker RUMO_TOKEN=abm_good RUMO_DATA_KEY=abk1_good',
       'connect-worker',
     );
     expect(accepted['ok']).toBe(true);
@@ -379,7 +379,7 @@ describe('worker and enrolment through the headless runner', () => {
   it('[server-app-059] the wrapper in the worker bin refuses the managed commands', async () => {
     const session = await connected();
     const { spawnSync } = await import('node:child_process');
-    const wrapper = join(root, 'worker/bin/board');
+    const wrapper = join(root, 'worker/bin/rumo');
 
     for (const command of ['setup', 'self-update', 'restart', 'init']) {
       expect(spawnSync('/bin/sh', [wrapper, command]).status, command).toBe(2);
@@ -405,7 +405,7 @@ describe('worker and enrolment through the headless runner', () => {
 
   it('[server-app-043] the real CLI publishes a recipe the app reads', async (context) => {
     if (!existsSync(REAL_CLI)) {
-      context.skip('the CLI is not built: run `pnpm --filter @agent-board/cli build`');
+      context.skip('the CLI is not built: run `pnpm --filter @rumo/cli build`');
     }
     installCli(REAL_CLI, '');
     writeSettings(root, { port, workerPath: [dirname(process.execPath)] });

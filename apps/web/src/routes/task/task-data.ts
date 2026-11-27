@@ -25,8 +25,8 @@ import {
   wakeNowClientTaskRoute,
   type Effort,
   type Priority,
-} from '@agent-board/contract';
-import { bindings, seal, type Keys } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, seal, type Keys } from '@rumo/sealing';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useRef } from 'react';
 

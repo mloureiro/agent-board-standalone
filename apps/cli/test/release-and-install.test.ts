@@ -23,7 +23,7 @@ import { UPDATE_TARGETS } from '../src/update/release-source.js';
 import { startReleaseServer, type FakeRelease, type ReleaseServer } from './support/releases.js';
 
 const SCRIPT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../scripts/install.sh');
-const BINARY = '#!/bin/sh\necho "board 1.0.0 (contract 1)"\n';
+const BINARY = '#!/bin/sh\necho "rumo 1.0.0 (contract 1)"\n';
 
 const cleanups: (() => Promise<void> | void)[] = [];
 
@@ -42,7 +42,7 @@ function temp(prefix: string): string {
 describe('the release script', () => {
   const input = {
     version: '1.0.0',
-    packageJson: '{\n  "name": "@agent-board/cli",\n  "version": "0.0.0",\n  "private": true\n}\n',
+    packageJson: '{\n  "name": "@rumo/cli",\n  "version": "0.0.0",\n  "private": true\n}\n',
     versionSource: "export const PART_NAME = 'cli';\nexport const PART_VERSION = '0.0.0';\n",
     changelog: '# Changelog\n\n## 0.0.0\n\nNot released\n',
     notes: 'First release of the board CLI.',
@@ -92,17 +92,17 @@ describe('the release script', () => {
 
 describe('the binary smoke suite', () => {
   it('[cli-063] the Node bundle passes the checks the compiled binary has to pass', async () => {
-    const directory = temp('board-cli-smoke-');
-    const outfile = path.join(directory, 'board');
+    const directory = temp('rumo-cli-smoke-');
+    const outfile = path.join(directory, 'rumo');
     await bundle(outfile);
     const results = smokeChecks([process.execPath, outfile], PART_VERSION);
     expect(results.filter((result) => !result.ok)).toEqual([]);
     expect(results.map((result) => result.name)).toEqual([
-      'board version',
-      'board --version',
-      'board --help',
-      'board completion bash',
-      'board internal selftest',
+      'rumo version',
+      'rumo --version',
+      'rumo --help',
+      'rumo completion bash',
+      'rumo internal selftest',
     ]);
   }, 60_000);
 });
@@ -115,7 +115,7 @@ describe('the install script', () => {
   }
 
   function fakeUname(system: string, machine: string): string {
-    const bin = temp('board-cli-uname-');
+    const bin = temp('rumo-cli-uname-');
     mkdirSync(bin, { recursive: true });
     const file = path.join(bin, 'uname');
     writeFileSync(
@@ -134,7 +134,7 @@ describe('the install script', () => {
     machine: string,
     extra: string[] = [],
   ): Promise<{ code: number; output: string; dir: string }> {
-    const dir = path.join(temp('board-cli-install-'), 'bin');
+    const dir = path.join(temp('rumo-cli-install-'), 'bin');
     return new Promise((resolve) => {
       execFile(
         'sh',
@@ -143,8 +143,8 @@ describe('the install script', () => {
           env: {
             PATH: `${fakeUname(system, machine)}:${process.env.PATH ?? ''}`,
             HOME: path.dirname(dir),
-            AGENT_BOARD_RELEASES_URL: server.listUrl,
-            AGENT_BOARD_DOWNLOAD_URL: `${server.server.url}/assets`,
+            RUMO_RELEASES_URL: server.listUrl,
+            RUMO_DOWNLOAD_URL: `${server.server.url}/assets`,
           },
         },
         (error, stdout, stderr) => {
@@ -163,14 +163,14 @@ describe('the install script', () => {
     '[cli-062] installs the newest release for %s %s after the checksum matches',
     async (system, machine, target) => {
       const server = await releases([
-        { version: '0.9.0', target, content: '#!/bin/sh\necho "board 0.9.0"\n' },
+        { version: '0.9.0', target, content: '#!/bin/sh\necho "rumo 0.9.0"\n' },
         { version: '1.0.0', target, content: BINARY },
         { version: '9.9.9', target, content: BINARY, tagPrefix: 'api-v' },
       ]);
       const result = await install(server, system, machine);
       expect(result.code, result.output).toBe(0);
-      expect(result.output).toContain(`installed board 1.0.0 (${target})`);
-      const installed = path.join(result.dir, 'board');
+      expect(result.output).toContain(`installed rumo 1.0.0 (${target})`);
+      const installed = path.join(result.dir, 'rumo');
       expect(readFileSync(installed, 'utf8')).toBe(BINARY);
       expect(statSync(installed).mode & 0o111).not.toBe(0);
     },
@@ -182,8 +182,8 @@ describe('the install script', () => {
     ]);
     const result = await install(server, 'Linux', 'x86_64');
     expect(result.code).toBe(1);
-    expect(result.output).toMatch(/checksum of board-linux-x64 does not match/);
-    expect(existsSync(path.join(result.dir, 'board'))).toBe(false);
+    expect(result.output).toMatch(/checksum of rumo-linux-x64 does not match/);
+    expect(existsSync(path.join(result.dir, 'rumo'))).toBe(false);
   });
 
   it('[cli-062] installs nothing when the release has no checksum list', async () => {
@@ -193,7 +193,7 @@ describe('the install script', () => {
     const result = await install(server, 'Linux', 'x86_64');
     expect(result.code).toBe(1);
     expect(result.output).toMatch(/SHA256SUMS/);
-    expect(existsSync(path.join(result.dir, 'board'))).toBe(false);
+    expect(existsSync(path.join(result.dir, 'rumo'))).toBe(false);
   });
 
   it('[cli-062] refuses a platform without a release build', async () => {
@@ -210,7 +210,7 @@ describe('the install script', () => {
     ]);
     const result = await install(server, 'Linux', 'x86_64', ['--version', '1.0.0']);
     expect(result.code, result.output).toBe(0);
-    expect(result.output).toContain('installed board 1.0.0');
+    expect(result.output).toContain('installed rumo 1.0.0');
   });
 
   it('[cli-062] says when the repository has no cli release', async () => {

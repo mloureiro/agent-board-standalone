@@ -1,10 +1,10 @@
 #!/bin/sh
 set -eu
 
-repo="mloureiro/agent-board-standalone"
-alias_name="agent-board"
-folder="${1:-$HOME/agent-board-keys}"
-keystore="${folder}/agent-board-release.jks"
+repo="mloureiro/rumo"
+alias_name="rumo"
+folder="${1:-$HOME/rumo-keys}"
+keystore="${folder}/rumo-release.jks"
 
 if ! command -v keytool >/dev/null 2>&1; then
   echo "keytool is missing: install a JDK (for example \`brew install openjdk\`) and run this again" >&2
@@ -27,7 +27,7 @@ keytool -genkeypair \
   -keyalg RSA \
   -keysize 4096 \
   -validity 10000 \
-  -dname "CN=Agent Board"
+  -dname "CN=Rumo"
 chmod 600 "${keystore}"
 
 cat <<EOF

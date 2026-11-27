@@ -1,4 +1,4 @@
-import { deleteClientAccountRoute, summaryClientAccountRoute } from '@agent-board/contract';
+import { deleteClientAccountRoute, summaryClientAccountRoute } from '@rumo/contract';
 import { Alert, Button, Group, Modal, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';

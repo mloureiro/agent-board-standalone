@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream';
 
-import { contentDigest } from '@agent-board/sealing';
+import { contentDigest } from '@rumo/sealing';
 import type { FastifyInstance } from 'fastify';
 
 import { readCredential } from '../../auth/index.js';
@@ -67,7 +67,7 @@ export const registerRequestSignature = (app: FastifyInstance, context: ServerCo
     context.services.database
       .withSystem((system) => system.purgeExpired(context.clock.now()))
       .catch((error: unknown) => {
-        process.stderr.write(`agent-board-api: purging expired rows failed: ${String(error)}\n`);
+        process.stderr.write(`rumo-api: purging expired rows failed: ${String(error)}\n`);
       });
   }, PURGE_EVERY_MS);
   purge.unref();

@@ -29,10 +29,10 @@ function fresh(): TestRuntime {
 
 describe('env file', () => {
   it('round-trips the credential lines', () => {
-    const text = renderEnvFile({ AGENT_BOARD_TOKEN: 'abm_x', AGENT_BOARD_DATA_KEY: 'abk1_y' });
+    const text = renderEnvFile({ RUMO_TOKEN: 'abm_x', RUMO_DATA_KEY: 'abk1_y' });
     expect(parseEnvFile(text)).toEqual({
-      AGENT_BOARD_TOKEN: 'abm_x',
-      AGENT_BOARD_DATA_KEY: 'abk1_y',
+      RUMO_TOKEN: 'abm_x',
+      RUMO_DATA_KEY: 'abk1_y',
     });
   });
 
@@ -108,8 +108,8 @@ describe('secret file staging', () => {
     const stolen = at('stolen');
     writeFileSync(stolen, '');
     symlinkSync(stolen, `${file}.tmp-${process.pid}`);
-    writeSecretFile(file, 'AGENT_BOARD_TOKEN=secret\n');
-    expect(readFileSync(file, 'utf8')).toBe('AGENT_BOARD_TOKEN=secret\n');
+    writeSecretFile(file, 'RUMO_TOKEN=secret\n');
+    expect(readFileSync(file, 'utf8')).toBe('RUMO_TOKEN=secret\n');
     expect(readFileSync(stolen, 'utf8')).toBe('');
   });
 });

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 
-import { directoryId, projectId } from '@agent-board/contract';
+import { directoryId, projectId } from '@rumo/contract';
 import { parse } from 'yaml';
 
 import { CONFIG_FILE } from '../profile/files.js';

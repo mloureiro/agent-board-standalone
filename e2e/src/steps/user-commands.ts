@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 
 import type { RouteOutput } from '../client/contract-client.js';
 import { enrolledMachine, type EnrolledMachine } from '../fixtures/machines.js';
@@ -322,12 +322,12 @@ export function stubPidOf(fixture: Pick<Fixture, 'stubLog'>, marker: string): Pr
 }
 
 export async function refusedInsideRun(fixture: Fixture, args: readonly string[]): Promise<number> {
-  const task = await newTask(fixture, `#stub: board ${args.join(' ')}`);
+  const task = await newTask(fixture, `#stub: rumo ${args.join(' ')}`);
   await waitForStatus(fixture, task.id, 'done');
   const entry = [...stubEntries(fixture)]
     .reverse()
-    .find((line) => line.kind === 'board' && JSON.stringify(line.args) === JSON.stringify(args));
-  if (entry === undefined) throw new Error(`the stub did not run board ${args.join(' ')}`);
+    .find((line) => line.kind === 'rumo' && JSON.stringify(line.args) === JSON.stringify(args));
+  if (entry === undefined) throw new Error(`the stub did not run rumo ${args.join(' ')}`);
   return Number(entry.code);
 }
 

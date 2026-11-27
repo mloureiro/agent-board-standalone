@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 
-import { isEnvelope } from '@agent-board/sealing';
+import { isEnvelope } from '@rumo/sealing';
 import { describe, expect, it } from 'vitest';
 
 import { setClockOffset } from '../src/harness/clock.js';

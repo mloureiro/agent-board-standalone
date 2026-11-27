@@ -1,4 +1,4 @@
-import { authOidcFinishRoute, authSamlFinishRoute } from '@agent-board/contract';
+import { authOidcFinishRoute, authSamlFinishRoute } from '@rumo/contract';
 import { Loader, Stack, Text, Title } from '@mantine/core';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router';

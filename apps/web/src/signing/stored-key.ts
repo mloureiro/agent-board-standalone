@@ -1,4 +1,4 @@
-import { exportPublicKey, generateSigningKey, signingKeyId } from '@agent-board/sealing';
+import { exportPublicKey, generateSigningKey, signingKeyId } from '@rumo/sealing';
 
 import { serverNamespace } from '../storage/index.js';
 

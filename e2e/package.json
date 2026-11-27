@@ -1,5 +1,5 @@
 {
-  "name": "@agent-board/e2e",
+  "name": "@rumo/e2e",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -14,8 +14,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@agent-board/contract": "workspace:^1.0.0",
-    "@agent-board/sealing": "workspace:^1.0.0"
+    "@rumo/contract": "workspace:^1.0.0",
+    "@rumo/sealing": "workspace:^1.0.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

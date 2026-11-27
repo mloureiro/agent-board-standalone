@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
-import { FEATURES, type DoctorResult } from '@agent-board/contract';
+import { FEATURES, type DoctorResult } from '@rumo/contract';
 
 import { appliedVersion, ASIDE_DIR } from '../agents/shared.js';
 import type { Context } from '../commands/context.js';
@@ -91,7 +91,7 @@ async function machineChecks(ctx: Context, url: string): Promise<DoctorResult[]>
         'board key',
         'fail',
         reason(error),
-        'check the token and the data key; run `board init --force` with fresh ones',
+        'check the token and the data key; run `rumo init --force` with fresh ones',
       ),
     ];
   }
@@ -107,7 +107,7 @@ async function machineChecks(ctx: Context, url: string): Promise<DoctorResult[]>
           'legacy-dirs',
           'warn',
           'the board holds a legacy directory document that is not converted yet',
-          'run `board dirs` to convert it',
+          'run `rumo dirs` to convert it',
         )
       : pass('legacy-dirs', 'no legacy directories waiting'),
   );

@@ -1,5 +1,5 @@
-import type { AnyRoute, RouteRequest, RouteResponse } from '@agent-board/contract';
-import type { Keys } from '@agent-board/sealing';
+import type { AnyRoute, RouteRequest, RouteResponse } from '@rumo/contract';
+import type { Keys } from '@rumo/sealing';
 import { useCallback, useRef } from 'react';
 
 import { callRoute } from '../auth/api.js';

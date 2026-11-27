@@ -1,5 +1,5 @@
 import { Button, Group, Paper, Stack, Text } from '@mantine/core';
-import type { TaskStatus } from '@agent-board/contract';
+import type { TaskStatus } from '@rumo/contract';
 import type { ReactNode } from 'react';
 
 import { CardView } from './CardView.js';

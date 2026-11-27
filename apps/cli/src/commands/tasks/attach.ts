@@ -1,7 +1,7 @@
 import { statSync } from 'node:fs';
 
-import { attachSessionRoute } from '@agent-board/contract';
-import { bindings, open } from '@agent-board/sealing';
+import { attachSessionRoute } from '@rumo/contract';
+import { bindings, open } from '@rumo/sealing';
 
 import { CliError, ReportedFailure, UsageError } from '../../errors.js';
 import { plain } from '../../domain/rules.js';
@@ -28,7 +28,7 @@ export async function runAttach(
   input: string,
   options: AttachOptions,
 ): Promise<void> {
-  refuseInRun(ctx, 'board attach');
+  refuseInRun(ctx, 'rumo attach');
   if (options.desktop === true && options.fork === true) {
     throw new UsageError('--desktop and --fork cannot be combined');
   }

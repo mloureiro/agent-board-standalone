@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 
 import type { BoardUser } from '../src/fixtures/users.js';
 import type { RouteOutput } from '../src/client/contract-client.js';

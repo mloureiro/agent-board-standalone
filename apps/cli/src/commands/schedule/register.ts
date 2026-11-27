@@ -1,6 +1,6 @@
 import type { Command } from 'commander';
 
-import { EFFORTS, MODEL_ALIASES, PRIORITIES } from '@agent-board/contract';
+import { EFFORTS, MODEL_ALIASES, PRIORITIES } from '@rumo/contract';
 
 import type { ScheduleFlags } from '../../scheduling/args.js';
 import type { Context } from '../context.js';

@@ -32,7 +32,7 @@ async function openCopy(
   folder: string,
   alias: PgliteAlias,
 ): Promise<{ database: PgliteInstance; scratch: string }> {
-  const scratch = await mkdtemp(join(tmpdir(), 'agent-board-migrate-'));
+  const scratch = await mkdtemp(join(tmpdir(), 'rumo-migrate-'));
   const copy = join(scratch, 'data');
   try {
     await cp(folder, copy, { recursive: true });

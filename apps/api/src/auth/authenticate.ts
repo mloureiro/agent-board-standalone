@@ -1,4 +1,4 @@
-import type { SessionState } from '@agent-board/contract';
+import type { SessionState } from '@rumo/contract';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import type { ServerContext } from '../context.js';

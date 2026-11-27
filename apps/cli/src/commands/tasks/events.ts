@@ -5,7 +5,7 @@ import {
   readNotesRoute,
   machineName,
   type TaskActor,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 
 import { ReportedFailure, UsageError } from '../../errors.js';
 import { parseStatus } from '../../domain/rules.js';
@@ -53,7 +53,7 @@ export async function runEventsCommand(
   options: EventsOptions,
   timing?: Partial<EventsTiming>,
 ): Promise<void> {
-  refuseInRun(ctx, 'board events');
+  refuseInRun(ctx, 'rumo events');
   if (options.machine !== undefined && !machineName.safeParse(options.machine).success) {
     throw new UsageError(`"${options.machine.slice(0, 40)}" is not a valid machine name`);
   }
@@ -99,7 +99,7 @@ export async function runEventsCommand(
       );
     },
     log: (line) => {
-      ctx.err(`board events: ${line}`);
+      ctx.err(`rumo events: ${line}`);
     },
     now: () => new Date(),
     signal: ctx.rt.interrupt,

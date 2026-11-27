@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-export const APP_TITLE = 'Agent Board';
+export const APP_TITLE = 'Rumo';
 
 export const pageTitle = (title: string | null | undefined): string =>
   title ? `${title} · ${APP_TITLE}` : APP_TITLE;

@@ -1,13 +1,13 @@
 import { randomBytes } from 'node:crypto';
 
-import { SIGNATURE_HEADERS, canonicalString } from '@agent-board/contract';
+import { SIGNATURE_HEADERS, canonicalString } from '@rumo/contract';
 import {
   contentDigest,
   exportPublicKey,
   generateSigningKey,
   sign,
   signingKeyId,
-} from '@agent-board/sealing';
+} from '@rumo/sealing';
 
 export interface TestSigner {
   publicKey: string;

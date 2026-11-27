@@ -1,4 +1,4 @@
-import { ERROR_STATUS, type ErrorBody, type ErrorCode } from '@agent-board/contract';
+import { ERROR_STATUS, type ErrorBody, type ErrorCode } from '@rumo/contract';
 
 export class ApiError extends Error {
   constructor(

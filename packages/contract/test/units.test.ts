@@ -22,10 +22,10 @@ const recipe = (platform: 'darwin' | 'linux') => {
       {
         ...DISPATCH_TICK,
         program: lockProgram,
-        args: [...lockArgs, '/run/dispatch.lock', '/opt/board/board', 'internal', 'dispatch'],
+        args: [...lockArgs, '/run/dispatch.lock', '/opt/board/rumo', 'internal', 'dispatch'],
       },
-      { ...LISTEN_UNIT, program: '/opt/board/board', args: ['internal', 'listen'] },
-      { ...WATCH_UNIT, program: '/opt/board/board', args: ['internal', 'watch'] },
+      { ...LISTEN_UNIT, program: '/opt/board/rumo', args: ['internal', 'listen'] },
+      { ...WATCH_UNIT, program: '/opt/board/rumo', args: ['internal', 'watch'] },
     ],
   };
 };

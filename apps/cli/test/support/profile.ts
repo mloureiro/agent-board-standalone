@@ -22,12 +22,12 @@ export function cliFor(stub: ApiStub, options: ProfileOptions = {}): Cli {
   const test = testRuntime({ platform: process.platform, ...options });
   const config =
     options.overrideDirs === false
-      ? test.path('xdg-config', 'agent-board', 'profiles', 'default')
+      ? test.path('xdg-config', 'rumo', 'profiles', 'default')
       : test.path('config');
   mkdirSync(config, { recursive: true });
   writeFileSync(path.join(config, 'server.json'), JSON.stringify({ url: stub.url }));
   const env = path.join(config, 'env');
-  writeFileSync(env, `AGENT_BOARD_TOKEN=${TEST_TOKEN}\nAGENT_BOARD_DATA_KEY=${stub.dataKey}\n`);
+  writeFileSync(env, `RUMO_TOKEN=${TEST_TOKEN}\nRUMO_DATA_KEY=${stub.dataKey}\n`);
   chmodSync(env, 0o600);
   writeFileSync(path.join(config, 'config.yaml'), options.config ?? 'machine: test-machine\n');
   return {

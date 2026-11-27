@@ -1,4 +1,4 @@
-import { waitRoute } from '@agent-board/contract';
+import { waitRoute } from '@rumo/contract';
 
 import { UsageError } from '../../errors.js';
 import {

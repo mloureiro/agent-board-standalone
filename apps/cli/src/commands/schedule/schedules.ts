@@ -5,8 +5,8 @@ import {
   updateScheduleRoute,
   type ScheduleSettings,
   type WireSchedule,
-} from '@agent-board/contract';
-import { bindings, seal } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, seal } from '@rumo/sealing';
 
 import { isAgentName } from '../../agents/definition.js';
 import {
@@ -148,7 +148,7 @@ async function runList(ctx: Context, options: SchedulesOptions): Promise<void> {
     return;
   }
   if (opened.length === 0)
-    ctx.out('no schedules; create one with "board schedule --every 1d <prompt>"');
+    ctx.out('no schedules; create one with "rumo schedule --every 1d <prompt>"');
   const width = Math.max(...opened.map((entry) => entry.wire.id.length), 0);
   for (const entry of opened) {
     const { wire } = entry;
@@ -255,7 +255,7 @@ async function changeSettings(
       );
       if (row === undefined || !listed) {
         throw new UsageError(
-          `${plain(target)} is not a listed directory of this machine; run "board dirs add" first`,
+          `${plain(target)} is not a listed directory of this machine; run "rumo dirs add" first`,
         );
       }
       place = { machine: s.machine, directoryId: row.id };
@@ -417,21 +417,21 @@ export async function runSchedules(
 ): Promise<void> {
   const [verb = 'list', ...rest] = action;
   if (verb === 'list') {
-    if (rest.length > 0) throw new UsageError('board schedules list takes no arguments');
+    if (rest.length > 0) throw new UsageError('rumo schedules list takes no arguments');
     await runList(ctx, options);
     return;
   }
-  refuseInRun(ctx, `board schedules ${verb}`);
+  refuseInRun(ctx, `rumo schedules ${verb}`);
   const [given, ...more] = rest;
-  if (given === undefined) throw new UsageError(`usage: board schedules ${verb} <id>`);
+  if (given === undefined) throw new UsageError(`usage: rumo schedules ${verb} <id>`);
   if (verb === 'edit') {
     await runEdit(ctx, given, more, options);
     return;
   }
-  if (more.length > 0) throw new UsageError(`usage: board schedules ${verb} <id>`);
+  if (more.length > 0) throw new UsageError(`usage: rumo schedules ${verb} <id>`);
   const touched = EDIT_FLAGS.filter((flag) => options[flag] !== undefined);
   if (touched.length > 0)
-    throw new UsageError(`--${touched[0] ?? ''} belongs to board schedules edit`);
+    throw new UsageError(`--${touched[0] ?? ''} belongs to rumo schedules edit`);
   if (verb !== 'pause' && verb !== 'resume' && verb !== 'rm') {
     throw new UsageError(
       `unknown action "${plain(verb).slice(0, 40)}"; use list, pause, resume, rm or edit`,

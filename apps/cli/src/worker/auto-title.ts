@@ -1,5 +1,5 @@
-import { applyTitleRuleRoute, getTitleRulesRoute } from '@agent-board/contract';
-import { bindings, open, seal } from '@agent-board/sealing';
+import { applyTitleRuleRoute, getTitleRulesRoute } from '@rumo/contract';
+import { bindings, open, seal } from '@rumo/sealing';
 
 import type { OpenTask } from '../commands/tasks/open.js';
 import { isRecord } from '../domain/values.js';

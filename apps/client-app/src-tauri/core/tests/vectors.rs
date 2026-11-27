@@ -1,15 +1,15 @@
 mod common;
 
-use agent_board_client_core::BUNDLE_ID;
-use agent_board_client_core::address::check_address;
-use agent_board_client_core::handover::{first_acceptable, normalise, parse, server_name};
-use agent_board_client_core::signing::{
-    RequestSigner, SigningError, canonical_string, content_digest, key_id,
-};
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use common::repo_json;
 use p256::ecdsa::{Signature, SigningKey, VerifyingKey, signature::Verifier};
 use p256::pkcs8::{DecodePublicKey, EncodePrivateKey};
+use rumo_client_core::BUNDLE_ID;
+use rumo_client_core::address::check_address;
+use rumo_client_core::handover::{first_acceptable, normalise, parse, server_name};
+use rumo_client_core::signing::{
+    RequestSigner, SigningError, canonical_string, content_digest, key_id,
+};
 use serde_json::Value;
 
 fn b64(text: &str) -> Vec<u8> {
@@ -98,11 +98,11 @@ fn client_app_014_handover_parser_matches_the_contract_cases() {
 #[test]
 fn client_app_014_first_acceptable_url_of_a_batch_wins() {
     let links = [
-        "agentboard://open?v=1&url=http%3A%2F%2F192.168.1.10%3A4000%2F",
-        "agentboard://open?v=2&url=http%3A%2F%2Flocalhost%3A1%2F",
-        "agentboard://open?v=1&url=http%3A%2F%2Fuser%3Asecret%40localhost%3A2%2F",
-        "agentboard://open?v=1&url=http%3A%2F%2Flocalhost%3A3%2F",
-        "agentboard://open?v=1&url=http%3A%2F%2Flocalhost%3A4%2F",
+        "rumo://open?v=1&url=http%3A%2F%2F192.168.1.10%3A4000%2F",
+        "rumo://open?v=2&url=http%3A%2F%2Flocalhost%3A1%2F",
+        "rumo://open?v=1&url=http%3A%2F%2Fuser%3Asecret%40localhost%3A2%2F",
+        "rumo://open?v=1&url=http%3A%2F%2Flocalhost%3A3%2F",
+        "rumo://open?v=1&url=http%3A%2F%2Flocalhost%3A4%2F",
     ];
     assert_eq!(
         first_acceptable(links),

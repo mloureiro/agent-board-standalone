@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import type { UiThreadNote, WireNote } from '@agent-board/contract';
+import type { UiThreadNote, WireNote } from '@rumo/contract';
 import { asc, eq } from 'drizzle-orm';
 
 import { note, task } from '../../db/schema/index.js';

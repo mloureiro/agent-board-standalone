@@ -1,4 +1,4 @@
-import type { ScheduleDraft, UiTaskCreate } from '@agent-board/contract';
+import type { ScheduleDraft, UiTaskCreate } from '@rumo/contract';
 
 type Repeating = Exclude<NonNullable<UiTaskCreate['when']>, string | { at: string }>;
 

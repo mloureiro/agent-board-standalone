@@ -237,7 +237,7 @@ describe('the CLI converts legacy directories', () => {
     return { matched: Number(matched?.[1]), unmatched: Number(unmatched?.[1]) };
   }
 
-  it('[cli-085] board init converts the machine legacy directories first and reports matched and unmatched counts', async () => {
+  it('[cli-085] rumo init converts the machine legacy directories first and reports matched and unmatched counts', async () => {
     const { live, machines } = await setup();
     const [machine] = machines;
     if (machine === undefined) throw new Error('the fixture holds no machine');

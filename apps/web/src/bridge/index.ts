@@ -1,7 +1,2 @@
 export { currentBridge } from './current.js';
-export type {
-  AgentBoardBridge,
-  BridgeKind,
-  BridgeServerEntry,
-  BridgeStreamedResponse,
-} from './types.js';
+export type { RumoBridge, BridgeKind, BridgeServerEntry, BridgeStreamedResponse } from './types.js';

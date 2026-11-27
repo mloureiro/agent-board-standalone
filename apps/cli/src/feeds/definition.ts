@@ -1,4 +1,4 @@
-import { laneName, MIN_INTERVAL_MS } from '@agent-board/contract';
+import { laneName, MIN_INTERVAL_MS } from '@rumo/contract';
 import path from 'node:path';
 
 import { nearest, isRecord } from '../domain/values.js';
@@ -42,7 +42,7 @@ export function parseFeed(name: string, entry: unknown): FeedConfig | string {
   }
   const { integration, action, every, dir, agent, lane } = entry;
   if (typeof integration !== 'string' || !INTEGRATION_REF.test(integration)) {
-    return `${where}.integration must be <marketplace>:<integration>, as installed with board plugins`;
+    return `${where}.integration must be <marketplace>:<integration>, as installed with rumo plugins`;
   }
   if (typeof action !== 'string' || !ACTION_NAME.test(action)) {
     return `${where}.action must be an action name of the integration`;

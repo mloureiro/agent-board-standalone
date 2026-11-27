@@ -1,8 +1,4 @@
-import {
-  BOARD_EXPORT_FORMAT,
-  BOARD_EXPORT_VERSION,
-  parseBoardExportLine,
-} from '@agent-board/contract';
+import { BOARD_EXPORT_FORMAT, BOARD_EXPORT_VERSION, parseBoardExportLine } from '@rumo/contract';
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -117,7 +113,7 @@ describe('Settings › Account export and import', () => {
     await user.click(await screen.findByRole('button', { name: 'Export' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('The export was saved.');
-    expect(saved.names).toEqual(['agent-board-export.ndjson']);
+    expect(saved.names).toEqual(['rumo-export.ndjson']);
     const lines = (await saved.blobs[0]!.text()).split('\n').filter((line) => line !== '');
     const header = parseBoardExportLine(lines[0] ?? '', 0);
     expect(header).toMatchObject({ format: BOARD_EXPORT_FORMAT, version: BOARD_EXPORT_VERSION });

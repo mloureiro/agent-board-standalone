@@ -43,11 +43,11 @@ const bundledBinary = join(BUNDLED_APP, 'Contents', 'MacOS', APP_BINARY);
 
 export const missing: string | undefined = (() => {
   if (binary === undefined)
-    return 'the app binary is not built: run `pnpm --filter @agent-board/server-app build:binary`';
+    return 'the app binary is not built: run `pnpm --filter @rumo/server-app build:binary`';
   const problems = resourcesProblems(RESOURCES_DIR);
   return problems.length === 0
     ? undefined
-    : `the bundle resources are not assembled (${problems[0]}): run \`pnpm --filter @agent-board/server-app assemble --build\``;
+    : `the bundle resources are not assembled (${problems[0]}): run \`pnpm --filter @rumo/server-app assemble --build\``;
 })();
 
 export const bundledApp: string | undefined = existsSync(bundledBinary) ? bundledBinary : undefined;
@@ -174,13 +174,13 @@ export async function startApp(options: StartOptions = {}): Promise<RealApp> {
     symlinkSync(join(RESOURCES_DIR, 'api/schema-version'), join(resources, 'api/schema-version'));
     writeTool(
       join(resources, 'api'),
-      'agent-board-api',
-      `#!/bin/sh\n/usr/bin/env > '${join(scratch, 'api-env.txt')}'\nexec '${join(RESOURCES_DIR, 'api/agent-board-api')}'\n`,
+      'rumo-api',
+      `#!/bin/sh\n/usr/bin/env > '${join(scratch, 'api-env.txt')}'\nexec '${join(RESOURCES_DIR, 'api/rumo-api')}'\n`,
     );
   }
   const program = options.bundle === true && bundledApp !== undefined ? bundledApp : binary;
   const env = environment(root, {
-    ...(options.bundle === true ? {} : { AGENT_BOARD_SERVER_RESOURCES: resources }),
+    ...(options.bundle === true ? {} : { RUMO_SERVER_RESOURCES: resources }),
     ...options.env,
   });
   const child = spawn(program as string, ['--headless'], { env });
@@ -260,7 +260,7 @@ export async function startApp(options: StartOptions = {}): Promise<RealApp> {
           const supervision = lastState()?.['supervision'] as
             { worker: { state: string } } | undefined;
           return (
-            existsSync(join(root, 'worker/bin/board')) && supervision?.worker.state === 'running'
+            existsSync(join(root, 'worker/bin/rumo')) && supervision?.worker.state === 'running'
           );
         },
         'the worker running',
@@ -269,7 +269,7 @@ export async function startApp(options: StartOptions = {}): Promise<RealApp> {
       return answer;
     },
     board: (args, { cwd, timeoutMs = 60_000 } = {}) => {
-      const result = spawnSync(join(root, 'worker/bin/board'), args, {
+      const result = spawnSync(join(root, 'worker/bin/rumo'), args, {
         encoding: 'utf8',
         timeout: timeoutMs,
         ...(cwd === undefined ? {} : { cwd }),

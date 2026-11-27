@@ -1,4 +1,4 @@
-import type { DoctorResult } from '@agent-board/contract';
+import type { DoctorResult } from '@rumo/contract';
 
 import type { Context } from '../commands/context.js';
 import { configChecks } from './config.js';

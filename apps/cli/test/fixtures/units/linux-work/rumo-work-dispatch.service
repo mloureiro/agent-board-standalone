@@ -1,0 +1,12 @@
+[Unit]
+Description=rumo work dispatch: one tick
+
+[Service]
+Type=oneshot
+Environment="PATH=/srv/tester/.local/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="RUMO_CONFIG_DIR=/srv/rumo work/config"
+Environment="RUMO_STATE_DIR=/srv/rumo work/state"
+Environment="RUMO_RUN_DIR=/srv/rumo work/run"
+ExecStart=/usr/bin/flock -n -E 75 "/srv/rumo work/run/dispatch.lock" /usr/local/bin/node /opt/board/dist/rumo --profile work internal dispatch
+SuccessExitStatus=75
+TimeoutStartSec=120

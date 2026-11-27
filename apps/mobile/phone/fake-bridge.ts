@@ -1,4 +1,4 @@
-import type { BridgeServerEntry } from '@agent-board/web';
+import type { BridgeServerEntry } from '@rumo/web';
 import type { BrowserContext, Page } from '@playwright/test';
 
 export interface FakeAnswer {
@@ -60,7 +60,7 @@ export class FakeBoard {
       const w = window as unknown as {
         __fakeFetch(serverId: string, method: string, path: string): Promise<FakeAnswer>;
         __fakeCall(name: string, args: unknown[]): Promise<unknown>;
-        agentBoardBridge: unknown;
+        rumoBridge: unknown;
       };
       const call = async (name: string, ...args: unknown[]): Promise<unknown> => {
         const result = await w.__fakeCall(name, args);
@@ -69,7 +69,7 @@ export class FakeBoard {
         }
         return result;
       };
-      w.agentBoardBridge = {
+      w.rumoBridge = {
         kind: 'mobile',
         serverFetch: async (serverId: string, method: string, path: string) => {
           const answer = await w.__fakeFetch(serverId, method, path);

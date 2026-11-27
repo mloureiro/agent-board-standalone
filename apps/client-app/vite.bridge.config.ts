@@ -8,7 +8,7 @@ export default defineConfig({
     lib: {
       entry: 'src/bridge/install.ts',
       formats: ['iife'],
-      name: 'agentBoardBridgeInstall',
+      name: 'rumoBridgeInstall',
       fileName: () => 'bridge.js',
     },
   },

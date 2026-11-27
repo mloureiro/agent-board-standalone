@@ -1,7 +1,7 @@
 import path from 'node:path';
 
-import { bindings, decodeDataKey, deriveKeys, unwrapSlot } from '@agent-board/sealing';
-import { TOKEN_PATTERN } from '@agent-board/contract';
+import { bindings, decodeDataKey, deriveKeys, unwrapSlot } from '@rumo/sealing';
+import { TOKEN_PATTERN } from '@rumo/contract';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { anonymous, call, clientToken, type ServerRef } from '../src/client/contract-client.js';
@@ -24,16 +24,16 @@ import { createTmp, type Tmp } from '../src/harness/tmp.js';
 
 const fakeApi = path.join(E2E_ROOT, 'test', 'fixtures', 'fake-api.ts');
 const fakeCli = path.join(E2E_ROOT, 'test', 'fixtures', 'fake-cli.ts');
-const originalApi = process.env.AGENT_BOARD_API_BIN;
-const originalCli = process.env.AGENT_BOARD_CLI_BIN;
+const originalApi = process.env.RUMO_API_BIN;
+const originalCli = process.env.RUMO_CLI_BIN;
 
 let api: ApiHandle;
 let tmp: Tmp;
 let server: ServerRef;
 
 beforeAll(async () => {
-  process.env.AGENT_BOARD_API_BIN = fakeApi;
-  process.env.AGENT_BOARD_CLI_BIN = fakeCli;
+  process.env.RUMO_API_BIN = fakeApi;
+  process.env.RUMO_CLI_BIN = fakeCli;
   tmp = createTmp('fixtures');
   api = await startApi({ tmp, database: createPgliteDatabase(tmp), auth: 'no-login' });
   server = { url: api.url };
@@ -43,8 +43,8 @@ afterAll(async () => {
   await api.stop();
   tmp.remove();
   for (const [name, value] of [
-    ['AGENT_BOARD_API_BIN', originalApi],
-    ['AGENT_BOARD_CLI_BIN', originalCli],
+    ['RUMO_API_BIN', originalApi],
+    ['RUMO_CLI_BIN', originalCli],
   ] as const) {
     if (value === undefined) delete process.env[name];
     else process.env[name] = value;
@@ -180,7 +180,7 @@ describe('hand-off', () => {
 });
 
 describe('enrolledMachine', () => {
-  it('issues a token, writes 600 secret files and runs board init under its own root', async () => {
+  it('issues a token, writes 600 secret files and runs rumo init under its own root', async () => {
     const user = await noLoginUser(server);
     const keyCalls = recordingUser({ 'client.keys.get': { setup: null } });
     const key = await unlockedKey(server, keyCalls.user, DEFAULT_PASSPHRASE);
@@ -208,22 +208,22 @@ describe('enrolledMachine', () => {
     };
     expect(probe.token).toEqual({ mode: '600', content: first.token });
     expect(probe.dataKey).toEqual({ mode: '600', content: key.dataKey });
-    expect(probe.env.AGENT_BOARD_CONFIG_DIR).toBe(first.tmp.path('cli', 'config'));
-    expect(probe.env.AGENT_BOARD_WORKER_SPAWN).toBe('process');
+    expect(probe.env.RUMO_CONFIG_DIR).toBe(first.tmp.path('cli', 'config'));
+    expect(probe.env.RUMO_WORKER_SPAWN).toBe('process');
     expect(probe.env.HOME).toContain(first.tmp.root);
-    expect(second.env.AGENT_BOARD_CONFIG_DIR).toBe(second.tmp.path('cli', 'config'));
+    expect(second.env.RUMO_CONFIG_DIR).toBe(second.tmp.path('cli', 'config'));
   });
 
-  it('reports a failing board init with its output', async () => {
+  it('reports a failing rumo init with its output', async () => {
     const user = await noLoginUser(server);
     const keyCalls = recordingUser({ 'client.keys.get': { setup: null } });
     const key = await unlockedKey(server, keyCalls.user, DEFAULT_PASSPHRASE);
     await expect(
       enrolledMachine({ url: server.url, tmp }, user, { key, name: 'gamma', initArgs: ['--fail'] }),
-    ).rejects.toThrow(/board init exited 3/);
+    ).rejects.toThrow(/rumo init exited 3/);
   });
 
-  it('skips board init on request and can read events as the machine', async () => {
+  it('skips rumo init on request and can read events as the machine', async () => {
     const user = await noLoginUser(server);
     const keyCalls = recordingUser({ 'client.keys.get': { setup: null } });
     const key = await unlockedKey(server, keyCalls.user, DEFAULT_PASSPHRASE);

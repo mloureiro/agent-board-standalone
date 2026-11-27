@@ -199,10 +199,10 @@ importers:
 
   apps/api:
     dependencies:
-      '@agent-board/contract':
+      '@rumo/contract':
         specifier: workspace:^1.0.0
         version: link:../../packages/contract
-      '@agent-board/sealing':
+      '@rumo/sealing':
         specifier: workspace:^1.0.0
         version: link:../../packages/sealing
       '@electric-sql/pglite':
@@ -257,10 +257,10 @@ importers:
 
   apps/cli:
     dependencies:
-      '@agent-board/contract':
+      '@rumo/contract':
         specifier: workspace:^1.0.0
         version: link:../../packages/contract
-      '@agent-board/sealing':
+      '@rumo/sealing':
         specifier: workspace:^1.0.0
         version: link:../../packages/sealing
       '@clack/prompts':
@@ -279,7 +279,7 @@ importers:
 
   apps/client-app:
     dependencies:
-      '@agent-board/web':
+      '@rumo/web':
         specifier: workspace:^0.0.0
         version: link:../web
     devDependencies:
@@ -307,10 +307,10 @@ importers:
 
   apps/migrate:
     dependencies:
-      '@agent-board/contract':
+      '@rumo/contract':
         specifier: workspace:^1.0.0
         version: link:../../packages/contract
-      '@agent-board/sealing':
+      '@rumo/sealing':
         specifier: workspace:^1.0.0
         version: link:../../packages/sealing
       pg:
@@ -341,7 +341,7 @@ importers:
 
   apps/mobile:
     dependencies:
-      '@agent-board/web':
+      '@rumo/web':
         specifier: workspace:^0.0.0
         version: link:../web
     devDependencies:
@@ -360,7 +360,7 @@ importers:
 
   apps/server-app:
     dependencies:
-      '@agent-board/api':
+      '@rumo/api':
         specifier: workspace:^0.0.0
         version: link:../api
     devDependencies:
@@ -370,10 +370,10 @@ importers:
 
   apps/web:
     dependencies:
-      '@agent-board/contract':
+      '@rumo/contract':
         specifier: workspace:^1.0.0
         version: link:../../packages/contract
-      '@agent-board/sealing':
+      '@rumo/sealing':
         specifier: workspace:^1.0.0
         version: link:../../packages/sealing
       '@dnd-kit/core':
@@ -446,10 +446,10 @@ importers:
 
   e2e:
     dependencies:
-      '@agent-board/contract':
+      '@rumo/contract':
         specifier: workspace:^1.0.0
         version: link:../packages/contract
-      '@agent-board/sealing':
+      '@rumo/sealing':
         specifier: workspace:^1.0.0
         version: link:../packages/sealing
     devDependencies:

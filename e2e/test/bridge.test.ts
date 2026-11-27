@@ -2,26 +2,26 @@ import path from 'node:path';
 import vm from 'node:vm';
 
 import type { BrowserContext } from '@playwright/test';
-import { TOKEN_PATTERN, buildHandover, routes } from '@agent-board/contract';
+import { TOKEN_PATTERN, buildHandover, routes } from '@rumo/contract';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createBridgeHost, refusedBridgePath, type BridgeHost } from '../src/fakes/bridge/host.js';
 import { bridgeInitScript } from '../src/fakes/bridge/inject.js';
-import type { AgentBoardBridge } from '../src/fakes/bridge/types.js';
+import type { RumoBridge } from '../src/fakes/bridge/types.js';
 import { startApi, type ApiHandle } from '../src/harness/api.js';
 import { createPgliteDatabase } from '../src/harness/database.js';
 import { E2E_ROOT } from '../src/harness/paths.js';
 import { createTmp, type Tmp } from '../src/harness/tmp.js';
 
 const fakeApi = path.join(E2E_ROOT, 'test', 'fixtures', 'fake-api.ts');
-const originalBin = process.env.AGENT_BOARD_API_BIN;
+const originalBin = process.env.RUMO_API_BIN;
 const TOKEN_ANYWHERE = /(abs|abc|abm)_[A-Za-z0-9_-]{43}/;
 
 let api: ApiHandle;
 let tmp: Tmp;
 
 beforeAll(async () => {
-  process.env.AGENT_BOARD_API_BIN = fakeApi;
+  process.env.RUMO_API_BIN = fakeApi;
   tmp = createTmp('bridge');
   api = await startApi({ tmp, database: createPgliteDatabase(tmp), auth: 'no-login' });
 });
@@ -29,8 +29,8 @@ beforeAll(async () => {
 afterAll(async () => {
   await api.stop();
   tmp.remove();
-  if (originalBin === undefined) delete process.env.AGENT_BOARD_API_BIN;
-  else process.env.AGENT_BOARD_API_BIN = originalBin;
+  if (originalBin === undefined) delete process.env.RUMO_API_BIN;
+  else process.env.RUMO_API_BIN = originalBin;
 });
 
 interface SeenRequest {
@@ -277,7 +277,7 @@ describe('window scope', () => {
 describe('page side', () => {
   interface Page {
     window: Record<string, unknown>;
-    bridge: AgentBoardBridge;
+    bridge: RumoBridge;
     host: BridgeHost;
   }
 
@@ -291,7 +291,7 @@ describe('page side', () => {
         );
       });
     vm.runInNewContext(bridgeInitScript(), { window, ReadableStream, TextEncoder });
-    return { window, bridge: window.agentBoardBridge as AgentBoardBridge, host };
+    return { window, bridge: window.rumoBridge as RumoBridge, host };
   }
 
   it('installs a frozen bridge the page cannot replace', () => {
@@ -299,7 +299,7 @@ describe('page side', () => {
     expect(Object.isFrozen(bridge)).toBe(true);
     expect(() => {
       'use strict';
-      window.agentBoardBridge = {};
+      window.rumoBridge = {};
     }).toThrow();
   });
 

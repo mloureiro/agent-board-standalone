@@ -5,10 +5,10 @@ use std::path::PathBuf;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use agent_board_server_core::control::ControlClient;
-use agent_board_server_core::log_file::{AppLog, LogFile};
-use agent_board_server_core::pairing::{self, VALIDITY};
-use agent_board_server_core::redact::{MASK, redact};
+use rumo_server_core::control::ControlClient;
+use rumo_server_core::log_file::{AppLog, LogFile};
+use rumo_server_core::pairing::{self, VALIDITY};
+use rumo_server_core::redact::{MASK, redact};
 use serde_json::json;
 
 fn serve(status: u16, body: &'static str) -> (tempfile::TempDir, PathBuf) {

@@ -1,4 +1,4 @@
-import { doctorReport } from '@agent-board/contract';
+import { doctorReport } from '@rumo/contract';
 import type { Command } from 'commander';
 
 import { formatResult, hasFailure, runChecks, summary } from '../../doctor/index.js';

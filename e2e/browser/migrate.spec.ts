@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { bindings, isBlindIndex, isEnvelope } from '@agent-board/sealing';
+import { bindings, isBlindIndex, isEnvelope } from '@rumo/sealing';
 
 import { unlockedKey } from '../src/fixtures/keys.js';
 import { UNLOCK_NAMES, unlockInPage } from '../src/fixtures/browser.js';

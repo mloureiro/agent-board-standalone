@@ -87,10 +87,10 @@ describe('exit codes', () => {
     });
   });
 
-  it('[cli-001] exits 2 on a usage error and writes board: <message>', async () => {
+  it('[cli-001] exits 2 on a usage error and writes rumo: <message>', async () => {
     const test = runtime();
     expect(await runCli(['nosuch'], test.rt)).toBe(2);
-    expect(test.captured.stderr).toMatch(/^board: unknown command 'nosuch'/);
+    expect(test.captured.stderr).toMatch(/^rumo: unknown command 'nosuch'/);
     expect(await runCli(['version', '--nosuch'], test.rt)).toBe(2);
     expect(await runCli(['init'], test.rt)).toBe(2);
   });
@@ -101,7 +101,7 @@ describe('exit codes', () => {
     expect(test.captured.stderr).toMatch(/invalid profile name/);
   });
 
-  it('[cli-001] exits 1 with board: <message> for any other failure', async () => {
+  it('[cli-001] exits 1 with rumo: <message> for any other failure', async () => {
     const test = runtime();
     expect(
       await runCli(
@@ -117,7 +117,7 @@ describe('exit codes', () => {
         test.rt,
       ),
     ).toBe(1);
-    expect(test.captured.stderr).toMatch(/^board: token file \/tmp\/none does not exist\n$/);
+    expect(test.captured.stderr).toMatch(/^rumo: token file \/tmp\/none does not exist\n$/);
   });
 
   it('[cli-001] keeps the code of a reported failure and of a usage error', async () => {
@@ -126,17 +126,17 @@ describe('exit codes', () => {
     expect(new CliError('x').exitCode).toBe(1);
   });
 
-  it('prints help and exits 0 for --help, --version and a bare board', async () => {
+  it('prints help and exits 0 for --help, --version and a bare rumo', async () => {
     const test = runtime();
     expect(await runCli(['--help'], test.rt)).toBe(0);
     expect(await runCli(['--version'], test.rt)).toBe(0);
     expect(await runCli([], test.rt)).toBe(0);
-    expect(test.captured.stdout).toContain('Usage: board');
-    expect(test.captured.stdout).toMatch(/board 0\.0\.0 \(contract 1\)/);
+    expect(test.captured.stdout).toContain('Usage: rumo');
+    expect(test.captured.stdout).toMatch(/rumo 0\.0\.0 \(contract 1\)/);
   });
 });
 
-describe('board version', () => {
+describe('rumo version', () => {
   it('prints only the CLI facts when no server is configured', async () => {
     const test = runtime();
     expect(await runCli(['version'], test.rt)).toBe(0);
@@ -169,7 +169,7 @@ describe('board version', () => {
   });
 });
 
-describe('board init', () => {
+describe('rumo init', () => {
   it('writes server.json, env with mode 600 and config.yaml, taking the machine name from the server', async () => {
     const server = await board();
     const test = runtime();
@@ -325,7 +325,7 @@ describe('board init', () => {
 
   it('refuses inside a run and writes nothing', async () => {
     const server = await board();
-    const test = runtime({ env: { AGENT_BOARD_TASK: 'tsk_00000001' } });
+    const test = runtime({ env: { RUMO_TASK: 'tsk_00000001' } });
     expect(await runCli(initArgs(server.url, secrets(test, server)), test.rt)).toBe(1);
     expect(test.captured.stderr).toMatch(/inside a board run/);
     expect(existsSync(test.path('config'))).toBe(false);
@@ -340,15 +340,15 @@ describe('profiles', () => {
     const first = secrets(test, server);
     expect(await runCli(['--profile', 'a', ...initArgs(server.url, first)], test.rt)).toBe(0);
     const second = secrets(test, other);
-    const withEnv = { ...test.rt, env: { ...test.rt.env, AGENT_BOARD_PROFILE: 'b' } };
+    const withEnv = { ...test.rt, env: { ...test.rt.env, RUMO_PROFILE: 'b' } };
     expect(await runCli(initArgs(other.url, second), withEnv)).toBe(0);
 
-    const a = test.path('xdg-config', 'agent-board', 'profiles', 'a');
-    const b = test.path('xdg-config', 'agent-board', 'profiles', 'b');
+    const a = test.path('xdg-config', 'rumo', 'profiles', 'a');
+    const b = test.path('xdg-config', 'rumo', 'profiles', 'b');
     expect(readFileSync(path.join(a, 'server.json'), 'utf8')).toContain(server.url);
     expect(readFileSync(path.join(b, 'server.json'), 'utf8')).toContain(other.url);
-    expect(existsSync(test.path('xdg-state', 'agent-board', 'profiles', 'a'))).toBe(true);
-    expect(existsSync(test.path('xdg-config', 'agent-board', 'profiles', 'default'))).toBe(false);
+    expect(existsSync(test.path('xdg-state', 'rumo', 'profiles', 'a'))).toBe(true);
+    expect(existsSync(test.path('xdg-config', 'rumo', 'profiles', 'default'))).toBe(false);
   });
 
   it('creates nothing for an invalid profile', async () => {

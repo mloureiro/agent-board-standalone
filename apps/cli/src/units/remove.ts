@@ -49,8 +49,8 @@ function otherProfilesInstalled(ctx: Context, directory: string): boolean {
   if (!existsSync(directory)) return false;
   const own = ctx.dirs.profile;
   return readdirSync(directory).some((name) => {
-    const unit = /^agent-board-([a-z0-9][a-z0-9-]*)-dispatch\.service$/.exec(name)?.[1];
-    const agent = /^agent-board\.([a-z0-9][a-z0-9-]*)\.dispatch\.plist$/.exec(name)?.[1];
+    const unit = /^rumo-([a-z0-9][a-z0-9-]*)-dispatch\.service$/.exec(name)?.[1];
+    const agent = /^rumo\.([a-z0-9][a-z0-9-]*)\.dispatch\.plist$/.exec(name)?.[1];
     const found = unit ?? agent;
     return found !== undefined && found !== own;
   });
@@ -99,7 +99,7 @@ async function stopsFor(
 }
 
 export async function runUninstall(ctx: Context, options: UninstallOptions): Promise<void> {
-  if (ctx.inRun) throw new CliError('`board uninstall` cannot run inside a board run');
+  if (ctx.inRun) throw new CliError('`rumo uninstall` cannot run inside a board run');
   const platform = requireUnitPlatform(ctx.rt, 'uninstall');
   const directory = unitDirectory(ctx.rt, platform);
   if (options.includeOptional === true) {
@@ -139,7 +139,7 @@ export async function runUninstall(ctx: Context, options: UninstallOptions): Pro
     else {
       failed = true;
       ctx.out(
-        `could not stop ${path.basename(stop.file)}: ${stop.program} exited ${result.code}; its file is kept, stop it by hand and run board uninstall again`,
+        `could not stop ${path.basename(stop.file)}: ${stop.program} exited ${result.code}; its file is kept, stop it by hand and run rumo uninstall again`,
       );
     }
   }
@@ -149,7 +149,7 @@ export async function runUninstall(ctx: Context, options: UninstallOptions): Pro
     else await runTool(ctx.rt, 'systemctl', ['--user', 'daemon-reload']);
   }
 
-  if (failed) ctx.out(`kept ${installedBoard(ctx.rt)} so board uninstall can be run again`);
+  if (failed) ctx.out(`kept ${installedBoard(ctx.rt)} so rumo uninstall can be run again`);
   else if (!otherProfilesInstalled(ctx, directory)) remove(installedBoard(ctx.rt), false);
 
   if (options.includeOptional === true) {
@@ -171,5 +171,5 @@ export async function runUninstall(ctx: Context, options: UninstallOptions): Pro
     }
   }
   ctx.out('Workers that are running keep running until they end.');
-  if (failed) throw new ReportedFailure(EXIT.failure, 'board uninstall did not finish');
+  if (failed) throw new ReportedFailure(EXIT.failure, 'rumo uninstall did not finish');
 }

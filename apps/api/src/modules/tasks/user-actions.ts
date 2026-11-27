@@ -1,4 +1,4 @@
-import type { NoteText, Priority } from '@agent-board/contract';
+import type { NoteText, Priority } from '@rumo/contract';
 import { and, eq } from 'drizzle-orm';
 
 import { note, task } from '../../db/schema/index.js';

@@ -1,5 +1,5 @@
-import { forkRoute, taskId } from '@agent-board/contract';
-import { bindings, seal } from '@agent-board/sealing';
+import { forkRoute, taskId } from '@rumo/contract';
+import { bindings, seal } from '@rumo/sealing';
 
 import { UsageError } from '../../errors.js';
 import { checkedSize } from '../../domain/rules.js';

@@ -29,9 +29,9 @@ export interface AssembleOptions {
 }
 
 const BUILD_HINTS = {
-  api: 'pnpm --filter @agent-board/api run build:executable',
+  api: 'pnpm --filter @rumo/api run build:executable',
   cli: 'node apps/cli/scripts/compile.ts --target darwin-arm64',
-  web: 'pnpm --filter @agent-board/web run build',
+  web: 'pnpm --filter @rumo/web run build',
   migrations: 'the API migration journal is part of the repository',
   apiManifest: 'the API package.json is part of the repository',
   cliManifest: 'the CLI package.json is part of the repository',
@@ -109,9 +109,9 @@ export async function assemble(options: AssembleOptions): Promise<void> {
 
 function build(): void {
   const steps: [string, string[]][] = [
-    ['pnpm', ['--filter', '@agent-board/api', 'run', 'build:executable']],
+    ['pnpm', ['--filter', '@rumo/api', 'run', 'build:executable']],
     ['node', ['apps/cli/scripts/compile.ts', '--target', 'darwin-arm64']],
-    ['pnpm', ['--filter', '@agent-board/web', 'run', 'build']],
+    ['pnpm', ['--filter', '@rumo/web', 'run', 'build']],
   ];
   for (const [command, args] of steps) {
     const result = spawnSync(command, args, { cwd: REPO_ROOT, stdio: 'inherit' });

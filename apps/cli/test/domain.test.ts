@@ -134,7 +134,7 @@ describe('the files a command reads', () => {
     expect(() => readNoteFile(file)).toThrow('hard link');
     expect(() => readNoteFile(directory)).toThrow(UsageError);
     expect(() => readNoteFile(tmpFile('x'.repeat(1024 * 1024 + 1)))).toThrow('1 MiB');
-    expect(() => readNoteFile('/tmp/board-cli-test-missing/none')).toThrow('cannot read');
+    expect(() => readNoteFile('/tmp/rumo-cli-test-missing/none')).toThrow('cannot read');
   });
 
   it('refuses a named pipe without waiting for a writer', () => {

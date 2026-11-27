@@ -9,7 +9,7 @@ import {
   type CollisionDetection,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import type { TaskStatus } from '@agent-board/contract';
+import type { TaskStatus } from '@rumo/contract';
 import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 
 import type { DropTarget } from './columns.js';

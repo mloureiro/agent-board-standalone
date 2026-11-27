@@ -1,5 +1,5 @@
-use agent_board_client_core::ports::{ByteStream, PortError};
 use futures_util::StreamExt;
+use rumo_client_core::ports::{ByteStream, PortError};
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicU64, Ordering};

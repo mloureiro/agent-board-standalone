@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 
-import { buildHandover } from '@agent-board/contract';
+import { buildHandover } from '@rumo/contract';
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 
 import { createBridgeHost, type BridgeHost } from '../src/fakes/bridge/host.js';

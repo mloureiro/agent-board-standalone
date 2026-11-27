@@ -9,8 +9,8 @@ import {
   type ScheduleDraft,
   type TaskDraft,
   type WireTask,
-} from '@agent-board/contract';
-import { bindings, blindIndex, seal, type Keys } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { bindings, blindIndex, seal, type Keys } from '@rumo/sealing';
 
 import { checkedIcon, checkedLabels, checkedLane, checkedSize } from '../../domain/rules.js';
 import { localTime } from '../../domain/time.js';
@@ -118,7 +118,7 @@ async function placement(ctx: Context, s: Session, repeating: boolean): Promise<
   });
   if (repeating && directoryId === null) {
     throw new UsageError(
-      'a schedule runs in a listed directory of this machine: run "board dirs add" in it, then schedule from there',
+      'a schedule runs in a listed directory of this machine: run "rumo dirs add" in it, then schedule from there',
     );
   }
   return { directoryId, projectId };
@@ -324,9 +324,9 @@ function polishPrompt(task: { id: string; title: string }): string {
   return [
     `Polish the prompt of task ${task.id}.`,
     '',
-    `Read it with "board show ${task.id}". Rewrite the prompt so that an agent with no other context can carry it out: say what to do, where, and how to tell it is done. Keep the author's intent and every concrete detail.`,
+    `Read it with "rumo show ${task.id}". Rewrite the prompt so that an agent with no other context can carry it out: say what to do, where, and how to tell it is done. Keep the author's intent and every concrete detail.`,
     '',
-    `Write the polished prompt to a file in /tmp, then post it with: board polish ${task.id} --title "<a title of one line>" --file <that file>`,
+    `Write the polished prompt to a file in /tmp, then post it with: rumo polish ${task.id} --title "<a title of one line>" --file <that file>`,
   ].join('\n');
 }
 
@@ -395,7 +395,7 @@ export async function runSchedule(
   flags: ScheduleFlags,
   words: readonly string[],
 ): Promise<void> {
-  refuseInRun(ctx, 'board schedule');
+  refuseInRun(ctx, 'rumo schedule');
   const args = parseScheduleArgs(flags, words, new Date());
   const fields = checkedFields(args);
   const s = await session(ctx);

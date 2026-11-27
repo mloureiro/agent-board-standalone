@@ -1,4 +1,4 @@
-import { TASK_STATUSES, type TaskStatus } from '@agent-board/contract';
+import { TASK_STATUSES, type TaskStatus } from '@rumo/contract';
 
 import { cardUid, type BoardCard } from './card-model.js';
 

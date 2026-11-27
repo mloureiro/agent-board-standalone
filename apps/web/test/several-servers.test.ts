@@ -1,8 +1,8 @@
-import { CONTRACT, MIN_SERVER } from '@agent-board/contract';
+import { CONTRACT, MIN_SERVER } from '@rumo/contract';
 import { screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { AgentBoardBridge } from '../src/bridge/index.js';
+import type { RumoBridge } from '../src/bridge/index.js';
 import {
   checkConnection,
   createBrowserRegistry,
@@ -297,7 +297,7 @@ describe('transports', () => {
   });
 
   it('[web-101] a wrapper gets the native transport for every server', () => {
-    const bridge = { kind: 'client-app' } as AgentBoardBridge;
+    const bridge = { kind: 'client-app' } as RumoBridge;
     for (const url of [`${PAGE_ORIGIN}/`, 'https://other.example/']) {
       expect(transportFor(entry(url), { pageOrigin: PAGE_ORIGIN, bridge }).kind).toBe('native');
     }
@@ -309,7 +309,7 @@ describe('transports', () => {
       headers: { 'content-type': 'text/event-stream' },
       body: new Response('event: changed\ndata: {}\n\n').body,
     }));
-    const bridge = { kind: 'mobile', serverFetch } as unknown as AgentBoardBridge;
+    const bridge = { kind: 'mobile', serverFetch } as unknown as RumoBridge;
     const transport = transportFor(entry('https://other.example/'), {
       pageOrigin: PAGE_ORIGIN,
       bridge,
@@ -374,7 +374,7 @@ describe('server namespaces', () => {
   const idb = async (): Promise<string[]> =>
     (await indexedDB.databases()).flatMap((database) => (database.name ? [database.name] : []));
 
-  it('[web-102] each server owns an ab:<id>: key prefix and an agent-board:<id> database', async () => {
+  it('[web-102] each server owns an ab:<id>: key prefix and an rumo:<id> database', async () => {
     const one = serverNamespace('one');
     const two = serverNamespace('two');
     one.local.set('draft:new', 'a');
@@ -384,7 +384,7 @@ describe('server namespaces', () => {
 
     expect(localStorage.getItem('ab:one:draft:new')).toBe('a');
     expect(localStorage.getItem('ab:two:draft:new')).toBe('b');
-    expect(await idb()).toEqual(expect.arrayContaining(['agent-board:one', 'agent-board:two']));
+    expect(await idb()).toEqual(expect.arrayContaining(['rumo:one', 'rumo:two']));
     expect(await one.secrets.names()).toEqual(['client-token']);
     expect(one.local.keys()).toEqual(['draft:new']);
   });
@@ -405,7 +405,7 @@ describe('server namespaces', () => {
     expect(await registry.remove(first.entry.id)).toBe(true);
 
     expect(a.local.keys()).toEqual([]);
-    expect(await idb()).not.toContain(`agent-board:${first.entry.id}`);
+    expect(await idb()).not.toContain(`rumo:${first.entry.id}`);
     expect(b.local.get('draft:new')).toBe('b');
     expect(await b.secrets.get('client-token')).toBe('y');
     expect(localStorage.getItem('ab:other-thing')).toBe('kept');
@@ -467,7 +467,7 @@ describe('server namespaces', () => {
         return true;
       }),
       renameServer: vi.fn(async () => undefined),
-    } as unknown as AgentBoardBridge;
+    } as unknown as RumoBridge;
     const draftsAtRemoval: string[] = [];
     const registry = createNativeRegistry(bridge);
     serverNamespace('native-1').local.set('draft:new', 'x');

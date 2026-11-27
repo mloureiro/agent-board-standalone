@@ -1,4 +1,4 @@
-import { authLogoutRoute } from '@agent-board/contract';
+import { authLogoutRoute } from '@rumo/contract';
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from 'react';
 

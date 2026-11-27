@@ -1,14 +1,14 @@
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { taskId } from '@agent-board/contract';
+import { taskId } from '@rumo/contract';
 
 import type { Runtime } from '../runtime.js';
 
 const GIT_TIMEOUT_MS = 10_000;
 const GIT_MAX_BYTES = 64 * 1024;
 
-export const lockReason = (task: string): string => `agent-board task ${task}`;
+export const lockReason = (task: string): string => `rumo task ${task}`;
 
 export interface WorktreeLocks {
   hold(task: string, dir: string): Promise<string | undefined>;

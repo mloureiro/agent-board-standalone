@@ -1,4 +1,4 @@
-import type { RouteRequest, RouteResponse, routes } from '@agent-board/contract';
+import type { RouteRequest, RouteResponse, routes } from '@rumo/contract';
 import { eq } from 'drizzle-orm';
 
 import { task } from '../../db/schema/index.js';

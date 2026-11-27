@@ -44,7 +44,7 @@ export function requireInstallable(rt: Runtime): { binary: string; target: Updat
   const binary = compiledBinary(rt);
   if (binary === null) {
     throw new CliError(
-      'this board runs as a script, not as the compiled binary; self-update replaces the compiled binary only (install it with the install script)',
+      'this rumo runs as a script, not as the compiled binary; self-update replaces the compiled binary only (install it with the install script)',
     );
   }
   const target = updateTarget(rt.platform, rt.arch);
@@ -85,7 +85,7 @@ export async function installRelease(env: UpdateEnv, release: Release): Promise<
   const { binary, target } = requireInstallable(rt);
   if (readPendingMigration(dirs.state) !== null) {
     throw new CliError(
-      'a migration is pending; run `board self-update --resume` or `board self-update --rollback` first',
+      'a migration is pending; run `rumo self-update --resume` or `rumo self-update --rollback` first',
     );
   }
   if (env.dryRun) {
@@ -130,7 +130,7 @@ export async function installRelease(env: UpdateEnv, release: Release): Promise<
       rmSync(staging, { recursive: true, force: true });
     }
   });
-  env.out(`installed board ${release.version} at ${binary}`);
+  env.out(`installed rumo ${release.version} at ${binary}`);
   const profileArgs = ['--profile', dirs.profile];
   const code = await rt.spawnInteractive(binary, [...profileArgs, 'self-update', '--resume'], {
     cwd: rt.cwd(),
@@ -156,7 +156,7 @@ export async function resumeMigration(env: UpdateEnv): Promise<void> {
   pruneBackups(env.dirs.state);
   env.out(
     report.ran.length === 0
-      ? `board ${PART_VERSION} needs no local migration`
-      : `migrated ${report.ran.length} step(s) to board ${PART_VERSION}`,
+      ? `rumo ${PART_VERSION} needs no local migration`
+      : `migrated ${report.ran.length} step(s) to rumo ${PART_VERSION}`,
   );
 }

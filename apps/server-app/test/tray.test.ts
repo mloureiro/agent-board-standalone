@@ -59,7 +59,7 @@ const ORDER = [
   'quit',
 ];
 
-const BUNDLE_ID = 'dev.mloureiro.agent-board-client';
+const BUNDLE_ID = 'dev.mloureiro.rumo-client';
 
 describe('tray menu, handover and pairing through the headless runner', () => {
   let scratch: string;
@@ -93,8 +93,8 @@ describe('tray menu, handover and pairing through the headless runner', () => {
 
   function start(extra: Record<string, string> = {}): Session {
     const session = launch(root, {
-      AGENT_BOARD_SERVER_RESOURCES: resources.dir,
-      AGENT_BOARD_SUPERVISION_TIMINGS: FAST_TIMINGS,
+      RUMO_SERVER_RESOURCES: resources.dir,
+      RUMO_SUPERVISION_TIMINGS: FAST_TIMINGS,
       ...extra,
     });
     sessions.push(session);
@@ -191,7 +191,7 @@ describe('tray menu, handover and pairing through the headless runner', () => {
       quit: 'Quit',
     });
     expect(menu.badge).toBeNull();
-    expect(menu.tooltip).toBe('Agent Board Server');
+    expect(menu.tooltip).toBe('Rumo Server');
     session.send('quit');
     expect(await session.closed).toBe(0);
   });
@@ -288,7 +288,7 @@ describe('tray menu, handover and pairing through the headless runner', () => {
       (menu) => menu.badge === null && apiRunning(menu),
       'the mark to clear',
     );
-    expect(recovered.tooltip).toBe('Agent Board Server');
+    expect(recovered.tooltip).toBe('Rumo Server');
     session.send('quit');
     await session.closed;
   });
@@ -309,13 +309,13 @@ describe('tray menu, handover and pairing through the headless runner', () => {
   it('[server-app-014] Open board hands the server URL to the client app with the contract link', async () => {
     writeSettings(root, { port });
     const recorder = opener(0);
-    const session = start({ AGENT_BOARD_OPEN_PROGRAM: recorder.program });
+    const session = start({ RUMO_OPEN_PROGRAM: recorder.program });
     await untilMenu(session, apiRunning, 'the API running');
 
     const answer = await actionAnswer(session, 'open-board', 'open-board');
 
     const url = `http://127.0.0.1:${port}/`;
-    const link = `agentboard://open?v=1&url=${encodeURIComponent(url)}`;
+    const link = `rumo://open?v=1&url=${encodeURIComponent(url)}`;
     expect(answer).toMatchObject({
       ok: true,
       target: 'client-app',
@@ -329,7 +329,7 @@ describe('tray menu, handover and pairing through the headless runner', () => {
   it('[server-app-014] Open board falls back to the default browser when the client app is absent', async () => {
     writeSettings(root, { port });
     const recorder = opener(1);
-    const session = start({ AGENT_BOARD_OPEN_PROGRAM: recorder.program });
+    const session = start({ RUMO_OPEN_PROGRAM: recorder.program });
     await untilMenu(session, apiRunning, 'the API running');
 
     const answer = await actionAnswer(session, 'open-board', 'open-board');
@@ -337,7 +337,7 @@ describe('tray menu, handover and pairing through the headless runner', () => {
     const url = `http://127.0.0.1:${port}/`;
     expect(answer).toMatchObject({ ok: true, target: 'browser' });
     expect(recorder.calls()).toEqual([
-      ['-b', BUNDLE_ID, `agentboard://open?v=1&url=${encodeURIComponent(url)}`],
+      ['-b', BUNDLE_ID, `rumo://open?v=1&url=${encodeURIComponent(url)}`],
       [url],
     ]);
     session.send('quit');
@@ -346,9 +346,9 @@ describe('tray menu, handover and pairing through the headless runner', () => {
 
   it('[server-app-014] Open board is refused while the API is not running and runs nothing', async () => {
     writeSettings(root, { port });
-    rmSync(join(resources.dir, 'api/agent-board-api'));
+    rmSync(join(resources.dir, 'api/rumo-api'));
     const recorder = opener(0);
-    const session = start({ AGENT_BOARD_OPEN_PROGRAM: recorder.program });
+    const session = start({ RUMO_OPEN_PROGRAM: recorder.program });
 
     const answer = await actionAnswer(session, 'open-board', 'open-board');
 
@@ -430,7 +430,7 @@ describe('tray menu, handover and pairing through the headless runner', () => {
   it('[server-app-022] every tray action answers through the headless runner', async () => {
     writeSettings(root, { port, requestSignature: true });
     const recorder = opener(0);
-    const session = start({ AGENT_BOARD_OPEN_PROGRAM: recorder.program });
+    const session = start({ RUMO_OPEN_PROGRAM: recorder.program });
     await untilMenu(session, apiRunning, 'the API running');
     const fake = await fakeControlSocket(root, { pairCode: 'WXYZ-2345' });
     fakes.push(fake);

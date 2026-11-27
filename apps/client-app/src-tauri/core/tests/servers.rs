@@ -1,21 +1,21 @@
 mod common;
 
-use agent_board_client_core::address::AddressProblem;
-use agent_board_client_core::bridge::{BridgeError, Scope};
-use agent_board_client_core::files::DirStore;
-use agent_board_client_core::handover::{
+use common::*;
+use rumo_client_core::address::AddressProblem;
+use rumo_client_core::bridge::{BridgeError, Scope};
+use rumo_client_core::files::DirStore;
+use rumo_client_core::handover::{
     EarlyLinks, HandoverPlan, UNKNOWN_VERSION_MESSAGE, plan as plan_handover,
 };
-use agent_board_client_core::handshake::RETRY_DELAYS as HANDSHAKE_DELAYS;
-use agent_board_client_core::opening::{
+use rumo_client_core::handshake::RETRY_DELAYS as HANDSHAKE_DELAYS;
+use rumo_client_core::opening::{
     LaunchWindow, Opening, WindowAction, launch_plan, plan_open, window_error,
 };
-use agent_board_client_core::orphans::{orphans, sweep, tab_file_name};
-use agent_board_client_core::ports::{FileStore, PortError};
-use agent_board_client_core::removal::{Effect, RETRY_DELAYS, Removal};
-use agent_board_client_core::servers::{ASIDE_FILE, SERVERS_FILE, ServerError, Servers};
-use agent_board_client_core::tokens::{key_service, token_service};
-use common::*;
+use rumo_client_core::orphans::{orphans, sweep, tab_file_name};
+use rumo_client_core::ports::{FileStore, PortError};
+use rumo_client_core::removal::{Effect, RETRY_DELAYS, Removal};
+use rumo_client_core::servers::{ASIDE_FILE, SERVERS_FILE, ServerError, Servers};
+use rumo_client_core::tokens::{key_service, token_service};
 use std::time::Duration;
 
 const ALPHA: (&str, &str, &str) = (FIRST_ID, "Alpha", "https://board.example.test/");
@@ -461,8 +461,8 @@ fn client_app_002_page_names_are_capped_and_refuse_control_characters() {
     );
 }
 
-const LINK_A: &str = "agentboard://open?v=1&url=http%3A%2F%2Flocalhost%3A4000%2F";
-const LINK_B: &str = "agentboard://open?v=1&url=http%3A%2F%2Flocalhost%3A4001%2F";
+const LINK_A: &str = "rumo://open?v=1&url=http%3A%2F%2Flocalhost%3A4000%2F";
+const LINK_B: &str = "rumo://open?v=1&url=http%3A%2F%2Flocalhost%3A4001%2F";
 
 #[test]
 fn client_app_015_links_before_setup_are_held_then_handled() {
@@ -490,16 +490,16 @@ fn client_app_014_an_unacceptable_link_only_brings_the_list_forward() {
     let nothing = HandoverPlan::ShowList { message: None };
     for link in [
         "https://example.test/",
-        "agentboard://open?v=1&url=http%3A%2F%2F192.168.1.10%3A4000%2F",
-        "agentboard://open?v=1&url=http%3A%2F%2Fuser%3Asecret%40localhost%3A2%2F",
-        "agentboard://open?v=1",
+        "rumo://open?v=1&url=http%3A%2F%2F192.168.1.10%3A4000%2F",
+        "rumo://open?v=1&url=http%3A%2F%2Fuser%3Asecret%40localhost%3A2%2F",
+        "rumo://open?v=1",
     ] {
         assert_eq!(plan_handover([link], &listed), nothing, "{link}");
     }
     assert_eq!(plan_handover([], &listed), nothing);
     assert_eq!(
         plan_handover(
-            ["agentboard://open?v=2&url=http%3A%2F%2Flocalhost%3A1%2F"],
+            ["rumo://open?v=2&url=http%3A%2F%2Flocalhost%3A1%2F"],
             &listed
         ),
         HandoverPlan::ShowList {
@@ -508,10 +508,7 @@ fn client_app_014_an_unacceptable_link_only_brings_the_list_forward() {
     );
     assert_eq!(
         plan_handover(
-            [
-                "agentboard://open?v=2&url=http%3A%2F%2Flocalhost%3A1%2F",
-                LINK_A
-            ],
+            ["rumo://open?v=2&url=http%3A%2F%2Flocalhost%3A1%2F", LINK_A],
             &listed
         ),
         HandoverPlan::Open(id(FIRST_ID))
@@ -530,7 +527,7 @@ fn client_app_013_a_known_address_opens_and_an_unknown_one_is_added() {
     );
     assert_eq!(
         plan_handover(
-            ["agentboard://open?v=1&url=HTTP%3A%2F%2FLOCALHOST%3A4000"],
+            ["rumo://open?v=1&url=HTTP%3A%2F%2FLOCALHOST%3A4000"],
             &listed
         ),
         HandoverPlan::Open(id(FIRST_ID))

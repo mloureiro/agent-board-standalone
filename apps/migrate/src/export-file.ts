@@ -2,11 +2,7 @@ import { createWriteStream } from 'node:fs';
 import { once } from 'node:events';
 import { mkdir, rm } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import {
-  BOARD_EXPORT_FORMAT,
-  BOARD_EXPORT_VERSION,
-  parseBoardExportLine,
-} from '@agent-board/contract';
+import { BOARD_EXPORT_FORMAT, BOARD_EXPORT_VERSION, parseBoardExportLine } from '@rumo/contract';
 import { buildPlan, type PlanReport } from './plan.js';
 import { detectSourceVersion } from './source/detect.js';
 import { openSource } from './source/open.js';

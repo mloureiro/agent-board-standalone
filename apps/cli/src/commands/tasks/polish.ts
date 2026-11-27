@@ -1,4 +1,4 @@
-import { addNoteRoute, taskId } from '@agent-board/contract';
+import { addNoteRoute, taskId } from '@rumo/contract';
 
 import { UsageError } from '../../errors.js';
 import { checkedSize } from '../../domain/rules.js';
@@ -15,10 +15,10 @@ export async function runPolish(
   const run = ctx.runTask;
   if (run === null) {
     throw new UsageError(
-      'board polish only works inside a board run: it posts on the task the run is for',
+      'rumo polish only works inside a board run: it posts on the task the run is for',
     );
   }
-  if (!taskId.safeParse(run).success) throw new UsageError('AGENT_BOARD_TASK is not a task id');
+  if (!taskId.safeParse(run).success) throw new UsageError('RUMO_TASK is not a task id');
   const title = options.title.trim();
   if (title === '') throw new UsageError('--title needs a title');
   if (/[\r\n]/.test(title)) throw new UsageError('the polished title must be one line');

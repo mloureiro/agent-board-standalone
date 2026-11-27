@@ -3,8 +3,8 @@ import {
   SIGNATURE_MAX_SKEW_SECONDS,
   canonicalString,
   type AnyRoute,
-} from '@agent-board/contract';
-import { importPublicKey, verify } from '@agent-board/sealing';
+} from '@rumo/contract';
+import { importPublicKey, verify } from '@rumo/sealing';
 import type { FastifyRequest } from 'fastify';
 
 import type { ServerContext } from '../../context.js';

@@ -1,4 +1,4 @@
-import { BoardExportError } from '@agent-board/contract';
+import { BoardExportError } from '@rumo/contract';
 
 import {
   BoardImportRefusal,
@@ -15,7 +15,7 @@ export interface ImportOptions {
   err?: (text: string) => void;
 }
 
-const USAGE = 'usage: agent-board-api import --file <path>';
+const USAGE = 'usage: rumo-api import --file <path>';
 
 const fileOf = (args: readonly string[]): string | null => {
   const [flag, value, ...rest] = args;
@@ -42,7 +42,7 @@ export const runImport = async (
   const err = options.err ?? ((text: string) => process.stderr.write(text));
   const file = fileOf(args);
   if (file === null) {
-    err(`agent-board-api: ${USAGE}\n`);
+    err(`rumo-api: ${USAGE}\n`);
     return 2;
   }
   try {
@@ -60,7 +60,7 @@ export const runImport = async (
     return 0;
   } catch (error) {
     err(
-      `agent-board-api: import failed: ${isRefusal(error) ? error.message : error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`,
+      `rumo-api: import failed: ${isRefusal(error) ? error.message : error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`,
     );
     return 1;
   }

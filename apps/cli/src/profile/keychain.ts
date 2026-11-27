@@ -9,7 +9,7 @@ const MAX_BYTES = 64 * 1024;
 const ITEM_NOT_FOUND = 44;
 
 export function keychainService(profile: string): string {
-  return `agent-board.cli.${profile}`;
+  return `rumo.cli.${profile}`;
 }
 
 function assertMacos(rt: Pick<Runtime, 'platform'>): void {

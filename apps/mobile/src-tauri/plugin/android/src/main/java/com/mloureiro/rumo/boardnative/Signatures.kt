@@ -1,4 +1,4 @@
-package com.mloureiro.agentboard.boardnative
+package com.mloureiro.rumo.boardnative
 
 object Signatures {
     fun derToRaw(der: ByteArray): ByteArray {

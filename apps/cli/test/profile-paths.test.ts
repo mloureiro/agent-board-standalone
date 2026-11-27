@@ -12,9 +12,9 @@ describe('profile path table', () => {
       env: {},
       profile: 'default',
       expected: {
-        config: '/tmp/h/.config/agent-board/profiles/default',
-        state: '/tmp/h/.local/state/agent-board/profiles/default',
-        run: '/tmp/h/.local/state/agent-board/profiles/default/run',
+        config: '/tmp/h/.config/rumo/profiles/default',
+        state: '/tmp/h/.local/state/rumo/profiles/default',
+        run: '/tmp/h/.local/state/rumo/profiles/default/run',
       },
     },
     {
@@ -22,9 +22,9 @@ describe('profile path table', () => {
       env: { XDG_CONFIG_HOME: '/tmp/xc', XDG_STATE_HOME: '/tmp/xs' },
       profile: 'work',
       expected: {
-        config: '/tmp/xc/agent-board/profiles/work',
-        state: '/tmp/xs/agent-board/profiles/work',
-        run: '/tmp/xs/agent-board/profiles/work/run',
+        config: '/tmp/xc/rumo/profiles/work',
+        state: '/tmp/xs/rumo/profiles/work',
+        run: '/tmp/xs/rumo/profiles/work/run',
       },
     },
     {
@@ -32,17 +32,17 @@ describe('profile path table', () => {
       env: { XDG_CONFIG_HOME: 'rel', XDG_STATE_HOME: '' },
       profile: 'a',
       expected: {
-        config: '/tmp/h/.config/agent-board/profiles/a',
-        state: '/tmp/h/.local/state/agent-board/profiles/a',
-        run: '/tmp/h/.local/state/agent-board/profiles/a/run',
+        config: '/tmp/h/.config/rumo/profiles/a',
+        state: '/tmp/h/.local/state/rumo/profiles/a',
+        run: '/tmp/h/.local/state/rumo/profiles/a/run',
       },
     },
     {
       name: 'the three overrides replace the directories',
       env: {
-        AGENT_BOARD_CONFIG_DIR: '/tmp/oc',
-        AGENT_BOARD_STATE_DIR: '/tmp/os',
-        AGENT_BOARD_RUN_DIR: '/tmp/or',
+        RUMO_CONFIG_DIR: '/tmp/oc',
+        RUMO_STATE_DIR: '/tmp/os',
+        RUMO_RUN_DIR: '/tmp/or',
         XDG_CONFIG_HOME: '/tmp/xc',
       },
       profile: 'a',
@@ -50,10 +50,10 @@ describe('profile path table', () => {
     },
     {
       name: 'the run directory follows an overridden state directory',
-      env: { AGENT_BOARD_STATE_DIR: '/tmp/os' },
+      env: { RUMO_STATE_DIR: '/tmp/os' },
       profile: 'a',
       expected: {
-        config: '/tmp/h/.config/agent-board/profiles/a',
+        config: '/tmp/h/.config/rumo/profiles/a',
         state: '/tmp/os',
         run: '/tmp/os/run',
       },
@@ -78,16 +78,14 @@ describe('profile names', () => {
   );
 
   it('prefers the flag, then the environment, then the default', () => {
-    expect(selectProfile('flag', { AGENT_BOARD_PROFILE: 'env' })).toBe('flag');
-    expect(selectProfile(undefined, { AGENT_BOARD_PROFILE: 'env' })).toBe('env');
-    expect(selectProfile(undefined, { AGENT_BOARD_PROFILE: '' })).toBe(DEFAULT_PROFILE);
+    expect(selectProfile('flag', { RUMO_PROFILE: 'env' })).toBe('flag');
+    expect(selectProfile(undefined, { RUMO_PROFILE: 'env' })).toBe('env');
+    expect(selectProfile(undefined, { RUMO_PROFILE: '' })).toBe(DEFAULT_PROFILE);
     expect(selectProfile(undefined, {})).toBe(DEFAULT_PROFILE);
   });
 
   it('refuses an invalid name from either source', () => {
     expect(() => selectProfile('Bad', {})).toThrow(/invalid profile name/);
-    expect(() => selectProfile(undefined, { AGENT_BOARD_PROFILE: 'a/b' })).toThrow(
-      /invalid profile name/,
-    );
+    expect(() => selectProfile(undefined, { RUMO_PROFILE: 'a/b' })).toThrow(/invalid profile name/);
   });
 });

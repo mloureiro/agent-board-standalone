@@ -1,4 +1,4 @@
-import { ERROR_STATUS, routes, type ErrorCode } from '@agent-board/contract';
+import { ERROR_STATUS, routes, type ErrorCode } from '@rumo/contract';
 import type { FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
 

@@ -10,7 +10,7 @@ import {
   formatClientHeader,
   parseHandover,
   routes,
-} from '@agent-board/contract';
+} from '@rumo/contract';
 
 import { readSse } from '../../client/events.js';
 import { createRequestSigner, type RequestSigner } from '../../client/signer.js';

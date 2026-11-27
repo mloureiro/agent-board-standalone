@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { bindings, deriveKeys, generateDataKey, isEnvelope, seal } from '@agent-board/sealing';
+import { bindings, deriveKeys, generateDataKey, isEnvelope, seal } from '@rumo/sealing';
 import { sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 

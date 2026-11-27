@@ -1,4 +1,4 @@
-import type { Priority } from '@agent-board/contract';
+import type { Priority } from '@rumo/contract';
 
 import { readConfigObject } from '../config/file.js';
 import { isRecord } from '../domain/values.js';

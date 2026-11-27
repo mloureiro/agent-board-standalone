@@ -1,7 +1,7 @@
 import { existsSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { encodeDataKey, generateDataKey } from '@agent-board/sealing';
+import { encodeDataKey, generateDataKey } from '@rumo/sealing';
 import { describe, expect, it } from 'vitest';
 
 import { callOk, machineToken } from '../src/client/contract-client.js';
@@ -110,7 +110,7 @@ describe('machine revokes its own token', () => {
   });
 });
 
-describe('board uninstall', () => {
+describe('rumo uninstall', () => {
   const harness = useBoard({ parts: ['api', 'cli'], features: [], auth: 'no-login' });
 
   async function installed() {
@@ -149,8 +149,8 @@ describe('board uninstall', () => {
     const link = machine.tmp.path('home-link');
     symlinkSync(machine.tmp.home, link);
     for (const [variable, target] of [
-      ['AGENT_BOARD_CONFIG_DIR', machine.tmp.home],
-      ['AGENT_BOARD_STATE_DIR', link],
+      ['RUMO_CONFIG_DIR', machine.tmp.home],
+      ['RUMO_STATE_DIR', link],
     ] as const) {
       const before = snapshotOf([machine.tmp.home, dirs.config, dirs.state]);
       const result = await machine.cli(['uninstall', '--include-optional'], {
@@ -173,7 +173,7 @@ describe('board uninstall', () => {
   });
 });
 
-describe('board uninstall with the server stopped', () => {
+describe('rumo uninstall with the server stopped', () => {
   const harness = useBoard({ parts: ['api', 'cli'], features: [], auth: 'no-login' });
 
   it('[cli-052] still completes and reports the revocation failure', async () => {
@@ -317,7 +317,7 @@ describe('enrolment refusals', () => {
   });
 });
 
-describe('worker check in board doctor', () => {
+describe('worker check in rumo doctor', () => {
   const harness = useBoard({ parts: ['api', 'cli'], features: [], auth: 'no-login' });
 
   async function enrolled() {
@@ -354,7 +354,7 @@ describe('worker check in board doctor', () => {
     const { identity, run, stubLog, secrets } = await enrolled();
     const otherName = uniqueName('someone-else');
     const otherToken = await issueMachineToken(identity.user, otherName);
-    const { check, texts } = await tickAndDoctor(run, { AGENT_BOARD_TOKEN: otherToken }, stubLog);
+    const { check, texts } = await tickAndDoctor(run, { RUMO_TOKEN: otherToken }, stubLog);
     expect(check?.level).not.toBe('ok');
     expect(check?.message).toMatch(/refused/i);
     expect(check?.message).toContain(otherName);

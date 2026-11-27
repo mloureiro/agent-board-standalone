@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { bindings } from '@agent-board/sealing';
+import { bindings } from '@rumo/sealing';
 
 import { useBoard } from '../src/harness/playwright.js';
 import {
@@ -106,7 +106,7 @@ test.describe('new task form', () => {
       ['dirs', 'add', projectDirectory],
     ]) {
       const done = await worker.machine.cli(args);
-      if (done.code !== 0) throw new Error(`board ${args.join(' ')} exited ${done.code}`);
+      if (done.code !== 0) throw new Error(`rumo ${args.join(' ')} exited ${done.code}`);
     }
     const title = uniqueTitle('full form');
     const values = {
