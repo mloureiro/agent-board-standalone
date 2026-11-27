@@ -108,6 +108,7 @@ describe('row isolation under PGlite', () => {
     expect(Object.keys(database).sort()).toEqual([
       'close',
       'kind',
+      'vacuum',
       'withOwner',
       'withOwners',
       'withSystem',
