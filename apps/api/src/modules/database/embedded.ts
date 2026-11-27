@@ -2,11 +2,13 @@ import { readFile } from 'node:fs/promises';
 
 import { PGlite } from '@electric-sql/pglite';
 
+import { PGLITE_START_PARAMS } from './pglite-memory.js';
 import type { PgliteFactory } from './pglite.js';
 
 export interface EmbeddedAssets {
   pglite?: PgliteFactory;
   migrations?: string;
+  collectGarbage?: () => void;
 }
 
 let assets: EmbeddedAssets = {};
@@ -34,4 +36,5 @@ export const embeddedPglite =
       pgliteWasmModule: await WebAssembly.compile(await bytes(files.wasm)),
       initdbWasmModule: await WebAssembly.compile(await bytes(files.initdb)),
       fsBundle: new Blob([await bytes(files.data)]),
+      startParams: [...PGLITE_START_PARAMS],
     });
