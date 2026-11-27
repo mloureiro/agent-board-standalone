@@ -19,7 +19,7 @@ import {
 } from '../../directories/index.js';
 import { isRecord } from '../../domain/values.js';
 import { ApiError } from '../../transport/errors.js';
-import type { Session } from '../../transport/session.js';
+import { withoutInputs, type Session } from '../../transport/session.js';
 import type { Context } from '../context.js';
 import { refuseInRun, session } from '../tasks/support.js';
 
@@ -206,7 +206,7 @@ function entryAt(ctx: Context, given: string | undefined): LocalDirectory {
 
 async function openWork(s: Session, entry: LocalDirectory): Promise<string[]> {
   const found: string[] = [];
-  const { tasks } = await s.query(listTasksRoute, {});
+  const { tasks } = await s.query(listTasksRoute, withoutInputs(s));
   const tasksHere = tasks.filter((task) => task.directoryId === entry.id && task.status !== 'done');
   if (tasksHere.length > 0) found.push(`${tasksHere.length} open task(s)`);
   if (s.supports('schedules')) {

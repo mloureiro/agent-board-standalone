@@ -75,12 +75,14 @@ export interface PrRefreshDeps {
 export async function refreshPrStatesIfDue(
   deps: PrRefreshDeps,
   s: Session,
-  tasks: readonly OpenTask[],
+  listTasks: () => Promise<readonly OpenTask[]>,
 ): Promise<number> {
-  const urls = prUrlsToCheck(tasks);
-  if (urls.length === 0 || findProgram(deps.rt, 'gh') === undefined) return 0;
+  if (findProgram(deps.rt, 'gh') === undefined) return 0;
   const last = lastPrRefresh(deps.stateDir);
   if (last !== null && deps.now.getTime() - last.getTime() < PR_REFRESH_INTERVAL_MS) return 0;
+  const tasks = await listTasks();
+  const urls = prUrlsToCheck(tasks);
+  if (urls.length === 0) return 0;
   if (!deps.dryRun) markPrRefresh(deps.stateDir, deps.now);
   const states = new Map<string, PrState>();
   const deadline = Date.now() + (deps.budgetMs ?? PR_REFRESH_BUDGET_MS);

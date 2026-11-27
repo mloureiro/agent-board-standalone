@@ -1,7 +1,7 @@
 import { getTaskRoute, listTasksRoute } from '@agent-board/contract';
 
 import { UsageError } from '../../errors.js';
-import { openSession, type Session } from '../../transport/session.js';
+import { openSession, withoutInputs, type Session } from '../../transport/session.js';
 import type { Context } from '../context.js';
 import { resolveTaskId } from '../ids.js';
 import { openTask, type OpenTask } from './open.js';
@@ -19,7 +19,7 @@ export function resolveTask(ctx: Context, s: Session, input: string): Promise<st
     inRun: ctx.inRun,
     serverUrl: s.url,
     listIds: async () => {
-      const { tasks } = await s.query(listTasksRoute, { all: true });
+      const { tasks } = await s.query(listTasksRoute, { all: true, ...withoutInputs(s) });
       return tasks.map((task) => task.id);
     },
   });

@@ -1,7 +1,7 @@
 import { listSchedulesRoute, listTasksRoute } from '@agent-board/contract';
 
 import type { Context } from '../commands/context.js';
-import { openSession } from '../transport/session.js';
+import { openSession, withoutInputs } from '../transport/session.js';
 
 export const COMPLETION_KINDS = ['tasks', 'schedules'] as const;
 export type CompletionKind = (typeof COMPLETION_KINDS)[number];
@@ -10,7 +10,7 @@ export const COMPLETION_BUDGET_MS = 2_000;
 async function fetchIds(ctx: Context, kind: CompletionKind): Promise<string[]> {
   const s = await openSession({ rt: ctx.rt, dirs: ctx.dirs, dryRun: false });
   if (kind === 'tasks') {
-    const { tasks } = await s.query(listTasksRoute, { all: true });
+    const { tasks } = await s.query(listTasksRoute, { all: true, ...withoutInputs(s) });
     return tasks.map((task) => task.id);
   }
   const { schedules } = await s.query(listSchedulesRoute, {});

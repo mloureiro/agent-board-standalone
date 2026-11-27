@@ -13,6 +13,7 @@ import { applyBoardAgents } from '../agents/shared.js';
 import { applyFeedRequests } from '../feeds/requests.js';
 import { readLocalDirectories } from '../directories/local.js';
 import { ApiError } from '../transport/errors.js';
+import { withoutInputs } from '../transport/session.js';
 import { WatchStore } from '../watch/store.js';
 import { scanWatches, watchHeartbeatFresh } from '../watch/scan.js';
 import type { TickEnv } from './env.js';
@@ -134,7 +135,9 @@ export async function runTick(env: TickEnv): Promise<TickResult> {
   }
 
   const listed = await Promise.all(
-    (await s.query(listTasksRoute, { all: false })).tasks.map((wire) => openTask(s.keys, wire)),
+    (await s.query(listTasksRoute, { all: false, ...withoutInputs(s) })).tasks.map((wire) =>
+      openTask(s.keys, wire),
+    ),
   );
   const store = new WatchStore(ctx.dirs.state);
 
@@ -379,7 +382,12 @@ export async function runTick(env: TickEnv): Promise<TickResult> {
     await refreshPrStatesIfDue(
       { rt: ctx.rt, stateDir: ctx.dirs.state, now: env.now(), dryRun: ctx.dryRun, log },
       s,
-      listed,
+      async () =>
+        Promise.all(
+          (await s.query(listTasksRoute, { all: false })).tasks.map((wire) =>
+            openTask(s.keys, wire),
+          ),
+        ),
     );
   } catch (error) {
     log(`WARN PR states not refreshed: ${message(error)}`);
