@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { emptyCredentialStore } from '../src/auth/index.js';
@@ -9,6 +10,7 @@ import {
   runCleanup,
 } from '../src/modules/cleanup/index.js';
 import { stubDatabase, type Database } from '../src/modules/database/index.js';
+import { VACUUMED_TABLES } from '../src/modules/database/pglite.js';
 import { createMemoryEvents } from '../src/modules/events/index.js';
 import { loadConfig } from '../src/modules/index.js';
 import { createServer } from '../src/server.js';
@@ -151,6 +153,17 @@ describe('[api-009] hourly cleanup on pglite', () => {
     expect((await stateOf('done-3d')).hasRun).toBe(true);
     expect((await stateOf('done-intake-29d')).hasRun).toBe(true);
     expect((await stateOf('todo-old')).hasRun).toBe(true);
+  });
+
+  it('vacuums and analyzes the large tables at the end of the pass, since PGlite runs no autovacuum', async () => {
+    const vacuumed = () =>
+      opened.database.withOwner('owner', async (tx) => {
+        const result = (await tx.execute(
+          sql`select relname from pg_stat_user_tables where last_vacuum is not null and last_analyze is not null`,
+        )) as unknown as { rows: { relname: string }[] };
+        return result.rows.map((row) => row.relname).sort();
+      });
+    expect(await vacuumed()).toEqual([...VACUUMED_TABLES].sort());
   });
 
   it('is idempotent', async () => {
