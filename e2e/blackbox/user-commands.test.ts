@@ -513,7 +513,7 @@ describe('user commands with a worker', () => {
     expect(await refusedInsideRun(fx, ['send', running.id, 'inside'])).toBe(2);
     expect((await threadOf(fx, idle.id)).some((note) => note.text === 'inside')).toBe(false);
     expect(
-      stubStdin(fx).some((line) => line.includes('inside') && !line.includes('#stub: board')),
+      stubStdin(fx).some((line) => line.includes('inside') && !line.includes('#stub: rumo')),
     ).toBe(false);
   });
 
