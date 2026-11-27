@@ -58,12 +58,13 @@ gh run download <run> --repo mloureiro/rumo -n server-app-adhoc-signed
 Unzip with `ditto -x -k <zip> .`. The apps are ad-hoc signed: remove the quarantine flag with
 `xattr -dr com.apple.quarantine "<name>.app"` before the first open, and expect one Keychain prompt per item after
 every rebuild (choose Always Allow). The CLI for another host is inside the server app at
-`<app>/Contents/Resources/cli/rumo`.
+`<app>/Contents/Resources/resources/cli/rumo`.
 
 ## 2. Install the server app
 
 1. Quit the old local server from its tray and stop it starting at login (its README says how). Keep its data.
-2. Copy `Rumo Server.app` to `/Applications` and remove the quarantine flag.
+2. Copy `Rumo Server.app` to `/Applications` and remove the quarantine flag. It sits beside the old local server, which
+   is `/Applications/Agent Board Server.app`.
 3. If you migrate a board (section 3), do not open the app yet: write `<root>/settings.json` with
    `{"userName": "<owner>"}` first, where `<owner>` is the name the old board exports. Without a migration, open the
    app now: it creates its settings and opens the Set up window by itself.
@@ -74,7 +75,7 @@ port.
 ## 3. Migrate the board
 
 Follow `migrate.md` from "Before you start" to step 12, with the bundled API executable
-`<app>/Contents/Resources/api/rumo-api` and `--target-db pglite://<root>/data`. The migration runs before the
+`<app>/Contents/Resources/resources/api/rumo-api` and `--target-db pglite://<root>/data`. The migration runs before the
 first start of the app, always first into a scratch copy, and never against the old board in place: for the rehearsal
 set up the old system, create and run a few cards, then migrate a copy of its data folder.
 
