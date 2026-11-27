@@ -98,6 +98,7 @@ export class BoardWorld extends FakeBoard {
   features: string[] = [];
   listStatus = 200;
   eventsStatus = 200;
+  eventStreamsOpened = 0;
   readonly moves: Record<string, unknown>[] = [];
   readonly configures: Record<string, unknown>[] = [];
   readonly doneIds: string[] = [];
@@ -179,6 +180,7 @@ export class BoardWorld extends FakeBoard {
         return json(this.eventsStatus, { error: { code: 'x', message: 'down' } });
       const stream = new ReadableStream<Uint8Array>({
         start: (controller) => {
+          this.eventStreamsOpened += 1;
           this.streams.push(controller);
           controller.enqueue(this.encoder.encode(': open\n\n'));
         },

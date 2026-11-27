@@ -14,7 +14,7 @@ import { callRoute } from '../../auth/api.js';
 import { useKeys } from '../../keys/index.js';
 import { useServers } from '../../servers/index.js';
 import type { ServerClient } from '../../transport/client.js';
-import { watchEvents } from '../../transport/index.js';
+import { joinEventStream } from './event-stream.js';
 import { decryptCard, openPrompt, type BoardCard, type OpenedPrompt } from './card-model.js';
 import { CONTEXT_FEATURE } from './context-model.js';
 import { applyMove, type MoveRequest } from './columns.js';
@@ -24,7 +24,6 @@ import { parseTime } from './format.js';
 
 export const POLL_MS = 5_000;
 export const MACHINES_POLL_MS = 15_000;
-export const EVENTS_PATH = '/api/client/events';
 export const LEAN_LIST_FEATURE = 'lean-task-list';
 
 export const leanList = (features: readonly string[]): { withoutInput?: 'true' } =>
@@ -95,23 +94,10 @@ export function useEventStream(
   useEffect(() => {
     const current = clientRef.current;
     if (!ready || current === null) return undefined;
-    const controller = new AbortController();
-    void watchEvents({
-      transport: {
-        kind: current.transport.kind,
-        fetch: (path, init) => current.request(path, init),
-      },
-      path: EVENTS_PATH,
-      signal: controller.signal,
-      onMessage: (message) => {
-        if (message.event === 'changed') changed.current();
-      },
-      onState: (next) => {
-        setState(next);
-        if (next === 'open') changed.current();
-      },
+    return joinEventStream(serverId, current, {
+      changed: () => changed.current(),
+      state: setState,
     });
-    return () => controller.abort();
   }, [serverId, ready]);
   return state;
 }

@@ -351,6 +351,16 @@ describe('Settings › Notifications', () => {
     expect(shown[0]?.title).toBe('Answer me');
   }, 20_000);
 
+  it('[web-073] shares one event stream with the board instead of opening its own', async () => {
+    world.features = [...world.features, 'attention'];
+    await world.setDocument('settings', JSON.stringify({ notifications: { desktop: true } }), 1);
+    grant('granted');
+    render('/');
+    await waitFor(() => expect(world.attentionPolls).toBeGreaterThan(0));
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(world.eventStreamsOpened).toBe(1);
+  }, 20_000);
+
   const silentCase = async (options: {
     permission: NotificationPermission;
     enabled: boolean;
