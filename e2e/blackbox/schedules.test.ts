@@ -101,7 +101,10 @@ describe('[cli-036] rumo schedule', () => {
     expect(task.projectId).toBe(defaultProject);
     expect(task.scheduleId).toBeNull();
     expect(
-      await key.open(bindings.input({ origin: { task: task.id }, creator: 'user' }), task.input),
+      await key.open(
+        bindings.input({ origin: { task: task.id }, creator: 'user' }),
+        task.input ?? '',
+      ),
     ).toBe('one-off prompt');
     const due = Date.parse(task.notBefore ?? '');
     expect(Math.abs(due - (Date.now() + HOUR_MS))).toBeLessThan(SLACK_MS);

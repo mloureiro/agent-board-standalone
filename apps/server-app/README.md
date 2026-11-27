@@ -184,13 +184,13 @@ and the command that builds it; `--api`, `--cli` and `--web` point at pre-built 
 `tauri build` and leaves the ad-hoc signed app at
 `src-tauri/target/release/bundle/macos/Rumo Server.app`. No secret is needed.
 
-| Path in `resources/` (and in `Contents/Resources/resources/`) | Content                                                                                          |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `api/rumo-api`                                         | The API single executable (`apps/api` `build:executable`); PGlite assets and migrations are embedded in it |
-| `api/schema-version`                                          | The API's last migration tag, read by the pre-upgrade backup                                     |
-| `api/version`, `cli/version`                                  | The API and CLI package versions, shown by the tray's version line                               |
-| `cli/rumo`                                                   | The CLI binary (`apps/cli` `compile`, target `darwin-arm64`), the worker                          |
-| `web/`                                                        | The browser client build (`apps/web` `dist`), served by the API                                  |
+| Path in `resources/` (and in `Contents/Resources/resources/`) | Content                                                                                                    |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `api/rumo-api`                                                | The API single executable (`apps/api` `build:executable`); PGlite assets and migrations are embedded in it |
+| `api/schema-version`                                          | The API's last migration tag, read by the pre-upgrade backup                                               |
+| `api/version`, `cli/version`                                  | The API and CLI package versions, shown by the tray's version line                                         |
+| `cli/rumo`                                                    | The CLI binary (`apps/cli` `compile`, target `darwin-arm64`), the worker                                   |
+| `web/`                                                        | The browser client build (`apps/web` `dist`), served by the API                                            |
 
 The app finds the folder next to its binary in a development build, in `Contents/Resources/resources` inside the `.app`,
 and in `RUMO_SERVER_RESOURCES` for the test seams.
@@ -218,14 +218,17 @@ Measured by `test/build-data-at-rest-resources.test.ts` 10 s after the worker is
 processes of the headless app (the same binary without AppKit), the API and the worker units. Measured on one Apple
 silicon Mac:
 
-| Process              | Measured RSS     | Threshold asserted |
-| -------------------- | ---------------- | ------------------ |
-| API single executable | 0.6 to 1.3 GiB | below 1.7 GiB      |
-| App plus worker units | about 105 MiB    | below 250 MiB      |
+| Process               | Measured RSS      | Threshold asserted     |
+| --------------------- | ----------------- | ---------------------- |
+| API single executable | about 300-350 MiB | below 400 MB (decimal) |
+| App plus worker units | about 105 MiB     | below 250 MiB          |
 
-The API figure is PGlite's WebAssembly memory. It is a known figure, kept as measured for the final review of the
-release: the threshold is set above it rather than the API lowered to meet a smaller one. The tray build adds WebKit to
-the app's own figure; that part is not measured by the automated run.
+About 175 MiB of the API figure is the Bun executable's own code pages; its physical footprint, the figure Activity
+Monitor shows, is about 160 MiB. A first start initialises a new PGlite data folder in a short-lived child process,
+because initdb peaks near 1 GiB and the allocator keeps a peak resident for the life of the process. After a burst of
+requests the RSS stays near that burst's peak even once the memory is collected: with 1000 open tasks, 8 KiB prompts
+each, it measured about 500 MiB. The tray build adds WebKit to the app's own figure; that part is not measured by the
+automated run.
 
 ## Tests against the real artifacts
 

@@ -1,4 +1,4 @@
-import type { UiTaskListItem } from '@rumo/contract';
+import type { UiTask, UiTaskListItem } from '@rumo/contract';
 import { bindings, open, seal, type Binding, type Keys, type Origin } from '@rumo/sealing';
 
 import { readContext, type ContextUsage } from './context-model.js';
@@ -147,7 +147,7 @@ export const inputBinding = (
 export async function openPrompt(
   keys: Keys,
   task: Pick<
-    UiTaskListItem,
+    UiTask,
     'id' | 'input' | 'createdBy' | 'directoryId' | 'agent' | 'forkOf' | 'scheduleId'
   >,
 ): Promise<OpenedPrompt | null> {

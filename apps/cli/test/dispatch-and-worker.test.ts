@@ -533,6 +533,30 @@ describe('dispatch tick', () => {
     expect(lookups).toHaveLength(1);
   });
 
+  it('[cli-070] the tick lists tasks without prompts and reads them only when a PR refresh is due', async () => {
+    const bin = mkdtempSync(path.join(os.tmpdir(), 'board-gh-'));
+    const gh = path.join(bin, 'gh');
+    writeFileSync(gh, '#!/bin/sh\n');
+    chmodSync(gh, 0o755);
+    const lookups: string[] = [];
+    const { stub, cli } = await rig({
+      env: { ...PROCESS, PATH: bin },
+      exec: (file, args) => {
+        if (file === 'gh') lookups.push(args[2] ?? '');
+        return { code: 0, stdout: 'MERGED\n' };
+      },
+    });
+    const url = 'https://github.com/acme/widgets/pull/9';
+    await stub.addTask({ id: 'prBBBBBB', status: 'backlog', input: `Review ${url}` });
+
+    expect(await cli.run('internal', 'dispatch')).toBe(0);
+    expect(lookups).toEqual([url]);
+    expect(await cli.run('internal', 'dispatch')).toBe(0);
+    const lists = stub.bodies('list-tasks');
+    expect(lists.filter((body) => body.withoutInput !== true)).toHaveLength(1);
+    expect(lists.filter((body) => body.withoutInput === true)).toHaveLength(2);
+  });
+
   it('[cli-070] without gh nothing is looked up and nothing is logged', async () => {
     const { stub, cli } = await rig({ env: { ...PROCESS, PATH: '/nonexistent' } });
     await stub.addTask({ id: 'prAAAAAA', status: 'backlog' });

@@ -8,6 +8,7 @@ import {
   type WireNote,
   type WireSchedule,
   type WireTask,
+  type WireTaskListItem,
 } from '@rumo/contract';
 import {
   bindings,
@@ -294,11 +295,18 @@ export async function startApiStub(options: FakeBoardOptions = {}): Promise<ApiS
 
   const handlers: Record<string, (body: Record<string, unknown>) => Promise<unknown> | unknown> = {
     'list-tasks': (body) => ({
-      tasks: [...tasks.values()].filter(
-        (task) =>
-          (body.all === true || !task.closed) &&
-          (body.projectId === undefined || task.projectId === body.projectId),
-      ),
+      tasks: [...tasks.values()]
+        .filter(
+          (task) =>
+            (body.all === true || !task.closed) &&
+            (body.projectId === undefined || task.projectId === body.projectId),
+        )
+        .map((task): WireTaskListItem => {
+          if (body.withoutInput !== true) return task;
+          const lean: WireTaskListItem = { ...task };
+          delete lean.input;
+          return lean;
+        }),
     }),
     'get-task': (body) => taskOf(body.id as string),
     'attach-session': (body) => {

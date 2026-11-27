@@ -12,7 +12,7 @@ import {
 describe('version', () => {
   it('exposes its name and version', () => {
     expect(PART_NAME).toBe('contract');
-    expect(PART_VERSION).toBe('1.1.0');
+    expect(PART_VERSION).toBe('1.2.0');
   });
 
   it('[contract-001] declares contract 1, minimum clients and server, and a non-empty feature list', () => {

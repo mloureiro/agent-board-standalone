@@ -21,6 +21,7 @@ export const FEATURE_LABELS = {
   watches: 'watches',
   'run-inbox': 'the run inbox',
   'context-usage': 'context usage',
+  'lean-task-list': 'task lists without prompts',
 } as const;
 
 export type Feature = keyof typeof FEATURE_LABELS;

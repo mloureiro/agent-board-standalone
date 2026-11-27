@@ -22,6 +22,7 @@ export interface Database {
   withOwner<T>(owner: string, work: (tx: ScopedDatabase) => Promise<T>): Promise<T>;
   withOwners<T>(work: (scopes: OwnerScopes) => Promise<T>): Promise<T>;
   withSystem<T>(work: (system: SystemFunctions) => Promise<T>): Promise<T>;
+  vacuum?(): Promise<void>;
   close(): Promise<void>;
 }
 

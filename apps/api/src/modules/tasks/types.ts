@@ -91,6 +91,7 @@ export interface TaskMove {
 export interface TaskListOptions {
   all?: boolean | undefined;
   projectId?: string | undefined;
+  withoutInput?: boolean | undefined;
 }
 
 export interface TaskOptions {

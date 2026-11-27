@@ -57,5 +57,10 @@ export const runCleanup = async ({
       result.failures.push(`cleanup of ${owner} failed: ${String(error)}`);
     }
   }
+  try {
+    await database.vacuum?.();
+  } catch (error) {
+    result.failures.push(`vacuum failed: ${String(error)}`);
+  }
   return result;
 };

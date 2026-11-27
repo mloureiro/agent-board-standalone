@@ -1,4 +1,4 @@
-import type { WireNote, WireTask } from '@rumo/contract';
+import type { WireNote, WireTaskListItem } from '@rumo/contract';
 import { bindings, open, type Binding, type Keys, type Origin } from '@rumo/sealing';
 
 export const UNREADABLE_TEXT = '(cannot decrypt)';
@@ -12,7 +12,7 @@ export interface OpenPr {
 }
 
 export interface OpenTask {
-  readonly wire: WireTask;
+  readonly wire: WireTaskListItem;
   readonly id: string;
   readonly title: string | null;
   readonly input: string | null;
@@ -55,7 +55,7 @@ function labelsOf(text: string): string[] | null {
 }
 
 export function inputBinding(
-  wire: WireTask,
+  wire: WireTaskListItem,
   agent: string | null,
   origin: 'task' | 'schedule',
   withDirectory = true,
@@ -75,7 +75,7 @@ export function inputBinding(
 async function attemptTaskField(
   keys: Keys,
   field: 'title' | 'agent' | 'icon' | 'labels',
-  wire: WireTask,
+  wire: WireTaskListItem,
   envelope: string,
 ): Promise<string | null> {
   const origins: Origin[] =
@@ -89,7 +89,26 @@ async function attemptTaskField(
   return null;
 }
 
-export async function openTask(keys: Keys, wire: WireTask): Promise<OpenTask> {
+async function openInput(
+  keys: Keys,
+  wire: WireTaskListItem,
+  agent: string | null,
+  envelope: string,
+): Promise<string | null> {
+  let input = await attempt(keys, inputBinding(wire, agent, 'task'), envelope);
+  if (input === null && wire.scheduleId !== null) {
+    input = await attempt(keys, inputBinding(wire, agent, 'schedule'), envelope);
+  }
+  if (input === null && wire.directoryId !== null) {
+    input = await attempt(keys, inputBinding(wire, agent, 'task', false), envelope);
+    if (input === null && wire.scheduleId !== null) {
+      input = await attempt(keys, inputBinding(wire, agent, 'schedule', false), envelope);
+    }
+  }
+  return input;
+}
+
+export async function openTask(keys: Keys, wire: WireTaskListItem): Promise<OpenTask> {
   const unreadable: Unreadable[] = [];
   const track = (field: Unreadable, value: string | null, present: boolean): string | null => {
     if (present && value === null) unreadable.push(field);
@@ -101,17 +120,10 @@ export async function openTask(keys: Keys, wire: WireTask): Promise<OpenTask> {
     wire.agent === null || wire.agent === undefined
       ? null
       : track('agent', await attemptTaskField(keys, 'agent', wire, wire.agent), true);
-  let input = await attempt(keys, inputBinding(wire, agent, 'task'), wire.input);
-  if (input === null && wire.scheduleId !== null) {
-    input = await attempt(keys, inputBinding(wire, agent, 'schedule'), wire.input);
-  }
-  if (input === null && wire.directoryId !== null) {
-    input = await attempt(keys, inputBinding(wire, agent, 'task', false), wire.input);
-    if (input === null && wire.scheduleId !== null) {
-      input = await attempt(keys, inputBinding(wire, agent, 'schedule', false), wire.input);
-    }
-  }
-  track('input', input, true);
+  const input =
+    wire.input === undefined
+      ? null
+      : track('input', await openInput(keys, wire, agent, wire.input), true);
   const icon =
     wire.icon === null
       ? null

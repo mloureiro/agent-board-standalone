@@ -30,6 +30,7 @@ export const holdableDatabase = (
     withOwner: (owner, work) => live().withOwner(owner, work),
     withSystem: (work) => live().withSystem(work),
     withOwners: (work) => live().withOwners(work),
+    ...(initial.vacuum === undefined ? {} : { vacuum: async () => live().vacuum?.() }),
     close: closeCurrent,
     hold: closeCurrent,
     resume: async () => {

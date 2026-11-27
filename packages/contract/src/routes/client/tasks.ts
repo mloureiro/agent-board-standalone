@@ -36,7 +36,13 @@ const guardedWrite = ['not-found', 'conflict', 'forbidden'] as const;
 const idOnly = z.object(taskRef).strict();
 
 export const listClientTasksRoute = clientQuery('tasks/list', {
-  request: z.object({ closed: queryBoolean.optional(), project: projectId.optional() }).strict(),
+  request: z
+    .object({
+      closed: queryBoolean.optional(),
+      project: projectId.optional(),
+      withoutInput: queryBoolean.optional(),
+    })
+    .strict(),
   response: z.object({ tasks: z.array(uiTaskListItem) }).strict(),
   errors: ['not-found'],
 });

@@ -598,7 +598,7 @@ describe('the tick around the workers', () => {
         budgetMs: 100,
       },
       s,
-      tasks,
+      () => Promise.resolve(tasks),
     );
     expect(lookups.length).toBeGreaterThan(0);
     expect(lookups.length).toBeLessThan(3);
